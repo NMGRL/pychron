@@ -279,7 +279,7 @@ class MainOptions(SubOptions):
                 label="Multiplier",
                 format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True),
             ),
-            checkbox_column(name="has_filter", label="Filter", editable=False)
+            checkbox_column(name="has_filter", label="Filter", editable=False),
             # object_column(name='filter_str', label='Filter')
         ]
 
@@ -1065,7 +1065,7 @@ class GuidesOptions(SubOptions):
             ObjectColumn(name="orientation", label="Orientation"),
             ObjectColumn(
                 name="plotname", editor=EnumEditor(name="plotnames"), label="Plot"
-            )
+            ),
             # ObjectColumn(name="alpha", label="Opacity"),
             # ObjectColumn(name="color", label="Color"),
             # ObjectColumn(name="line_style", label='Style'),
@@ -1086,7 +1086,7 @@ class GuidesOptions(SubOptions):
             ObjectColumn(name="orientation", label="Orientation"),
             ObjectColumn(
                 name="plotname", editor=EnumEditor(name="plotnames"), label="Plot"
-            )
+            ),
             # ObjectColumn(name="alpha", label="Opacity"),
             # ObjectColumn(name="color", label="Color"),
             # ObjectColumn(name="line_style", label='Style'),

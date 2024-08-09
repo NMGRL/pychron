@@ -26,7 +26,7 @@ import weakref
 from pprint import pformat
 from threading import Event as TEvent, Thread
 
-from numpy import Inf, polyfit, linspace, polyval
+from numpy import Inf, polyfit, linspace, polyval, array
 from traits.api import (
     Any,
     Str,
@@ -43,6 +43,7 @@ from traits.api import (
     Dict,
 )
 from traits.trait_errors import TraitError
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.filetools import add_extension, unique_path2
 from pychron.core.helpers.filetools import get_path
@@ -97,6 +98,7 @@ from pychron.pychron_constants import (
     TRUNCATED,
     SUCCESS,
     CANCELED,
+    SYN_EXTRACTION,
 )
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
@@ -165,6 +167,7 @@ class AutomatedRun(Loggable):
     extraction_line_manager = Any
     # experiment_executor = Any
     ion_optics_manager = Any
+    syn_extractor = Any
 
     multi_collector = Instance(
         "pychron.experiment.automated_run.multi_collector.MultiCollector"
@@ -248,6 +251,7 @@ class AutomatedRun(Loggable):
 
     previous_blanks = Tuple
     previous_baselines = Dict
+    baseline_modifiers = Dict
 
     _active_detectors = List
     _peak_center_detectors = List
@@ -280,6 +284,8 @@ class AutomatedRun(Loggable):
 
     failed_intensity_count_threshold = Int(3)
     use_equilibration_analysis = Bool(False)
+
+    _syn_extraction_active = Bool(False)
 
     def set_preferences(self, preferences):
         self.debug("set preferences")
@@ -914,7 +920,7 @@ class AutomatedRun(Loggable):
                     )
 
             if not self.plot_panel:
-                p = self._new_plot_panel(self.plot_panel, stack_order="top_to_bottom")
+                p = self._new_plot_panel(stack_order="top_to_bottom")
                 self.plot_panel = p
 
             self.debug("peak center started")
@@ -1390,6 +1396,8 @@ class AutomatedRun(Loggable):
 
             self.spec.new_result(self)
 
+            self._apply_baseline_modification()
+
             # save to database
             if exception_queue:  # parallel save not currently working
                 t = Thread(
@@ -1418,6 +1426,92 @@ class AutomatedRun(Loggable):
         #         return True
         # else:
         #     return True
+
+    def _apply_baseline_modification(self):
+        if not os.path.isfile(paths.baseline_model):
+            self.warning("No baseline model file available to do baseline modification")
+
+        def modifier_function(model, detector):
+            config = self.baseline_modifiers[detector]
+            ar40iso = self.isotope_group.get_isotope("Ar40")
+            ar40 = self.isotope_group.get_isotope("Ar40").uvalue
+            ar39 = self.isotope_group.get_isotope("Ar39").uvalue
+            xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
+
+            if config["function"] == "model":
+                if model:
+                    prediction = model.get_prediction(nominal_value(xvalue))
+                    v, e = prediction.predicted_mean, prediction.se_mean
+                else:
+                    v, e = 0, 0
+                mb = ufloat(v, e, tag="baseline_modifier")
+            else:
+                mb = eval(config["function"], {"x": xvalue})
+
+            fe = config.get("function_err", "")
+            if "countingstatistics" in fe:
+                countingtime = ar40iso.baseline.xs[-1] - ar40iso.baseline.xs[0]
+                cpsTofA = 6250.0 * countingtime
+                n = nominal_value(mb) * cpsTofA
+                self.debug(
+                    f"using counting statistics error n={n} countingtime={countingtime} modified_baseline={mb}"
+                )
+
+                sigma = n**0.5  # n/n**-0.5
+                self.debug("counting stats")
+                sigma = eval(fe, {"countingstatistics": sigma})
+                mb = ufloat(
+                    nominal_value(mb), (sigma) / cpsTofA, tag="baseline_modifier"
+                )
+
+            self.debug(
+                f'applying baseline modification det={detector} {config["function"]} x={xvalue} modification={mb}'
+            )
+            return mb
+
+        if self.baseline_modifiers:
+            self._update_persister_spec(baseline_modifiers=self.baseline_modifiers)
+
+            model = None
+            if os.path.isfile(paths.baseline_model):
+                import pandas as pd
+                from statsmodels.api import OLS, WLS
+
+                with open(paths.baseline_model) as rfile:
+                    data = pd.read_csv(rfile)
+                    a40 = data["ar40"]
+                    a40e = data["ar40err"]
+                    a39 = data["ar39"]
+                    a39e = data["ar39err"]
+
+                    a40u = [ufloat(a, e) for a, e in zip(a40, a40e)]
+                    a39u = [ufloat(a, e) for a, e in zip(a39, a39e)]
+                    x = [a + b for a, b in zip(a40u, a39u)]
+                    exo = [nominal_value(xi) for xi in x]
+                    endo = data["baseline"]
+                    w = array([std_dev(xi) for xi in x])
+                    model = WLS(endo, exo, weights=1.0 / (w**2)).fit()
+
+            md = {}
+            for key, iso in self.persistence_spec.isotope_group.items():
+                if iso.detector in self.baseline_modifiers:
+                    m = modifier_function(model, iso.detector)
+                    iso.baseline.ys += m.nominal_value
+
+                    # this needs to incorporate filtering
+                    # use logic from MassSpecPersistenceSpec.get_filtered_baseline_uvalue
+                    # refactor into Isotope
+
+                    # nm = iso.baseline.ys.mean()
+                    # ns = iso.baseline.ys.std()
+                    md[iso.detector] = {
+                        # "modified_baseline": ufloat(
+                        #     nm + nominal_value(m), (ns**2 + std_dev(m) ** 2) ** 0.5
+                        # ),
+                        "modifier": m,
+                    }
+            self.debug(f"modified baselines {md}")
+            self.update_persister_spec(modified_baselines=md)
 
     # ===============================================================================
     # setup
@@ -1507,10 +1601,12 @@ class AutomatedRun(Loggable):
         self.persister.insure_run()
         return self._start_script(MEASUREMENT)
 
-    def do_extraction(self):
+    def do_extraction(self, syn_extractor=None):
         self.debug("do extraction")
 
         self._persister_action("pre_extraction_save")
+
+        self.syn_extractor = syn_extractor
 
         self.info_color = EXTRACTION_COLOR
         script = self.extraction_script
@@ -1525,24 +1621,25 @@ class AutomatedRun(Loggable):
         queue = self.experiment_queue
         script.set_load_identifier(queue.load_name)
 
-        syn_extractor = None
+        self._syn_extraction_active = False
+        use_syn_extraction = False
         if script.syntax_ok(warn=False):
-            if self.use_syn_extraction and self.spec.syn_extraction:
-                p = os.path.join(
-                    paths.scripts_dir, "syn_extraction", self.spec.syn_extraction
+            if self.use_syn_extraction and self.spec.syn_extraction_script:
+
+                pp = self._make_script_name(
+                    self.spec.syn_extraction_script, extension=".yaml"
                 )
-                p = add_extension(p, ".yaml")
-
+                p = os.path.join(paths.scripts_dir, "syn_extraction", pp)
+                self.debug(f"using syn_extracion file: {p}")
                 if os.path.isfile(p):
-                    from pychron.experiment.automated_run.syn_extraction import (
-                        SynExtractionCollector,
-                    )
-
-                    dur = script.calculate_estimated_duration(force=True)
-                    syn_extractor = SynExtractionCollector(
-                        arun=weakref.ref(self)(), path=p, extraction_duration=dur
-                    )
-                    syn_extractor.start()
+                    # dur = script.calculate_estimated_duration(force=True)
+                    # syn_extractor = SynExtractionCollector(
+                    #     arun=weakref.ref(self)(), path=p, extraction_duration=dur
+                    # )
+                    self.syn_extractor.arun = self
+                    self.syn_extractor.path = p
+                    self.syn_extractor.start()
+                    use_syn_extraction = True
                 else:
                     self.warning(
                         "Cannot start syn extraction collection. Configuration file does not exist. {}".format(
@@ -1559,10 +1656,12 @@ class AutomatedRun(Loggable):
             ex_result = False
             self.debug("extraction exception={}".format(e))
 
-        if ex_result:
-            if syn_extractor:
-                syn_extractor.stop()
+        if syn_extractor:
+            syn_extractor.stop()
 
+        if use_syn_extraction:
+            self._syn_extraction_active = True
+        if ex_result:
             # report the extraction results
             ach, req = script.output_achieved()
             self.info("Requested Output= {:0.3f}".format(req))
@@ -1603,8 +1702,6 @@ class AutomatedRun(Loggable):
             self._wait_for_min_ms_pumptime()
 
         else:
-            if syn_extractor:
-                syn_extractor.stop()
 
             self.do_post_equilibration()
             self.do_post_measurement()
@@ -1627,8 +1724,10 @@ class AutomatedRun(Loggable):
             self.warning("run is not alive")
             return
 
+        self.debug(f"do measurement script {script}")
         if script is None:
             script = self.measurement_script
+            self.debug(f"using measurement script {script}, {script.name}")
 
         if script is None:
             self.warning("no measurement script")
@@ -1970,6 +2069,9 @@ anaylsis_type={}
             i.baseline.set_filtering(fod)
             self.debug("setting fod for {}= {}".format(i.detector, fod))
 
+    def update_persister_spec(self, **kw):
+        self._update_persister_spec(**kw)
+
     def _update_persister_spec(self, **kw):
         ps = self.persistence_spec
         for k, v in kw.items():
@@ -2113,6 +2215,8 @@ anaylsis_type={}
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
+            if name == SYN_EXTRACTION:
+                continue
             setattr(self, "{}_script".format(name), self._load_script(name))
 
     def _get_default_fits_file(self):
@@ -2218,16 +2322,17 @@ anaylsis_type={}
 
         """
         self.debug("activate detectors")
+        p = self.plot_panel
 
-        create = True
+        create = not self._syn_extraction_active or p is None
         # if self.plot_panel is None:
         #     create = True
         # else:
         #     cd = set([d.name for d in self.plot_panel.detectors])
         #     ad = set(dets)
         #     create = cd - ad or ad - cd
-
-        p = self._new_plot_panel(self.plot_panel, stack_order="top_to_bottom")
+        if create:
+            p = self._new_plot_panel(stack_order="top_to_bottom")
 
         self._active_detectors = self._set_active_detectors(dets)
 
@@ -2240,9 +2345,10 @@ anaylsis_type={}
 
         self.debug("clear isotope group")
 
-        self.isotope_group.clear_isotopes()
-        self.isotope_group.clear_error_components()
-        self.isotope_group.clear_blanks()
+        if not self._syn_extraction_active:
+            self.isotope_group.clear_isotopes()
+            self.isotope_group.clear_error_components()
+            self.isotope_group.clear_blanks()
 
         cb = (
             False
@@ -2258,7 +2364,7 @@ anaylsis_type={}
         self._load_previous()
 
         # self.debug('load analysis view')
-        # p.analysis_view.load(self)
+        p.analysis_view.load(self)
         self.plot_panel = p
 
     def _load_previous(self):
@@ -2282,11 +2388,12 @@ anaylsis_type={}
                 previous_blanks=blanks, previous_blank_runid=runid
             )
 
-        self.isotope_group.clear_baselines()
+        if not self._syn_extraction_active:
+            self.isotope_group.clear_baselines()
 
-        baselines = self.previous_baselines
-        for iso, v in baselines.items():
-            self.isotope_group.set_baseline(iso, v[0], v[1])
+            baselines = self.previous_baselines
+            for iso, v in baselines.items():
+                self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
         t = self.spec.conditionals
@@ -2361,7 +2468,7 @@ anaylsis_type={}
     def _get_extraction_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
-    def _new_plot_panel(self, plot_panel, stack_order="bottom_to_top"):
+    def _new_plot_panel(self, stack_order="bottom_to_top"):
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
         if sample:
@@ -3058,7 +3165,6 @@ anaylsis_type={}
         from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
         sname = self.script_info.measurement_script_name
-        sname = self._make_script_name(sname)
 
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
@@ -3080,50 +3186,63 @@ anaylsis_type={}
 
             klass = QuaderaMeasurementPyScript
 
-        ms = klass(
-            root=paths.measurement_dir,
-            name=sname,
-            automated_run=self,
-            runner=self.runner,
-        )
-        return ms
+        return self._script_factory(paths.measurement_dir, sname, klass=klass)
 
     def _extraction_script_factory(self, klass=None):
-        ext = self._ext_factory(
+        return self._script_factory(
             paths.extraction_dir, self.script_info.extraction_script_name, klass=klass
         )
-        if ext is not None:
-            ext.automated_run = self
-        return ext
 
     def _post_measurement_script_factory(self):
-        return self._ext_factory(
-            paths.post_measurement_dir, self.script_info.post_measurement_script_name
+        from pychron.pyscripts.post_measurement_pyscript import PostMeasurementPyScript
+
+        return self._script_factory(
+            paths.post_measurement_dir,
+            self.script_info.post_measurement_script_name,
+            klass=PostMeasurementPyScript,
         )
 
     def _post_equilibration_script_factory(self):
-        return self._ext_factory(
+        return self._script_factory(
             paths.post_equilibration_dir,
             self.script_info.post_equilibration_script_name,
         )
 
-    def _ext_factory(self, root, file_name, klass=None):
+    # def _ext_factory(self, root, file_name, klass=None):
+    #     file_name = self._make_script_name(file_name)
+    #     if os.path.isfile(os.path.join(root, file_name)):
+    #         if klass is None:
+    #             from pychron.pyscripts.extraction_line_pyscript import (
+    #                 ExtractionPyScript,
+    #             )
+    #
+    #             klass = ExtractionPyScript
+    #
+    #         obj = klass(root=root,
+    #                     automated_run=self,
+    #                     name=file_name, runner=self.runner)
+    #
+    #         return obj
+
+    def _script_factory(self, root, file_name, klass=None):
+        if klass is None:
+            from pychron.pyscripts.extraction_line_pyscript import (
+                ExtractionPyScript,
+            )
+
+            klass = ExtractionPyScript
+
         file_name = self._make_script_name(file_name)
         if os.path.isfile(os.path.join(root, file_name)):
-            if klass is None:
-                from pychron.pyscripts.extraction_line_pyscript import (
-                    ExtractionPyScript,
-                )
-
-                klass = ExtractionPyScript
-
-            obj = klass(root=root, name=file_name, runner=self.runner)
+            obj = klass(
+                root=root, automated_run=self, name=file_name, runner=self.runner
+            )
 
             return obj
 
-    def _make_script_name(self, name):
+    def _make_script_name(self, name, extension=".py"):
         name = "{}_{}".format(self.spec.mass_spectrometer.lower(), name)
-        return add_extension(name, ".py")
+        return add_extension(name, extension)
 
     def _setup_context(self, script):
         """
@@ -3177,6 +3296,10 @@ anaylsis_type={}
         okinds = []
         bs = []
         for s in kinds:
+
+            if s is SYN_EXTRACTION:
+                continue
+
             sc = getattr(self, "{}_script".format(s))
             if sc is not None:
                 bs.append((sc.name, sc.toblob()))

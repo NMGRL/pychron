@@ -277,6 +277,7 @@ class Paths(object):
 
     oauth_file = None
     packages_file = None
+    baseline_model = None
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -524,6 +525,10 @@ class Paths(object):
         self.oauth_file = join(self.appdata_dir, "oauth.json")
 
         self.packages_file = join(self.appdata_dir, "packages.json")
+
+        self.baseline_model = join(
+            self.scripts_dir, "syn_extraction", "baseline_model.csv"
+        )
 
         build_directories()
 

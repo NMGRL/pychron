@@ -25,9 +25,9 @@ from envisage.ui.tasks.tasks_application import (
     TasksApplicationState,
     logger,
 )
-from pyface.dialog import Dialog
+from pyface.about_dialog import AboutDialog
 from pyface.tasks.task_window_layout import TaskWindowLayout
-from traits.api import List, Instance
+from traits.api import List, Instance, Any
 
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.yaml import yload
@@ -41,7 +41,7 @@ from pychron.startup_test.tester import StartupTester
 
 
 class BaseTasksApplication(TasksApplication, Loggable):
-    about_dialog = Instance(Dialog)
+    about_dialog = Instance(AboutDialog)
     startup_tester = Instance(StartupTester)
     uis = List
     available_task_extensions = ExtensionPoint(id="pychron.available_task_extensions")

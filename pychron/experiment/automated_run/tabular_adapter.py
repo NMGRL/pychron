@@ -178,7 +178,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ("T_o Offset", "collection_time_zero_offset"),
         ("Measurement", "measurement_script"),
         ("Conditionals", "conditionals"),
-        ("SynExtraction", "syn_extraction"),
+        ("SynExtraction", "syn_extraction_script"),
         ("CDDWarm", USE_CDD_WARMING),
         ("Post Eq.", "post_equilibration_script"),
         ("Post Meas.", "post_measurement_script"),
@@ -346,11 +346,11 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         at = self.item.analysis_type
         p = self.item.position
 
-        if at == BLANK_UNKNOWN:
-            if "," not in p:
-                p = ""
-
-        elif at not in (UNKNOWN, DEGAS):
+        # if at == BLANK_UNKNOWN:
+        #     if "," not in p:
+        #         p = ""
+        #
+        if at not in (UNKNOWN, DEGAS, BLANK_UNKNOWN):
             p = ""
 
         return p

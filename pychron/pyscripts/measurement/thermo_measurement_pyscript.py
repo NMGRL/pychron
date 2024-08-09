@@ -19,6 +19,7 @@
 
 from pychron.pyscripts.decorators import verbose_skip
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript, command_register
+from traits.api import Dict
 
 ESTIMATED_DURATION_FF = 1.0
 
@@ -193,6 +194,10 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
     @command_register
     def set_accelerating_voltage(self, v=""):
         self._set_spectrometer_parameter("SetHV", v)
+
+
+class ThermoSynMeasurementPyScript(ThermoMeasurementPyScript):
+    pass
 
 
 class NGXMeasurementPyScript(MeasurementPyScript):

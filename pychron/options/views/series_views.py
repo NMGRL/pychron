@@ -91,7 +91,7 @@ class SeriesMainOptions(MainOptions):
             checkbox_column(name="ytick_visible", label="Y Tick"),
             checkbox_column(name="ytitle_visible", label="Y Title"),
             checkbox_column(name="use_dev", label="Dev"),
-            checkbox_column(name="use_percent_dev", label="Dev %")
+            checkbox_column(name="use_percent_dev", label="Dev %"),
             # checkbox_column(name='has_filter', label='Filter', editable=False)
         ]
 

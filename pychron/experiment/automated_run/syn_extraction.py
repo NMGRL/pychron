@@ -22,7 +22,7 @@ import time
 import uuid
 from threading import Thread
 
-from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
+from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float, Any
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -32,7 +32,23 @@ from pychron.experiment.utilities.runid import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+from pychron.pyscripts.measurement.thermo_measurement_pyscript import (
+    ThermoSynMeasurementPyScript,
+)
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
+
+
+class SynExtractionCTX:
+    def __init__(self, run, syn_script):
+        self.run = run
+        self.oscript = run.measurement_script
+        self.run.measurement_script = syn_script
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.run.measurement_script = self.oscript
 
 
 class SynExtractionSpec(HasTraits):
@@ -91,6 +107,7 @@ class SynExtractionCollector(Loggable):
     extraction_duration = Float
     persister = None
     persister_use_massspec_database = Bool(False)
+    executor = Any
 
     def start(self):
         self.persister_use_massspec_database = self.arun.persister.use_massspec_database
@@ -113,9 +130,10 @@ class SynExtractionCollector(Loggable):
         # return the persister to its original configuration
         # if self.persister:
         #     self.arun.persister = self.persister
-        self.arun.persister.trait_set(
-            use_massspec_database=self.persister_use_massspec_database
-        )
+        if self.arun:
+            self.arun.persister.trait_set(
+                use_massspec_database=self.persister_use_massspec_database
+            )
 
     def _do_collection(self, cfg):
         self.info("Starting syn extraction collection")
@@ -123,13 +141,13 @@ class SynExtractionCollector(Loggable):
         # clone the persister
         # self.persister = self.arun.persister.clone_traits()
 
-        # spec = SynExtractionSpec(config=cfg)
+        spec = SynExtractionSpec(config=cfg)
         # script = self._setup_script(spec)
-        script = self._setup_script(cfg)
+        script = self._setup_script(spec)
         if not script:
             return
         script, post_script = script
-        if not self._do_syn_extract(cfg, script, post_script):
+        if not self._do_syn_extract(spec, script, post_script):
             self.debug("do syn extraction failed")
             return
 
@@ -190,29 +208,34 @@ class SynExtractionCollector(Loggable):
         # self.info("Syn Extraction finished")
 
     def _setup_script(self, spec):
-        p = spec.script
-        if os.path.isfile(p):
-            self.debug('measurement script "{}"'.format(p))
-            root = os.path.dirname(p)
-            sname = os.path.basename(p)
+        p = spec.measurement
+        p = add_extension(p, ".py")
+        for p in (p, os.path.join(paths.measurement_dir, p)):
+            if p and os.path.isfile(p):
+                self.debug('measurement script "{}"'.format(p))
+                root = os.path.dirname(p)
+                sname = os.path.basename(p)
 
-            # setup the script
-            ms = MeasurementPyScript(root=root, name=sname, automated_run=self.arun)
-            if ms.bootstrap():
-                if ms.syntax_ok(warn=False):
-                    # spec.duration = ms.get_estimated_duration()
-                    pms = None
-                    p = spec.post_measurement_script
-                    if p and os.path.isfile(p):
-                        self.debug('measurement script "{}"'.format(p))
-                        pms = ExtractionPyScript(
-                            root=os.path.dirname(p), name=os.path.basename(p)
-                        )
-                    return ms, pms
-                else:
-                    self.debug("invalid syntax {}".format(ms.name))
-
-        self.debug('invalid measurement script "{}"'.format(p))
+                # setup the script
+                ms = ThermoSynMeasurementPyScript(
+                    root=root, name=sname, automated_run=self.arun
+                )
+                self.arun.baseline_modifiers = spec.baseline_modifiers
+                if ms.bootstrap():
+                    if ms.syntax_ok(warn=False):
+                        # spec.duration = ms.get_estimated_duration()
+                        pms = None
+                        p = spec.post_measurement
+                        if p and os.path.isfile(p):
+                            self.debug('measurement script "{}"'.format(p))
+                            pms = ExtractionPyScript(
+                                root=os.path.dirname(p), name=os.path.basename(p)
+                            )
+                        return ms, pms
+                    else:
+                        self.debug("invalid syntax {}".format(ms.name))
+        else:
+            self.debug('invalid measurement script "{}"'.format(p))
 
     def _do_syn_extract(self, spec, script, post_script):
         self.debug('Executing SynExtraction mode="{}"'.format(spec.mode))
@@ -232,16 +255,33 @@ class SynExtractionCollector(Loggable):
         #     self.arun.persister.trait_set(
         #         use_massspec_database=False, runid=runid, uuid=str(uuid.uuid4())
         #     )
-        if self.arun.do_measurement(script=script, use_post_on_fail=False):
-            if post_script:
-                self.debug("starting post measurement")
-                if not self.arun.do_post_measurement(script=post_script):
-                    return
+        # oscript = self.arun.measurement_script
+        # self.debug(f'oscript {oscript}')
 
-            self.debug("delay between syn extractions {}".format(spec.delay_between))
-            self.arun.wait(spec.delay_between)
+        with SynExtractionCTX(self.arun, script):
+            # self.arun.measurement_script = script
+            try:
+                if self.executor.syn_measure(self.arun, script):
+                    # if self.arun.do_measurement(script=script, use_post_on_fail=False):
+                    if post_script:
+                        self.debug("starting post measurement")
+                        if not self.arun.do_post_measurement(script=post_script):
+                            return
 
-            return True
+                    # self.debug(
+                    #     "delay between syn extractions {}".format(spec.delay_between)
+                    # )
+                    # self.arun.wait(spec.delay_between or 0)
+                    # self.arun.measurement_script = oscript
+                    # self.debug(f'setting {self.arun} {oscript}')
+                    return True
+                # else:
+                #     self.arun.measurement_script = oscript
+
+            except BaseException as e:
+                self.debug(f"failed doing measurement {e}")
+        # finally:
+        #     self.arun.measurement_script = oscript
 
     # def _spec_generator(self, config):
     #     pattern = config.get("pattern", "S")

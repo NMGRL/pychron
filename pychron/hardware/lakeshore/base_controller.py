@@ -81,8 +81,8 @@ class GPIBProtocol(Protocol):
     def read_setpoint(self, output, verbose=True):
         return self.ask(f"SETP? {output}", verbose=verbose)
 
-    def set_setpoint(self, output, v):
-        self.tell(f"SETP {output},{v}")
+    def set_setpoint(self, output, v, verbose=True):
+        self.tell(f"SETP {output},{v}", verbose=verbose)
 
     def set_range(self, output, ra):
         self.tell(f"RANGE {output},{ra}")
@@ -255,8 +255,8 @@ class BaseLakeShoreController(BaseCryoController):
                 setattr(self, "setpoint{}".format(idx), v)
         self._block(setpoints, delay, block)
 
-    def _write_setpoint(self, v, output):
-        self.protocol.set_setpoint(output, v)
+    def _write_setpoint(self, v, output, **kw):
+        self.protocol.set_setpoint(output, v, **kw)
 
     def set_setpoint(self, v, output=1, retries=3):
         self.set_range(v, output)

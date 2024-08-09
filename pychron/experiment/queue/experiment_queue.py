@@ -51,7 +51,6 @@ from pychron.experiment.utilities.runid import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
-from pychron.stage.maps.laser_stage_map import LaserStageMap
 
 
 class RepeatRunBlockView(HasTraits):
@@ -148,6 +147,8 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         open_view(ve)
 
     def motion_saver(self):
+        from pychron.stage.maps.laser_stage_map import LaserStageMap
+
         stage_map_klass = LaserStageMap
 
         t = self.tray

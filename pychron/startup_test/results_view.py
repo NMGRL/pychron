@@ -114,6 +114,7 @@ class ResultsView(Controller):
             # do_after(self.auto_close * 1000, self._do_auto_close)
         else:
             self.help_str = ""
+        return True
 
     def closed(self, info, is_ok):
         import sys

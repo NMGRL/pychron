@@ -77,6 +77,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     delay_before_analyses = Int(5)
     delay_after_blank = Int(15)
     delay_after_air = Int(15)
+    delay_after_conditional = Str
     tray = Str
     trays = Property
     note = Str
@@ -97,6 +98,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         "delay_before_analyses",
         "delay_after_blank",
         "delay_after_air",
+        "delay_after_conditional",
         "default_lighting",
         "queue_conditionals_name",
     )

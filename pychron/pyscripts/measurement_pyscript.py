@@ -40,13 +40,14 @@ ESTIMATED_DURATION_FF = 1.0
 
 command_register = makeRegistry()
 
+from pychron.pyscripts.automated_run_pyscript import AutomatedRunPyScript
 
-class MeasurementPyScript(ValvePyScript):
+
+class MeasurementPyScript(AutomatedRunPyScript):
     """
     MeasurementPyScripts are used to collect isotopic data
     """
 
-    automated_run = None
     ncounts = 0
     info_color = MEASUREMENT_COLOR
     abbreviated_count_ratio = None
@@ -94,7 +95,7 @@ class MeasurementPyScript(ValvePyScript):
         super(MeasurementPyScript, self).truncate(style=style)
 
     def get_variables(self):
-        return ["truncated", "eqtime", "use_cdd_warming"]
+        return ["truncated", "eqtime", "use_cdd_warming", "analysis_type"]
 
     def increment_series_counts(self, s, f):
         self._series_count += s
@@ -832,6 +833,10 @@ class MeasurementPyScript(ValvePyScript):
         self._automated_run_call("py_set_isotope_group", name)
 
     @property
+    def analysis_type(self):
+        return self.automated_run.spec.analysis_type
+
+    @property
     def truncated(self):
         """
         Property. True if run was truncated otherwise False
@@ -930,15 +935,6 @@ class MeasurementPyScript(ValvePyScript):
         config.read(p)
 
         return config
-
-    def _automated_run_call(self, func, *args, **kw):
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
 
     def _set_spectrometer_parameter(self, *args, **kw):
         self._automated_run_call("py_set_spectrometer_parameter", *args, **kw)
