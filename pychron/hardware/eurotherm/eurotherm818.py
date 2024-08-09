@@ -25,11 +25,11 @@ from pychron.hardware.furnace.base_furnace_controller import BaseFurnaceControll
 class Eurotherm800Series(CoreDevice):
     gid = Int(0)
     uid = Int(1)
-    protocol = Str('bisynch')
+    protocol = Str("bisynch")
 
     def enquiry(self, mnenonic, verbose=False):
         address = self.unit_address
-        transmission = f'{EOT}{address}{mnenonic}{ENQ}'
+        transmission = f"{EOT}{address}{mnenonic}{ENQ}"
         resp = self.ask(transmission, verbose=verbose)
         if resp:
             stx = resp[0]
@@ -41,12 +41,13 @@ class Eurotherm800Series(CoreDevice):
     def change(self, mnenonic, value, verbose=True):
         address = self.unit_address
 
-        packet = f'{mnenonic}{value}{ETX}'
+        packet = f"{mnenonic}{value}{ETX}"
         bcc = calculate_bcc(packet)
-        transmission = f'{EOT}{address}{STX}{packet}{bcc}'
+        transmission = f"{EOT}{address}{STX}{packet}{bcc}"
 
-        resp = self.ask(transmission, verbose=verbose,
-                        read_terminator=ACK, terminator_position=0)
+        resp = self.ask(
+            transmission, verbose=verbose, read_terminator=ACK, terminator_position=0
+        )
         # if resp:
         #     stx = resp[0]
         #     rmnenonic = resp[1:3]
@@ -56,7 +57,7 @@ class Eurotherm800Series(CoreDevice):
 
     @property
     def unit_address(self):
-        return f'{self.gid}{self.gid}{self.uid}{self.uid}'
+        return f"{self.gid}{self.gid}{self.uid}{self.uid}"
 
     def load_additional_args(self, config):
         """ """
@@ -85,7 +86,7 @@ class Eurotherm800Series(CoreDevice):
     def open(self, *args, **kw):
         ret = super().open(*args, **kw)
         if ret:
-            self.communicator.handle.write_termination = ''
+            self.communicator.handle.write_termination = ""
         return ret
 
 
@@ -96,19 +97,19 @@ class Eurotherm818(Eurotherm800Series, BaseFurnaceController):
     """
 
     def read_setpoint(self, **kw):
-        return self.enquiry('SL', **kw)
+        return self.enquiry("SL", **kw)
 
     def test_connection(self):
         return self.read_setpoint(verbose=True) is not None, None
 
     def set_process_setpoint_hook(self, v, **kw):
-        self.change('SL', v, **kw)
+        self.change("SL", v, **kw)
 
     def get_process_value_hook(self, *args, **kw):
-        return self.enquiry('PV', **kw)
+        return self.enquiry("PV", **kw)
 
     def get_output_hook(self, *args, **kw):
-        return self.enquiry('OP', **kw)
+        return self.enquiry("OP", **kw)
 
     def set_pid(self, s):
         if PID_REGEX.match(s):
@@ -119,5 +120,6 @@ class Eurotherm818(Eurotherm800Series, BaseFurnaceController):
             return True
         else:
             self.warning('invalid pid string "{}"'.format(s))
+
 
 # ============= EOF =============================================

@@ -141,9 +141,12 @@ class LaserStageMap(BaseStageMap):
 
     @caller
     def load_correction_affine_file(self):
-        if (self.correction_affine_path and
-                os.path.isfile(self.correction_affine_path) and not self.corrected_affine or
-        self._corrected_zoom_level != self.zoom_level):
+        if (
+            self.correction_affine_path
+            and os.path.isfile(self.correction_affine_path)
+            and not self.corrected_affine
+            or self._corrected_zoom_level != self.zoom_level
+        ):
             self.debug("load correction affine file")
             p = self.correction_affine_path
             correction_table = yload(p)

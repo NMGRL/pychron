@@ -238,4 +238,5 @@ class BaseEurotherm(BaseFurnaceController):
         """ """
         return resp == ACK
 
+
 # ============= EOF =============================================

@@ -48,7 +48,7 @@ class UC2000LaserManager(LaserManager):
     def _power_setpoint_changed(self):
         self.extract(self.power_setpoint)
 
-    def extract(self, power, units='percent', **kw):
+    def extract(self, power, units="percent", **kw):
         self.set_laser_power(power, units=units)
 
     def _laser_controller_default(self):

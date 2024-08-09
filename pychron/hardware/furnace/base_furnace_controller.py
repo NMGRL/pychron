@@ -61,7 +61,9 @@ class BaseFurnaceController(HasTraits):
 
     def get_process_value(self, *args, **kw):
         try:
-            self.process_value = self.get_process_value_hook(verbose=kw.get('verbose', True))
+            self.process_value = self.get_process_value_hook(
+                verbose=kw.get("verbose", True)
+            )
         except TraitError:
             pass
 
@@ -86,4 +88,6 @@ class BaseFurnaceController(HasTraits):
 
         if self.setpoint_min <= v < self.setpoint_max:
             return v
+
+
 # ============= EOF =============================================

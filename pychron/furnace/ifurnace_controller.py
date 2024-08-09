@@ -48,4 +48,6 @@ class IFurnaceController(Interface):
     #
     # def read_output_percent(self, force=False, verbose=False):
     #     pass
+
+
 # ============= EOF =============================================

@@ -36,7 +36,6 @@ class UC2000(CoreDevice):
 
     control_mode = "manual_closed"
 
-
     def _load_communicator(self, config, comtype, *args, **kw):
         self.communicator = SerialCommunicator(name="uc2000")
         self.communicator.load(config, self.config_path)
@@ -44,18 +43,24 @@ class UC2000(CoreDevice):
         return True
 
     def initialize(self, *args, **kw):
-        if self.control_mode == 'manual_closed':
+        if self.control_mode == "manual_closed":
             # enter into manual closed mode
-            self._ask('73')
+            self._ask("73")
         else:
             # enter into manual open mode
-            self._ask('70')
-
+            self._ask("70")
 
         return True
 
     def load_additional_args(self, config):
-        self.set_attribute(config, "control_mode", "General", "control_mode", optional=True, default='manual')
+        self.set_attribute(
+            config,
+            "control_mode",
+            "General",
+            "control_mode",
+            optional=True,
+            default="manual",
+        )
 
         return True
 
@@ -126,7 +131,7 @@ class UC2000(CoreDevice):
         return resp
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     uc = UC2000()
     uc.set_laser_power(63)
 # ============= EOF =============================================

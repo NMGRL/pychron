@@ -40,6 +40,7 @@ class Eurotherm(BaseEurotherm, CoreDevice):
     website2: http://eurotherm.com/document-library/?ignoreeveryonegroup=0&assetdetesctl1390419=1833&search=2000+series&searchcontent=0
 
     """
+
     # def get_setpoint(self, *args, **kw):
     #     return self.process_setpoint
 

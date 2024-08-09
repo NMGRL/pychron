@@ -92,7 +92,7 @@ class BaseFurnaceManager(StreamGraphManager):
         ret, err = False, ""
         if self.controller:
             ret, err = self.controller.test_connection()
-        self.debug(f'testing result {ret} {err}')
+        self.debug(f"testing result {ret} {err}")
         return ret, err
 
     def test_connection(self):
@@ -142,7 +142,9 @@ class BaseFurnaceManager(StreamGraphManager):
     def set_pid_parameters(self, v):
         p, exists = pid_parameters_path()
         if not exists:
-            self.unique_warning(f"No PID parameters file at {p}. Cannot set PID parameters")
+            self.unique_warning(
+                f"No PID parameters file at {p}. Cannot set PID parameters"
+            )
 
         self.debug("setting pid parameters for {}".format(v))
         from pychron.hardware.eurotherm.base import (
@@ -158,7 +160,7 @@ class BaseFurnaceManager(StreamGraphManager):
             self._pid_str = param_str
             self.controller.set_pid(param_str)
 
-    @on_trait_change('setpoint')
+    @on_trait_change("setpoint")
     def set_setpoint(self, v):
         self.debug("set setpoint={}".format(v))
         self.set_pid_parameters(v)
