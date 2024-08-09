@@ -17,8 +17,12 @@ from pychron.hardware.core.communicators.serial_communicator import SerialCommun
 from pychron.hardware.core.core_device import CoreDevice
 
 STX = "5B"
-ACK = "AA"
-NAK = "3F"
+ACK = b"\xAA"
+NAK = b"\x3F"
+
+
+def is_ack(resp):
+    return resp == ACK
 
 
 class UC2000(CoreDevice):
@@ -30,6 +34,9 @@ class UC2000(CoreDevice):
 
     """
 
+    control_mode = "manual_closed"
+
+
     def _load_communicator(self, config, comtype, *args, **kw):
         self.communicator = SerialCommunicator(name="uc2000")
         self.communicator.load(config, self.config_path)
@@ -37,9 +44,19 @@ class UC2000(CoreDevice):
         return True
 
     def initialize(self, *args, **kw):
+        if self.control_mode == 'manual_closed':
+            # enter into manual closed mode
+            self._ask('73')
+        else:
+            # enter into manual open mode
+            self._ask('70')
+
+
         return True
 
     def load_additional_args(self, config):
+        self.set_attribute(config, "control_mode", "General", "control_mode", optional=True, default='manual')
+
         return True
 
     def enable(self, *args, **kw):
@@ -52,16 +69,20 @@ class UC2000(CoreDevice):
         """ """
         if 0 <= percentage <= 100:
             cmd = "7F"
-            databyte = f"{percentage * 2:x}"
-            checksum = self._calculate_checksum(cmd, databyte)
-            resp = self._ask(f"{cmd}{databyte}{checksum}")
+            data = int(percentage * 2)
+            databyte = f"{data:02x}"
+            # checksum = self._calculate_checksum(cmd, databyte)
+            # resp = self._ask(f"{cmd}{databyte}{checksum}")
+
+            resp = self._ask(cmd, databyte)
+            self.debug(f"set laser power {percentage} {resp}")
 
     def get_status(self):
         status = self.communicator.ask("7E")
         self.debug(f"status {status}")
 
     # private
-    def _ask(self, cmd, databyte=None, default=None):
+    def _ask(self, cmd, databyte=None, default=None, nbytes=1):
         chksum = self._calculate_checksum(cmd, databyte)
         cmd = f"{STX}{cmd}"
 
@@ -69,7 +90,9 @@ class UC2000(CoreDevice):
             cmd = f"{cmd}{databyte}"
 
         cmd = f"{cmd}{chksum}"
-        resp = self.communicator.ask(cmd, verbose=True)
+        self.debug(f"ask {cmd}")
+
+        resp = self.communicator.ask(cmd, verbose=True, is_hex=True, nbytes=nbytes)
         if resp != ACK:
             self.warning(
                 f"response was not an ACK. resp={resp}. returning default={default}"
@@ -84,15 +107,26 @@ class UC2000(CoreDevice):
             d += int(value, 16)
         nc = d & 255
         ones_compliment = nc ^ 255
-        return f"{ones_compliment:x}"
+        return f"{ones_compliment:02x}"
 
     def _enable_laser(self, **kw):
+        # self.set_laser_power(0)
+
         cmd = "75"
-        return self._ask(cmd)
+        resp = is_ack(self._ask(cmd))
+        # self.set_laser_power(0)
+        return resp
 
     def _disable_laser(self):
+
         cmd = "76"
-        return self._ask(cmd)
+        resp = is_ack(self._ask(cmd))
+        self.set_laser_power(0)
+
+        return resp
 
 
+if __name__ == '__main__':
+    uc = UC2000()
+    uc.set_laser_power(63)
 # ============= EOF =============================================

@@ -42,6 +42,13 @@ class UC2000CO2StagePane(StageControlPane):
 class UC2000CO2ControlPane(ControlPane):
     id = "pychron.uc2000.co2.control"
 
+    def _get_request_group(self):
+        request_grp = super()._get_request_group()
+        control_grp = HGroup(Item('power_setpoint', label='Power Setpoint'))
+        v = VGroup(control_grp,
+                   request_grp)
+        return v
+
 
 class UC2000CO2AxesPane(AxesPane):
     id = "pychron.uc2000.co2.axes"

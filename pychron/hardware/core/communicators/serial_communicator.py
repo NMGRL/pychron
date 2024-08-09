@@ -514,14 +514,19 @@ class SerialCommunicator(Communicator):
                 r += self.handle.read(inw)
                 if r and r.strip():
                     for ti in terminator:
+                        if isinstance(ti, str):
+                            ti = ti.encode()
+
                         if terminator_position:
-                            terminated = r[terminator_position] == ti
+                            if not len(r) >= abs(terminator_position):
+                                continue
+                            terminated = chr(r[terminator_position]).encode() == ti
                         else:
-                            if isinstance(ti, str):
-                                ti = ti.encode()
+
                             terminated = r.endswith(ti)
                         if terminated:
                             break
+
             except BaseException as e:
                 self.warning(e)
             return r, terminated

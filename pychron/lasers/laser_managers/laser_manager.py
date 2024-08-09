@@ -172,7 +172,8 @@ class LaserManager(BaseLaserManager):
 
         self._requested_power = power
         self._calibrated_power = p
-        self._set_laser_power_hook(p, verbose=verbose)
+        self.laser_controller.set_laser_power(p, verbose=verbose)
+        self.set_laser_power_hook(p, verbose=verbose)
         return True
 
     def close(self, ok):
@@ -334,12 +335,8 @@ class LaserManager(BaseLaserManager):
                 resp = True
             return resp
 
-    # def _set_laser_power_hook(self, *args, **kw):
-    #    pass
-
     def set_laser_power_hook(self, *args, **kw):
-        self._set_laser_power_hook(*args, **kw)
-
+        pass
     # ===============================================================================
     # factories
     # ===============================================================================
