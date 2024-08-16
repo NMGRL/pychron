@@ -506,7 +506,7 @@ class PyScript(Loggable):
             parent_script=self,
             # syntax_checked=self.syntax_checked,
             _ctx=self._ctx,
-            **kw
+            **kw,
         )
 
         if calc_time:

@@ -185,7 +185,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # use_project_based_repository_identifier = Bool(True)
     # use_load_based_repository_identifier = Bool(False)
 
-    repository_identifier_model = Enum(('Project', ('None', 'Project', 'Load')))
+    repository_identifier_model = Enum(("Project", ("None", "Project", "Load")))
     repository_identifier = Str
     repository_identifiers = Property(
         depends_on="repository_identifier_dirty, db_refresh_needed"
@@ -1123,7 +1123,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.irrad_hole = d["irradiation_position"]
                 self._no_clear_labnumber = False
 
-            if self.repository_identifier_model in ['Load', 'Project']:
+            if self.repository_identifier_model in ["Load", "Project"]:
                 self.repository_identifier = d["repository_identifier"]
 
             # if self.use_project_based_repository_identifier:
@@ -1183,13 +1183,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 #     self.repository_identifier = '{}{}'.format(ipp, irrad)
                 if project_name != "REFERENCES":
                     repo = None
-                    if self.repository_identifier_model == 'Project':
+                    if self.repository_identifier_model == "Project":
                         if ipp and project_name.startswith(ipp):
                             repo = project_name
                         else:
                             repo = camel_case(project_name)
 
-                    elif self.repository_identifier_model == 'Load':
+                    elif self.repository_identifier_model == "Load":
                         repo = self.load_name
 
                     if repo:

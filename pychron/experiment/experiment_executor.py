@@ -2120,8 +2120,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             (self._check_for_email_plugin, "Check For Email Plugin"),
             (self._check_for_massspec_db, "Check For Mass Spec Plugin"),
             (self._check_first_aliquot, "Setting Aliquot"),
-            (self._check_dated_repos if self.use_dvc_persistence else None, "Setup Dated Repositories"),
-            (self._check_repository_identifiers if self.use_dvc_persistence else None, "Check Repositories"),
+            (
+                self._check_dated_repos if self.use_dvc_persistence else None,
+                "Setup Dated Repositories",
+            ),
+            (
+                (
+                    self._check_repository_identifiers
+                    if self.use_dvc_persistence
+                    else None
+                ),
+                "Check Repositories",
+            ),
             (self._check_managers, "Check Managers"),
             (self._check_dashboard, "Check  Dashboard"),
             (self._check_memory, "Check Memory"),
@@ -2301,7 +2311,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             repos = {ai.repository_identifier for ai in ei.cleaned_automated_runs}
             for ri in repos:
                 self.datahub.mainstore
-
 
     def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db

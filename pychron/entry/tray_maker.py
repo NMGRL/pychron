@@ -32,7 +32,7 @@ class Position(HasTraits):
     radius = Float(0.1)
 
     def totuple(self):
-        return self.x, self.y, self.radius*2, str(self.id)
+        return self.x, self.y, self.radius * 2, str(self.id)
 
     def dump(self, inches=False):
         x, y = self.x, self.y
@@ -79,15 +79,14 @@ class TrayMaker(Loggable):
         #     (5, -2),
         # ]
 
-
         rows = [
-            (3,-1),
-            (5,-2),
-            (7,-3),
-            (7,-3),
-            (7,-3),
-            (5,-2),
-            (3,-1),
+            (3, -1),
+            (5, -2),
+            (7, -3),
+            (7, -3),
+            (7, -3),
+            (5, -2),
+            (3, -1),
         ]
 
         space = 6.75
