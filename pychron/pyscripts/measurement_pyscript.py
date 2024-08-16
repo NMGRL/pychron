@@ -86,7 +86,7 @@ class MeasurementPyScript(AutomatedRunPyScript):
         self._reset()
 
     def get_command_register(self):
-        cs = super(MeasurementPyScript, self).get_command_register()
+        cs = super(self).get_command_register()
         return cs + list(command_register.commands.items())
 
     def truncate(self, style=None):

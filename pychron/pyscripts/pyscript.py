@@ -326,11 +326,15 @@ class PyScript(Loggable):
     def get_context(self):
         ctx = dict()
         for k in self.get_commands():
-            if isinstance(k, tuple):
-                ka, kb = k
-                name, func = ka, getattr(self, kb)
-            else:
-                name, func = k, getattr(self, k)
+            try:
+                if isinstance(k, tuple):
+                    ka, kb = k
+                    name, func = ka, getattr(self, kb)
+                else:
+                    name, func = k, getattr(self, k)
+            except AttributeError:
+                self.debug(f'{self} has no attribute "{k}"')
+                continue
 
             ctx[name] = func
 
@@ -981,9 +985,10 @@ class PyScript(Loggable):
 
     def __getattr__(self, item):
         ctx = self._get_interpolation_context()
+
         v = ctx.get(item, None)
         if v is None:
-            raise AttributeError
+            raise AttributeError('Attribute "{}" not found'.format(item))
 
         return v
 

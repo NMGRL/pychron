@@ -17,14 +17,20 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
-from pychron.pyscripts.decorators import verbose_skip
-from pychron.pyscripts.measurement_pyscript import MeasurementPyScript, command_register
+from pychron.pyscripts.decorators import verbose_skip, makeRegistry
+from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from traits.api import Dict
 
 ESTIMATED_DURATION_FF = 1.0
 
+command_register = makeRegistry()
+
 
 class ThermoMeasurementPyScript(MeasurementPyScript):
+    def get_command_register(self):
+        cs = super(self).get_command_register()
+        return cs + list(command_register.commands.items())
+
     @verbose_skip
     @command_register
     def set_deflection(self, detname, v=""):

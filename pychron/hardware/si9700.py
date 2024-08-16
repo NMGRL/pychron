@@ -55,6 +55,7 @@ class SI9700Controller(BaseCryoController):
         if isinstance(ch, int):
             ch = "AB"[ch - 1]
 
+        ch = ch.upper()
         resp = self.ask(f"T{ch}?")
         if resp:
             cmd, value = resp.split(" ")
