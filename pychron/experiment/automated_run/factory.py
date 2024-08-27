@@ -182,7 +182,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     display_labnumbers = Property(depends_on="project, selected_level, _identifiers")
     _identifiers = List
 
-    use_project_based_repository_identifier = Bool(True)
+    # use_project_based_repository_identifier = Bool(True)
+    # use_load_based_repository_identifier = Bool(False)
+
+    repository_identifier_model = Enum(("Project", ("None", "Project", "Load")))
     repository_identifier = Str
     repository_identifiers = Property(
         depends_on="repository_identifier_dirty, db_refresh_needed"
@@ -339,6 +342,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     extract_device = Str
     username = Str
     laboratory = Str
+    load_name = Str
 
     persistence_name = "run_factory"
     pattributes = (
@@ -363,7 +367,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         TEMPLATE,
         "use_simple_truncation",
         "conditionals_path",
-        "use_project_based_repository_identifier",
+        "repository_identifier_model",
+        # "use_project_based_repository_identifier",
+        # "use_load_based_repository_identifier",
         "delay_after",
         DISABLE_BETWEEN_POSITIONS,
     )
@@ -1117,16 +1123,21 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.irrad_hole = d["irradiation_position"]
                 self._no_clear_labnumber = False
 
-            if self.use_project_based_repository_identifier:
-                ipp = self.irradiation_project_prefix
-                project_name = d["project"]
-                if ipp and project_name.startswith(ipp):
-                    repo = project_name
-                    if repo == "REFERENCES":
-                        repo = ""
-                else:
-                    repo = camel_case(project_name)
-                self.repository_identifier = repo
+            if self.repository_identifier_model in ["Load", "Project"]:
+                self.repository_identifier = d["repository_identifier"]
+
+            # if self.use_project_based_repository_identifier:
+            #     ipp = self.irradiation_project_prefix
+            #     project_name = d["project"]
+            #     if ipp and project_name.startswith(ipp):
+            #         repo = project_name
+            #         if repo == "REFERENCES":
+            #             repo = ""
+            #     else:
+            #         repo = camel_case(project_name)
+            #     self.repository_identifier = repo
+            # elif self.use_load_based_repository_identifier:
+            #     self.repository_identifier = d['load_name']
 
             return True
         else:
@@ -1171,12 +1182,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 #     irrad = ip.level.irradiation.name
                 #     self.repository_identifier = '{}{}'.format(ipp, irrad)
                 if project_name != "REFERENCES":
-                    if self.use_project_based_repository_identifier:
+                    repo = None
+                    if self.repository_identifier_model == "Project":
                         if ipp and project_name.startswith(ipp):
                             repo = project_name
                         else:
                             repo = camel_case(project_name)
 
+                    elif self.repository_identifier_model == "Load":
+                        repo = self.load_name
+
+                    if repo:
                         self.debug("unprepped repo={}".format(repo))
                         repo = prep_repo_name(repo)
                         self.debug("setting repository to {}".format(repo))
@@ -1199,9 +1215,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                         "Failed to add {}."
                                         "\nResolve issue before proceeding!!".format(m)
                                     )
+                                    return
 
                 d["repository_identifier"] = self.repository_identifier
-
+                d["load_name"] = self.load_name
                 if self.mode != SIMPLE:
                     self._make_irrad_level(ip)
                     d["irradiation"] = self.selected_irradiation

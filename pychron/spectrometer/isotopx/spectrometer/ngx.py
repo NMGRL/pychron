@@ -292,9 +292,16 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             self.debug("keys: {}".format(keys))
             self.debug("signals: {}".format(signals))
 
-        self.microcontroller.lock.release()
-        if trigger_release:
+        try:
             self.microcontroller.lock.release()
+        except RuntimeError as e:
+            self.debug(f'Cannot release lock. "RuntimeError" {e}')
+
+        if trigger_release:
+            try:
+                self.microcontroller.lock.release()
+            except RuntimeError as e:
+                self.debug(f'Trigger Release. Cannot release lock. "RuntimeError" {e}')
 
         return keys, signals, collection_time, inc
 

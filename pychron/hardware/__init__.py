@@ -87,6 +87,7 @@ HW_PACKAGE_MAP = {
     "IGC100GaugeController": gauge_pkg("igc100_gauge_controller"),
     "SI9700Controller": hardware_pkg("si9700"),
     "KinesisMotionController": hardware_pkg("kinesis.kinesis_controller"),
+    "Eurotherm818": hardware_pkg("eurotherm.eurotherm818"),
 }
 
 

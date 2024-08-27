@@ -41,8 +41,8 @@ class Eurotherm(BaseEurotherm, CoreDevice):
 
     """
 
-    def get_setpoint(self, *args, **kw):
-        return self.process_setpoint
+    # def get_setpoint(self, *args, **kw):
+    #     return self.process_setpoint
 
 
 # ============= EOF ====================================

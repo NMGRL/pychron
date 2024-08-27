@@ -345,9 +345,14 @@ class ExperimentFactoryPane(TraitsDockPane):
                     run_factory_name("clear_repository_identifier_button"), "clear"
                 ),
                 UItem(
-                    run_factory_name("use_project_based_repository_identifier"),
-                    tooltip="Use repository identifier based on project name",
+                    run_factory_name("repository_identifier_model"),
+                    tooltip='None: You must specify repository\nLoad: repository based on "load" name\nProject: '
+                    'repository based on "project" name',
                 ),
+                # UItem(
+                #     run_factory_name("use_project_based_repository_identifier"),
+                #     tooltip="Use repository identifier based on project name",
+                # )
             ),
             HGroup(
                 run_factory_item(

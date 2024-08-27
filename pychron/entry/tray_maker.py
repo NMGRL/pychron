@@ -32,7 +32,7 @@ class Position(HasTraits):
     radius = Float(0.1)
 
     def totuple(self):
-        return self.x, self.y, self.radius, str(self.id)
+        return self.x, self.y, self.radius * 2, str(self.id)
 
     def dump(self, inches=False):
         x, y = self.x, self.y
@@ -53,39 +53,50 @@ class TrayMaker(Loggable):
     save_button = Button
 
     def gen(self):
+        # rows = [
+        #     (5, -2),
+        #     (9, -4),
+        #     (13, -6),
+        #     (15, -7),
+        #     (17, -8),
+        #     (19, -9),
+        #     (19, -9),
+        #     (21, -10),
+        #     (21, -10),
+        #     (23, -11),
+        #     (23, -11),
+        #     (23, -11),
+        #     (23, -11),
+        #     (23, -11),
+        #     (21, -10),
+        #     (21, -10),
+        #     (19, -9),
+        #     (19, -9),
+        #     (17, -8),
+        #     (15, -7),
+        #     (13, -6),
+        #     (9, -4),
+        #     (5, -2),
+        # ]
+
         rows = [
+            (3, -1),
             (5, -2),
-            (9, -4),
-            (13, -6),
-            (15, -7),
-            (17, -8),
-            (19, -9),
-            (19, -9),
-            (21, -10),
-            (21, -10),
-            (23, -11),
-            (23, -11),
-            (23, -11),
-            (23, -11),
-            (23, -11),
-            (21, -10),
-            (21, -10),
-            (19, -9),
-            (19, -9),
-            (17, -8),
-            (15, -7),
-            (13, -6),
-            (9, -4),
+            (7, -3),
+            (7, -3),
+            (7, -3),
             (5, -2),
+            (3, -1),
         ]
-        space = 2
-        oy = 24
+
+        space = 6.75
+        oy = 20.25
         ps = []
         for ri, (rc, ox) in enumerate(rows):
             y = oy - ri * space
             for ji in range(rc):
                 x = (ox * space) + ji * space
-                p = Position(x=x, y=y, radius=1)
+                p = Position(x=x, y=y, radius=2.25)
                 ps.append(p)
                 print(x, y)
 

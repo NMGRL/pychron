@@ -2120,8 +2120,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             (self._check_for_email_plugin, "Check For Email Plugin"),
             (self._check_for_massspec_db, "Check For Mass Spec Plugin"),
             (self._check_first_aliquot, "Setting Aliquot"),
-            (self._check_dated_repos, "Setup Dated Repositories"),
-            (self._check_repository_identifiers, "Check Repositories"),
+            (
+                self._check_dated_repos if self.use_dvc_persistence else None,
+                "Setup Dated Repositories",
+            ),
+            (
+                (
+                    self._check_repository_identifiers
+                    if self.use_dvc_persistence
+                    else None
+                ),
+                "Check Repositories",
+            ),
             (self._check_managers, "Check Managers"),
             (self._check_dashboard, "Check  Dashboard"),
             (self._check_memory, "Check Memory"),
@@ -2132,6 +2142,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         )
 
         for func, msg in funcs:
+            if not func:
+                continue
+
             self.debug("checking: {}".format(msg))
             if prog:
                 prog.change_message(msg)
@@ -2293,6 +2306,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     #             db.add_repository_association(expid, c)
     #         self._cached_runs = []
 
+    def _check_repository_health(self, inform):
+        for ei in self.experiment_queues:
+            repos = {ai.repository_identifier for ai in ei.cleaned_automated_runs}
+            for ri in repos:
+                self.datahub.mainstore
+
     def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db
 
@@ -2358,6 +2377,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if prog:
                     prog.change_message("Syncing {}".format(e))
                     if not self.datahub.mainstore.sync_repo(e, use_progress=False):
+                        return e
+                    if not self.datahub.mainstore.is_clean(e):
                         return e
 
     def _post_run_check(self, run):

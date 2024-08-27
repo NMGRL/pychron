@@ -232,6 +232,10 @@ class ExperimentFactory(DVCAble):
         elif name == "extract_device":
             self._set_extract_device(new)
 
+        elif name == "load_name":
+            # used by run factory to set repository_identifier by load_name
+            self.run_factory.load_name = new
+
         self._auto_save()
 
     def _auto_save(self):

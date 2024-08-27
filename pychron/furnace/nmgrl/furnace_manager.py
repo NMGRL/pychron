@@ -77,7 +77,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
     # settings_name = "furnace_settings"
     status_txt = Str
 
-    use_full_power = Bool(False)
     dump_sample_enabled = Property(
         depends_on="dump_funnel_safety_override, funnel_up_enabled"
     )
@@ -458,7 +457,7 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
             if output is not None:
                 self.output_percent_readback = output
 
-            self._update_scan_graph(response, output, d["setpoint"])
+            self._set_scan_graph_values(response, output, d["setpoint"])
 
     # def _update_scan_graph(self, response, output, setpoint):
     #     x = None
@@ -599,9 +598,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
         return self.funnel_up_enabled or self.dump_funnel_safety_override
 
     # handlers
-    def _setpoint_changed(self, new):
-        self.set_setpoint(new)
-
     def _stage_manager_default(self):
         sm = NMGRLFurnaceStageManager(stage_manager_id="nmgrl.furnace.stage_map")
         return sm

@@ -24,6 +24,7 @@ from operator import attrgetter
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 
+from pychron.core.codetools.inspection import caller
 from pychron.core.geometry.affine import transform_point, itransform_point
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.loggable import Loggable
@@ -193,6 +194,7 @@ class BaseStageMap(Loggable):
 
         return self.get_hole(key.strip())
 
+    @caller
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
         npos = itransform_point(pos, cpos, rot, scale)
