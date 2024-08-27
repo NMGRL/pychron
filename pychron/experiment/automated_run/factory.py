@@ -1153,10 +1153,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     # set sample and irrad info
                 else:
                     self.warning_dialog(
-                        "{} does not exist.\n\n"
-                        'Add using "Entry>>Labnumber"\n'
-                        'or "Utilities>>Import"\n'
-                        "or manually".format(labnumber)
+                        f"{labnumber} does not exist.\n\n"
+                        'Add using "Entry>>Package"\n'
+                        "or manually"
                     )
                     return
 
