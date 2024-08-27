@@ -286,6 +286,7 @@ class UseOfflineDatabase(Action):
         if ret == YES:
             restart()
 
+
 class SeedDatabase(Action):
     name = "Seed Database"
 
@@ -294,4 +295,6 @@ class SeedDatabase(Action):
 
         app = event.task.window.application
         seed_database(dvc=app.get_service(DVC_PROTOCOL), application=app)
+
+
 # ============= EOF =============================================

@@ -565,7 +565,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     arv.trait_set(
                         user_defined_aliquot=aliquot,
-                        **st.make_dict(self.duration, self.cleanup)
+                        **st.make_dict(self.duration, self.cleanup),
                     )
                     new_runs.append((idx, arv))
                     i += 1
@@ -839,7 +839,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     arv.trait_set(
                         user_defined_aliquot=al + 1 + offset + c,
-                        **st.make_dict(self.duration, self.cleanup)
+                        **st.make_dict(self.duration, self.cleanup),
                     )
                     arvs.append(arv)
 

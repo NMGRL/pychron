@@ -18,7 +18,7 @@ from traits.api import Instance
 
 
 class SeedDatabase(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
 
     def seed(self):
         self.info("Seeding database")
@@ -30,14 +30,15 @@ class SeedDatabase(Loggable):
             self._seedirradiationspositions()
 
     def _seedirradiationspositions(self):
-        self.info('Seeding irradiations and positions')
+        self.info("Seeding irradiations and positions")
         dvc = self.dvc
         db = dvc.db
-        positions = (('NoIrradiation', 'A', '1', 'ba-01-N'),
-                     ('NoIrradiation', 'A', '2', 'a-01-N'),
-                     ('NoIrradiation', 'A', '3', 'bu-CC-N'),
-                     ('NoIrradiation', 'A', '4', 'dg'),
-                     )
+        positions = (
+            ("NoIrradiation", "A", "1", "ba-01-N"),
+            ("NoIrradiation", "A", "2", "a-01-N"),
+            ("NoIrradiation", "A", "3", "bu-CC-N"),
+            ("NoIrradiation", "A", "4", "dg"),
+        )
         n = len(positions)
         for i, (irradiation, level, hole, identifier) in enumerate(positions):
             dbpos = db.get_irradiation_position(irradiation, level, hole)
@@ -48,12 +49,7 @@ class SeedDatabase(Loggable):
             if not dbpos.identifier:
                 # add the flux file to the index only on the last iteration
                 dvc.meta_repo.update_flux(
-                    irradiation,
-                    level,
-                    hole,
-                    identifier,
-                    0,0,
-                    add = i==n-1
+                    irradiation, level, hole, identifier, 0, 0, add=i == n - 1
                 )
 
         # add to database
@@ -69,5 +65,6 @@ class SeedDatabase(Loggable):
         #
         # meta_repo.commit("Added level {} to {}".format(self.name, self.irradiation))
         # self.info('Seeding irradiations and positions complete')
+
 
 # ============= EOF =============================================
