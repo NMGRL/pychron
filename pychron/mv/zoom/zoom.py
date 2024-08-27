@@ -28,7 +28,6 @@ from skimage import feature
 # ============= standard library imports ========================
 from PIL import Image
 from numpy import array, linspace, polyval, polyfit
-import matplotlib.pyplot as plt
 
 
 # ============= local library imports  ==========================
@@ -169,6 +168,8 @@ def calculate_spacings():
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     zns, zas, px = calculate_spacings()
     # print zns
     # print zas

@@ -23,8 +23,8 @@ from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.qt import QtGui
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
-from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorAreaWidget
-from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
+from pyface.ui.qt.tasks.advanced_editor_area_pane import EditorAreaWidget
+from pyface.ui.qt.tasks.editor_area_pane import EditorAreaDropFilter
 
 # ============= standard library imports ========================
 import sys
@@ -153,35 +153,35 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
     #     self.control.add_editor_widget(editor_widget)
     #     self.editors.append(editor)
 
-    def create(self, parent):
-        """Create and set the toolkit-specific control that represents the
-        pane.
-        """
-        self.control = control = myEditorAreaWidget(self, parent)
-        self._filter = EditorAreaDropFilter(self)
-        self.control.installEventFilter(self._filter)
-
-        # Add shortcuts for scrolling through tabs.
-        if sys.platform == "darwin":
-            next_seq = "Ctrl+}"
-            prev_seq = "Ctrl+{"
-        else:
-            next_seq = "Ctrl+PgDown"
-            prev_seq = "Ctrl+PgUp"
-        shortcut = QtGui.QShortcut(QtGui.QKeySequence(next_seq), self.control)
-        shortcut.activated.connect(self._next_tab)
-        shortcut = QtGui.QShortcut(QtGui.QKeySequence(prev_seq), self.control)
-        shortcut.activated.connect(self._previous_tab)
-
-        # Add shortcuts for switching to a specific tab.
-        mod = "Ctrl+" if sys.platform == "darwin" else "Alt+"
-        mapper = QtCore.QSignalMapper(self.control)
-        mapper.mapped.connect(self._activate_tab)
-        for i in range(1, 10):
-            sequence = QtGui.QKeySequence(mod + str(i))
-            shortcut = QtGui.QShortcut(sequence, self.control)
-            shortcut.activated.connect(mapper.map)
-            mapper.setMapping(shortcut, i - 1)
+    # def create(self, parent):
+    #     """Create and set the toolkit-specific control that represents the
+    #     pane.
+    #     """
+    #     self.control = control = myEditorAreaWidget(self, parent)
+    #     self._filter = EditorAreaDropFilter(self)
+    #     self.control.installEventFilter(self._filter)
+    #
+    #     # Add shortcuts for scrolling through tabs.
+    #     if sys.platform == "darwin":
+    #         next_seq = "Ctrl+}"
+    #         prev_seq = "Ctrl+{"
+    #     else:
+    #         next_seq = "Ctrl+PgDown"
+    #         prev_seq = "Ctrl+PgUp"
+    #     shortcut = QtGui.QShortcut(QtGui.QKeySequence(next_seq), self.control)
+    #     shortcut.activated.connect(self._next_tab)
+    #     shortcut = QtGui.QShortcut(QtGui.QKeySequence(prev_seq), self.control)
+    #     shortcut.activated.connect(self._previous_tab)
+    #
+    #     # Add shortcuts for switching to a specific tab.
+    #     mod = "Ctrl+" if sys.platform == "darwin" else "Alt+"
+    #     mapper = QtCore.QSignalMapper(self.control)
+    #     mapper.mapped.connect(self._activate_tab)
+    #     for i in range(1, 10):
+    #         sequence = QtGui.QKeySequence(mod + str(i))
+    #         shortcut = QtGui.QShortcut(sequence, self.control)
+    #         shortcut.activated.connect(mapper.map)
+    #         mapper.setMapping(shortcut, i - 1)
 
     def remove_editor(self, editor):
         """Removes an editor from the pane."""

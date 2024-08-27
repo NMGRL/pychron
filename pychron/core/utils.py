@@ -27,9 +27,13 @@ def autodoc_helper(name, bases):
 def get_display_size():
     size = namedtuple("Size", "width height")
     from pyface.qt.QtGui import QApplication
+    try:
+        desktop = QApplication.desktop()
+        rect = desktop.screenGeometry()
+    except AttributeError:
+        screen = QApplication.screens()[0]
+        rect = screen.size()
 
-    desktop = QApplication.desktop()
-    rect = desktop.screenGeometry()
     w, h = rect.width(), rect.height()
 
     return size(w, h)

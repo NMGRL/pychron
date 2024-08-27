@@ -21,7 +21,7 @@ from chaco.default_colormaps import color_map_dict, color_map_name_dict
 from pyface.qt.QtGui import QPainter, QColor, QFrame
 from traits.api import Float, Int, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from numpy import array
 
 

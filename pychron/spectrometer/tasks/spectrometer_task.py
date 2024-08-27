@@ -24,7 +24,7 @@ from threading import Thread
 
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
-from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
+from pyface.ui.qt.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
 
 # ============= local library imports  ==========================

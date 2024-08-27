@@ -106,9 +106,9 @@ class AutomatedRunSpec(HasTraits):
     """
 
     run_klass = "pychron.experiment.automated_run.automated_run.AutomatedRun"
-    spectrometer_manager = Instance(
-        "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
-    )
+    # spectrometer_manager = Instance(
+    #     "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+    # )
 
     result = Instance(AutomatedRunResult, ())
     state = Enum(
@@ -137,7 +137,7 @@ class AutomatedRunSpec(HasTraits):
     load_name = Str
     load_holder = Str
     queue_conditionals_name = Str
-    sensitivity_units = Str
+    sensitivity_units = Str("mol/fA")
     # ===========================================================================
     # run id
     # ===========================================================================
@@ -202,7 +202,6 @@ class AutomatedRunSpec(HasTraits):
     lab_temperature = 0
     lab_humidity = 0
     sensitivity = 0
-    sensitivity_units = "mol/fA"
 
     # ===========================================================================
     # info
@@ -249,13 +248,13 @@ class AutomatedRunSpec(HasTraits):
     def acquisition_software(self):
         from pychron.experiment import __version__ as eversion
         from pychron.dvc import __version__ as dversion
-        from pychron import __version__
+        from pychron.version import __version__
 
         return "Pychron{}(Exp{},DVC{})".format(__version__, eversion, dversion)
 
     @property
     def data_reduction_software(self):
-        from pychron import __version__
+        from pychron.version import __version__
         from pychron.dvc import __version__ as dversion
 
         return "Pychron{}(DVC{})".format(__version__, dversion)
@@ -468,7 +467,7 @@ class AutomatedRunSpec(HasTraits):
 
         run.spec = self
         run.runid = self.runid
-        run.spectrometer_manager = self.spectrometer_manager
+        # run.spectrometer_manager = self.spectrometer_manager
 
         return run
 

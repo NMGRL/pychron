@@ -101,7 +101,7 @@ class ValveNode(Node):
 
 
 class RootNode(Node):
-    state = True
+    state = "open"
 
 
 class GaugeNode(RootNode):

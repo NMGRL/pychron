@@ -30,8 +30,8 @@ from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.image.image import Image
 from .cv_wrapper import get_capture_device
-from .toupcam.camera_v2 import ToupCamCamera
-from .toupcam.toupcam import Toupcam
+# from .toupcam.camera_v2 import ToupCamCamera
+# from .toupcam.toupcam import Toupcam
 
 
 def convert_to_video(
@@ -171,6 +171,7 @@ class Video(Image):
                         self.cap = self._get_pylon_device(i)
                         # identifier is a url
                     elif identifier.startswith("toupcam"):
+                        from .toupcam.camera_v2 import ToupCamCamera
                         self.cap = ToupCamCamera()
                 else:
                     # ideally an identifier is passed in

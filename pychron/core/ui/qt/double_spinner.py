@@ -21,7 +21,7 @@ from traits.api import Float, Str
 # ============= standard library imports ========================
 from pyface.qt.QtGui import QDoubleSpinBox
 from PySide import QtCore
-from traitsui.qt4.range_editor import SimpleSpinEditor
+from traitsui.qt.range_editor import SimpleSpinEditor
 from traitsui.basic_editor_factory import BasicEditorFactory
 
 

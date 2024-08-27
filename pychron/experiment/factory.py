@@ -58,9 +58,10 @@ class ExperimentFactory(DVCAble):
     )
 
     labnumber = DelegatesTo("run_factory")
+    mass_spectrometer = DelegatesTo("run_factory")
+
     load_name = DelegatesTo("queue_factory")
     username = DelegatesTo("queue_factory")
-    mass_spectrometer = DelegatesTo("queue_factory")
     extract_device = DelegatesTo("queue_factory")
 
     selected_positions = List
@@ -96,7 +97,7 @@ class ExperimentFactory(DVCAble):
         qf = self.queue_factory
         for a in (
             "username",
-            "mass_spectrometer",
+            # "mass_spectrometer",
             "extract_device",
             "email",
             "use_email",
@@ -114,8 +115,8 @@ class ExperimentFactory(DVCAble):
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
 
-        self.debug("run factory set mass spec {}".format(self.mass_spectrometer))
-        self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
+        # self.debug("run factory set mass spec {}".format(self.mass_spectrometer))
+        # self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
     def set_selected_runs(self, runs):
         self.run_factory.set_selected_runs(runs)
@@ -225,9 +226,9 @@ class ExperimentFactory(DVCAble):
                 for a in self.queue.automated_runs:
                     a.repository_identifier = new
 
-        if name == "mass_spectrometer":
-            self.mass_spectrometer = new
-            self.run_factory.set_mass_spectrometer(new)
+        # if name == "mass_spectrometer":
+        #     self.mass_spectrometer = new
+        #     self.run_factory.set_mass_spectrometer(new)
 
         elif name == "extract_device":
             self._set_extract_device(new)
@@ -252,7 +253,7 @@ class ExperimentFactory(DVCAble):
         if self.queue:
             self.queue.set_extract_device(ed)
             self.queue.username = self.username
-            self.queue.mass_spectrometer = self.mass_spectrometer
+            # self.queue.mass_spectrometer = self.mass_spectrometer
             self.queue.patterns = patterns
 
     def _get_patterns(self, ed):
@@ -323,8 +324,8 @@ class ExperimentFactory(DVCAble):
             'default mass spec changed "{}"'.format(self.default_mass_spectrometer)
         )
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
-        self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
-        self.mass_spectrometer = self.default_mass_spectrometer
+        # self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
+        # self.mass_spectrometer = self.default_mass_spectrometer
 
     # ===============================================================================
     # property get/set
@@ -357,7 +358,7 @@ class ExperimentFactory(DVCAble):
             dvc=self.dvc,
             application=self.application,
             extract_device=self.extract_device,
-            mass_spectrometer=self.mass_spectrometer,
+            # mass_spectrometer=self.mass_spectrometer,
         )
 
         rf.on_trait_change(self._update_end_after, "end_after")
@@ -378,10 +379,17 @@ class ExperimentFactory(DVCAble):
     def _queue_factory_default(self):
         eq = ExperimentQueueFactory(dvc=self.dvc, application=self.application)
 
+#         eq.on_trait_change(
+#             self._update_queue,
+#             """mass_spectrometer,
+# extract_device, delay_+, tray, username, load_name, note,
+# email, use_email, use_group_email,
+# queue_conditionals_name, repository_identifier""",
+#         )
+
         eq.on_trait_change(
             self._update_queue,
-            """mass_spectrometer,
-extract_device, delay_+, tray, username, load_name, note,
+            """extract_device, delay_+, tray, username, load_name, note,
 email, use_email, use_group_email,
 queue_conditionals_name, repository_identifier""",
         )

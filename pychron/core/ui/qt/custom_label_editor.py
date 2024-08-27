@@ -26,7 +26,7 @@ from traits.api import (
     Bool,
 )
 from traitsui.api import View, UItem
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QLabel
 

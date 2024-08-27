@@ -26,7 +26,7 @@ from traits.trait_errors import TraitError
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 class _TextEditor(Editor):

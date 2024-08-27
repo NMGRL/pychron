@@ -24,7 +24,7 @@ from pyface.qt.QtGui import QGraphicsView
 from pyface.qt.QtGui import QVBoxLayout
 from pyface.qt.QtGui import QWidget
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 class _ReferenceMarkEditor(Editor):

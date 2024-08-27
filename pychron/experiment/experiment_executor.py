@@ -63,6 +63,7 @@ from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
 from pychron.experiment import events, PreExecuteCheckException
+from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.conditional.conditional import conditionals_from_file
@@ -175,7 +176,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     wait_group = Instance(WaitGroup, ())
     stats = Instance(StatsGroup, ())
     conditionals_view = Instance(ConditionalsView)
-    spectrometer_manager = Any
+    # spectrometer_manager = Any
     extraction_line_manager = Any
     ion_optics_manager = Any
 
@@ -287,15 +288,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         p2 = "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
         p3 = "pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager"
         if self.application:
-            if prog:
-                prog.change_message("Setting Spectrometer")
-            self.spectrometer_manager = self.application.get_service(p2)
-            if self.spectrometer_manager is None:
-                if not globalv.ignore_plugin_warnings:
-                    self.warning_dialog(
-                        "Spectrometer Plugin is required for Experiment"
-                    )
-                    return
+            # if prog:
+            #     prog.change_message("Setting Spectrometer")
+            #
+            # self.spectrometer_manager = self.application.get_service(p2)
+            #
+            # if self.spectrometer_manager is None:
+            #     if not globalv.ignore_plugin_warnings:
+            #         self.warning_dialog(
+            #             "Spectrometer Plugin is required for Experiment"
+            #         )
+            #         return
             self.ion_optics_manager = self.application.get_service(p3)
 
             if prog:
@@ -772,6 +775,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if run is None:
                     self.debug("failed to make run")
                     break
+
+                sm = self.application.get_service_by_name(
+                    "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager",
+                    spec.mass_spectrometer,
+                )
+                run.spectrometer_manager = sm
 
                 self.wait_group.active_control.page_name = run.runid
                 run.is_first = is_first_flag
@@ -1333,7 +1342,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         return ret
 
-    def _extraction(self, ai):
+    def _extraction(self, ai: AutomatedRun):
         """
         ai: AutomatedRun
         extraction step
@@ -1374,7 +1383,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.send_config_before_run:
             self.info("Sending spectrometer configuration")
-            man = self.spectrometer_manager
+            man = ai.spectrometer_manager
             man.send_configuration()
             if self.verify_spectrometer_configuration:
                 if not man.verify_configuration():
@@ -1464,7 +1473,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             "datahub",
             "console_display",
             "experiment_queue",
-            "spectrometer_manager",
+            # "spectrometer_manager",
             "extraction_line_manager",
             "ion_optics_manager",
             "use_db_persistence",
@@ -1952,26 +1961,42 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     ed_connectable.set_connection_parameters(man)
                     ed_connectable.connected = True
 
-        needs_spec_man = any(
-            [
-                ai.measurement_script
-                for ai in exp.cleaned_automated_runs
-                if ai.state == "not run"
-            ]
-        )
+        ms = [ai.mass_spectrometer for ai in exp.cleaned_automated_runs
+              if ai.state=="not run" and ai.measurement_script]
 
-        if needs_spec_man:
-            s_connectable = Connectable(
-                name="Spectrometer", manager=self.spectrometer_manager
-            )
-            self.connectables.append(s_connectable)
-            if self.spectrometer_manager is None:
-                nonfound.append("spectrometer")
-            else:
-                if not self.spectrometer_manager.test_connection():
-                    nonfound.append("spectrometer")
+        # needs_spec_man = any(
+        #     [
+        #         ai.measurement_script
+        #         for ai in exp.cleaned_automated_runs
+        #         if ai.state == "not run"
+        #     ]
+        # )
+
+        # if needs_spec_man:
+
+        if any(ms):
+            sp = "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+            for mi in ms:
+                sm = self.application.get_service(sp, query=f"name=='{mi}'")
+                name = f"Spectrometer({mi})"
+                s_connectable = Connectable(name=name, manager=sm)
+                self.connectables.append(s_connectable)
+
+                if sm is None:
+                    nonfound.append(name)
                 else:
-                    s_connectable.connected = True
+                    if not sm.test_connection():
+                        nonfound.append(name)
+                    else:
+                        s_connectable.connected = True
+
+                # if self.spectrometer_manager is None:
+                #     nonfound.append("spectrometer")
+                # else:
+                #     if not self.spectrometer_manager.test_connection():
+                #         nonfound.append("spectrometer")
+                #     else:
+                #         s_connectable.connected = True
 
         return nonfound
 
@@ -2173,7 +2198,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.heading("Pre Extraction Check")
 
             self.debug("Get a measurement from the spectrometer")
-            data = self.spectrometer_manager.spectrometer.get_intensities()
+
+            # data = self.spectrometer_manager.spectrometer.get_intensities()
+            data = run.spectrometer_manager.spectrometer.get_intensities()
+
             ks = ",".join(data[0])
             ss = ",".join(["{:0.5f}".format(d) for d in data[1]])
             self.debug(

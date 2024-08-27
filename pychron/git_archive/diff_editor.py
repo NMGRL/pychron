@@ -33,7 +33,7 @@ from pyface.qt.QtGui import (
 )
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 # ============= local library imports  ==========================
 from pychron.git_archive.diff_util import extract_line_numbers

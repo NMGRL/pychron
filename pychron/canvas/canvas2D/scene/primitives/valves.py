@@ -70,10 +70,10 @@ class Switch(Connectable, Circle):
             p.x, p.y = self.x, self.y
             p.render(gc)
 
-    def is_in(self, sx, sy):
-        x, y = self.get_xy()
-        r = self.map_dimension(self.radius)
-        return ((x + r - sx) ** 2 + (y + r / 2.0 - sy) ** 2) ** 0.5 < r
+    # def is_in(self, sx, sy):
+    #     x, y = self.get_xy()
+    #     r = self.map_dimension(self.radius)
+    #     return ((x + r - sx) ** 2 + (y + r / 2.0 - sy) ** 2) ** 0.5 < r
 
 
 class BaseValve(Connectable):

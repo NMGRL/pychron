@@ -26,8 +26,8 @@ from pyface.confirmation_dialog import confirm
 from pyface.message_dialog import warning
 from pyface.qt import QtGui, QtCore
 from traits.etsconfig.api import ETSConfig
-from traitsui.qt4.table_editor import TableDelegate
-from traitsui.qt4.ui_panel import heading_text
+from traitsui.qt.table_editor import TableDelegate
+from traitsui.qt.ui_panel import heading_text
 
 from pychron.environment.util import set_application_home
 
@@ -83,9 +83,9 @@ def monkey_patch_preferences():
     Preferences._set = setfunc
 
 
-from traitsui.qt4.ui_base import BasePanel
+from traitsui.qt.ui_base import BasePanel
 from traitsui.menu import UndoButton, RevertButton, HelpButton
-from traitsui.qt4.ui_panel import panel, _size_hint_wrapper
+from traitsui.qt.ui_panel import panel, _size_hint_wrapper
 from traitsui.undo import UndoHistory
 
 
@@ -216,7 +216,7 @@ class myPanel(BasePanel):
 
 
 def monkey_patch_panel():
-    from traitsui.qt4 import ui_panel
+    from traitsui.qt import ui_panel
     ui_panel._Panel = myPanel
 
 
@@ -301,13 +301,13 @@ def monkey_patch_checkbox_render():
             return style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
                                           QtCore.QSize(), None)
 
-    from traitsui.qt4.extra import checkbox_renderer
+    from traitsui.qt.extra import checkbox_renderer
 
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
 
 def monkey_patch_table_view():
-    from traitsui.qt4.table_editor import TableView
+    from traitsui.qt.table_editor import TableView
 
     def sizeHint(self):
         size_hint = QtGui.QTableView.sizeHint(self)
@@ -378,6 +378,25 @@ def monkey_patch_table_view():
     TableView.resizeColumnsToContents = resizeColumnsToContents
     TableView.sizeHint = sizeHint
 
+def monkey_patch_application_window():
+    # see
+    def _update_tool_bar_managers(obj, event):
+        if obj.control is not None:
+            # Remove the old toolbars.
+            for child in obj.control.children():
+                if isinstance(child, QtGui.QToolBar):
+                    obj.control.removeToolBar(child)
+                    child.deleteLater()
+
+            # Add the new toolbars.
+            if event.new is not None:
+                #self._create_status_bar(self.control)
+                obj._create_tool_bar(obj.control)
+
+    from pyface.application_window import ApplicationWindow
+    from traits.api import observe
+    ApplicationWindow._update_tool_bar_managers = observe("tool_bar_managers.items")(_update_tool_bar_managers)
+
 
 KLASS_MAP = {'pyexperiment': 'PyExperiment',
              'pyview': 'PyView',
@@ -398,6 +417,7 @@ def entry_point(appname, debug=False):
     monkey_patch_checkbox_render()
     monkey_patch_panel()
     monkey_patch_table_view()
+    monkey_patch_application_window()
 
     # set_stylesheet('darkorange.css')
     env = initialize_version(appname, debug)

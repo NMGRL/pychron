@@ -28,8 +28,8 @@ from pyface.qt.QtGui import (
 from traits.api import Str, Bool, Event, List, Enum
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.constants import OKColor, ErrorColor
-from traitsui.qt4.enum_editor import SimpleEditor
+from traitsui.qt.constants import OKColor, ErrorColor
+from traitsui.qt.enum_editor import SimpleEditor
 
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
@@ -84,7 +84,8 @@ class _ComboboxEditor(SimpleEditor):
         # QtCore.QObject.connect(control,
         #                        QtCore.SIGNAL('currentIndexChanged(QString)'),
         #                        self.update_object)
-        control.currentIndexChanged[str].connect(self.update_object)
+
+        control.currentIndexChanged[int].connect(self.update_object)
 
         if self.factory.evaluate is not None:
             control.setEditable(True)

@@ -22,7 +22,7 @@ from traits.api import Int
 # ============= local library imports  ==========================
 from pyface.qt.QtGui import QFrame, QPainter, QColor
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 class Square(QFrame):

@@ -21,7 +21,7 @@ from pyface.qt.QtCore import Qt, QThread
 from pyface.qt.QtGui import QColor, QWidget, QPainter, QPainterPath
 from traits.api import Str, Event
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from six.moves import range
 from six.moves import zip
 

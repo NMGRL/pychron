@@ -23,7 +23,7 @@ from traits.api import Any, Str, Event, Bool
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.helper import enum_values_changed
-from traitsui.qt4.enum_editor import SimpleEditor
+from traitsui.qt.enum_editor import SimpleEditor
 
 
 class mComboBox(QtGui.QComboBox):

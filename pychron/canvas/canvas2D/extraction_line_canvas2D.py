@@ -125,6 +125,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def update_switch_state(self, name, nstate, refresh=True, mode=None):
         """ """
+        print('asdfsdf', name, nstate, refresh, mode)
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.state = nstate

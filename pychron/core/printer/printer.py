@@ -16,11 +16,7 @@
 import math
 import tempfile
 
-from PyQt5.QtGui import QPainter
-from chaco.pdf_graphics_context import PdfPlotGraphicsContext
-from enable.graphics_context import ImageGraphicsContextEnable
 from kiva.qpainter import GraphicsContext
-from pyface.qt import QtGui, QtCore
 
 from pychron.core.ui.dialogs import PrinterDialog
 

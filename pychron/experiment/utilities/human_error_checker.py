@@ -38,7 +38,7 @@ class HumanErrorChecker(Loggable):
     queue_enabled = Bool
     runs_enabled = Bool
     non_fatal_enabled = Bool
-    spectrometer_manager = None
+    # spectrometer_manager = None
     modifier_check_enabled = Bool(True)
     repairable_enabled = Bool(True)
 
@@ -224,7 +224,9 @@ class HumanErrorChecker(Loggable):
 
     def _check_run(self, run, inform, test):
         if test:
-            run.spectrometer_manager = self.spectrometer_manager
+
+            # run.spectrometer_manager = self.spectrometer_manager
+
             run.test_scripts(
                 script_context=self._script_context, warned=self._warned, duration=False
             )

@@ -64,8 +64,8 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     users_dirty = Event
     db_refresh_needed = Event
 
-    mass_spectrometer = String("Spectrometer")
-    mass_spectrometers = Property(depends_on="db_refresh_needed")
+    # mass_spectrometer = String("Spectrometer")
+    # mass_spectrometers = Property(depends_on="db_refresh_needed")
 
     extract_device = String("Extract Device")
     extract_devices = Property(depends_on="db_refresh_needed")
@@ -87,11 +87,12 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
     select_existing_load_name_button = Button
 
-    ok_make = Property(depends_on="mass_spectrometer, username")
+    # ok_make = Property(depends_on="mass_spectrometer, username")
+    ok_make = Property(depends_on="username")
 
     persistence_name = "queue_factory"
     pattributes = (
-        "mass_spectrometer",
+        # "mass_spectrometer",
         "extract_device",
         "use_group_email",
         "delay_between_analyses",
@@ -142,9 +143,10 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
     @cached_property
     def _get_ok_make(self):
-        ms = self.mass_spectrometer.strip()
+        # ms = self.mass_spectrometer.strip()
+        # return bool(ms and ms not in ("Spectrometer", LINE_STR) and un)
         un = self.username.strip()
-        return bool(ms and ms not in ("Spectrometer", LINE_STR) and un)
+        return bool(un)
 
     @cached_property
     def _get_trays(self):
@@ -194,28 +196,28 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
             names = FUSIONS
         return [EXTRACT_DEVICE, LINE_STR] + names
 
-    @cached_property
-    def _get_mass_spectrometers(self):
-        """
-        look in db first
-        then look for a config file
-        then use hardcorded defaults
-        """
-        db = self.get_database()
-        cp = os.path.join(paths.setup_dir, "names")
-        if db:
-            if not db.connect():
-                self.warning("not connected to database")
-                return []
-            with db.session_ctx(use_parent_session=False):
-                ms = db.get_mass_spectrometer_names()
-                names = [mi.capitalize() for mi in ms]
-        elif os.path.isfile(cp):
-            names = self._get_names_from_config(cp, "Mass Spectrometers")
-        else:
-            names = ["Jan", "Obama"]
-
-        return ["Spectrometer", LINE_STR] + names
+    # @cached_property
+    # def _get_mass_spectrometers(self):
+    #     """
+    #     look in db first
+    #     then look for a config file
+    #     then use hardcorded defaults
+    #     """
+    #     db = self.get_database()
+    #     cp = os.path.join(paths.setup_dir, "names")
+    #     if db:
+    #         if not db.connect():
+    #             self.warning("not connected to database")
+    #             return []
+    #         with db.session_ctx(use_parent_session=False):
+    #             ms = db.get_mass_spectrometer_names()
+    #             names = [mi.capitalize() for mi in ms]
+    #     elif os.path.isfile(cp):
+    #         names = self._get_names_from_config(cp, "Mass Spectrometers")
+    #     else:
+    #         names = ["Jan", "Obama"]
+    #
+    #     return ["Spectrometer", LINE_STR] + names
 
     def _get_names_from_config(self, cp, section):
         config = ConfigParser()
@@ -249,8 +251,8 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
             self.users_dirty = True
             self.username = nuser
 
-    def _mass_spectrometer_changed(self, new):
-        self.debug('mass spectrometer ="{}"'.format(new))
+    # def _mass_spectrometer_changed(self, new):
+    #     self.debug('mass spectrometer ="{}"'.format(new))
 
     def _edit_emails_fired(self):
         task = self.application.open_task("pychron.users")

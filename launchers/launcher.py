@@ -15,12 +15,14 @@
 # ===============================================================================
 import os
 
-from helpers import entry_point
+# os.environ['QT_API'] = 'pyqt'
+# os.environ['ETS_TOOLKIT'] = 'qt4'
 
 appname = os.environ.get('PYCHRON_APPNAME', 'pycrunch')
 debug = os.environ.get('PYCHRON_DEBUG', False)
-
-
+from traits.etsconfig.etsconfig import ETSConfig
+ETSConfig.toolkit = 'qt'
+from helpers import entry_point
 entry_point(appname, debug=debug)
 
 # ============= EOF =============================================

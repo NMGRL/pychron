@@ -28,12 +28,12 @@ from pyface.qt.QtGui import (
     QTextFormat,
     QPen,
 )
-from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
+from pyface.ui.qt.code_editor.gutters import LineNumberWidget
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 class DiffGutter(LineNumberWidget):

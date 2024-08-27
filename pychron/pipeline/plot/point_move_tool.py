@@ -23,12 +23,12 @@ from traits.api import Enum, CArray
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-normal_pointer = Pointer("normal")
+normal_pointer = Pointer("arrow")
 hand_pointer = Pointer("hand")
 
 
 class PointMoveTool(DragTool):
-    event_state = Enum("normal", "dragging")
+    event_state = Enum("arrow", "dragging")
     _prev_pt = CArray
     _start_pt = None
 

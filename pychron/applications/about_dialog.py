@@ -22,7 +22,7 @@ from pyface.qt.QtGui import QPlainTextEdit
 
 # ============= enthought library imports =======================
 from pyface.about_dialog import AboutDialog
-from traits.api import List, Str
+from traits.api import List, Str, Event
 
 # ============= local library imports  ==========================
 

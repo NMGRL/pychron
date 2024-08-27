@@ -185,21 +185,29 @@ class ExperimentFactoryPane(TraitsDockPane):
 
         lgrp = VGroup(load_select, generate_queue)
 
+        # ms_ed_grp = BorderVGroup(
+        #     HGroup(
+        #         queue_factory_uitem(
+        #             "mass_spectrometer",
+        #             editor=myEnumEditor(name=queue_factory_name("mass_spectrometers")),
+        #         ),
+        #         queue_factory_uitem(
+        #             "extract_device",
+        #             editor=myEnumEditor(name=queue_factory_name("extract_devices")),
+        #         ),
+        #     ),
+        #     lgrp,
+        #     queue_factory_item("default_lighting"),
+        #     label="Spectrometer/Extract Device",
+        # )
         ms_ed_grp = BorderVGroup(
-            HGroup(
-                queue_factory_uitem(
-                    "mass_spectrometer",
-                    editor=myEnumEditor(name=queue_factory_name("mass_spectrometers")),
-                ),
-                queue_factory_uitem(
-                    "extract_device",
-                    editor=myEnumEditor(name=queue_factory_name("extract_devices")),
-                ),
+            queue_factory_uitem(
+                "extract_device",
+                editor=myEnumEditor(name=queue_factory_name("extract_devices")),
             ),
-            lgrp,
-            queue_factory_item("default_lighting"),
-            label="Spectrometer/Extract Device",
-        )
+        lgrp,
+        queue_factory_item("default_lighting"),
+        label="Extract Device")
 
         name = queue_factory_name("available_conditionals")
         queue_cond_grp = BorderHGroup(
@@ -299,6 +307,8 @@ class ExperimentFactoryPane(TraitsDockPane):
             ),
         )
         grp = BorderVGroup(
+            run_factory_item("mass_spectrometer", label="Spectrometer",
+                             editor=myEnumEditor(name=run_factory_name("mass_spectrometers"))),
             a,
             HGroup(
                 run_factory_uitem(

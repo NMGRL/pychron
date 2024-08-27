@@ -61,7 +61,7 @@ from pychron.pychron_constants import (
     EXTRACT_VALUE,
     POSITION,
     SAMPLE,
-    CRYO_TEMP,
+    CRYO_TEMP, MASS_SPECTROMETER,
 )
 
 
@@ -83,7 +83,6 @@ email: {email:}
 use_group_email: {use_group_email:}
 date: {date:}
 queue_conditionals_name: {queue_conditionals:}
-mass_spectrometer: {mass_spectrometer:}
 delay_before_analyses: {delay_before_analyses:}
 delay_between_analyses: {delay_between_analyses:}
 delay_after_blank: {delay_after_blank:}
@@ -367,7 +366,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param("note", meta, default)
         self._set_meta_param("tray", meta, default)
         self._set_meta_param("extract_device", meta, key_default("Extract Device"))
-        self._set_meta_param("mass_spectrometer", meta, key_default("Spectrometer"))
+        # self._set_meta_param("mass_spectrometer", meta, key_default("Spectrometer"))
         self._set_meta_param("delay_between_analyses", meta, default_int)
         self._set_meta_param("delay_before_analyses", meta, default_int)
         self._set_meta_param("delay_after_blank", meta, default_int)
@@ -454,6 +453,7 @@ class BaseExperimentQueue(RunBlock):
             "frequency_group",
             REPOSITORY_IDENTIFIER,
             DELAY_AFTER,
+            ('spec', MASS_SPECTROMETER),
         ]
 
         if self.extract_device == FUSIONS_UV:
@@ -464,9 +464,9 @@ class BaseExperimentQueue(RunBlock):
         return header, attrs
 
     def _meta_dumper(self, wfile):
-        ms = self.mass_spectrometer
-        if ms in ("Spectrometer", LINE_STR):
-            ms = ""
+        # ms = self.mass_spectrometer
+        # if ms in ("Spectrometer", LINE_STR):
+        #     ms = ""
 
         s = METASTR.format(
             username=self.username,
@@ -475,7 +475,7 @@ class BaseExperimentQueue(RunBlock):
             use_group_email=self.use_group_email,
             date=datetime.datetime.today(),
             queue_conditionals=self.queue_conditionals_name,
-            mass_spectrometer=ms,
+            # mass_spectrometer=ms,
             delay_before_analyses=self.delay_before_analyses,
             delay_between_analyses=self.delay_between_analyses,
             delay_after_blank=self.delay_after_blank,
@@ -502,18 +502,21 @@ class BaseExperimentQueue(RunBlock):
     def _delay_before_analyses_changed(self, new):
         self.stats.delay_before_analyses = new
 
-    def _mass_spectrometer_changed(self):
-        ms = self.mass_spectrometer
-        for ai in self.automated_runs:
-            ai.mass_spectrometer = ms
+    # def _mass_spectrometer_changed(self):
+        # ms = self.mass_spectrometer
+        # for ai in self.automated_runs:
+        #     ai.mass_spectrometer = ms
 
-    @on_trait_change("automated_runs[]")
-    def _handle_automated_runs(self):
-        sm = self.application.get_service(
-            "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
-        )
-        for a in self.automated_runs:
-            a.spectrometer_manager = sm
+    # @on_trait_change("automated_runs[]")
+    # def _handle_automated_runs(self):
+    #     sm = self.application.get_service(
+    #         "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager",
+    #         query=f"name=='{self.mass_spectrometer}'",
+    #     )
+    #
+    #
+    #     for a in self.automated_runs:
+    #         a.spectrometer_manager = sm
 
     # ===============================================================================
     # property get/set

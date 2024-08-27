@@ -40,7 +40,7 @@ from pychron.pychron_constants import (
     EXTRACT_UNITS,
     CRYO_TEMP,
     DISABLE_BETWEEN_POSITIONS,
-    AUTOCENTER,
+    AUTOCENTER, MASS_SPECTROMETER,
 )
 from pychron.regex import ALIQUOT_REGEX
 
@@ -112,6 +112,7 @@ class RunParser(Loggable):
             REPOSITORY_IDENTIFIER,
             ("conditionals", "truncate"),
             (EXTRACT_UNITS, "e_units"),
+            (MASS_SPECTROMETER, "spec"),
         ]:
             v = self._get_attr_value(header, args, attr)
             # print attr, v

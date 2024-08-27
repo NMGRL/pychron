@@ -114,7 +114,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
             if self.use_border_gaps and use_border_gaps:
                 # with gc:
                 for t, c in self.connections:
-                    cw4 = c.width / 2
+                    cw4 = c.width / 4
                     with gc:
                         gc.set_line_width(self.border_width + 1)
                         if isinstance(c, (BorderLine, Tee, Elbow, Cross)):

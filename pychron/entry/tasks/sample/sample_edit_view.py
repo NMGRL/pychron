@@ -15,7 +15,7 @@
 # ===============================================================================
 import re
 
-import pyproj as pyproj
+import pyproj
 from traits.api import (
     HasTraits,
     Instance,

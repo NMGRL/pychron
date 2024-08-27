@@ -369,8 +369,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
 
     def update_switch_state(self, name, state, *args, **kw):
-        # self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
-
+        self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
@@ -789,7 +788,9 @@ class ExtractionLineManager(Manager, Consoleable):
         self, name, action, description=None, address=None, mode="remote", **kw
     ):
         vm = self.switch_manager
-        if vm is not None:
+        if vm is None:
+            self.warning("Switch manager not available")
+        else:
             oname = name
             if address:
                 name = vm.get_name_by_address(address)
@@ -999,7 +1000,7 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
-        # self.debug('handle state {}'.format(new))
+        self.debug('handle state {}'.format(new))
         if isinstance(new, tuple):
             self.update_switch_state(*new)
         else:

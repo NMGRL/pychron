@@ -71,7 +71,10 @@ ICON_MAP = {
 class CatergoryAdapter(TabularAdapter):
     columns = [("Category", "name")]
     name_image = Property
-    font = "helvetica 14"
+    font = "14"
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        return "gray"
 
     def _get_name_image(self):
         return ICON_MAP.get(self.item.name)

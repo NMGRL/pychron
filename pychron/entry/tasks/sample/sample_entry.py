@@ -17,7 +17,7 @@
 import os
 import re
 
-import utm as utm
+import utm
 import yaml
 
 # ============= enthought library imports =======================

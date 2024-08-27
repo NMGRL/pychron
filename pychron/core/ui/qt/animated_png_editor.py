@@ -28,7 +28,7 @@ from pyface.qt.QtGui import QWidget, QImageReader, QPixmap
 
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from pychron.envisage.resources import icon
 
 

@@ -22,7 +22,7 @@ from queue import Empty
 from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
 from traits.api import Color, Str, Event, Int
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 # ============= local library imports  ==========================

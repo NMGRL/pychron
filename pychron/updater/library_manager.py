@@ -17,7 +17,7 @@ import os.path
 import subprocess
 import sys
 
-from PyQt5.QtWidgets import QApplication
+from pyface.qt.QtWidgets import QApplication
 from traits.api import HasTraits, Str, List, Int, Button
 from traitsui.api import View, UItem, Item, TabularEditor, HGroup
 from traitsui.tabular_adapter import TabularAdapter

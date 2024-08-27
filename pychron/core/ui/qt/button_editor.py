@@ -19,7 +19,7 @@ from pyface.qt.QtGui import QSizePolicy
 from traits.api import Property, Enum, Range, Str, Trait, Bool
 from traitsui.api import View
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.button_editor import CustomEditor
+from traitsui.qt.button_editor import CustomEditor
 from traitsui.ui_traits import AView, Image
 import six
 

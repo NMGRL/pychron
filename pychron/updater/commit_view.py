@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from traits.api import Int, Property, List
+from traits.api import Int, Property, List, Instance
 from traitsui.api import VGroup, UItem, HGroup, Group, Tabbed
 
 # ============= standard library imports ========================
@@ -73,7 +73,7 @@ class TagAdapter(CommitAdapter):
 
 
 class BaseCommitsView(Controller):
-    model = BaseGitHistory
+    model = Instance(BaseGitHistory)
 
     def traits_view(self):
         v = okcancel_view(

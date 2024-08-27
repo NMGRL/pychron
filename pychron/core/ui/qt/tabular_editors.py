@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-
-from pyface.qt.QtCore import QRegExp, Qt
+from pyface.qt.QtCore import QRegularExpression
+from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import (
     QHBoxLayout,
     QPushButton,
@@ -208,9 +208,9 @@ class _FilterTabularEditor(_TabularEditor):
     def on_text_change(self):
         ft = self.control.get_text()
         if self.use_fuzzy:
-            reg = QRegExp(".*".join(ft), Qt.CaseInsensitive)
+            reg = QRegularExpression(".*".join(ft), Qt.CaseInsensitive)
         else:
-            reg = QRegExp("^{}".format(ft), Qt.CaseInsensitive)
+            reg = QRegularExpression(f"^{ft}", Qt.CaseInsensitive)
 
         self.proxyModel.setFilterRegExp(reg)
         self.control.sortByColumn(0, self.proxyModel.sortOrder())

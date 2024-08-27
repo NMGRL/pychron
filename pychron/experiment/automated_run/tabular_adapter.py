@@ -65,7 +65,7 @@ from pychron.pychron_constants import (
     MEASUREMENT,
     INVALID,
     END_AFTER,
-    ABORTED,
+    ABORTED, MASS_SPECTROMETER,
 )
 
 # ============= local library imports  ==========================
@@ -186,6 +186,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ("Comment", COMMENT),
         ("Weight", WEIGHT),
         ("Delay After", DELAY_AFTER),
+        ("Mass Spec.", MASS_SPECTROMETER),
     ]
 
     columns = [

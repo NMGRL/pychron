@@ -19,7 +19,7 @@ from traits.etsconfig.etsconfig import ETSConfig
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
-ETSConfig.toolkit = "qt4"
+# ETSConfig.toolkit = "qt4"
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Instance, Str, Float, Any

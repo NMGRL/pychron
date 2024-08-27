@@ -520,15 +520,16 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         if klass is None:
             klass = HumanErrorChecker
 
-        spec_man = None
-        if self.application:
-            from pychron.spectrometer.base_spectrometer_manager import (
-                BaseSpectrometerManager,
-            )
+        # spec_man = None
+        # if self.application:
+        #     from pychron.spectrometer.base_spectrometer_manager import (
+        #         BaseSpectrometerManager,
+        #     )
+        #
+        #     spec_man = self.application.get_service(BaseSpectrometerManager)
 
-            spec_man = self.application.get_service(BaseSpectrometerManager)
-
-        hec = klass(spectrometer_manager=spec_man)
+        # hec = klass(spectrometer_manager=spec_man)
+        hec = klass()
         return hec
 
     def _find_run(self, aid):

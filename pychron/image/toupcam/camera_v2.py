@@ -21,7 +21,7 @@ import os
 from copy import copy
 from io import StringIO
 from PIL import Image
-from PyQt5.QtGui import QImage
+from pyface.qt.QtGui import QImage
 from numpy import zeros, uint8, uint32
 
 # ============= enthought library imports =======================

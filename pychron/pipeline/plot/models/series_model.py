@@ -21,6 +21,7 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from traits.api import on_trait_change, Dict
+from traits.trait_types import Instance
 
 from pychron.pipeline.plot.models.figure_model import FigureModel
 
@@ -29,11 +30,11 @@ from pychron.pipeline.plot.panels.series_panel import SeriesPanel, DashboardSeri
 
 
 class SeriesModel(FigureModel):
-    _panel_klass = SeriesPanel
+    _panel_klass = Instance(SeriesPanel)
 
 
 class DashboardSeriesModel(SeriesModel):
-    _panel_klass = DashboardSeriesPanel
+    _panel_klass = Instance(DashboardSeriesPanel)
     measurements = Dict
 
     @on_trait_change("measurements")

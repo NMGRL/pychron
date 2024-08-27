@@ -335,7 +335,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     edit_mode_label = Property(depends_on="edit_mode")
     edit_enabled = Bool(True)
 
-    mass_spectrometer = String
+    mass_spectrometer = String("Spectrometer")
+    mass_spectrometers = Property(depends_on="db_refresh_needed")
+    # mass_spectrometer = String
+
     extract_device = Str
     username = Str
     laboratory = Str
@@ -366,6 +369,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         "use_project_based_repository_identifier",
         "delay_after",
         DISABLE_BETWEEN_POSITIONS,
+        MASS_SPECTROMETER,
     )
 
     use_name_prefix = Bool
@@ -475,7 +479,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def set_mass_spectrometer(self, new):
         new = new.lower()
         self.debug("setting mass spec to={}".format(new))
-        self.mass_spectrometer = new
+        # self.mass_spectrometer = new
         for s in self._iter_scripts():
             s.mass_spectrometer = new
             s.refresh_lists = True
@@ -578,7 +582,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _new_run_block(self):
         p = os.path.join(paths.run_block_dir, add_extension(self.run_block, ".txt"))
         block = RunBlock(
-            extract_device=self.extract_device, mass_spectrometer=self.mass_spectrometer
+            extract_device=self.extract_device,
+            mass_spectrometer=self.mass_spectrometer.lower()
         )
         return block.make_runs(p), self.frequency_model.frequency
 
@@ -716,6 +721,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             USE_CDD_WARMING,
             USERNAME,
             WEIGHT,
+            MASS_SPECTROMETER,
         ]
 
     def _set_run_values(self, arv, excludes=None):
@@ -1258,6 +1264,29 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         return ids
 
     @cached_property
+    def _get_mass_spectrometers(self):
+        """
+        look in db first
+        then look for a config file
+        then use hardcorded defaults
+        """
+        db = self.get_database()
+        cp = os.path.join(paths.setup_dir, "names")
+        if db:
+            if not db.connect():
+                self.warning("not connected to database")
+                return []
+            with db.session_ctx(use_parent_session=False):
+                ms = db.get_mass_spectrometer_names()
+                names = [mi.capitalize() for mi in ms]
+        elif os.path.isfile(cp):
+            names = self._get_names_from_config(cp, "Mass Spectrometers")
+        else:
+            names = ["Jan", "Obama"]
+
+        return ["Spectrometer", LINE_STR] + names
+
+    @cached_property
     def _get_irradiations(self):
         db = self.get_database()
         if db is None or not db.connect():
@@ -1770,6 +1799,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 USE_CDD_WARMING,
                 WEIGHT,
                 DISABLE_BETWEEN_POSITIONS,
+                MASS_SPECTROMETER
             )
         )
     )
@@ -1938,6 +1968,9 @@ syn_extraction_script:name"""
         else:
             self.warning_dialog("Please select one or more runs")
 
+    def _mass_spectrometer_changed(self, new):
+        self.set_mass_spectrometer(new)
+
     # ===============================================================================
     # defaults
     # ================================================================================
@@ -1949,7 +1982,7 @@ syn_extraction_script:name"""
             label=label,
             use_name_prefix=self.use_name_prefix,
             name_prefix=self.name_prefix,
-            mass_spectrometer=self.mass_spectrometer,
+            mass_spectrometer=self.mass_spectrometer.lower(),
             name=name,
             kind=kind,
         )

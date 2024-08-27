@@ -21,7 +21,7 @@ import six
 from pyface.image_resource import ImageResource
 from pyface.qt import QtGui
 from traits.api import Int, Any, Instance, Bool, Str, Property
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 # ============= standard library imports ========================
