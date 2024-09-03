@@ -95,7 +95,14 @@ class MeasurementPyScript(AutomatedRunPyScript):
         super(MeasurementPyScript, self).truncate(style=style)
 
     def get_variables(self):
-        return ["truncated", "eqtime", "use_cdd_warming", "analysis_type", "identifier", 'runid']
+        return [
+            "truncated",
+            "eqtime",
+            "use_cdd_warming",
+            "analysis_type",
+            "identifier",
+            "runid",
+        ]
 
     def increment_series_counts(self, s, f):
         self._series_count += s
