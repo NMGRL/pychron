@@ -95,7 +95,7 @@ class MeasurementPyScript(AutomatedRunPyScript):
         super(MeasurementPyScript, self).truncate(style=style)
 
     def get_variables(self):
-        return ["truncated", "eqtime", "use_cdd_warming", "analysis_type"]
+        return ["truncated", "eqtime", "use_cdd_warming", "analysis_type", "identifier", 'runid']
 
     def increment_series_counts(self, s, f):
         self._series_count += s
@@ -831,6 +831,14 @@ class MeasurementPyScript(AutomatedRunPyScript):
     @command_register
     def set_isotope_group(self, name):
         self._automated_run_call("py_set_isotope_group", name)
+
+    @property
+    def runid(self):
+        return self.automated_run.runid
+
+    @property
+    def identifier(self):
+        return self.automated_run.spec.labnumber
 
     @property
     def analysis_type(self):

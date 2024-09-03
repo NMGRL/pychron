@@ -13,26 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pymodbus.client.sync import ModbusTcpClient
+from pymodbus.client import ModbusTcpClient
 
 from pychron.hardware.core.communicators.communicator import Communicator
-from pymodbus.constants import Defaults
+
 
 
 class ModbustcpCommunicator(Communicator):
     host = None
     timeout = None
+    port = 502
 
     def load(self, config, path):
         self.host = self.config_get(config, "Communications", "host")
+        self.port = self.config_get(config, "Communications", "port", cast="int", default=502)
         self.timeout = self.config_get(
-            config, "Communications", "timeout", cast="int", default=Defaults.Timeout
+            config, "Communications", "timeout", cast="int", default=2
         )
         return super(ModbustcpCommunicator, self).load(config, path)
 
     def open(self, *args, **kw):
         a = self.host
-        self.handle = ModbusTcpClient(a, timeout=self.timeout)
+        self.handle = ModbusTcpClient(a, timeout=self.timeout, port=self.port)
         return True
 
     def initialize(self, *args, **kw):
