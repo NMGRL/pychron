@@ -43,8 +43,11 @@ class RegressionEditor(BaseTraitsEditor):
     result_template = """
 mswd={mswd:}
 slope={slope:}
+slope_error={slope_error:}
 intercept={intercept:}
+intercept_error={intercept_error:}
 rsquared={rsquared:}
+
 """
     refresh_needed = Event
     _items = List
@@ -155,7 +158,9 @@ rsquared={rsquared:}
         self.result_str = self.result_template.format(
             mswd=reg.mswd,
             slope=reg.slope,
+            slope_error=reg.get_slope_error(),
             intercept=reg.intercept,
+            intercept_error=reg.get_intercept_error(),
             rsquared=reg.rsquared,
         )
         self.graph = g
