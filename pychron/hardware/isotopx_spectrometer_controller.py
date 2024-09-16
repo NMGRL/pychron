@@ -58,6 +58,10 @@ class NGXController(CoreDevice):
     #    else:
     #        resp = self.event_buffer.get()
     #    return resp
+    def set_acquisition_buffer(self, flag):
+        flag = "1" if flag else "0"
+        self.debug(f"set acquisition buffer {flag}")
+        self.ask(f"SAB {flag}")
 
     def stop_acquisition(self):
         self.triggered = False
@@ -75,7 +79,8 @@ class NGXController(CoreDevice):
 
         self.communicator.strip = False
         # trying a new locking mechanism see ngx.trigger for more details
-        self.lock = RLock()
+
+        self.lock = Lock()
         #   self.event_buffer = Queue()
 
         if ret:

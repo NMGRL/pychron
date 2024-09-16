@@ -252,7 +252,7 @@ class EthernetCommunicator(Communicator):
     message_frame = ""
     timeout = Float(1.0)
     strip = True
-    default_timeout = 3
+    # default_timeout = 3
     default_datasize = 2**12
 
     _comms_report_attrs = (
@@ -319,14 +319,14 @@ class EthernetCommunicator(Communicator):
         self.message_frame = self.config_get(
             config, "Communications", "message_frame", optional=True, default=""
         )
-        self.default_timeout = self.config_get(
-            config,
-            "Communications",
-            "default_timeout",
-            cast="int",
-            optional=True,
-            default=3,
-        )
+        # self.default_timeout = self.config_get(
+        #     config,
+        #     "Communications",
+        #     "default_timeout",
+        #     cast="int",
+        #     optional=True,
+        #     default=3,
+        # )
         self.default_datasize = self.config_get(
             config,
             "Communications",
@@ -461,7 +461,7 @@ class EthernetCommunicator(Communicator):
                 retries = 2
 
             if timeout is None:
-                timeout = self.default_timeout
+                timeout = self.timeout
 
             re = "ERROR: Connection refused: {}, timeout={}".format(
                 self.address, timeout
@@ -506,7 +506,7 @@ class EthernetCommunicator(Communicator):
         self._reset_connection()
 
     def select_read(self, *args, **kw):
-        timeout = self.default_timeout
+        timeout = self.timeout
         handler = self.get_handler(timeout=timeout)
         if handler:
             handler = self.get_read_handler(handler, timeout=timeout)
@@ -583,7 +583,7 @@ class EthernetCommunicator(Communicator):
                 timeout = 0.5
 
         if timeout is None:
-            timeout = self.default_timeout
+            timeout = self.timeout
 
         self.error_mode = False
         return timeout
