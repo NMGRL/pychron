@@ -49,9 +49,6 @@ class SampleEntryTask(BaseManagerTask):
         SToolBar(ImportSamplesAction(), MakeSampleTemplateAction()),
     ]
 
-    def activated(self):
-        self.manager.activated()
-
     def prepare_destroy(self):
         self.manager.prepare_destroy()
 

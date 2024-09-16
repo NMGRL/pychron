@@ -128,12 +128,7 @@ class ScanManager(StreamGraphManager):
         self._set_detector(det)
         self._set_position()
 
-    def stop(self):
-        self.prepare_destroy()
 
-    def stop_scan(self):
-        self.dump_settings()
-        self._stop_timer()
 
         # clear our graph settings so on reopen events will fire
         # del self.graph_scale
@@ -406,13 +401,6 @@ class ScanManager(StreamGraphManager):
                     "Scan is stopped! Close and reopen window to restart"
                 )
                 self._stop_timer()
-
-    def _stop_timer(self):
-        self.info("stopping scan timer")
-        if self.timer:
-            self.timer.Stop()
-        else:
-            self.debug("no timer to stop")
 
     def _start_recording(self):
         #        self._first_recording = True
