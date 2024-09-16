@@ -128,8 +128,6 @@ class ScanManager(StreamGraphManager):
         self._set_detector(det)
         self._set_position()
 
-
-
         # clear our graph settings so on reopen events will fire
         # del self.graph_scale
         # del self._graph_ymax

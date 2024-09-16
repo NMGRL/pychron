@@ -29,10 +29,12 @@ class ModbustcpCommunicator(Communicator):
 
     def load(self, config, path):
 
-        logger = logging.getLogger('pymodbus.logging')
+        logger = logging.getLogger("pymodbus.logging")
         logger.setLevel(logging.ERROR)
         self.host = self.config_get(config, "Communications", "host")
-        self.port = self.config_get(config, "Communications", "port", cast="int", default=502)
+        self.port = self.config_get(
+            config, "Communications", "port", cast="int", default=502
+        )
         self.byteorder = self.config_get(
             config, "Communications", "byteorder", default="big"
         )

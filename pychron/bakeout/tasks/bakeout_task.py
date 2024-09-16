@@ -31,4 +31,5 @@ class BakeoutTask(BaseManagerTask):
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem("pychron.bakeout.control"))
 
+
 # ============= EOF =============================================

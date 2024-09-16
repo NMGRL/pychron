@@ -26,7 +26,7 @@ from pychron.managers.stream_graph_manager import StreamGraphManager
 
 class BakeoutManager(StreamGraphManager):
     controller = Any
-    settings_name = 'bakeout_streaming'
+    settings_name = "bakeout_streaming"
 
     def _create_manager(
         self, klass, manager, params, port=None, host=None, remote=False
@@ -34,7 +34,7 @@ class BakeoutManager(StreamGraphManager):
         return self.application.get_service(BakeoutManager)
 
     def _controller_default(self):
-        return BakeoutPLC(name='controller', configuration_dir_name='bakeout')
+        return BakeoutPLC(name="controller", configuration_dir_name="bakeout")
 
     def prepare_destroy(self):
         self.set_streaming_active(False)
@@ -42,7 +42,7 @@ class BakeoutManager(StreamGraphManager):
         self.controller.prepare_destroy()
 
     def activate(self):
-        self.debug('asdfascasdcasdc')
+        self.debug("asdfascasdcasdc")
         self.set_streaming_active(True)
         # self.bind_preferences()
 
@@ -86,17 +86,27 @@ class BakeoutManager(StreamGraphManager):
         g.set_data_limits(1.8 * 600, plotid=0)
 
         # Output/Duty Cycle
-        g.new_plot(ytitle="Output/Duty Cycle (%)", padding_top=5, padding_left=75, padding_right=5)
+        g.new_plot(
+            ytitle="Output/Duty Cycle (%)",
+            padding_top=5,
+            padding_left=75,
+            padding_right=5,
+        )
 
         g.set_scan_width(600, plotid=1)
         g.set_data_limits(1.8 * 600, plotid=1)
         g.set_y_limits(min_=-2, max_=102, plotid=1)
         for channel in self.controller.channels:
-            series, _ = g.new_series(plotid=0, color=channel.color, name=channel.shortname)
-            g.new_series(plotid=0,
-                         # render_style="connectedhold",
-                         line_style='dash',
-                         color=series.color, name=f'{channel.shortname}, Setpoint')
+            series, _ = g.new_series(
+                plotid=0, color=channel.color, name=channel.shortname
+            )
+            g.new_series(
+                plotid=0,
+                # render_style="connectedhold",
+                line_style="dash",
+                color=series.color,
+                name=f"{channel.shortname}, Setpoint",
+            )
 
             g.new_series(plotid=1, name=channel.shortname, color=series.color)
 
@@ -106,9 +116,7 @@ class BakeoutManager(StreamGraphManager):
         return [ci for ci in self.controller.channels if ci.display]
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     b = BakeoutManager()
     b.activate()
     b.setup_scan()

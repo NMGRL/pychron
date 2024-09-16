@@ -28,11 +28,15 @@ class ModbusMixin:
     """
 
     def _read_float(self, register, *args, **kw):
-        result = self._read_holding_registers(address=int(register), count=2, *args, **kw)
+        result = self._read_holding_registers(
+            address=int(register), count=2, *args, **kw
+        )
         return self._decode_float(result)
 
     def _read_int(self, register, *args, **kw):
-        result = self._read_holding_registers(address=int(register), count=2, *args, **kw)
+        result = self._read_holding_registers(
+            address=int(register), count=2, *args, **kw
+        )
         decoder = BinaryPayloadDecoder.fromRegisters(
             result.registers, self._get_byteorder(), wordorder=self._get_wordorder()
         )
@@ -61,7 +65,7 @@ class ModbusMixin:
 
     def _get_wordorder(self):
         if hasattr(self.communicator, "wordorder"):
-            w =  self.communicator.wordorder
+            w = self.communicator.wordorder
             if w.lower() == "big":
                 return Endian.BIG
             else:
@@ -76,9 +80,9 @@ class ModbusMixin:
             return decoder.decode_32bit_float()
 
     def _get_payload(self, value, is_float=True):
-        builder = BinaryPayloadBuilder(byteorder=self._get_byteorder(),
-                                       wordorder=self._get_wordorder()
-                                       )
+        builder = BinaryPayloadBuilder(
+            byteorder=self._get_byteorder(), wordorder=self._get_wordorder()
+        )
         if is_float:
             builder.add_32bit_float(value)
         else:
@@ -106,7 +110,7 @@ class ModbusMixin:
 
     def _func(self, funcname, *args, **kw):
         if self.communicator:
-            if kw.get('verbose', False):
+            if kw.get("verbose", False):
                 self.debug("ModbusMixin: {} {} {}".format(funcname, args, kw))
 
             try:

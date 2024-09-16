@@ -20,24 +20,24 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class BakeoutPlugin(BaseTaskPlugin):
-    id = 'pychron.bakeout.plugin'
-    name = 'Bakeout'
+    id = "pychron.bakeout.plugin"
+    name = "Bakeout"
 
     def _tasks_default(self):
-        return [TaskFactory(
-            id="pychron.bakeout.task",
-            factory=self._task_factory,
-            name="Bakeout",
-            image="applications-science",
-            task_group="hardware",
-            accelerator="Ctrl+Shift+B",
-        )]
+        return [
+            TaskFactory(
+                id="pychron.bakeout.task",
+                factory=self._task_factory,
+                name="Bakeout",
+                image="applications-science",
+                task_group="hardware",
+                accelerator="Ctrl+Shift+B",
+            )
+        ]
 
     def _service_offers_default(self):
         """ """
-        so = self.service_offer_factory(
-            protocol=BakeoutManager, factory=self._factory
-        )
+        so = self.service_offer_factory(protocol=BakeoutManager, factory=self._factory)
         return [so]
 
     def _factory(self):
@@ -45,8 +45,11 @@ class BakeoutPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         from pychron.bakeout.tasks.bakeout_task import BakeoutTask
-        return BakeoutTask(application=self.application,
-                           manager=self.application.get_service(BakeoutManager))
+
+        return BakeoutTask(
+            application=self.application,
+            manager=self.application.get_service(BakeoutManager),
+        )
 
     def _managers_default(self):
         """ """
@@ -57,4 +60,6 @@ class BakeoutPlugin(BaseTaskPlugin):
                 manager=self.application.get_service(BakeoutManager),
             )
         ]
+
+
 # ============= EOF =============================================
