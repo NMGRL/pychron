@@ -320,6 +320,12 @@ class BaseManagerTask(BaseTask):
     wildcard = None
     manager = Any
 
+    def prepare_destroy(self):
+        self.manager.prepare_destroy()
+
+    def activated(self):
+        self.manager.activate()
+
     def view_pdf(self, p):
         self.view_file(p, application="Preview")
 

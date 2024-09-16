@@ -17,7 +17,7 @@ import json
 import logging
 import os
 import time
-from socket import gethostbyname, gethostname
+from socket import gethostbyname, gethostname, gaierror
 from threading import Thread
 
 # =============enthought library imports=======================
@@ -873,7 +873,11 @@ class ExtractionLineManager(Manager, Consoleable):
 
         if force or self.check_master_owner:
             if requestor is None:
-                requestor = gethostbyname(gethostname())
+                try:
+                    requestor = gethostbyname(gethostname())
+                except gaierror:
+                    self.debug("failed to get host name. defaulting to 'localhost'")
+                    requestor = "localhost"
 
             self.debug("checking ownership. requestor={}".format(requestor))
             try:
