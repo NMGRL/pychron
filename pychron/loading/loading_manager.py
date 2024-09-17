@@ -49,15 +49,13 @@ from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
 from pychron.hardware.jss57 import STP_MTRD
-from pychron.lasers.stage_managers.stage_manager import StageManager
-from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
 from pychron.loading.foot_pedal import FootPedal
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
-from pychron.loading.tray_checker import TrayChecker
 from pychron.paths import paths
 
 # ============= enthought library imports =======================
@@ -242,8 +240,9 @@ class LoadingManager(DVCIrradiationable):
 
     _suppress_edit = Bool(False)
 
-    stage_manager = Instance(StageManager)
-    use_stage = Bool(True)
+    stage_manager = Instance('pychron.lasers.stage_managers.video_stage_manager.VideoStageManager')
+
+    use_stage = Bool(False)
     foot_pedal = Instance(FootPedal, ())
     interaction_mode_enabled = Bool(False)
     focus_motor = Instance(STP_MTRD)
@@ -273,7 +272,7 @@ class LoadingManager(DVCIrradiationable):
     refresh_table = Event
     mode = "normal"
 
-    tray_checker = Instance(TrayChecker)
+    tray_checker = Instance('pychron.loading.tray_checker.TrayChecker')
 
     use_image_shift = True
 
@@ -281,7 +280,15 @@ class LoadingManager(DVCIrradiationable):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
 
+        pref_id = 'pychron.loading'
+        bind_preference(
+            self, "use_stage", "{}.use_stage".format(pref_id)
+        )
+
         if self.use_stage:
+            from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
+            from pychron.loading.tray_checker import TrayChecker
+
             pxpermm = 55
             self.stage_manager = VideoStageManager(
                 parent=self,

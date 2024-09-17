@@ -45,7 +45,6 @@ from pychron.loading.tasks.panes import (
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.loading.tray_checker import TrayChecker
 
 
 class LoadingTask(BaseManagerTask):
