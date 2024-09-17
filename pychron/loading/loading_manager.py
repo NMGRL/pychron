@@ -240,7 +240,9 @@ class LoadingManager(DVCIrradiationable):
 
     _suppress_edit = Bool(False)
 
-    stage_manager = Instance('pychron.lasers.stage_managers.video_stage_manager.VideoStageManager')
+    stage_manager = Instance(
+        "pychron.lasers.stage_managers.video_stage_manager.VideoStageManager"
+    )
 
     use_stage = Bool(False)
     foot_pedal = Instance(FootPedal, ())
@@ -272,7 +274,7 @@ class LoadingManager(DVCIrradiationable):
     refresh_table = Event
     mode = "normal"
 
-    tray_checker = Instance('pychron.loading.tray_checker.TrayChecker')
+    tray_checker = Instance("pychron.loading.tray_checker.TrayChecker")
 
     use_image_shift = True
 
@@ -280,13 +282,13 @@ class LoadingManager(DVCIrradiationable):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
 
-        pref_id = 'pychron.loading'
-        bind_preference(
-            self, "use_stage", "{}.use_stage".format(pref_id)
-        )
+        pref_id = "pychron.loading"
+        bind_preference(self, "use_stage", "{}.use_stage".format(pref_id))
 
         if self.use_stage:
-            from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
+            from pychron.lasers.stage_managers.video_stage_manager import (
+                VideoStageManager,
+            )
             from pychron.loading.tray_checker import TrayChecker
 
             pxpermm = 55
