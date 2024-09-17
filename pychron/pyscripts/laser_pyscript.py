@@ -30,7 +30,7 @@ class LaserPyScript(ExtractionPyScript):
     _task = None
 
     def get_command_register(self):
-        cs = super(self).get_command_register()
+        cs = super().get_command_register()
         return cs + list(command_register.commands.items())
 
     @verbose_skip
