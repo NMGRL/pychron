@@ -339,6 +339,23 @@ class ArArAge(IsotopeGroup):
     def set_temporary_uic_factor(self, k, refdet, uv):
         self.temporary_ic_factors[k] = uv
 
+    def set_discrimination(self, disc, is_peak_hop):
+        # assume disc is a 4amu discrimination
+        m40 = 39.9624
+        m36 = 35.9675
+        disc = disc/(m40-m36)
+        for k, m in (("Ar40", m40), ("Ar39", 38.964),
+                     ("Ar38", 37.9627), ("Ar37", 36.9668)):
+            v = disc ** (m-m36)
+            if is_peak_hop:
+                iso = self.get_isotope(detector=k)
+            else:
+                iso = self.get_isotope(k)
+            det = iso.detector
+
+            self.temporary_ic_factors[det] = {"reference_detector": k, "value": v}
+            self.info("setting discrimination based ic factor={} to {}".format(det, v))
+
     def set_beta(self, n, beta, is_peak_hop):
         """
         this is a source discrimination correction and assumes detectors are already "perfectly" calibrated

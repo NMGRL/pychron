@@ -105,6 +105,9 @@ class ICFactor(ReferencesSeries):
                     ic = 1 / ufloat(v, e)
                     beta = umath.log(ic) / umath.log(m40 / m36)
                     ui.set_beta(n, beta, is_peak_hop)
+                elif self.options.use_discrimination:
+                    # assumes 40/36 discrimination
+                    ui.set_discrimination(ufloat(v, e))
                 else:
                     if d == "rad40":
                         iso = ui.get_isotope(name="Ar40")

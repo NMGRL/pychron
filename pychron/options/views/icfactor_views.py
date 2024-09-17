@@ -72,6 +72,12 @@ class ICFactorSubOptions(SubOptions):
             Item("source_correction_kind", label="Kind"),
             label="Source",
         )
+
+        disc = BorderVGroup(
+            Item("use_discrimination", label="Use Discrimination"),
+            label="Discrimination",
+        )
+
         v = View(
             VGroup(
                 Item(
@@ -90,6 +96,7 @@ class ICFactorSubOptions(SubOptions):
                     "all other plots",
                 ),
                 src,
+                disc,
             )
         )
         return v

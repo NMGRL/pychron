@@ -210,6 +210,7 @@ class FitICFactorNode(FitReferencesNode):
     def _set_additional_options(self, state):
         state.delete_existing_icfactors = self.plotter_options.delete_existing
         state.use_source_correction = self.plotter_options.use_source_correction
+        state.use_discrimination = self.plotter_options.use_discrimination
 
     def _set_saveable(self, state):
         super(FitICFactorNode, self)._set_saveable(state)

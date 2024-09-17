@@ -866,11 +866,14 @@ class DVC(Loggable):
         fits,
         refs,
         use_source_correction,
+        use_discrimination,
         standard_ratios,
         reference_data,
     ):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
+        elif use_discrimination:
+            ai.dump_disc_icfactors(refs)
         else:
             if fits and dets:
                 self.info("Saving icfactors for {}".format(ai))

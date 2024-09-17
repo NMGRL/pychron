@@ -224,6 +224,8 @@ class ICFactorPersistNode(DVCPersistNode):
 
         if state.use_source_correction:
             msg = "source correction ic_factors"
+        elif state.use_discrimination:
+            msg = "discrimination ic_factors"
         else:
             msg = self.commit_message
             if not msg:
@@ -250,6 +252,7 @@ class ICFactorPersistNode(DVCPersistNode):
             state.saveable_fits,
             state.references,
             state.use_source_correction,
+            state.use_discrimination,
             state.standard_ratios,
             state.reference_data,
         )
