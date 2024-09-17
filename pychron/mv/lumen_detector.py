@@ -35,7 +35,7 @@ from numpy import (
     ravel_multi_index,
 )
 from skimage.color import rgb2gray, gray2rgb
-from skimage.draw import circle, polygon
+from skimage.draw import circle_perimeter, polygon
 
 # ============= local library imports  ==========================
 from skimage.feature import peak_local_max
@@ -206,7 +206,7 @@ class LumenDetector(Locator):
 
         return src, v, targets
 
-    def find_targets(self, image, src, dim, mask=False):
+    def find_targets(self, image, src, dim, **kw):
         targets = self._find_targets_bs(
             image,
             src,
@@ -220,7 +220,7 @@ class LumenDetector(Locator):
             search_depth=5,
             search_start=254,
             # convexity_filter=0.75,
-            mask=mask,
+            **kw
         )
         self.active_targets = None
         if targets:
@@ -262,7 +262,7 @@ class LumenDetector(Locator):
             self._draw_targets(img, targets, color=(252, 169, 3))
             self._draw_targets(img, [target], color=(3, 86, 252))
 
-            peak_img[circle(py, px, min_distance)] = 255
+            peak_img[circle_perimeter(py, px, min_distance)] = 255
 
             # ilum = lum[target.mask].sum()
             # area = (target.area + target.pactual / 2)

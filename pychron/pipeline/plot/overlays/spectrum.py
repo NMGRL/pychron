@@ -19,6 +19,9 @@ from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
 
+from chaco.label import Label
+
+# from enable.colors import convert_from_pyqt_color
 try:
     from chaco.overlays.plot_label import PlotLabel
 except ImportError:
@@ -28,8 +31,6 @@ try:
     from chaco.overlays.data_label import draw_arrow
 except ImportError:
     from chaco.api import draw_arrow
-
-from chaco.label import Label
 
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool

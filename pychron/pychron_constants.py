@@ -84,9 +84,16 @@ POST_MEASUREMENT = "post_measurement"
 POST_EQUILIBRATION = "post_equilibration"
 EXTRACTION = "extraction"
 EM_SCRIPT_KEYS = (EXTRACTION, MEASUREMENT)
-SCRIPT_KEYS = [MEASUREMENT, POST_MEASUREMENT, EXTRACTION, POST_EQUILIBRATION]
+SYN_EXTRACTION = "syn_extraction"
+SCRIPT_KEYS = [
+    MEASUREMENT,
+    POST_MEASUREMENT,
+    EXTRACTION,
+    POST_EQUILIBRATION,
+    SYN_EXTRACTION,
+]
 
-SCRIPT_NAMES = ["{}_script".format(si) for si in SCRIPT_KEYS]
+SCRIPT_NAMES = ["{}_script".format(si) for si in SCRIPT_KEYS if si != SYN_EXTRACTION]
 
 SIMPLE = "simple"
 
@@ -246,6 +253,7 @@ FUSIONS_CO2 = "Fusions CO2"
 CHROMIUM_CO2 = "Chromium CO2"
 ABLATION_CO2 = "Ablation CO2"
 TAP_DIODE = "TAP Diode"
+UC2000_CO2 = "UC2000 CO2"
 
 FUSIONS = [FUSIONS_CO2, FUSIONS_DIODE, FUSIONS_UV]
 LASER_PLUGINS = [
@@ -257,6 +265,7 @@ LASER_PLUGINS = [
         ABLATION_CO2,
         OSTECH_DIODE,
         TAP_DIODE,
+        UC2000_CO2,
     )
 ]
 
@@ -477,6 +486,7 @@ COLLECTION_TIME_ZERO_OFFSET = "collection_time_zero_offset"
 DURATION = "duration"
 WEIGHT = "weight"
 POSITION = "position"
+NEXT_POSITION = "next_position"
 LIGHT_VALUE = "light_value"
 PATTERN = "pattern"
 BEAM_DIAMETER = "beam_diameter"

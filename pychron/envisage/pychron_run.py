@@ -71,8 +71,11 @@ PACKAGE_DICT = dict(
     LDEOFurnacePlugin="pychron.furnace.tasks.ldeo.furnace_plugin",
     LDEOFurnaceControlPlugin="pychron.furnace.tasks.ldeo.furnace_control_plugin",
     ThermoFurnacePlugin="pychron.furnace.tasks.thermo.furnace_plugin",
+    RestonFurnacePlugin="pychron.furnace.tasks.reston.furnace_plugin",
+    BakeoutPlugin="pychron.bakeout.tasks.bakeout_plugin",
     # hardware-lasers
     TAPDiodePlugin="pychron.lasers.tasks.plugins.tap",
+    UC2000CO2Plugin="pychron.lasers.tasks.plugins.uc2000_plugin",
     OsTechDiodePlugin="pychron.lasers.tasks.plugins.ostech_diode",
     AblationCO2Plugin="pychron.lasers.tasks.plugins.ablation_co2",
     ChromiumCO2Plugin="pychron.lasers.tasks.plugins.chromium_co2",
@@ -283,6 +286,13 @@ def launch(klass):
     #         return
 
     app = app_factory(klass)
+    try:
+        import qdarktheme
+
+        # Apply the complete dark theme to your Qt App.
+        qdarktheme.setup_theme("light")
+    except ImportError:
+        pass
 
     try:
         try:

@@ -40,13 +40,14 @@ ESTIMATED_DURATION_FF = 1.0
 
 command_register = makeRegistry()
 
+from pychron.pyscripts.automated_run_pyscript import AutomatedRunPyScript
 
-class MeasurementPyScript(ValvePyScript):
+
+class MeasurementPyScript(AutomatedRunPyScript):
     """
     MeasurementPyScripts are used to collect isotopic data
     """
 
-    automated_run = None
     ncounts = 0
     info_color = MEASUREMENT_COLOR
     abbreviated_count_ratio = None
@@ -85,7 +86,7 @@ class MeasurementPyScript(ValvePyScript):
         self._reset()
 
     def get_command_register(self):
-        cs = super(MeasurementPyScript, self).get_command_register()
+        cs = super(self).get_command_register()
         return cs + list(command_register.commands.items())
 
     def truncate(self, style=None):
@@ -94,7 +95,14 @@ class MeasurementPyScript(ValvePyScript):
         super(MeasurementPyScript, self).truncate(style=style)
 
     def get_variables(self):
-        return ["truncated", "eqtime", "use_cdd_warming"]
+        return [
+            "truncated",
+            "eqtime",
+            "use_cdd_warming",
+            "analysis_type",
+            "identifier",
+            "runid",
+        ]
 
     def increment_series_counts(self, s, f):
         self._series_count += s
@@ -109,7 +117,7 @@ class MeasurementPyScript(ValvePyScript):
     # ===============================================================================
     @verbose_skip
     @command_register
-    def sink_data(self, n=100, delay=1, calc_time=False):
+    def sink_data(self, n=100, delay=1, root=None, buffer_delay=5, calc_time=False):
         """
 
         @param n: number of measurements
@@ -119,7 +127,9 @@ class MeasurementPyScript(ValvePyScript):
         """
         if calc_time:
             return n * delay
-        self._automated_run_call("py_sink_data", n=n, delay=delay)
+        self._automated_run_call(
+            "py_sink_data", n=n, delay=delay, root=root, buffer_delay=buffer_delay
+        )
 
     @verbose_skip
     @command_register
@@ -155,6 +165,31 @@ class MeasurementPyScript(ValvePyScript):
 
         if not self._automated_run_call(
             "py_generate_ic_mftable", detectors, refiso, peak_center_config, n
+        ):
+            self.cancel()
+
+    @verbose_skip
+    @command_register
+    def generate_peakhop_mftable(
+        self, pairs, peak_center_config="", n=1, calc_time=False
+    ):
+        """
+        Generate an Peakhop MFTable.
+
+        cancel script if generating mftable fails
+
+        :param detectors: list of detectors to peak center
+        :type detectors: list
+        :param refiso: isotope to peak center
+        :type refiso: str
+        """
+
+        if calc_time:
+            self._estimated_duration += (len(pairs) * 30) * n
+            return
+
+        if not self._automated_run_call(
+            "py_generate_peakhop_mftable", pairs, peak_center_config, n
         ):
             self.cancel()
 
@@ -805,6 +840,18 @@ class MeasurementPyScript(ValvePyScript):
         self._automated_run_call("py_set_isotope_group", name)
 
     @property
+    def runid(self):
+        return self.automated_run.runid
+
+    @property
+    def identifier(self):
+        return self.automated_run.spec.labnumber
+
+    @property
+    def analysis_type(self):
+        return self.automated_run.spec.analysis_type
+
+    @property
     def truncated(self):
         """
         Property. True if run was truncated otherwise False
@@ -861,6 +908,12 @@ class MeasurementPyScript(ValvePyScript):
             return self.automated_run.spec.use_cdd_warming
             # return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
+    def set_default_context(self, **kw):
+        if "analysis_type" not in kw:
+            kw["analysis_type"] = ""
+
+        self.setup_context(**kw)
+
     # private
     def _get_deflection_from_file(self, name):
         config = self._get_config()
@@ -897,15 +950,6 @@ class MeasurementPyScript(ValvePyScript):
         config.read(p)
 
         return config
-
-    def _automated_run_call(self, func, *args, **kw):
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
 
     def _set_spectrometer_parameter(self, *args, **kw):
         self._automated_run_call("py_set_spectrometer_parameter", *args, **kw)

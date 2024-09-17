@@ -83,6 +83,11 @@ HW_PACKAGE_MAP = {
     "HiPace": hardware_pkg("turbo.hipace"),
     "ADCGaugeController": gauge_pkg("adc_gauge_controller"),
     "WatlowEZZone": hardware_pkg("watlow.watlow_ezzone"),
+    "LasconController": hardware_pkg("lascon_controller"),
+    "IGC100GaugeController": gauge_pkg("igc100_gauge_controller"),
+    "SI9700Controller": hardware_pkg("si9700"),
+    "KinesisMotionController": hardware_pkg("kinesis.kinesis_controller"),
+    "Eurotherm818": hardware_pkg("eurotherm.eurotherm818"),
 }
 
 

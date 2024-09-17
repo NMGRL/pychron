@@ -18,7 +18,7 @@ import shutil
 from operator import attrgetter
 
 import yaml
-from enable.colors import ColorTrait
+
 from traits.api import (
     HasTraits,
     List,
@@ -29,7 +29,9 @@ from traits.api import (
     Instance,
     Str,
     Bool,
+    Color,
 )
+from traits.traits import Color
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
 
@@ -103,7 +105,7 @@ class CanvasEditor(Loggable):
     height_increment_plus_button = Button
     height_increment_minus_button = Button
 
-    color = ColorTrait
+    color = Color
     add_item_button = Button("Add")
     new_item_kind = Enum(NULL_STR, "Valve", "Spectrometer", "Stage")
     new_item = Instance(Primitive)
@@ -144,6 +146,10 @@ class CanvasEditor(Loggable):
         g = self.selected_group
         for s in g.selected:
             setattr(s, axis, getattr(s, axis) + inc)
+            s.request_layout()
+
+        self.canvas.scene.request_layout()
+        self.canvas.invalidate_and_redraw()
 
     def _dim_increment(self, sign, dim):
         g = self.selected_group
@@ -184,10 +190,12 @@ class CanvasEditor(Loggable):
 
     def _save_yaml(self, p):
         obj = {}
+        items = [i.toyaml() for i in self.canvas.scene.valves.values()]
+        obj["valve"] = items
 
         for klass, key in (
             (Switch, "switch"),
-            (Valve, "valve"),
+            # (Valve, "valve"),
             (ManualSwitch, "manual_valve"),
             (Turbo, "turbo"),
             (IonPump, "ionpump"),

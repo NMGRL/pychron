@@ -489,6 +489,9 @@ class DVC(Loggable):
                     path = os.path.join(paths.dvc_dir, name)
                     self.meta_repo.clone(url, path)
                 else:
+                    r_mkdir(root)
+                    mrepo.init_repo(root)
+
                     self.debug(
                         "no url returned for MetaData repository. You need to clone your MetaData repository "
                         "manually"
@@ -1437,6 +1440,15 @@ class DVC(Loggable):
 
     def clear_pull_cache(self):
         self._pull_cache = {}
+
+    def is_clean(self, name):
+        try:
+            repo = self._get_repository(name)
+            ahead, behind = repo.ahead_behind()
+            return ahead == 0 and behind == 0
+        except BaseException as e:
+            self.debug("is clean exception {}".format(e))
+            return False
 
     def sync_repo(self, name, use_progress=True, pull_frequency=None):
         """

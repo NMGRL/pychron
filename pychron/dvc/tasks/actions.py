@@ -300,4 +300,14 @@ class UploadDatabaseAction(Action):
         ud.edit_traits()
 
 
+class SeedDatabase(Action):
+    name = "Seed Database"
+
+    def perform(self, event):
+        from pychron.dvc.seed import seed_database
+
+        app = event.task.window.application
+        seed_database(dvc=app.get_service(DVC_PROTOCOL), application=app)
+
+
 # ============= EOF =============================================

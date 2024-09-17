@@ -159,6 +159,8 @@ class AutomatedRunSpec(HasTraits):
     post_measurement_script = Str
     post_equilibration_script = Str
     extraction_script = Str
+    syn_extraction_script = Str
+
     script_options = Str
     use_cdd_warming = Bool
 
@@ -168,6 +170,7 @@ class AutomatedRunSpec(HasTraits):
     extract_value = Float
     extract_units = Str
     position = Str
+    next_position = Str
     xyz_position = Str
     light_value = 0
 
@@ -186,7 +189,6 @@ class AutomatedRunSpec(HasTraits):
     _overlap = Int
     _min_ms_pumptime = Int
     conditionals = Str
-    syn_extraction = Str
     collection_time_zero_offset = Float
     repository_identifier = Str
 
@@ -310,6 +312,7 @@ class AutomatedRunSpec(HasTraits):
             "extract_device",
             "extraction_script",
             "measurement_script",
+            "syn_extraction_script",
             "post_equilibration_script",
             "post_measurement_script",
         ]
@@ -379,8 +382,10 @@ class AutomatedRunSpec(HasTraits):
         self._executable = all(script_oks)
         return s
 
-    def get_position_list(self):
-        pos = self.position
+    def get_position_list(self, pos=None):
+        if pos is None:
+            pos = self.position
+
         if XY_REGEX[0].match(pos):
             ps = XY_REGEX[1](pos)
         elif "," in pos:
@@ -396,7 +401,10 @@ class AutomatedRunSpec(HasTraits):
         an = self.analysis_type.split("_")[0]
 
         ctx = dict(
-            position=self.get_position_list(), extract_device=hdn, analysis_type=an
+            position=self.get_position_list(),
+            next_position=self.get_position_list(self.next_position),
+            extract_device=hdn,
+            analysis_type=an,
         )
 
         for attr in (
@@ -477,7 +485,7 @@ class AutomatedRunSpec(HasTraits):
 
         return d
 
-    def load(self, script_info, params):
+    def load(self, script_info, params, next_params):
         for k, v in script_info.items():
             k = k if k == "script_options" else "{}_script".format(k)
             setattr(self, k, v)
@@ -485,6 +493,9 @@ class AutomatedRunSpec(HasTraits):
         for k, v in params.items():
             if hasattr(self, k):
                 setattr(self, k, v)
+
+        if next_params:
+            self.next_position = next_params.get("position", "")
 
         if self.light_value is None:
             self.light_value = params.get("default_lighting", 0)
@@ -559,7 +570,7 @@ class AutomatedRunSpec(HasTraits):
             "_overlap",
             "_min_ms_pumptime",
             "conditionals",
-            "syn_extraction",
+            "syn_extraction_script",
             COLLECTION_TIME_ZERO_OFFSET,
             WEIGHT,
             COMMENT,
@@ -590,7 +601,7 @@ class AutomatedRunSpec(HasTraits):
     # ===============================================================================
     @on_trait_change(
         """measurement_script, post_measurement_script,
-post_equilibration_script, extraction_script, script_options, position, duration, cleanup, pre_cleanup, post_cleanup"""
+post_equilibration_script, extraction_script, syn_extraction_script, script_options, position, duration, cleanup, pre_cleanup, post_cleanup"""
     )
     def _change_handler(self, name, new):
         if new == "None":
@@ -703,6 +714,10 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @property
     def measurement_script_name(self):
         return self.measurement_script
+
+    @property
+    def syn_extraction_script_name(self):
+        return self.syn_extraction_script
 
     @property
     def sensitivity(self):

@@ -53,7 +53,7 @@ class FileListener(object):
 
         self._alive = True
         if os.path.isfile(self._path):
-            t = Thread(target=self._listen)
+            t = Thread(target=self._listen, daemon=True)
             t.start()
 
     @property
@@ -68,7 +68,10 @@ class FileListener(object):
         while self._alive:
             time.sleep(1 / self._freq)
             if self._check():
-                self._callback()
+                try:
+                    self._callback()
+                except BaseException as e:
+                    print(f"exception in file listener callback {e}")
                 self._otime = self.otime
 
     def _check(self):

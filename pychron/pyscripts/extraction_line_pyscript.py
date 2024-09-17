@@ -39,14 +39,28 @@ from pychron.pychron_constants import (
     CLEANUP,
     DURATION,
     CRYO_TEMP,
+    POSITION,
+    NEXT_POSITION,
+    EXTRACT_DEVICE,
+    TRAY,
+    EXTRACT_VALUE,
+    EXTRACT_UNITS,
+    BEAM_DIAMETER,
+    LIGHT_VALUE,
 )
 from pychron.pyscripts.context_managers import (
     RecordingCTX,
     LightingCTX,
     GrainPolygonCTX,
 )
-from pychron.pyscripts.decorators import verbose_skip, makeRegistry, calculate_duration
+from pychron.pyscripts.decorators import (
+    verbose_skip,
+    makeRegistry,
+    calculate_duration,
+    device_verbose_skip,
+)
 from pychron.pyscripts.valve_pyscript import ValvePyScript
+from pychron.pyscripts.automated_run_pyscript import AutomatedRunPyScript
 
 COMPRE = re.compile(r"[A-Za-z]*")
 
@@ -56,13 +70,11 @@ COMPRE = re.compile(r"[A-Za-z]*")
 command_register = makeRegistry()
 
 
-class ExtractionPyScript(ValvePyScript):
+class ExtractionPyScript(AutomatedRunPyScript):
     """
     The ExtractionPyScript is used to program the extraction and gettering of
     sample gas.
     """
-
-    automated_run = None
 
     _resource_flag = None
     info_color = EXTRACTION_COLOR
@@ -111,8 +123,9 @@ class ExtractionPyScript(ValvePyScript):
         """
         Get the extraction device's response blob
 
-        :return: response blob. binary string representing time v measured output
-        :rtype: str
+        Returns:
+            `bytes`: binary string representing time v measured output
+
         """
         result = self._extraction_action(("get_response_blob", (), {}))
         return result or b""
@@ -121,8 +134,8 @@ class ExtractionPyScript(ValvePyScript):
         """
         Get the extraction device's output blob
 
-        :return: output blob: binary string representing time v percent output
-        :rtype: str
+        Returns:
+            `bytes`: binary string representing time v percent output
         """
 
         result = self._extraction_action(("get_output_blob", (), {}))
@@ -181,6 +194,7 @@ class ExtractionPyScript(ValvePyScript):
 
         self.setup_context(
             position="",
+            next_position="",
             pattern="",
             extract_value=0,
             extract_units="",
@@ -243,6 +257,17 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_cryo(self, value, device_name=None, block=False, delay=1):
+        """
+        Set the cryotrap to setpoint `value` in degrees K.
+
+        Args:
+            value (`float,int`): Setpoint in degrees K
+            block (`bool,float,int`, optional): If `True` command is blocking, i.e. the command will not return
+                until setpoint reached. If `block` is a number than block until `block>abs(current_temp-setpoint)`
+            delay (`float,int`): Delay in seconds between each check to determine if blocking is complete.
+
+        """
+
         result = self._manager_action(
             (
                 "set_cryo",
@@ -958,10 +983,16 @@ class ExtractionPyScript(ValvePyScript):
     def set_intensity_scalar(self, v):
         return self._automated_run_call("py_set_intensity_scalar", v)
 
-    @verbose_skip
+    @device_verbose_skip
     @command_register
     def get_device(self, name):
         return self._get_device(name)
+
+    @verbose_skip
+    @command_register
+    def load_and_execute_lascon_script(self, scriptnumber, block=True):
+        dev = self._get_device("lascon_controller")
+        dev.load_and_execute_script(scriptnumber, block=block)
 
     # ==========================================================================
     # properties
@@ -991,46 +1022,38 @@ class ExtractionPyScript(ValvePyScript):
         return self._get_property(PATTERN)
 
     @property
-    def analysis_type(self):
-        at = self._get_property("analysis_type")
-        self.debug(
-            "getting analysis type for {}. "
-            "analysis_type={}".format(self.run_identifier, at)
-        )
-        return at
-
-    @property
     def extract_device(self):
-        return self._get_property("extract_device")
+        return self._get_property(EXTRACT_DEVICE)
 
     @property
     def tray(self):
-        return self._get_property("tray")
-        # return self.get_context()['tray']
+        return self._get_property(TRAY)
 
     @property
     def position(self):
         """
         if position is 0 return None
         """
-        # pos = self.get_context()['position']
-        pos = self._get_property("position")
+        pos = self._get_property(POSITION)
         if pos:
             return pos
 
     @property
+    def next_position(self):
+        return self._get_property(NEXT_POSITION)
+
+    @property
     def extract_value(self):
-        return self._get_property("extract_value")
-        # return self.get_context()['extract_value']
+        return self._get_property(EXTRACT_VALUE)
 
     @property
     def extract_units(self):
-        return self._get_property("extract_units")
+        return self._get_property(EXTRACT_UNITS)
         # return self.get_context()['extract_units']
 
     @property
     def beam_diameter(self):
-        return self._get_property("beam_diameter")
+        return self._get_property(BEAM_DIAMETER)
         # return self.get_context()['beam_diameter']
 
     @property
@@ -1043,7 +1066,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @property
     def light_value(self):
-        return self._get_property("light_value")
+        return self._get_property(LIGHT_VALUE)
 
     # ===============================================================================
     # private
@@ -1160,15 +1183,6 @@ class ExtractionPyScript(ValvePyScript):
 
     def _stop_pattern(self, protocol=None):
         self._extraction_action(("stop_pattern", (), {}), protocol=protocol)
-
-    def _automated_run_call(self, func, *args, **kw):
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
 
 
 # ============= EOF ====================================

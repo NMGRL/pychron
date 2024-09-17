@@ -43,6 +43,7 @@ from traits.api import (
 
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.regex import IPREGEX
 
@@ -227,6 +228,7 @@ class DatabaseAdapter(Loggable):
             else:
                 self.warning("no session factory")
         else:
+            self.critical("using Mock session")
             self.session = MockSession()
 
     def close_session(self):
@@ -304,8 +306,41 @@ class DatabaseAdapter(Loggable):
                     self.info(
                         "{} connecting to database {}".format(id(self), self.public_url)
                     )
+
+                    connect_args = {}
+                    if (
+                        globalv.db_ca_file
+                        and globalv.db_cert_file
+                        and globalv.db_key_file
+                    ):
+                        self.debug(
+                            f"using ssl ca={globalv.db_ca_file}, cert={globalv.db_cert_file}, key={globalv.db_key_file}"
+                        )
+
+                        for f in (
+                            globalv.db_ca_file,
+                            globalv.db_cert_file,
+                            globalv.db_key_file,
+                        ):
+                            if not os.path.isfile(f):
+                                self.warning(f"file does not exist: {f}")
+                                break
+                        else:
+                            connect_args = {
+                                "ssl": {
+                                    "ca": globalv.db_ca_file,
+                                    "cert": globalv.db_cert_file,
+                                    "key": globalv.db_key_file,
+                                    "check_hostname": False,
+                                }
+                            }
+
+                    self.debug(f"using connect_args {connect_args}")
                     engine = create_engine(
-                        url, echo=self.echo, pool_recycle=pool_recycle
+                        url,
+                        echo=self.echo,
+                        pool_recycle=pool_recycle,
+                        connect_args=connect_args,
                     )
 
                     self.session_factory = sessionmaker(
@@ -545,6 +580,7 @@ host= {}\nurl= {}'.format(
 
             connected = True
         except OperationalError:
+            self.debug_exception()
             self.warning("Operational connection failed to {}".format(self.public_url))
             connected = False
             self._test_connection_enabled = False
@@ -599,7 +635,11 @@ host= {}\nurl= {}'.format(
             self.critical("No session")
 
     def _add_unique(self, item, attr, name):
-        nitem = getattr(self, "get_{}".format(attr))(name)
+        try:
+            nitem = getattr(self, "get_{}".format(attr))(name)
+        except NoResultFound:
+            nitem = None
+
         if nitem is None:
             self.info("adding {}= {}".format(attr, name))
             self._add_item(item)

@@ -82,7 +82,13 @@ class ExtractionLineGraph(HasTraits):
         if self._cp:
             a = elem.find(tag).text
         else:
-            a = str(elem.get(tag)["name"])
+            # if isinstance(elem, (str, int)):
+            #     a = str(elem)
+            # else:
+            a = elem.get(tag)
+            if isinstance(a, dict):
+                a = str(a["name"])
+            # a = str(elem.get(tag)["name"])
 
         return a.strip()
 

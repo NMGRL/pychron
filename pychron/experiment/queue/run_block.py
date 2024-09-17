@@ -67,12 +67,16 @@ class RunBlock(Loggable):
     def _runs_gen(self, line_gen):
         delim = "\t"
 
-        header = [l.strip() for l in next(line_gen).split(delim)]
+        lines = list(line_gen)
+
+        header = [l.strip() for l in lines[0].split(delim)]
         pklass = RunParser
         if self.extract_device == FUSIONS_UV:
             pklass = UVRunParser
         parser = pklass()
-        for linenum, line in enumerate(line_gen):
+        # trim off header
+        lines = lines[1:]
+        for linenum, line in enumerate(lines):
             # self.debug('loading line {}'.format(linenum))
             skip = False
             line = line.rstrip()
@@ -99,8 +103,20 @@ class RunBlock(Loggable):
                 if self.extract_device == FUSIONS_UV:
                     klass = UVAutomatedRunSpec
 
+                # get the next runs position and save it to the current run.
+                # this allows the current run to move to the next run's position
+                try:
+                    nextline = lines[linenum + 1]
+                except IndexError:
+                    nextline = None
+
+                next_params = None
+                if nextline:
+                    _, next_params = parser.parse(header, nextline)
+                # self.debug(f"next line {nextline}")
+                # self.debug(f'next_params {next_params}')
                 arun = klass()
-                arun.load(script_info, params)
+                arun.load(script_info, params, next_params)
 
                 yield arun
 

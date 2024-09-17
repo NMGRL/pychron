@@ -281,7 +281,6 @@ class DVCAnalysis(Analysis):
         )
         if self.has_raw_data and not force:
             self.debug("already has raw data {}, {}".format(self.has_raw_data, force))
-            print(self.isotopes["Ar40"].sniff.xs)
             return
 
         path = self._analysis_path(modifier=".data")

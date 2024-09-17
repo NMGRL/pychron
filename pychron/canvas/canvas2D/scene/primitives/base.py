@@ -306,8 +306,7 @@ class QPrimitive(Primitive):
     def is_in(self, x, y):
         mx, my = self.get_xy()
         w, h = self.get_wh()
-        if mx <= x <= (mx + w) and my <= y <= (my + h):
-            return True
+        return mx <= x <= (mx + w) and my <= y <= (my + h)
 
 
 class Connectable(QPrimitive):
@@ -319,16 +318,16 @@ class Connectable(QPrimitive):
         if not self._initialized:
             return
 
-        cvo = self.x != self.ox
-        cho = self.y != self.oy
-
+        # cvo = self.x != self.ox
+        # cho = self.y != self.oy
+        w, h = self.width, self.height
         for t, c in self.connections:
-            c.clear_vorientation = cvo
-            c.clear_horientation = cho
+            # c.clear_vorientation = cvo
+            # c.clear_horientation = cho
 
             func = getattr(c, "set_{}point".format(t))
-            w, h = self.width, self.height
             func((self.x + w / 2.0, self.y + h / 2.0))
+            c.request_layout()
 
         self.request_redraw()
 
