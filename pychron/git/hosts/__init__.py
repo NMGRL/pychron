@@ -95,6 +95,9 @@ class BaseGitHostService(Loggable):
     default_remote_name = Str("origin")
     remote_url = Str
 
+    def set_authentication(self):
+        raise NotImplementedError
+
     def make_url(self, *args, **kw):
         raise NotImplementedError
 

@@ -52,6 +52,9 @@ class Experimentor(DVCIrradiationable):
     activate_editor_event = Event
     save_event = Event
 
+    def activate(self):
+        pass
+
     def prepare_destory(self):
         if self.executor:
             if self.executor.datahub:
