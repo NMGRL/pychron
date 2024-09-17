@@ -616,7 +616,7 @@ class DVCAnalysis(Analysis):
                 "value": float(v),
                 "error": float(e),
                 "reviewed": True,
-                "fit": 'discrimination power law',
+                "fit": "discrimination power law",
                 "standard_ratio": standard_ratio,
                 "discrimination": True,
                 "references": make_ref_list(refs),
