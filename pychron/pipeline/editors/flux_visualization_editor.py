@@ -407,15 +407,16 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         cg = self.graph
         if not isinstance(cg, FluxVisualizationGraph):
             cg = FluxVisualizationGraph(
-                container_dict={"kind": "h",
-                                "padding_left": 60,
-                                "padding_right":0,
-                                "padding_top": 60,
-                                "padding_bottom": 60,
-                                # "bgcolor": 'yellow',
-                                # "fill_padding": True,
-                                "bgcolor": self.plotter_options.bgcolor
-                                }
+                container_dict={
+                    "kind": "h",
+                    "padding_left": 60,
+                    "padding_right": 0,
+                    "padding_top": 60,
+                    "padding_bottom": 60,
+                    # "bgcolor": 'yellow',
+                    # "fill_padding": True,
+                    "bgcolor": self.plotter_options.bgcolor,
+                }
             )
             self.graph = cg
         else:
@@ -482,7 +483,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             # width=550,
             resizable="h",
             padding=20,
-            xtitle="mm", ytitle="J"
+            xtitle="mm",
+            ytitle="J",
         )
 
         right_plot = cg.new_plot(
