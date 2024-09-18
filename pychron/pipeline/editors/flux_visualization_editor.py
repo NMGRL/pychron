@@ -16,6 +16,8 @@
 from operator import itemgetter
 from pprint import pprint
 
+from chaco.examples.demo.basic.scatter import bgcolor
+from chaco.plot_containers import VPlotContainer
 from numpy import (
     linspace,
     meshgrid,
@@ -405,7 +407,15 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         cg = self.graph
         if not isinstance(cg, FluxVisualizationGraph):
             cg = FluxVisualizationGraph(
-                container_dict={"kind": "h", "bgcolor": self.plotter_options.bgcolor}
+                container_dict={"kind": "h",
+                                "padding_left": 60,
+                                "padding_right":0,
+                                "padding_top": 60,
+                                "padding_bottom": 60,
+                                # "bgcolor": 'yellow',
+                                # "fill_padding": True,
+                                "bgcolor": self.plotter_options.bgcolor
+                                }
             )
             self.graph = cg
         else:
@@ -415,11 +425,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             xtitle="X",
             ytitle="Y",
             add=False,
-            padding=0,
-            width=550,
-            height=550,
-            resizable="",
-            aspect_ratio=1,
+            padding=20,
+            # width=550,
+            # height=550,
+            resizable="hv",
+            # aspect_ratio=1,
+            # bgcolor='red',
+            # fill_padding=True,
         )
 
         ito = IrradiationTrayOverlay(
@@ -465,14 +477,22 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         # add 1D slices
         bottom_plot = cg.new_plot(
-            add=False, height=175, resizable="h", padding=0, xtitle="mm", ytitle="J"
+            add=False,
+            height=175,
+            # width=550,
+            resizable="h",
+            padding=20,
+            xtitle="mm", ytitle="J"
         )
 
         right_plot = cg.new_plot(
             add=False,
             width=175,
+            # height=600,
             resizable="v",
-            padding=0,
+            padding_bottom=235,
+            orientation="v",
+            padding=20,
             # xtitle='J',
             ytitle="mm",
         )
@@ -503,10 +523,10 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         center_plot.x_axis.orientation = "top"
 
-        right_plot.orientation = "v"
-        right_plot.x_axis.orientation = "top"
-        right_plot.x_axis.tick_label_rotate_angle = 45
-        right_plot.y_axis.orientation = "right"
+        # right_plot.orientation = "v"
+        # right_plot.x_axis.orientation = "top"
+        # right_plot.x_axis.tick_label_rotate_angle = 45
+        # right_plot.y_axis.orientation = "right"
         right_plot.x_axis.axis_line_visible = False
         right_plot.y_axis.axis_line_visible = False
 
@@ -534,26 +554,21 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         center.index.on_trait_change(cg.metadata_changed, "metadata_changed")
 
-        gridcontainer = container_factory(
-            kind="g",
-            # fill_padding=True,
-            # bgcolor='red',
-            padding_left=100,
-            padding_right=20,
-            padding_top=100,
-            padding_bottom=40,
-            shape=(2, 2),
-            spacing=(5, 5),
-        )
+        # gridcontainer = container_factory(
+        #     kind="g",
+        #     # fill_padding=True,
+        #     # bgcolor='red',
+        #     padding_left=100,
+        #     padding_right=20,
+        #     padding_top=100,
+        #     padding_bottom=40,
+        #     shape=(2, 2),
+        #     spacing=(5, 5),
+        # )
 
-        gridcontainer.add(center_plot)
-        gridcontainer.add(right_plot)
-        gridcontainer.add(bottom_plot)
-
-        # cb = cg.make_colorbar(center)
-        # cb.width = 50
-        # cb.padding_left = 50
-        # cg.plotcontainer.add(cb)
+        # gridcontainer.add(center_plot)
+        # gridcontainer.add(right_plot)
+        # gridcontainer.add(bottom_plot)
 
         # plot means
         s = cg.new_series(
@@ -571,7 +586,16 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         cg.x = reg.xs
         cg.y = reg.ys
 
-        cg.plotcontainer.add(gridcontainer)
+        # cg.plotcontainer = gridcontainer
+        # cg.plotcontainer.add(gridcontainer)
+        # cg.plotcontainer.add(center_plot)
+
+        inner_container = VPlotContainer(padding=0)
+
+        inner_container.add(bottom_plot)
+        inner_container.add(center_plot)
+        cg.plotcontainer.add(inner_container)
+        cg.plotcontainer.add(right_plot)
 
     @property
     def cleaned_analyses(self):
