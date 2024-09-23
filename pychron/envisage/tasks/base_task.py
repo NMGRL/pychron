@@ -321,10 +321,14 @@ class BaseManagerTask(BaseTask):
     manager = Any
 
     def prepare_destroy(self):
-        self.manager.prepare_destroy()
+        if self.manager:
+            if hasattr(self.manager, "prepare_destroy"):
+                self.manager.prepare_destroy()
 
     def activated(self):
-        self.manager.activate()
+        if self.manager:
+            if hasattr(self.manager, "activate"):
+                self.manager.activate()
 
     def view_pdf(self, p):
         self.view_file(p, application="Preview")
