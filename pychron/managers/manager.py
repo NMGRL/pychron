@@ -116,6 +116,12 @@ class Manager(Viewable, ConfigLoadable):
 
     error_code = None
 
+    def activate(self):
+        pass
+
+    def prepare_destroy(self):
+        pass
+
     def finish_loading(self):
         """ """
         pass
