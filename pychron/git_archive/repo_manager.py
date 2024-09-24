@@ -1023,7 +1023,7 @@ class GitRepoManager(Loggable):
 
         repo = self._repo
         if not self._get_remote(remote):
-            ahead, behind = 0,0
+            ahead, behind = 0, 0
         else:
             ahead, behind = ahead_behind(repo, remote)
 
