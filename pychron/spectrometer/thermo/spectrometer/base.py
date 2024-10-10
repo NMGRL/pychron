@@ -337,14 +337,8 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         pd = "Protection"
         if config.has_section(pd):
-            self.magnet.use_beam_blank = self.config_get(
-                config, pd, "use_beam_blank", cast="boolean", default=False
-            )
             self.magnet.use_detector_protection = self.config_get(
                 config, pd, "use_detector_protection", cast="boolean", default=False
-            )
-            self.magnet.beam_blank_threshold = self.config_get(
-                config, pd, "beam_blank_threshold", cast="float", default=0.1
             )
 
             # self.magnet.detector_protection_threshold = self.config_get(config, pd,
@@ -368,6 +362,8 @@ class ThermoSpectrometer(BaseSpectrometer):
         self.debug("Detectors {}".format(self.detectors))
         for d in self.detectors:
             d.load_deflection_coefficients()
+
+        return config
 
     def start(self):
         self.debug(

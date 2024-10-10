@@ -20,13 +20,11 @@ from pychron.spectrometer.isotopx.magnet.base import IsotopxMagnet
 
 
 class NGXMagnet(IsotopxMagnet):
-    _protect_detector = False
-
     def read_dac(self):
         return self.read_mass()
 
     def set_dac(self, v, *args, **kw):
-        return self.set_mass(v, deflect=self.microcontroller.protect_detector)
+        return self.set_mass(v, **kw)
 
     @get_float()
     def read_mass(self):
@@ -50,12 +48,18 @@ class NGXMagnet(IsotopxMagnet):
         self.microcontroller.stop_acquisition()
         # self.microcontroller.triggered = False
 
-        deflect = ",deflect" if deflect else ""
-        self.ask("SetMass {},{}{}".format(v, delay, deflect))
         dv = abs(self._dac - v)
         self._dac = v
-        change = dv > 1e-7
 
+        if self.use_beam_blank:
+            deflect = dv > self.beam_blank_threshold
+
+        self.debug(f'use beam blank={deflect}. dv={dv}, threshold={self.beam_blank_threshold}')
+
+        deflect = ",deflect" if deflect else ""
+        self.ask(f"SetMass {v},{delay}{deflect}")
+
+        change = dv > 1e-7
         return change
 
 

@@ -468,6 +468,8 @@ class BaseSpectrometer(SpectrometerDevice):
         p = get_spectrometer_config_path(name)
         config = self.get_configuration_writer(p)
 
+        self.magnet.load_beam_blank(config)
+
         return config
 
     def load_molecular_weights(self):

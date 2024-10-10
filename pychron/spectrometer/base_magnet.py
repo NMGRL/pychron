@@ -20,7 +20,7 @@ import time
 from math import pi
 
 from numpy import arange, sin
-from traits.api import Property, Float, Event, Instance
+from traits.api import Property, Float, Event, Instance, Bool
 
 from pychron.core.yaml import yload
 from pychron.paths import paths
@@ -51,6 +51,9 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
     use_af_demagnetization = False
 
     _suppress_mass_update = False
+
+    use_beam_blank = Bool(False)
+    beam_blank_threshold = Float(0.5)
 
     # def __init__(self, *args, **kw):
     #     super(BaseMagnet, self).__init__(*args, **kw)
@@ -86,6 +89,14 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         # load af demag
         self._load_af_demag_configuration()
 
+    def load_beam_blank(self, config):
+        pd = "Protection"
+        self.use_beam_blank = self.config_get(
+            config, pd, "use_beam_blank", cast="boolean", default=False
+        )
+        self.beam_blank_threshold = self.config_get(
+            config, pd, "beam_blank_threshold", cast="float", default=0.1
+        )
     # ===============================================================================
     # mapping
     # ===============================================================================
