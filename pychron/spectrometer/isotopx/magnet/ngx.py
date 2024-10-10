@@ -54,7 +54,9 @@ class NGXMagnet(IsotopxMagnet):
         if self.use_beam_blank:
             deflect = dv > self.beam_blank_threshold
 
-        self.debug(f'use beam blank={deflect}. dv={dv}, threshold={self.beam_blank_threshold}')
+        self.debug(
+            f"use beam blank={deflect}. dv={dv}, threshold={self.beam_blank_threshold}"
+        )
 
         deflect = ",deflect" if deflect else ""
         self.ask(f"SetMass {v},{delay}{deflect}")

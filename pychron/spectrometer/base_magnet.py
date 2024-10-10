@@ -97,6 +97,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         self.beam_blank_threshold = self.config_get(
             config, pd, "beam_blank_threshold", cast="float", default=0.1
         )
+
     # ===============================================================================
     # mapping
     # ===============================================================================
