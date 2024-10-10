@@ -28,6 +28,10 @@ class LasconController(CoreDevice):
         self.ask("SendPassword 3")
         return True
 
+    def set(self, script_number, block=True):
+        self.ask(f"PScriptLoad {script_number}")
+        self.ask(f"PScriptSet {script_number}")
+
     def send_script(self, text, script_number, stop_on_completion):
         sleep = 0
         self.ask(f"PScriptStart {script_number}")
