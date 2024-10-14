@@ -23,7 +23,7 @@ from threading import Event
 
 from numpy import polyfit, array, average, uint8, zeros_like
 from skimage.color import gray2rgb
-from skimage.draw import circle
+from skimage.draw import disk
 from skimage.draw._draw import _coords_inside_image
 from traits.api import Any, Bool
 
@@ -412,11 +412,14 @@ class PatternExecutor(Patternable):
         per_img = zeros_like(oimg, dtype="int16")
 
         img_h, img_w = pos_img.shape
-        pcx, pcy = circle(img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm)
+        # pcx, pcy = circle(img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm)
 
         color = 2**15 - 1
 
-        perimeter_circle = _coords_inside_image(pcx, pcy, per_img.shape)
+        # perimeter_circle = _coords_inside_image(pcx, pcy, per_img.shape)
+        perimeter_circle = disk(
+            (img_h / 2, img_w / 2), pattern.perimeter_radius * pxpermm
+        )
         per_img[perimeter_circle] = 50
         set_data("imagedata", gray2rgb(per_img.astype(uint8)))
 
@@ -582,8 +585,9 @@ class PatternExecutor(Patternable):
                 pos_img -= 5
                 pos_img = pos_img.clip(0, color)
 
-                cxx, cyy = circle(ay, ax, 2)
-                c = _coords_inside_image(cxx, cyy, pos_img.shape)
+                # cxx, cyy = circle(ay, ax, 2)
+                # c = _coords_inside_image(cxx, cyy, pos_img.shape)
+                c = disk((ay, ax), 2)
                 pos_img[c] = color - 60
                 nimg = (pos_img + per_img).astype(uint8)
 

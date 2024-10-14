@@ -17,7 +17,14 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from pyface.qt.QtCore import QRegExp, Qt
+
+from pyface.qt.QtCore import Qt
+
+try:
+    from pyface.qt.QtCore import QRegExp
+except ImportError:
+    from pyface.qt.QtCore import QRegularExpression as QRegExp
+
 from pyface.qt.QtGui import (
     QHBoxLayout,
     QPushButton,
@@ -185,7 +192,8 @@ class _FilterTabularEditor(_TabularEditor):
         proxyModel.setSourceModel(self.model)
         self.control.setSortingEnabled(True)
         self.control.setModel(proxyModel)
-        if self.factory.multi_select:
+
+        if self.factory and self.factory.multi_select:
             slot = self._on_rows_selection
         else:
             slot = self._on_row_selection

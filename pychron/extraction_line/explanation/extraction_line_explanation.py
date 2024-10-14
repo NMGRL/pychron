@@ -29,6 +29,7 @@ class ELEHandler(Handler):
     def init(self, info):
         if not info.initialized:
             info.object.selection_ok = True
+        return True
 
 
 class ExplanationAdapter(TabularAdapter):

@@ -26,7 +26,11 @@ from traits.api import Event, Str, List, Instance, String
 
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
-from pychron.core.helpers.filetools import glob_list_directory, add_extension
+from pychron.core.helpers.filetools import (
+    glob_list_directory,
+    add_extension,
+    list_directory,
+)
 from pychron.core.ui.stage_component_editor import LaserComponentEditor
 from pychron.core.ui.thread import Thread
 from pychron.managers.manager import Manager
@@ -82,6 +86,12 @@ class BaseStageManager(Manager):
         print(sms, self.root)
         self.stage_map_names = sms
 
+    def stage_maps_iter(self):
+        for s in self.stage_map_names:
+            sm = self._stage_map_factory(s)
+            if sm and sm.load():
+                yield sm
+
     def load(self):
         self.refresh_stage_map_names()
 
@@ -135,8 +145,13 @@ class BaseStageManager(Manager):
                         rot, cpos, scale
                     )
                 )
-                pos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
-
+                npos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
+                if key:
+                    hole = smap.get_hole(key)
+                    hole.calibrated_position = smap.map_to_calibration(
+                        pos, cpos=cpos, rot=rot, scale=scale
+                    )
+                pos = npos
         return pos
 
     def update_axes(self):
@@ -180,20 +195,23 @@ class BaseStageManager(Manager):
         self.debug("User entered calibrated position {}".format(new))
         self.goto_position(new)
 
+    def _stage_map_factory(self, name):
+        root = self.root
+        path = os.path.join(root, add_extension(name, ".txt"))
+        sm = self.stage_map_klass(file_path=path)
+        return sm
+
     def _stage_map_name_changed(self, old, new):
         if new:
             self.debug("setting stage map to {}".format(new))
-            root = self.root
-            path = os.path.join(root, add_extension(new, ".txt"))
-            sm = self.stage_map_klass(file_path=path)
-
+            sm = self._stage_map_factory(new)
             if sm.load():
+                self.stage_map = sm
+
                 self.tray_calibration_manager.load_calibration(stage_map=new)
 
                 self.canvas.set_map(sm)
                 self.canvas.request_redraw()
-
-                self.stage_map = sm
 
                 self._stage_map_changed_hook()
             else:

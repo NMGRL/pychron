@@ -216,6 +216,9 @@ class ExperimentFactoryPane(TraitsDockPane):
             queue_factory_item("delay_between_analyses", label="Between Analyses (s)"),
             queue_factory_item("delay_after_blank", label="After Blank (s)"),
             queue_factory_item("delay_after_air", label="After Air (s)"),
+            queue_factory_item(
+                "delay_after_conditional", label="Conditional Delay (s)"
+            ),
             label="Delays",
         )
 
@@ -342,9 +345,14 @@ class ExperimentFactoryPane(TraitsDockPane):
                     run_factory_name("clear_repository_identifier_button"), "clear"
                 ),
                 UItem(
-                    run_factory_name("use_project_based_repository_identifier"),
-                    tooltip="Use repository identifier based on project name",
+                    run_factory_name("repository_identifier_model"),
+                    tooltip='None: You must specify repository\nLoad: repository based on "load" name\nProject: '
+                    'repository based on "project" name',
                 ),
+                # UItem(
+                #     run_factory_name("use_project_based_repository_identifier"),
+                #     tooltip="Use repository identifier based on project name",
+                # )
             ),
             HGroup(
                 run_factory_item(
@@ -445,6 +453,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             run_factory_uitem("measurement_script", style="custom"),
             run_factory_uitem("post_equilibration_script", style="custom"),
             run_factory_uitem("post_measurement_script", style="custom"),
+            run_factory_uitem("syn_extraction_script", style="custom"),
             run_factory_uitem("script_options", style="custom"),
             HGroup(
                 spring,

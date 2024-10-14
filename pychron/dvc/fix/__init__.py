@@ -13,34 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
-
-from pyface.message_dialog import warning
-
-from pychron.dvc.dvc import DVC
-from pychron.paths import paths
-
-
-def get_dvc():
-    conn = dict(
-        host=os.environ.get("ARGONSERVER_HOST"),
-        username=os.environ.get("ARGONSERVER_DB_USER"),
-        password=os.environ.get("ARGONSERVER_DB_PWD"),
-        name="pychrondvc",
-        kind="mysql",
-    )
-
-    paths.build("~/PychronDev")
-    meta_name = "NMGRLMetaData"
-    dvc = DVC(bind=False, organization="NMGRLData", meta_repo_name=meta_name)
-    paths.meta_root = os.path.join(paths.dvc_dir, dvc.meta_repo_name)
-    dvc.db.trait_set(**conn)
-    if not dvc.initialize():
-        warning(None, "Failed to initialize DVC")
-        return
-
-    dvc.meta_repo.smart_pull()
-    return dvc
 
 
 # ============= EOF =============================================

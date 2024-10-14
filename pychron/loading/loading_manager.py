@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import os
+import time
 from datetime import datetime
 
 from chaco.data_range_1d import DataRange1D
@@ -35,9 +36,11 @@ from traits.api import (
     on_trait_change,
     Enum,
     RGBColor,
+    Event,
 )
 from traitsui.api import Item, EnumEditor, UItem, ListStrEditor
 
+from pychron.canvas.canvas2D.calibration_canvas import CalibrationCanvas
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.utils import load_holder_canvas
@@ -45,9 +48,13 @@ from pychron.core.helpers.filetools import view_file
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
+from pychron.hardware.jss57 import STP_MTRD
+from pychron.loading.foot_pedal import FootPedal
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
 
@@ -89,6 +96,10 @@ class LoadSelection(HasTraits):
             title="Select Loads to Unarchive",
         )
         return v
+
+
+class NamedPosition(HasTraits):
+    name = Str
 
 
 class LoadPosition(HasTraits):
@@ -192,6 +203,7 @@ class LoadingManager(DVCIrradiationable):
     selected_instances = List
 
     canvas = Any
+    mv_canvas = Any
 
     add_button = Button
     delete_button = Button
@@ -221,16 +233,104 @@ class LoadingManager(DVCIrradiationable):
 
     cmap_name = Enum(sorted(list(color_map_name_dict.keys())))
     use_cmap = Bool(True)
-    interaction_mode = Enum("Entry", "Info", "Edit")
+    interaction_mode = Enum("Entry", "Info", "Edit", "Goto", "GotoEntry", "FootPedal")
     suppress_update = False
 
     use_measured = Bool(False)
 
     _suppress_edit = Bool(False)
 
+    stage_manager = Instance(
+        "pychron.lasers.stage_managers.video_stage_manager.VideoStageManager"
+    )
+
+    use_stage = Bool(False)
+    foot_pedal = Instance(FootPedal, ())
+    interaction_mode_enabled = Bool(False)
+    focus_motor = Instance(STP_MTRD)
+    focus_position_entry = Float(enter_set=True, auto_set=False)
+    focus_position_readback = Float
+    focus_stepsperdata = Int(964)
+    focus_scalar = Float(15.5)
+    zoom_level = Enum(
+        "1",
+        (
+            "0.8",
+            "1",
+            "2",
+            "3",
+            "4",
+            "6",
+            "8",
+        ),
+    )
+
+    loading_level_button = Button("Loading Level")
+    checking_level_button = Button("Checking Level")
+    up_button = Button("Up")
+    down_button = Button("Down")
+    home_button = Button("Home")
+    scan_tray_button = Button("Scan Tray")
+    refresh_table = Event
+    mode = "normal"
+
+    tray_checker = Instance("pychron.loading.tray_checker.TrayChecker")
+
+    use_image_shift = True
+
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
+
+        pref_id = "pychron.loading"
+        bind_preference(self, "use_stage", "{}.use_stage".format(pref_id))
+
+        if self.use_stage:
+            from pychron.lasers.stage_managers.video_stage_manager import (
+                VideoStageManager,
+            )
+            from pychron.loading.tray_checker import TrayChecker
+
+            pxpermm = 55
+            self.stage_manager = VideoStageManager(
+                parent=self,
+                name="loader",
+                pxpermm=pxpermm,
+                # root=os.path.join(paths.meta_root, 'load_holders'),
+                stage_controller_klass="ZaberMotion",
+            )
+            self.stage_manager.autocenter_manager.use_autocenter = True
+            self.stage_manager.autocenter_manager.pxpermm = pxpermm
+            self.stage_manager.load()
+            self.stage_manager.initialize_video()
+            self.stage_manager.canvas.padding = 10
+            self.stage_manager.canvas.show_axes = False
+            self.stage_manager.stage_controller.bootstrap()
+            self.stage_manager.stage_controller.update_axes()
+            self.tray_checker = TrayChecker(self)
+            self.focus_motor = STP_MTRD(name="focusmotor")
+            self.focus_motor.bootstrap()
+            self.focus_motor.stepsperdata = self.focus_stepsperdata
+            self.focus_motor.nominal_home_position = 12
+            self.stage_manager.set_zoom_manually(pxpermm)
+            # self.stage_manager.canvas.set_mapper_limits('x', (-10,10))
+            # self.stage_manager.canvas.set_mapper_limits('y', (-10,10))
+            self.stage_manager.bind_preferences("pychron.loading")
+
+            self._update_focus_position()
+            self.focus_position_entry = round(self.focus_position_readback, 2)
+
+    def scan_tray(self):
+        classify_now = False
+        if self.confirmation_dialog("Would you like to classify each image"):
+            classify_now = True
+        self.tray_checker.scan(classify_now)
+
+    def check_tray(self):
+        self.tray_checker.check()
+
+    def map_tray(self):
+        self.tray_checker.map()
 
     def set_loaded_runs(self, runs):
         pass
@@ -244,6 +344,11 @@ class LoadingManager(DVCIrradiationable):
     def clear(self):
         if self.canvas:
             self.canvas.clear_all()
+
+    def get_load_position_by_position(self, pos):
+        for p in self.positions:
+            if p.position == pos:
+                return p
 
     def get_selection(self):
         from pychron.loading.load_view_selection import (
@@ -285,12 +390,15 @@ class LoadingManager(DVCIrradiationable):
         self.load_load_by_name()
 
     def load_load_by_name(self):
+        self.interaction_mode_enabled = False
         self.tray = ""
         if not self.load_instance:
             return
 
         load_name = self.load_instance.name
         self.canvas = self.make_canvas(load_name)
+        self.mv_canvas = self.make_canvas(load_name, klass=CalibrationCanvas)
+
         loadtable = self.dvc.db.get_loadtable(load_name)
         self.positions = []
         if not loadtable:
@@ -359,19 +467,41 @@ class LoadingManager(DVCIrradiationable):
         self.positions = pos
         self._set_group_colors()
         self.canvas.request_redraw()
+        self.interaction_mode_enabled = True
 
-    def make_canvas(self, new, editable=True):
+        if self.stage_manager:
+            for hole in self.stage_manager.stage_map.sample_holes:
+                self._update_mv_canvas(hole)
+
+    def _update_mv_canvas(self, hole):
+        if self.mv_canvas:
+            hole = self.stage_manager.stage_map.get_hole(hole)
+            pos = hole.corrected_position
+            if pos[0] or pos[1]:
+                unmapped_pos = self.stage_manager.get_uncalibrated_xy(pos)
+                self.mv_canvas.update_hole(hole, unmapped_pos)
+
+    def make_canvas(self, new, editable=True, klass=None, **kw):
+        if klass is None:
+            klass = LoadingCanvas
+
         db = self.dvc.db
 
         lt = db.get_loadtable(new)
-        c = self.canvas
-        if not c:
-            c = LoadingCanvas(
-                view_x_range=(-2, 2),
-                view_y_range=(-2, 2),
-                bgcolor="lightgray",
-                editable=editable,
-            )
+        if "view_x_range" not in kw:
+            kw["view_x_range"] = (-2, 2)
+        if "view_y_range" not in kw:
+            kw["view_y_range"] = (-2, 2)
+        if "bgcolor" not in kw:
+            kw["bgcolor"] = "lightgray"
+
+        c = klass(
+            # view_x_range=(-2, 2),
+            # view_y_range=(-2, 2),
+            # bgcolor="lightgray",
+            editable=editable,
+            **kw,
+        )
         if lt and lt.holderName and lt.holderName != NULL_STR:
             self.tray = lt.holderName
             holes = self.dvc.get_load_holder_holes(lt.holderName)
@@ -506,7 +636,41 @@ class LoadingManager(DVCIrradiationable):
 
         return True
 
+    def goto(self, hole, block=False, capture=False):
+        self.debug("goto {}".format(hole))
+        if not self.stage_manager:
+            self.warning_dialog("No Stage Manager")
+            return
+
+        if not self.stage_manager.moving():
+            if isinstance(hole, str):
+                hole = int(hole)
+
+            if not isinstance(hole, int):
+                hole = int(hole.name)
+
+            self.stage_manager.move_to_hole(hole)
+            if block:
+                time.sleep(0.05)
+                while self.stage_manager.move_thread.isRunning():
+                    time.sleep(0.05)
+
+                if capture:
+                    name = hole
+                    if isinstance(capture, str):
+                        name = "{}{}".format(hole, capture)
+                    self._capture(name)
+
+                self._update_mv_canvas(hole)
+
     # private
+    def _capture(self, name):
+        loadname = self.load_instance.name
+        dirpath = os.path.join(paths.loading_dir, loadname)
+        self.stage_manager.snapshot(
+            name=name, directory=dirpath, render_canvas=False, inform=False
+        )
+
     def _check_load_holders(self, ts):
         ns = []
         for ti in ts:
@@ -529,7 +693,11 @@ class LoadingManager(DVCIrradiationable):
             loads = []
 
         return [
-            Load(name=li.name, create_date=li.create_date.strftime("%m/%d/%Y"))
+            Load(
+                name=li.name,
+                tray=li.holderName,
+                create_date=li.create_date.strftime("%m/%d/%Y"),
+            )
             for li in loads
         ]
 
@@ -568,10 +736,14 @@ class LoadingManager(DVCIrradiationable):
         # clear fill
         canvas_hole.fill = False
         canvas_hole.clear_text()
+        self.foot_pedal.active_idx = pid
 
     def _new_position(self, canvas_hole):
         pid = int(canvas_hole.name)
+        self._new_position_factory(pid)
+        self._set_canvas_hole_selected(canvas_hole)
 
+    def _new_position_factory(self, pid):
         lp = LoadPosition(
             identifier=self.identifier,
             irradiation=self.irradiation,
@@ -587,10 +759,8 @@ class LoadingManager(DVCIrradiationable):
         )
         self.positions.append(lp)
 
-        self._set_canvas_hole_selected(canvas_hole)
-
-    def _auto_increment_identifier(self):
-        if self.auto_increment and self.identifier:
+    def _auto_increment_identifier(self, force=False):
+        if (force or self.auto_increment) and self.identifier:
             idx = self.identifiers.index(self.identifier)
             try:
                 self.identifier = self.identifiers[idx + 1]
@@ -905,6 +1075,10 @@ class LoadingManager(DVCIrradiationable):
                 sel.weight = self.weight
                 sel.weight_label.text = self.weight
 
+    def _tray_changed(self, new):
+        if self.use_stage and new:
+            self.stage_manager.stage_map_name = new
+
     def _nxtals_changed(self):
         if self._suppress_edit:
             return
@@ -915,6 +1089,49 @@ class LoadingManager(DVCIrradiationable):
                 sel.nxtals = self.nxtals
                 sel.nxtals_label.text = self.nxtals
 
+    @on_trait_change("stage_map:stage_map_name")
+    def _handle_stage_map_changed(self):
+        self.stage_manager.stage_map.zoom_level = self.zoom_level
+
+    @on_trait_change("canvas:increment_event")
+    def _increment(self):
+        """
+        First this after the crystal is loaded into the hole.
+        take a picture then move to the next hole
+
+        """
+        self.debug("increment")
+        idx = self.foot_pedal.active_idx
+        item = self.canvas.scene.get_item(idx)
+        if item:
+            # check to see if sample actually loaded
+            if not self.tray_checker.check_frame():
+                if self.confirmation_dialog(
+                    "It does not appear that a grain is in the hole. Is this correct?"
+                ):
+                    result = True
+                else:
+                    result = False
+                self.tray_checker.validate_result(result)
+
+                if result:
+                    if not self.confirmation_dialog(
+                        "Would you like to skip loading this hole?"
+                    ):
+                        return
+
+            item.fill = True
+            self._capture("{}.loaded".format(idx))
+
+            self._new_position_factory(idx)
+            self._set_group_colors()
+            self.canvas.request_redraw()
+            self.goto(idx + 1, block=True, capture=".empty")
+
+            if self.foot_pedal.increment():
+                if self.confirmation_dialog("Max count reached. Increment Identifier?"):
+                    self._auto_increment_identifier(force=True)
+
     @on_trait_change("canvas:selected")
     def _update_selected(self, new):
         if not new:
@@ -924,6 +1141,31 @@ class LoadingManager(DVCIrradiationable):
             self.warning_dialog("Select a load")
             return
 
+        if self.interaction_mode == "Goto":
+            self.goto(new)
+        else:
+            self._interact(new)
+
+    def set_interaction_mode(self, mode):
+        if self.interaction_mode == mode:
+            self.interaction_mode = "Entry"
+        else:
+            self.interaction_mode = mode
+
+    def _interaction_mode_changed(self, new):
+        self.debug("interaction mode {}".format(new))
+        if self.canvas:
+            self.canvas.mode_overlay.mode = new
+            if new == "FootPedal":
+                info = self.foot_pedal.edit_traits()
+                if info.result:
+                    self.goto(self.foot_pedal.active_idx, block=True, capture=".empty")
+                    self.canvas.set_foot_pedal_mode(new == "FootPedal")
+            self.canvas.request_redraw()
+        else:
+            self.information_dialog("Please select a load")
+
+    def _interact(self, new):
         if not self.canvas.editable:
             if self.use_measured:
                 if new.measured_indicator:
@@ -1000,6 +1242,67 @@ class LoadingManager(DVCIrradiationable):
         # self.refresh_table = True
         self.dirty = True
         self.canvas.request_redraw()
+
+    def _scan_tray_button_fired(self):
+        self.scan_tray()
+
+    def _zoom_level_changed(self, new):
+        self.stage_manager.stage_map.zoom_level = new
+        with open(os.path.join(paths.appdata_dir, "zoom_level.csv")) as rfile:
+            for line in rfile:
+                zoom, pxpermm = line.split(",")
+                if float(zoom) == float(new):
+                    pxpermm = float(pxpermm)
+                    break
+            else:
+                pxpermm = 55
+                self.debug(f"no zoom found for {new}. defaulting to {pxpermm}")
+        self.stage_manager.set_zoom_manually(pxpermm)
+        self.stage_manager.autocenter_manager.pxpermm = pxpermm
+
+    def _focus_stepsperdata_changed(self, new):
+        self.focus_motor.stepsperdata = new
+
+    def _focus_position_entry_changed(self, new):
+        if new is not None:
+
+            def update(pos):
+                self.focus_position_readback = pos
+
+            self.focus_motor.set_position(
+                new, use_absolute=True, block=False, update=update
+            )
+            dev = new - 18
+
+            self.stage_manager.canvas.set_offset(self.get_focus_scalar() * dev)
+
+    def get_focus_scalar(self):
+        return self.stage_manager.pxpermm / self.focus_scalar
+
+    def _up_button_fired(self):
+        pos = self.focus_motor.data_position
+        self.debug(f"up pos={pos}")
+        if self.focus_position_readback < 52:
+            self.focus_motor.set_position(0.25)
+            if self.use_image_shift:
+                self.stage_manager.canvas.shift_right(self.get_focus_scalar() / 4.0)
+            self._update_focus_position()
+
+    def _down_button_fired(self):
+        pos = self.focus_motor.data_position
+        self.debug(f"down pos={pos}")
+        if self.focus_position_readback > 0:
+            self.focus_motor.set_position(-0.25)
+            if self.use_image_shift:
+                self.stage_manager.canvas.shift_left(self.get_focus_scalar() / 4.0)
+            self._update_focus_position()
+
+    def _update_focus_position(self):
+        self.focus_position_readback = self.focus_motor.get_position()
+
+    def _home_button_fired(self):
+        self._update_focus_position()
+        self.focus_motor.home()
 
 
 # ============= EOF =============================================

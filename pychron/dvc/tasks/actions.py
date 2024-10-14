@@ -287,4 +287,27 @@ class UseOfflineDatabase(Action):
             restart()
 
 
+class UploadDatabaseAction(Action):
+    name = "Upload Database"
+
+    def perform(self, event):
+        from pychron.dvc.upload_database import UploadDatabase
+
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+
+        ud = UploadDatabase(dvc=dvc, application=app)
+        ud.edit_traits()
+
+
+class SeedDatabase(Action):
+    name = "Seed Database"
+
+    def perform(self, event):
+        from pychron.dvc.seed import seed_database
+
+        app = event.task.window.application
+        seed_database(dvc=app.get_service(DVC_PROTOCOL), application=app)
+
+
 # ============= EOF =============================================

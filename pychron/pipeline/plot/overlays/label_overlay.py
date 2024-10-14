@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.plot_label import PlotLabel
+from chaco.api import PlotLabel
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import List, Bool, Int, on_trait_change, Color
 from six.moves import zip

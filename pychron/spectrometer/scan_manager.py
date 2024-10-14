@@ -128,13 +128,6 @@ class ScanManager(StreamGraphManager):
         self._set_detector(det)
         self._set_position()
 
-    def stop(self):
-        self.prepare_destroy()
-
-    def stop_scan(self):
-        self.dump_settings()
-        self._stop_timer()
-
         # clear our graph settings so on reopen events will fire
         # del self.graph_scale
         # del self._graph_ymax
@@ -407,13 +400,6 @@ class ScanManager(StreamGraphManager):
                 )
                 self._stop_timer()
 
-    def _stop_timer(self):
-        self.info("stopping scan timer")
-        if self.timer:
-            self.timer.Stop()
-        else:
-            self.debug("no timer to stop")
-
     def _start_recording(self):
         #        self._first_recording = True
         self.queue = Queue()
@@ -480,6 +466,7 @@ class ScanManager(StreamGraphManager):
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR and self.detector:
             self.info("set position {} on {}".format(self.isotope, self.detector))
+            self.spectrometer.set_position_hook()
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
     @property
@@ -643,18 +630,20 @@ class ScanManager(StreamGraphManager):
             det.series_id = i
 
         if plot.plots:
-            cp = plot.plots[det.name][0]
-            dt = DataTool(
-                plot=cp, component=plot, normalize_time=True, use_date_str=False
-            )
-            dto = DataToolOverlay(component=plot, tool=dt)
-            plot.tools.append(dt)
-            plot.overlays.append(dto)
-
-            n = self.graph_scan_width
-            n = max(n, 1 / 60.0)
-            mins = n * 60
-            g.data_limits[0] = 1.8 * mins
+            pass
+            # disable datatool for now
+            # cp = plot.plots[det.name][0]
+            # dt = DataTool(
+            #     plot=cp, component=plot, normalize_time=True, use_date_str=False
+            # )
+            # dto = DataToolOverlay(component=plot, tool=dt)
+            # plot.tools.append(dt)
+            # plot.overlays.append(dto)
+            #
+            # n = self.graph_scan_width
+            # n = max(n, 1 / 60.0)
+            # mins = n * 60
+            # g.data_limits[0] = 1.8 * mins
 
         return g
 

@@ -24,7 +24,9 @@ command_register = makeRegistry()
 
 
 class NGXMeasurementPyScript(MeasurementPyScript):
-    pass
+    def get_command_register(self):
+        cs = super().get_command_register()
+        return cs + list(command_register.commands.items())
 
 
 # ============= EOF =============================================

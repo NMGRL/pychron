@@ -72,6 +72,12 @@ class ICFactorSubOptions(SubOptions):
             Item("source_correction_kind", label="Kind"),
             label="Source",
         )
+
+        disc = BorderVGroup(
+            Item("use_discrimination", label="Use Discrimination"),
+            label="Discrimination",
+        )
+
         v = View(
             VGroup(
                 Item(
@@ -81,6 +87,7 @@ class ICFactorSubOptions(SubOptions):
                     "redefined how you are handling the IC factor correction. ",
                 ),
                 Item("show_statistics"),
+                Item("show_current"),
                 Item(
                     "link_plots",
                     label="Link Plots",
@@ -89,6 +96,7 @@ class ICFactorSubOptions(SubOptions):
                     "all other plots",
                 ),
                 src,
+                disc,
             )
         )
         return v

@@ -99,6 +99,9 @@ class ToupCamCamera(object):
         b, g, r = image.split()
         return Image.merge("RGB", (r, g, b))
 
+    def read(self):
+        return True, self.get_image_data()
+
     def get_image_data(self, *args, **kw):
         d = self._data
         return d

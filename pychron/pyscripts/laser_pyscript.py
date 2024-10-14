@@ -29,6 +29,10 @@ command_register = makeRegistry()
 class LaserPyScript(ExtractionPyScript):
     _task = None
 
+    def get_command_register(self):
+        cs = super().get_command_register()
+        return cs + list(command_register.commands.items())
+
     @verbose_skip
     @command_register
     def power_map(self, *args, **kw):

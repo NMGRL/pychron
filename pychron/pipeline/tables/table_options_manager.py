@@ -18,22 +18,22 @@ import os
 from traits.api import Instance
 
 from pychron.globals import globalv
-from pychron.options.options_manager import BaseOptionsManager
+from pychron.options.options_manager import BaseOptionsManager, OptionsManager
 from pychron.paths import paths
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 
 
-class TableOptionsManager(BaseOptionsManager):
+class TableOptionsManager(OptionsManager):
     selected_options = Instance(XLSXAnalysisTableWriterOptions)
     options_klass = XLSXAnalysisTableWriterOptions
 
-    def _save(self, name, obj):
-        obj.set_persistence_path(self._pname(name))
-        obj.dump()
+    # def _save(self, name, obj):
+    #     obj.set_persistence_path(self._pname(name, '.json'))
+    #     obj.dump()
 
     # def _selected_changed(self, new):
     #     if new:
-    #         obj = self.options_klass(self._pname(new))
+    #         obj = self.options_klass(self._pname(new, '.json'))
     #         self.selected_options = obj
 
     @property

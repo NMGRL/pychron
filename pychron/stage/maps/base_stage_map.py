@@ -17,13 +17,18 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+import math
 import os
+import random
+from operator import attrgetter
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 
+from pychron.core.codetools.inspection import caller
 from pychron.core.geometry.affine import transform_point, itransform_point
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.loggable import Loggable
+from pychron.mv.zoom.zoom import calc_rotation
 
 
 class SampleHole(HasTraits):
@@ -39,7 +44,7 @@ class SampleHole(HasTraits):
     corrected = False
     interpolation_holes = None
     analyzed = False
-
+    deviation = None
     nominal_position = Property(depends_on="x,y")
     corrected_position = Property(depends_on="x_cor,y_cor")
 
@@ -53,6 +58,12 @@ class SampleHole(HasTraits):
 
     def has_correction(self):
         return self.corrected
+
+    def distance(self, h):
+        return ((self.x_cor - h.x_cor) ** 2 + (self.y_cor - h.y_cor) ** 2) ** 0.5
+
+    def vector_distance(self, h):
+        return self.x_cor - h.x_cor, self.y_cor - h.y_cor
 
 
 class BaseStageMap(Loggable):
@@ -70,6 +81,9 @@ class BaseStageMap(Loggable):
 
     # should always be N,E,S,W,center
     calibration_holes = None
+    secondary_calibration = None
+
+    corrected_affine = None
 
     # def __init__(self, *args, **kw):
     #     super(BaseStageMap, self).__init__(*args, **kw)
@@ -89,7 +103,8 @@ class BaseStageMap(Loggable):
 
                 if cnt == 0:
                     # line 0 shape, dimension
-                    shape, dimension = line.split(",")
+                    args = line.split(",")
+                    shape, dimension = args[:2]
                     self.g_shape = shape
                     self.g_dimension = dimension = float(dimension)
                 elif cnt == 1:
@@ -112,7 +127,6 @@ class BaseStageMap(Loggable):
                     if h is None:
                         self.warning_dialog("Invalid Stage Map {}".format(self.name))
                         return
-
                     sms.append(h)
                     hi += 1
             else:
@@ -120,6 +134,10 @@ class BaseStageMap(Loggable):
 
             self._load_hook()
             return True
+
+    def random_choice(self, k=10):
+        holes = random.choice(self.sample_holes, k=k)
+        return sorted(holes, key=attrgetter("id"))
 
     def row_dict(self):
         return {k: list(v) for k, v in self._grouped_rows()}
@@ -136,6 +154,15 @@ class BaseStageMap(Loggable):
             if include_mid:
                 yield ri[len(ri) / 2]
             yield b
+
+    def all_holes(self):
+        for i, (g, ri) in enumerate(self._grouped_rows()):
+            if i % 2:
+                # odd row
+                yield from reversed(list(ri))
+            else:
+                # even row
+                yield from ri
 
     def circumference_holes(self):
         for i, (g, ri) in enumerate(self._grouped_rows()):
@@ -168,9 +195,18 @@ class BaseStageMap(Loggable):
 
         return self.get_hole(key.strip())
 
+    @caller
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
-        return itransform_point(pos, cpos, rot, scale)
+        npos = itransform_point(pos, cpos, rot, scale)
+
+        self.load_correction_affine_file()
+        if self.corrected_affine:
+            cpos = self.corrected_affine["translation"]
+            rot = self.corrected_affine["rotation"]
+            npos = itransform_point(npos, cpos, rot, 1)
+
+        return npos
         # a = AffineTransform()
         # a.scale(1 / scale, 1 / scale)
         # a.rotate(-rot)
@@ -192,10 +228,55 @@ class BaseStageMap(Loggable):
                 pos, cpos, rot, pt
             )
         )
+        # if self.secondary_calibration and include_secondary:
+        #     c, r, s = self.secondary_calibration
+        #     npt = transform_point(pt, c, r, s)
+        #     self.debug('secondary calibration pos={}, cpos={}, rot={}, new pos={}'.format(pt, c, r, npt))
+        #     pt = npt
+
         return pt
 
+    _bufx = None
+
+    # def update_secondary_calibration(self, h):
+    #     """
+    #     """
+    #     return
+    #
+    #     if h.corrected_position:
+    #         # nx, ny = h.nominal_position
+    #         nx, ny = h.calibrated_position
+    #         cx, cy = h.corrected_position
+    #
+    #         # nx -= self.cpos[0]
+    #         # ny -= self.cpos[1]
+    #         # dx = nx - cx
+    #         # dy = ny - cy
+    #
+    #         # if self._bufx is None:
+    #         #     self._bufx = []
+    #         #     self._bufy = []
+    #         # self._bufx.append(dx)
+    #         # self._bufy.append(dy)
+    #         #
+    #         # dx = sum(self._bufx) / len(self._bufx)
+    #         # dy = sum(self._bufy) / len(self._bufy)
+    #
+    #         # r = math.degrees(math.atan2(dy, dx))
+    #         nominal_rotation = math.degrees(math.atan2(ny, nx))
+    #         corrected_rotation = math.degrees(math.atan2(cy, cx))
+    #         r = corrected_rotation - nominal_rotation
+    #
+    #         self.debug('secondary rotation calibration {}'.format(ny, nx, cy, cx, r))
+    #         # self.secondary_calibration = ((0, 0), r, 1)
+    #         # self.debug('nx {} {} {} {} dx={} dy={}'.format(nx, cx, ny, cy, dx, dy))
+    #         # c, r, s = calculate_transform(h.nominal_position, h.corrected_position)
+
     def get_hole(self, key):
-        return next((h for h in self.sample_holes if h.id == str(key)), None)
+        r = key
+        if not isinstance(key, SampleHole):
+            r = next((h for h in self.sample_holes if h.id == str(key)), None)
+        return r
 
     def get_hole_pos(self, key):
         """
@@ -226,14 +307,30 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
             return True
 
     def get_corrected_hole_pos(self, key):
-        return next(
+        pos = next(
             (
                 h.corrected_position if h.has_correction else h.nominal_position
                 for h in self.sample_holes
-                if h.id == key
+                if int(h.id) == int(key)
             ),
             None,
         )
+        if pos is not None:
+            self.load_correction_affine_file()
+
+            if self.corrected_affine:
+                cpos = self.corrected_affine["translation"]
+                rot = self.corrected_affine["rotation"]
+                scale = 1
+                self.debug(
+                    f"applying corrected affine pos={pos} cpos={cpos}, rot={rot}"
+                )
+                pos = transform_point(pos, cpos, rot, scale)
+                self.debug(f"new pos {pos}")
+        return pos
+
+    def load_correction_affine_file(self):
+        pass
 
     def clear_correction_file(self):
         pass
@@ -312,10 +409,14 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
     def _get_calibration_params(self, cpos, rot, scale):
         if cpos is None:
             cpos = self.cpos if self.cpos else (0, 0)
+            self.cpos = cpos
         if rot is None:
             rot = self.rotation if self.rotation else 0
+            self.rotation = rot
         if scale is None:
             scale = 1
+            self.scale = scale
+
         return cpos, rot, scale
 
     # handlers

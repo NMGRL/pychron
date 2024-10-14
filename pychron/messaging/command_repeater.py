@@ -39,6 +39,7 @@ class CRHandler(Handler):
     def init(self, info):
         """ """
         info.object.test_connection()
+        return True
 
 
 class CommandRepeater(ConfigLoadable):

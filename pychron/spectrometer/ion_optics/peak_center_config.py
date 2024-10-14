@@ -69,6 +69,9 @@ class PeakCenterConfig(HasTraits):
     min_peak_height = Float(1.0)
     percent = Int(80)
 
+    use_pseudo_peak = Bool(False)
+    peak_shift_threshold = Float(0.0)
+
     use_interpolation = Bool
     interpolation_kind = Enum(
         "linear", "nearest", "zero", "slinear", "quadratic", "cubic"
@@ -144,6 +147,17 @@ class PeakCenterConfig(HasTraits):
             HGroup(
                 Item("use_dac_offset", label="DAC Offset"),
                 UItem("dac_offset", enabled_when="use_dac_offset"),
+            ),
+            Item(
+                "use_pseudo_peak",
+                tooltip="Identify the high mass shoulder. Offset is added to the peak shoulder. i.e a negative "
+                "offset shifts the peak center to lower mass.",
+                label="Use Pseudo Peak Detection",
+            ),
+            Item(
+                "peak_shift_threshold",
+                label="Peak Shift Threshold",
+                tooltip="Fail peak center if the new peak center is shifted greater than this value",
             ),
             Item("calculate_all_peaks"),
             show_border=True,

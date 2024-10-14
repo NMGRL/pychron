@@ -51,6 +51,7 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
 class FindReferencesConfigView(Controller):
     def init(self, info):
         self.model.load()
+        return True
 
     def closed(self, info, is_ok):
         if is_ok:

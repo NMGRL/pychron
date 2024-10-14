@@ -316,14 +316,14 @@ class DACScanner(BaseScanner):
             self.tool.low = self.scan_min_dac
             self.tool.overlay.low = self.scan_min_dac
         self._scan_time_length_changed()
-        self.graph.redraw()
+        # self.graph.redraw()
 
     def _scan_max_dac_changed(self):
         if self.tool:
             self.tool.high = self.scan_max_dac
             self.tool.overlay.high = self.scan_max_dac
         self._scan_time_length_changed()
-        self.graph.redraw()
+        # self.graph.redraw()
 
     def _min_dac_changed(self):
         if self.min_dac < self.max_dac:

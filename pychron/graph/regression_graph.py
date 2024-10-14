@@ -15,8 +15,8 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 
-from chaco.lineplot import LinePlot
-from chaco.text_box_overlay import TextBoxOverlay
+from chaco.api import LinePlot
+from chaco.api import TextBoxOverlay
 from enable.component_editor import ComponentEditor
 from numpy import linspace
 from traits.api import List, Any, Event, Callable, Dict, Int, Bool
@@ -592,7 +592,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             return
 
         r.set_truncate(scatter.truncate)
-        r.determine_fit()
+        r.determine_fit(fit)
         r.calculate()
 
         self._set_excluded(scatter, r)

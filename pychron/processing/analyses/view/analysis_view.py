@@ -16,10 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
 
-from numpy.ma import arange
-from pyface.timer.do_later import do_later, do_after
 from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
 from traitsui.api import (
     View,
@@ -34,9 +31,7 @@ from traitsui.api import (
 )
 
 from pychron.core.helpers.binpack import unpack
-from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.view_util import open_view
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.processing.analyses.view.adapters import (
     IsotopeTabularAdapter,
@@ -45,10 +40,12 @@ from pychron.processing.analyses.view.adapters import (
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.dvc_commit_view import HistoryView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
+from pychron.processing.analyses.view.icfactor_view import ICFactorView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.regression_view import RegressionView
+from pychron.processing.analyses.view.sample_view import SampleView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, MeasurementView
@@ -98,6 +95,7 @@ class MetaView(HasTraits):
     name = "Meta"
     spectrometer = Instance(SpectrometerView)
     interference = Instance(InterferencesView)
+    sample = Instance(SampleView)
 
     def traits_view(self):
         v = View(
@@ -111,6 +109,11 @@ class MetaView(HasTraits):
                     UItem("interference", style="custom"),
                     show_border=True,
                     label="Reactor",
+                ),
+                VGroup(
+                    UItem("sample", style="custom"),
+                    show_border=True,
+                    label="Sample",
                 ),
             )
         )
@@ -306,15 +309,21 @@ class AnalysisView(HasTraits):
     def _selected_tab_changed(self, new):
         if isinstance(new, HistoryView):
             new.initialize(self.model)
+            new.dvc = self.dvc
         elif isinstance(new, RegressionView):
             new.initialize(self.model)
+        elif isinstance(new, ICFactorView):
+            new.dvc = self.dvc
+            new.activate()
 
     def _make_subviews(self, an, gs):
         view = HistoryView()
         gs.append(view)
 
         view = MetaView(
-            interference=InterferencesView(an), spectrometer=SpectrometerView(an)
+            interference=InterferencesView(an),
+            spectrometer=SpectrometerView(an),
+            sample=SampleView(an),
         )
         gs.append(view)
 
@@ -340,6 +349,9 @@ class AnalysisView(HasTraits):
         if an.analysis_type in (UNKNOWN, COCKTAIL):
             ecv = ErrorComponentsView(an)
             gs.append(ecv)
+
+            icv = ICFactorView(analysis=an)
+            gs.append(icv)
 
         pch = PeakCenterView()
         if pch.load(an):

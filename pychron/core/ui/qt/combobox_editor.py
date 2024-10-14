@@ -84,7 +84,7 @@ class _ComboboxEditor(SimpleEditor):
         # QtCore.QObject.connect(control,
         #                        QtCore.SIGNAL('currentIndexChanged(QString)'),
         #                        self.update_object)
-        control.currentIndexChanged[str].connect(self.update_object)
+        control.currentIndexChanged[int].connect(self.update_object)
 
         if self.factory.evaluate is not None:
             control.setEditable(True)
@@ -204,8 +204,6 @@ class ComboboxEditor(BasicEditorFactory):
     refresh = Str
     use_filter = Bool(True)
     completion_mode = Enum(("popup", "inline"))
-    use_separator = Bool(False)
-    separator = Str
     use_separator = Bool(False)
     separator = Str("")
 

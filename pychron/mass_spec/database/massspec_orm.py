@@ -33,7 +33,7 @@ from sqlalchemy import (
     TIMESTAMP,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relation, relationship
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
 # =============local library imports  ==========================
@@ -379,7 +379,7 @@ class IsotopeTable(Base):
     HallProbeAtEndOfRun = Column(Float, nullable=True)
 
     #    peak_time_series = relation('PeakTimeTable', uselist=False)
-    peak_time_series = relation("PeakTimeTable")
+    peak_time_series = relationship("PeakTimeTable")
 
     results = relationship("IsotopeResultsTable", backref="isotope")
 
@@ -418,7 +418,7 @@ class MaterialTable(Base):
     ID = Column(Integer, primary_key=True)
     Material = Column(String(40))
 
-    irradpositions = relation("IrradiationPositionTable")
+    irradpositions = relationship("IrradiationPositionTable")
 
 
 class MolecularWeightTable(Base):
@@ -500,7 +500,7 @@ class SampleTable(Base):
     Temperature = Column(Float, default=0)
 
     irradpositions = relationship("IrradiationPositionTable", backref="sample")
-    analyses = relation("AnalysesTable", backref="sample")
+    analyses = relationship("AnalysesTable", backref="sample")
 
 
 class SampleLoadingTable(Base):

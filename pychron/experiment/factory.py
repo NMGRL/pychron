@@ -106,6 +106,7 @@ class ExperimentFactory(DVCAble):
             "delay_after_blank",
             "delay_between_analyses",
             "delay_after_air",
+            "delay_after_conditional",
             "default_lighting",
             "queue_conditionals_name",
             "note",
@@ -185,9 +186,9 @@ class ExperimentFactory(DVCAble):
             q,
             positions=positions,
             auto_increment_position=self.auto_increment_position,
-            auto_increment_id=self.auto_increment_id_count
-            if self.auto_increment_id
-            else 0,
+            auto_increment_id=(
+                self.auto_increment_id_count if self.auto_increment_id else 0
+            ),
         )
 
         if new_runs:
@@ -230,6 +231,10 @@ class ExperimentFactory(DVCAble):
 
         elif name == "extract_device":
             self._set_extract_device(new)
+
+        elif name == "load_name":
+            # used by run factory to set repository_identifier by load_name
+            self.run_factory.load_name = new
 
         self._auto_save()
 

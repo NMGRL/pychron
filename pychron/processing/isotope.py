@@ -192,6 +192,7 @@ class IsotopicMeasurement(BaseMeasurement):
     use_stored_value = False
     reviewed = False
     ic_factor_reviewed = False
+    ic_factor_fit = None
 
     _value = 0
     _error = 0
@@ -504,7 +505,7 @@ class IsotopicMeasurement(BaseMeasurement):
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
-            fit = reg.determine_fit()
+            fit = reg.determine_fit(lfit)
             self.fit = fit
             reg.calculate()
         except FitError as e:
@@ -690,6 +691,8 @@ class Isotope(BaseIsotope):
     discrimination = None
     interference_corrected_value = None
     blank_source = ""
+
+    klass = 1
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)

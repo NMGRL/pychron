@@ -86,6 +86,7 @@ class Legend(HasTraits):
 class IrradiationCanvas(LoadingCanvas):
     _scene_klass = IrradiationScene
     editable = False
+    mode_overlay_enabled = False
 
     def __init__(self, *args, **kw):
         self.legend = Legend()

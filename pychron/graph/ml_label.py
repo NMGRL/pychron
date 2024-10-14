@@ -25,7 +25,7 @@ from enable.component_editor import ComponentEditor
 from enable.label import Label
 
 # ============= standard library imports ========================
-from numpy import array, float64
+from numpy import array, float64, asarray
 from traits.api import HasTraits
 from traitsui.api import View, UItem
 
@@ -120,6 +120,7 @@ class MPlotAxis(PlotAxis):
 
         # get the _rotated_ bounding box of the label
         tl_bounds = array(title_label.get_bounding_box(gc), float64)
+        # print("tlasd", tl_bounds)
         text_center_to_corner = -tl_bounds / 2.0
         # which axis are we moving away from the axis line along?
         axis_index = self._major_axis.argmin()
@@ -151,6 +152,87 @@ class MLLabel(Label):
     _text_positions = None
     # mltext = Str
     _cached_text_width = None
+
+    def _calc_line_positions(self, gc):
+        """
+        this is a monkey patch of the original method
+
+        the pdf gc get_text_extent only returns width and height
+        use get_full_text_extent instead
+
+        """
+        if not self._position_cache_valid:
+            with gc:
+                gc.set_font(self.font)
+                # The bottommost line starts at postion (0,0).
+                x_pos = []
+                y_pos = []
+                self._bounding_box = [0, 0]
+                margin = self.margin
+                prev_y_pos = margin
+                prev_y_height = -self.line_spacing
+                max_width = 0
+                for line in self.text.split("\n")[::-1]:
+                    if line != "":
+                        try:
+                            (
+                                descent,
+                                leading,
+                                width,
+                                height,
+                            ) = gc.get_text_extent(line)
+                        except ValueError:
+                            (
+                                descent,
+                                leading,
+                                width,
+                                height,
+                            ) = gc.get_full_text_extent(line)
+                        if width > max_width:
+                            max_width = width
+                        new_y_pos = (
+                            prev_y_pos + prev_y_height - descent + self.line_spacing
+                        )
+                    else:
+                        # For blank lines, we use the height of the previous
+                        # line, if there is one.  The width is 0.
+                        leading = 0
+                        if prev_y_height != -self.line_spacing:
+                            new_y_pos = prev_y_pos + prev_y_height + self.line_spacing
+                            height = prev_y_height
+                        else:
+                            new_y_pos = prev_y_pos
+                            height = 0
+                    x_pos.append(-leading + margin)
+                    y_pos.append(new_y_pos)
+                    prev_y_pos = new_y_pos
+                    prev_y_height = height
+
+            width = max_width + 2 * margin + 2 * self.border_width
+            height = prev_y_pos + prev_y_height + margin + 2 * self.border_width
+            self._bounding_box = [width, height]
+
+            if self.hjustify == "left":
+                x_pos = x_pos[::-1]
+            else:
+                x_pos = asarray(x_pos[::-1], dtype=float)
+                if self.hjustify == "center":
+                    x_pos += (self.width - width) / 2.0
+                elif self.hjustify == "right":
+                    x_pos += self.width - width
+            self._line_xpos = x_pos
+
+            if self.vjustify == "bottom":
+                y_pos = y_pos[::-1]
+            else:
+                y_pos = asarray(y_pos[::-1], dtype=float)
+                if self.vjustify == "center":
+                    y_pos += (self.height - height) / 2.0
+                elif self.vjustify == "top":
+                    y_pos += self.height - height
+            self._line_ypos = y_pos
+
+            self._position_cache_valid = True
 
     def _text_changed(self):
         self._cached_text_width = None
