@@ -360,9 +360,12 @@ class FitIsotopeEvolutionNode(FitNode):
                     pe = inf
 
                 smart_filter_coefficients = f.get_filter_coefficients()
+                smart_filter_goodness = None
+                smart_filter_threshold = None
+                smart_filter = e
                 if smart_filter_coefficients:
                     smart_filter_threshold = f.smart_filter_values(i)
-                    smart_filter_goodness = e < f.smart_filter_values(i)
+                    smart_filter_goodness = smart_filter < f.smart_filter_values(i)
 
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
@@ -477,7 +480,7 @@ class FitIsotopeEvolutionNode(FitNode):
                     signal_to_baseline_percent_threshold=signal_to_baseline_percent_threshold,
                     smart_filter_goodness=smart_filter_goodness,
                     smart_filter_threshold=smart_filter_threshold,
-                    smart_filter=e,
+                    smart_filter=smart_filter,
                     regression_str=iso.regressor.tostring(),
                     fit=iso.fit,
                     isotope=k,
