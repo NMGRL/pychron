@@ -302,7 +302,7 @@ class Spectrum(BaseArArFigure):
         ls = group.center_line_style
         if not ls == "No Line":
             ds.line_style = ls
-            ds.line_width = group.center_line_widthh
+            ds.line_width = group.center_line_width
         else:
             ds.line_width = 0
             ds.color = "transparent"
