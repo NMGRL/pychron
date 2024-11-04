@@ -38,6 +38,10 @@ class VideoUnderlay(AbstractOverlay):
     video = Any
     _cached_image = None
 
+    def __init__(self, *args, **kw):
+        super(VideoUnderlay, self).__init__(*args, **kw)
+        self.offset = (0, 0)
+
     def overlay(self, component, gc, *args, **kw):
         """ """
 
@@ -53,6 +57,7 @@ class VideoUnderlay(AbstractOverlay):
                     )
                     gc.clip_to_rect(x, y, w, h)
                     gc.translate_ctm(x, y)
+                    gc.translate_ctm(*self.offset)
                     try:
                         gc.draw_image(
                             asarray(

@@ -57,9 +57,13 @@ SWITCH_TAGS = ("switch", "valve", "rough_valve", "manual_valve")
 
 
 def get_offset(elem, default=None):
-    offset = elem.get("offset")
     if default is None:
         default = 0, 0
+
+    if isinstance(elem, (str, int)):
+        offset = None
+    else:
+        offset = elem.get("offset")
 
     txt = ""
     if offset:

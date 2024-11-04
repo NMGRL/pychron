@@ -19,7 +19,7 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
 class RegressionSeries(BaseArArFigure):
-    def build(self, plots, plot_dict=None):
+    def build(self, plots, plot_dict=None, *args, **kwargs):
         """
         make plots
         """
@@ -72,19 +72,19 @@ class RegressionSeries(BaseArArFigure):
                 kind = "baseline"
                 name = name[:-2]
             iso = a.get_isotope(name, kind=kind)
-
-            xs = iso.xs
-            ys = iso.ys
-            self.graph.new_series(
-                xs,
-                ys,
-                fit="{}_{}".format(iso.fit, iso.error_type),
-                filter_outliers_dict=iso.filter_outliers_dict,
-                type="scatter",
-                plotid=i,
-                color=next(cg),
-                add_point_inspector=False,
-            )
+            if iso:
+                xs = iso.xs
+                ys = iso.ys
+                self.graph.new_series(
+                    xs,
+                    ys,
+                    fit="{}_{}".format(iso.fit, iso.error_type),
+                    filter_outliers_dict=iso.filter_outliers_dict,
+                    type="scatter",
+                    plotid=i,
+                    color=next(cg),
+                    add_point_inspector=False,
+                )
 
             if self.options.show_statistics:
                 graph.add_statistics(plotid=i)

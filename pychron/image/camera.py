@@ -36,7 +36,6 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.envisage.resources import icon
 from pychron.image.i_camera import ICamera
-from pychron.image.toupcam.camera import ToupCamCamera
 
 
 # ============= standard library imports ========================
@@ -145,6 +144,8 @@ class CameraViewer(HasTraits):
                 pass
 
     def open(self):
+        from pychron.image.toupcam.camera import ToupCamCamera
+
         self._device = ToupCamCamera()
         self._device.open()
 

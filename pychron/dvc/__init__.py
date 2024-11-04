@@ -98,9 +98,12 @@ def dvc_dump(obj, path):
             print("dvc dump exception. error:{}, {}".format(e, pformat(obj)))
 
 
-def dvc_load(path):
-    ret = {}
-    if os.path.isfile(path):
+def dvc_load(path, default=None):
+    if default is None:
+        ret = {}
+    else:
+        ret = default
+    if path and os.path.isfile(path):
         with open(path, "r") as rfile:
             try:
                 ret = json.load(rfile)
@@ -251,6 +254,14 @@ def _analysis_path(
 
 def repository_path(*args):
     return os.path.join(paths.repository_dataset_dir, *args)
+
+
+# def make_ref_plot_list(refs):
+#
+#     xs = [for r in refs]
+#     ys = [for r in refs]
+#
+#     return {"xs": xs, "ys": ys}
 
 
 def make_ref_list(refs):

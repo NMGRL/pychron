@@ -24,8 +24,6 @@ from pychron.spectrometer.tasks.inspector.scan_inspector import ScanInspector
 
 
 class ScanInspectorTask(BaseManagerTask):
-    def activated(self):
-        self.manager.activated()
 
     def create_dock_panes(self):
         return []

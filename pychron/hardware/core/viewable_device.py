@@ -55,7 +55,6 @@ class ViewableDevice(HasTraits):
     def __init__(self, *args, **kw):
         super(ViewableDevice, self).__init__(*args, **kw)
         self.doc = self._build_doc()
-        print("asdf", self, self.doc)
 
     def _build_doc(self):
         return self.__class__.__doc__

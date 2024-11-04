@@ -60,7 +60,13 @@ from pychron.pipeline.editors.flux_visualization_editor import (
 )
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.flux import mean_j
-from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+from pychron.pychron_constants import (
+    LEAST_SQUARES_1D,
+    WEIGHTED_MEAN_1D,
+    WEIGHTED_MEAN,
+    AVERAGE,
+    LINEAR,
+)
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -164,6 +170,10 @@ class FluxPosition(HasTraits):
     bracket_b = Int
     available_positions = List
 
+    @property
+    def residual(self):
+        return (self.mean_j - self.saved_j) / self.saved_j * 100
+
     def set_mean_j(self, use_weights):
         ans = [a for a in self.analyses if not a.is_omitted()]
         if ans:
@@ -210,6 +220,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
     selected_unknowns = List
     toggle_use_button = Button("Toggle Use")
     toggle_save_button = Button("Toggle Save")
+    toggle_save_predicted_button = Button("Toggle Save Predicted")
     toggle_save_unknowns_button = Button("Toggle Save")
     save_monitor_flux_csv_button = Button("Monitor Fluxes CSV")
     recalculate_button = Button("Calculate")
@@ -394,7 +405,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             p.use = not p.use
 
         self._suppress_predict = False
-        self.predict_values(refresh=True)
+        self.predict_values()
 
     def _toggle_save_unknowns_button_fired(self):
         for p in self.selected_unknowns:
@@ -403,6 +414,10 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
     def _toggle_save_button_fired(self):
         for p in self.selected_monitors:
             p.save = not p.save
+
+    def _toggle_save_predicted_button_fired(self):
+        for p in self.selected_monitors:
+            p.save_predicted = not p.save_predicted
 
     def _save_monitor_flux_csv_button_fired(self):
         self._save_monitor_flux_csv()
@@ -439,6 +454,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             HGroup(
                 UItem("toggle_use_button"),
                 UItem("toggle_save_button"),
+                UItem("toggle_save_predicted_button"),
                 UItem("save_monitor_flux_csv_button"),
             ),
             BorderHGroup(
@@ -478,29 +494,43 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         return v
 
 
+# def linear_interp(obj, a, b):
+#     def func(j1,j2):
+#         x2 = ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5
+#         x = ((obj.x - b.x) ** 2 + (obj.y - b.y) ** 2) ** 0.5
+#         j = j1 + x * (j2 - j1) / (x2)
+#         return j
+#
+#     return func(a.mean_j, b.mean_j), func(a.mean_jerr, b.mean_jerr)
+
+
 class BracketingFluxResultsEditor(FluxResultsEditor):
     @on_trait_change("unknown_positions:[bracket_a, bracket_b]")
     def handle_bracket(self, obj, name, old, new):
-        if obj.bracket_a and obj.bracket_b:
-            a, b = [
-                p
-                for p in self.monitor_positions
-                if p.hole_id in (obj.bracket_a, obj.bracket_b)
-            ]
-
-            ws = array([1 / a.mean_jerr**2, 1 / b.mean_jerr**2])
-            vs = array([a.mean_j, b.mean_j])
-            if self.plotter_options.use_weighted_fit:
-                j = average(vs, weights=ws)
-                je = sum(ws)
-
-            else:
-                j, je = vs.mean(), vs.std()
-
-            oj = obj.saved_j
-            obj.j = j
-            obj.jerr = je
-            obj.dev = (oj - j) / j * 100
+        pass
+        # if obj.bracket_a and obj.bracket_b:
+        #     a, b = [
+        #         p
+        #         for p in self.monitor_positions
+        #         if p.hole_id in (obj.bracket_a, obj.bracket_b)
+        #     ]
+        #
+        #     ws = array([1 / a.mean_jerr**2, 1 / b.mean_jerr**2])
+        #     vs = array([a.mean_j, b.mean_j])
+        #     self.debug('interpolation style {}', self.plotter_options)
+        #     if self.plotter_options.interpolation_style in (AVERAGE, WEIGHTED_MEAN):
+        #         if self.plotter_options.use_weighted_fit:
+        #             j = average(vs, weights=ws)
+        #             je = sum(ws)
+        #         else:
+        #             j, je = vs.mean(), vs.std()
+        #     elif self.plotter_options.interpolation_style == LINEAR:
+        #         j, je = linear_interp(obj, a, b)
+        #         self.debug('j={}, je={}', j, je)
+        #     oj = obj.saved_j
+        #     obj.j = j
+        #     obj.jerr = je
+        #     obj.dev = (oj - j) / j * 100
 
     def traits_view(self):
         unk_cols = [

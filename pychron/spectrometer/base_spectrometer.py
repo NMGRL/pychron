@@ -80,7 +80,7 @@ class BaseSpectrometer(SpectrometerDevice):
     def halted(self):
         pass
 
-    def sink_data(self, writer, n):
+    def sink_data(self, *args, **kw):
         pass
 
     def cancel(self):
@@ -485,6 +485,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 try:
                     mws = {l[0]: float(l[1]) for l in reader}
                 except BaseException:
+                    self.debug_exception()
                     mws = None
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
@@ -526,6 +527,9 @@ class BaseSpectrometer(SpectrometerDevice):
                 self._dump_detectors_yaml(ypath)
         else:
             self._load_detectors_yaml(ypath)
+
+    def set_position_hook(self):
+        pass
 
     def _dump_detectors_yaml(self, ypath):
         self.information_dialog(

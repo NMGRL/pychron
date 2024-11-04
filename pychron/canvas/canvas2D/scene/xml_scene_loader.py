@@ -251,7 +251,13 @@ class XMLLoader(BaseLoader):
         elif orient == "horizontal":
             y1 = y
 
-        connection = klass((x, y), (x1, y1), default_color=(204, 204, 204), name=key)
+        connection = klass(
+            (x, y),
+            (x1, y1),
+            default_color=(204, 204, 204),
+            name=key,
+            orientation=orient,
+        )
 
         if sanchor:
             sanchor.connections.append(("start", connection))

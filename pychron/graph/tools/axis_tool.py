@@ -93,6 +93,7 @@ class AxisViewHandler(Handler):
         from pyface.qt import QtCore
 
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        return True
 
 
 class WrapAxis(HasTraits):

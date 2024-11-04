@@ -67,6 +67,13 @@ class StreamGraphManager(Manager):
     _signal_failed_cnt = 0
     _streaming_active = True
 
+    def stop(self):
+        self.prepare_destroy()
+
+    def stop_scan(self):
+        self.dump_settings()
+        self._stop_timer()
+
     def set_streaming_active(self, flag):
         self._streaming_active = flag
 
@@ -110,6 +117,13 @@ class StreamGraphManager(Manager):
             self.warning("No scan settings file {}".format(p))
 
     # private
+    def _stop_timer(self):
+        self.info("stopping scan timer")
+        if self.timer:
+            self.timer.Stop()
+        else:
+            self.debug("no timer to stop")
+
     def _get_graph_y_min_max(self, plotid=0):
         mi, ma = Inf, -Inf
         for k, plot in self.graph.plots[plotid].plots.items():
@@ -253,7 +267,7 @@ class StreamGraphManager(Manager):
             "graph_scan_width",
         ]
 
-    def _dump_settings(self):
+    def _dump_settings(self, d):
         pass
 
     def _set_graph_attrs(self, params):

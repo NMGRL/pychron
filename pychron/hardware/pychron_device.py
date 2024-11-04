@@ -81,7 +81,9 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
     host = Str
     timeout = CInt
 
-    def setup_communicator(self, write_terminator=None, read_terminator=None):
+    def setup_communicator(
+        self, write_terminator=None, read_terminator=None, force=False
+    ):
         from pychron.hardware.core.communicators.ethernet_communicator import (
             EthernetCommunicator,
         )
@@ -92,18 +94,23 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
         if read_terminator is None:
             read_terminator = self.read_terminator
 
-        self.communicator = ec = EthernetCommunicator(
-            host=self.host,
-            port=self.port,
-            kind=self.kind,
-            use_end=self.use_end,
-            message_frame=self.message_frame,
-            write_terminator=write_terminator,
-            read_terminator=read_terminator,
-            timeout=self.timeout,
-        )
+        ret = True
+        if force or self.communicator is None:
+            self.communicator = ec = EthernetCommunicator(
+                host=self.host,
+                port=self.port,
+                kind=self.kind,
+                use_end=self.use_end,
+                message_frame=self.message_frame,
+                write_terminator=write_terminator,
+                read_terminator=read_terminator,
+                timeout=self.timeout,
+            )
+            ret = ec.open()
+            if self.communicator:
+                self.communicator.report()
 
-        return ec.open()
+        return ret
 
 
 # ============= EOF =============================================

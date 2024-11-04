@@ -41,7 +41,11 @@ from traits.api import (
 
 from pychron.canvas.canvas2D.camera import Camera, YamlCamera, BaseCamera
 from pychron.core.helpers.binpack import pack, encode_blob
-from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
+from pychron.core.helpers.filetools import (
+    unique_path,
+    unique_path_from_manifest,
+    add_extension,
+)
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.core.ui.thread import Thread as QThread
 from pychron.core.ui.thread import sleep
@@ -158,7 +162,7 @@ class VideoStageManager(StageManager):
 
         bind_preference(self, "video_identifier", "{}.video_identifier".format(pref_id))
 
-        bind_preference(self, "use_video_server", "{}.use_video_server".format(pref_id))
+        # bind_preference(self, "use_video_server", "{}.use_video_server".format(pref_id))
 
         bind_preference(
             self.video_archiver,
@@ -343,10 +347,14 @@ class VideoStageManager(StageManager):
         path=None,
         name=None,
         auto=False,
+        directory=None,
         inform=True,
         return_blob=False,
         pic_format=".jpg",
         include_raw=True,
+        render_canvas=True,
+        use_cached=False,
+        crop_to_hole=True,
     ):
         """
         path: abs path to use
@@ -359,7 +367,14 @@ class VideoStageManager(StageManager):
         """
 
         if path is None:
-            if self.auto_save_snapshot or auto:
+            if directory:
+                if not os.path.isdir(directory):
+                    os.makedirs(directory)
+                if name is None:
+                    name = "snapshot"
+                path = os.path.join(directory, name)
+                path = add_extension(path, pic_format)
+            elif self.auto_save_snapshot or auto:
                 if name is None:
                     name = "snapshot"
                 path = unique_path_from_manifest(paths.snapshot_dir, name, pic_format)
@@ -375,16 +390,22 @@ class VideoStageManager(StageManager):
                 path = self.save_file_dialog()
 
         if path:
-            self.info("saving snapshot {}".format(path))
             # play camera shutter sound
             # play_sound('shutter')
+
             if include_raw:
-                frame = self.video.get_cached_frame()
+                frame = self.video.get_cached_frame(force=not use_cached)
+                if crop_to_hole:
+                    frame = self._crop_to_hole(frame)
                 head, _ = os.path.splitext(path)
                 raw_path = "{}.tif".format(head)
+                self.info("saving snapshot {}".format(raw_path))
                 pil_save(frame, raw_path)
 
-            self._render_snapshot(path)
+            if render_canvas:
+                self.info("saving snapshot {}".format(path))
+                self._render_snapshot(path)
+
             if self.auto_upload:
                 if include_raw:
                     self._upload(raw_path)
@@ -561,6 +582,11 @@ class VideoStageManager(StageManager):
                 else:
                     self.warning(msg)
 
+    def _crop_to_hole(self, frame):
+        dim = self.get_target_dimension()
+        cropdim = dim * 8 * self.pxpermm
+        return self.video.crop(frame, 0, 0, cropdim, cropdim)
+
     def _render_snapshot(self, path):
         from chaco.plot_graphics_context import PlotGraphicsContext
 
@@ -610,8 +636,8 @@ class VideoStageManager(StageManager):
         video = self.video
 
         crop_to_hole = True
-        dim = self.get_target_dimension()
-        cropdim = dim * 8 * self.pxpermm
+        # dim = self.get_target_dimension()
+        # cropdim = dim * 8 * self.pxpermm
         color = self.canvas.crosshairs_color.getRgb()[:3]
 
         r = int(self.canvas.get_crosshairs_radius() * self.pxpermm)
@@ -631,7 +657,8 @@ class VideoStageManager(StageManager):
             # ch, cw = int(ch), int(cw)
 
             if crop_to_hole:
-                frame = video.crop(frame, 0, 0, cropdim, cropdim)
+                frame = self._crop_to_hole(frame)
+                # frame = video.crop(frame, 0, 0, cropdim, cropdim)
 
             if self.render_with_markup and frame is not None:
                 # draw crosshairs
@@ -663,12 +690,11 @@ class VideoStageManager(StageManager):
             "move to hole hook holenum={}, "
             "correct={}, autocentered_position={}".format(*args)
         )
-        if correct:
-            ntries = 1 if autocentered_position else 3
-
+        if correct and not autocentered_position:
+            # ntries = 1 if autocentered_position else 3
             self._auto_correcting = True
             try:
-                self._autocenter(holenum=holenum, ntries=ntries, save=True)
+                self._autocenter(holenum=holenum, save=True)
             except BaseException as e:
                 self.debug_exception()
                 self.critical("Autocentering failed. {}".format(e))
@@ -700,15 +726,13 @@ class VideoStageManager(StageManager):
     #         src = self.autocenter_manager.crop(src)
     #         return self.lumen_detector.find_best_target(src)
 
-    def _autocenter(self, holenum=None, ntries=3, save=False, inform=False):
+    def _autocenter(self, holenum=None, ntries=2, save=False, inform=False):
         self.debug("do autocenter")
         rpos = None
         interp = False
         sm = self.stage_map
         st = time.time()
         if self.autocenter_manager.use_autocenter:
-            time.sleep(0.1)
-
             dim = self.get_target_dimension()
             shape = sm.g_shape
             if holenum is not None:
@@ -721,6 +745,7 @@ class VideoStageManager(StageManager):
             mxs, mys = [], []
             n = max(1, ntries)
             for ti in range(n):
+                # time.sleep(0.5)
                 # use machine vision to calculate positioning error
                 rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
@@ -729,7 +754,9 @@ class VideoStageManager(StageManager):
                     oy,
                     dim=dim,
                     shape=shape,
+                    annular_mask=(dim * 1.4, 0),
                 )
+                # rpos = rpos[0]*0.75, rpos[1]*0.75
 
                 if rpos is not None:
                     if ti < n - 1:
@@ -889,8 +916,12 @@ class VideoStageManager(StageManager):
         except ValueError:
             pass
 
-    def _update_xy_limits(self):
-        z = 0
+    def set_zoom_manually(self, pxpermm):
+        x = self.stage_controller.get_current_position("x")
+        y = self.stage_controller.get_current_position("y")
+        self.camera.set_limits_by_zoom(None, x, y, self.canvas, pxpermm=pxpermm)
+
+    def _update_xy_limits(self, z=0):
         if self.parent is not None:
             zoom = self.parent.get_motor("zoom")
             if zoom is not None:

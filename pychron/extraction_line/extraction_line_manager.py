@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 import logging
+import os
 import time
-from socket import gethostbyname, gethostname
+from socket import gethostbyname, gethostname, gaierror
 from threading import Thread
 
 # =============enthought library imports=======================
@@ -52,6 +54,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
+from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 
 MANAGERS = {
@@ -219,7 +222,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.link_valve_actuation_dict[name] = func
 
     def enable_auto_reload(self):
-        self.file_listener = fm = FileListener(
+        self.file_listener = FileListener(
             path=self.canvas_path, callback=self.reload_canvas
         )
 
@@ -353,7 +356,6 @@ class ExtractionLineManager(Manager, Consoleable):
     def reload_scene_graph(self):
         self.info("reloading canvas scene")
         for c in self.canvases:
-            self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
 
             c.load_canvas_file()
@@ -363,6 +365,8 @@ class ExtractionLineManager(Manager, Consoleable):
                     if vc:
                         vc.soft_lock = v.software_lock
                         vc.state = v.state
+
+            self.canvas_editor.load(c.canvas2D, self.canvas_path)
 
     def update_switch_state(self, name, state, *args, **kw):
         # self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
@@ -381,7 +385,11 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def update_switch_owned_state(self, *args, **kw):
         for c in self.canvases:
-            c.update_switch_owned_state(*args, **kw)
+            if "state" in kw:
+                try:
+                    c.update_switch_owned_state(*args, **kw)
+                except BaseException:
+                    self.debug_exception()
 
     def set_valve_owner(self, name, owner):
         """
@@ -529,6 +537,44 @@ class ExtractionLineManager(Manager, Consoleable):
         t = Thread(target=sample)
         t.start()
 
+    # ------------------------------------------------------------
+    # Aqua
+    # ------------------------------------------------------------
+    script_executor = None
+    _aqua_active_flag = False
+
+    def aqua_trigger(self):
+        app = self.application
+        se = self.script_executor
+        if not se:
+            se = app.get_service("pychron.pyscripts.tasks.pyscript_task.ScriptExecutor")
+            self.script_executor = se
+        # context = {"analysis_type": "blank" if "blank" in name else "unknown"}
+        name = "aqua.py"
+        root = os.path.join(paths.scripts_dir)
+        p = os.path.join(root, name)
+        if os.path.isfile(p):
+            context = {}
+            se.execute_script(
+                name, root, delay_start=1, manager=self, context=context, kind="Aqua"
+            )
+            self._aqua_active_flag = True
+        else:
+            self.warning(f"{p} is not a valid file")
+
+    def aqua_get_status(self):
+        status = {}
+        if self.script_executor and self._aqua_active_flag:
+            status = self.script_executor.get_script_status()
+            if status.get("completed"):
+                self._aqua_active_flag = False
+        return json.dumps(status)
+
+    def aqua_get_report(self):
+        if self.script_executor:
+            # get the last entry in the aqua log file and send
+            pass
+
     def cycle(self, name, **kw):
         def cycle():
             valve = self.switch_manager.get_switch_by_name(name)
@@ -567,7 +613,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def new_canvas(self, config=None):
         c = ExtractionLineCanvas(manager=self, display_name="Extraction Line")
-        c.load_canvas_file(canvas_config_path=config)
+        # c.load_canvas_file(canvas_config_path=config)
         self.canvases.append(c)
         c.canvas2D.trait_set(
             display_volume=self.display_volume, volume_key=self.volume_key
@@ -827,7 +873,11 @@ class ExtractionLineManager(Manager, Consoleable):
 
         if force or self.check_master_owner:
             if requestor is None:
-                requestor = gethostbyname(gethostname())
+                try:
+                    requestor = gethostbyname(gethostname())
+                except gaierror:
+                    self.debug("failed to get host name. defaulting to 'localhost'")
+                    requestor = "localhost"
 
             self.debug("checking ownership. requestor={}".format(requestor))
             try:

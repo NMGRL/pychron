@@ -35,6 +35,7 @@ from pychron.pychron_constants import (
 )
 from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
+
 from pychron.spectrometer.thermo.spectrometer import normalize_integration_time
 
 

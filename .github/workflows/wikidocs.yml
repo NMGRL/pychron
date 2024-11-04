@@ -1,12 +1,12 @@
-name: Hardware Docs
+name: Wiki Docs
 on:
   pull_request:
     branches: [dev/dc, hot/dc]
   push:
     branches: [dev/dc, hot/dc]
 jobs:
-  build_hardware_docs:
-    name: Build hardware docs (${{ matrix.python-version }}, ${{ matrix.os }})
+  build_wiki_docs:
+    name: Build wiki docs (${{ matrix.python-version }}, ${{ matrix.os }})
     strategy:
       matrix:
         os: [ macos-latest ]
@@ -32,20 +32,27 @@ jobs:
           scipy sqlalchemy traits xlrd xlsxwriter xlwt pytest statsmodels
       - name: Install PIP dependencies
         run: >
-          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils
-      - name: build docs
+          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils lazydocs
+      - name: build hardware docs
         run: |
-          ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py 
+          ~/.edm/envs/edm/bin/python pychron/docs_hardware.py
       - name: copy to temp
         run: cp pychron/hardwaredocs.md /Users/runner/work/hardwaredocs.md
+      - name: build pyscript docs
+        run: |
+          ~/.edm/envs/edm/bin/python pychron/docs_pyscript.py
+      - name: copy to temp
+        run: cp pychron/pyscriptdocs.md /Users/runner/work/pyscriptdocs.md
       - name: fetch wiki
         uses: actions/checkout@v2
         with:
           repository: NMGRL/pychron.wiki
           set-safe-directory: /Users/runner/work/pychron.wiki
-      - name: copy to wiki
+      - name: copy hardware to wiki
         run:  cp /Users/runner/work/hardwaredocs.md ./Available-Hardware.md
+      - name: copy pyscript to wiki
+        run: cp /Users/runner/work/pyscriptdocs.md ./Pyscript-API.md
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:
-          commit_message: built hardware docs
+          commit_message: built wiki docs

@@ -113,6 +113,7 @@ class PeakHopCollector(DataCollector):
 
             arun.measurement_script.increment_series_count(-2, -1)
 
+            self._protect_detectors(pdets, True)
             change = arun.set_magnet_position(
                 isotope,
                 detector,
@@ -128,6 +129,7 @@ class PeakHopCollector(DataCollector):
                 )
                 arun.wait(settle, msg)
                 self.debug(msg)
+            self._protect_detectors(pdets, False)
 
             self.plot_panel._ncounts = pocounts
             self.measurement_script.ncounts = ocounts

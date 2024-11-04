@@ -35,6 +35,7 @@ class ICFactorAuxPlot(RatioSeriesAuxPlot):
 class ICFactorOptions(RatioSeriesOptions):
     aux_plot_klass = ICFactorAuxPlot
     delete_existing = Bool
+    use_discrimination = Bool
     use_source_correction = Bool  # this is experimental and should be removed? requested by WiscAr to correct for
     # source bias
     source_correction_kind = Enum("Exponential")

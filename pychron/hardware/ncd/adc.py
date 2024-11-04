@@ -7,6 +7,7 @@
    http://www.controlanything.com/Relay/Device/A0010
    http://assets.controlanything.com/manuals/ProXR.pdf
 """
+
 # ===============================================================================
 # Copyright 2012 Jake Ross
 #

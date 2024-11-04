@@ -997,6 +997,7 @@ class AutomatedRunPersister(BasePersister):
             runid=rid,
             runscript_name=self.per_spec.runscript_name,
             runscript_text=self.per_spec.runscript_blob,
+            modified_baselines=self.per_spec.modified_baselines,
             # signal_fits=sf,
             mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
             # blanks=blanks,

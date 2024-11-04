@@ -36,6 +36,7 @@ from traits.api import (
     Color,
     Dict,
 )
+from traits.trait_errors import TraitError
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.pychron_traits import StepStr
@@ -194,32 +195,33 @@ class AnalysisGroup(IdeogramPlotable):
         if new:
             a = new[0]
             for attr in (
-                    "mass_spectrometer",
-                    "identifier",
-                    "aliquot",
-                    "repository_identifier",
-                    "igsn",
-                    "sample",
-                    "material",
-                    "grainsize",
-                    "project",
-                    "irradiation",
-                    "irradiation_position",
-                    "irradiation_level",
-                    "irradiation_label",
-                    "unit",
-                    "lithology",
-                    "lithology_type",
-                    "lithology_group",
-                    "lithology_class",
-                    "latitude",
-                    "longitude",
-                    "reference",
-                    "rlocation",
-                    "production_ratios",
-                    "arar_constants",
-                    "monitor_age",
-                    "monitor_reference",
+                "mass_spectrometer",
+                "identifier",
+                "aliquot",
+                "repository_identifier",
+                "igsn",
+                "sample",
+                "material",
+                "weight",
+                "grainsize",
+                "project",
+                "irradiation",
+                "irradiation_position",
+                "irradiation_level",
+                "irradiation_label",
+                "unit",
+                "lithology",
+                "lithology_type",
+                "lithology_group",
+                "lithology_class",
+                "latitude",
+                "longitude",
+                "reference",
+                "rlocation",
+                "production_ratios",
+                "arar_constants",
+                "monitor_age",
+                "monitor_reference",
             ):
                 try:
                     setattr(self, attr, getattr(a, attr))
@@ -232,6 +234,23 @@ class AnalysisGroup(IdeogramPlotable):
                 pass
 
             self.age_units = self.arar_constants.age_units
+
+    def trigger_omit(self):
+        self._handle_trigger("omit")
+
+    def trigger_tag(self):
+        self._handle_trigger("tag")
+
+    def trigger_recall(self):
+        self._handle_trigger("recall")
+
+    def trigger_invalid(self):
+        self._handle_trigger("invalid")
+
+    def _handle_trigger(self, tag):
+        f = "trigger_{}".format(tag)
+        a = self.analyses[0]
+        getattr(a, f)(analyses=self.analyses)
 
     def clear_temp_selected(self):
         for a in self.analyses:
@@ -336,18 +355,18 @@ class AnalysisGroup(IdeogramPlotable):
         ans = [a for a in self.analyses if isinstance(a, ArArAge)]
 
         if (exclude_non_plateau or self.exclude_non_plateau) and hasattr(
-                self, "get_is_plateau_step"
+            self, "get_is_plateau_step"
         ):
 
             def test(ai):
                 a = self._is_omitted(ai)
                 b = not self.get_is_plateau_step(ai)
-                return a or b
+                return a or b or ai.exclude_from_isochron
 
         else:
 
             def test(ai):
-                return self._is_omitted(ai)
+                return self._is_omitted(ai) or ai.exclude_from_isochron
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
@@ -427,6 +446,10 @@ class AnalysisGroup(IdeogramPlotable):
     @property
     def labnumber(self):
         return self.identifier
+
+    @property
+    def identifier_str(self):
+        return ",".join({ai.identifier for ai in self.analyses})
 
     @property
     def age_attr(self):
@@ -557,7 +580,7 @@ class AnalysisGroup(IdeogramPlotable):
 
         if self.include_j_error_in_mean:
             v, e, pa = func(wa)
-            ne = (pa ** 2 + self.j_err ** 2) ** 0.5
+            ne = (pa**2 + self.j_err**2) ** 0.5
             wa = ufloat(v, ne * v)
 
         if self.include_decay_error_mean:
@@ -569,7 +592,7 @@ class AnalysisGroup(IdeogramPlotable):
             except ZeroDivisionError:
                 pass
 
-            ne = (pa ** 2 + de ** 2) ** 0.5
+            ne = (pa**2 + de**2) ** 0.5
             wa = ufloat(v, ne * v)
 
         return wa
@@ -579,7 +602,7 @@ class AnalysisGroup(IdeogramPlotable):
             mswd = self.mswd
 
         if kind in (MSE, MSEM):
-            e *= mswd ** 0.5 if mswd > 1 else 1
+            e *= mswd**0.5 if mswd > 1 else 1
 
         return e
 
@@ -601,10 +624,10 @@ class AnalysisGroup(IdeogramPlotable):
             vs = array([nominal_value(v) for v in ans])
             es = array([std_dev(v) for v in ans])
             if attr not in (
-                    "lab_temperature",
-                    "peak_center",
-                    "lab_humidity",
-                    "lab_airpressure",
+                "lab_temperature",
+                "peak_center",
+                "lab_humidity",
+                "lab_airpressure",
             ):
                 idx = es.astype(bool)
                 vs = vs[idx]
@@ -658,14 +681,14 @@ class AnalysisGroup(IdeogramPlotable):
             vpercent = ks / sks
             weights = [nominal_value(wi) for wi in (vpercent * errors) ** 2]
         elif weighting == "Variance":
-            weights = 1 / errors ** 2
+            weights = 1 / errors**2
 
         if weights is not None:
             wmean, sum_weights = average(values, weights=weights, returned=True)
             if weighting == "Volume":
-                werr = sum_weights ** 0.5
+                werr = sum_weights**0.5
             else:
-                werr = sum_weights ** -0.5
+                werr = sum_weights**-0.5
 
             f = ufloat(wmean, werr)
         else:
@@ -1105,7 +1128,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             if "Plateau" in obj.kind:
                 self.plateau_age_error_kind = obj.error_kind
                 if obj.kind != "Plateau":
-                    self.age_error_kind = obj.error_kind
+                    try:
+                        self.age_error_kind = obj.error_kind
+                    except TraitError:
+                        pass
+
             elif "Isochron" in obj.kind:
                 self.isochron_age_error_kind = obj.error_kind
             else:
@@ -1113,9 +1140,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
             self.dirty = True
             v = self._get_preferred_age()
+            print("asdfsafdsda", v)
             obj.value = nominal_value(v)
             obj.error = std_dev(v)
-            self.dirty = True
+
         else:
             v, k = self._get_preferred_(
                 obj.attr, obj.kind, obj.error_kind, obj.weighting
@@ -1147,9 +1175,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def get_preferred_mswd_tuple(self):
         pv = self._get_pv("age")
         k = pv.computed_kind.lower()
-        t = self.get_mswd_tuple()
         if k == "plateau":
             t = self.get_plateau_mswd_tuple()
+        elif "isochron" in k:
+            t = self.isochron_mswd()
+        else:
+            t = self.get_mswd_tuple()
 
         return t
 
@@ -1172,8 +1203,13 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                     vk = default_vk
                     ek = default_ek
             else:
-                vk = sg.get("{}_kind".format(k), default_vk)
-                ek = sg.get("{}_error_kind".format(k), default_ek)
+                if not isinstance(sg, dict):
+                    pv = sg.get_preferred_obj(k)
+                    vk = pv.kind
+                    ek = pv.error_kind
+                else:
+                    vk = sg.get("{}_kind".format(k), default_vk)
+                    ek = sg.get("{}_error_kind".format(k), default_ek)
 
             self.set_preferred_kind(k, vk, ek, unit)
 
@@ -1181,9 +1217,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv = self._get_pv(attr)
         pv.error_kind = ek
         pv.kind = k
-        pv.dirty = True
         if unit:
             pv.unit = unit
+
+        pv.dirty = True
 
     def get_preferred_kind(self, attr):
         pv = self.get_preferred_obj(attr)
@@ -1302,5 +1339,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     def __getattr__(self, item):
         return ""
+
 
 # ============= EOF =============================================

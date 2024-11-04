@@ -44,7 +44,7 @@ class PacketStr(BaseStr):
             self.error(obj, name, value)
 
 
-class URLStr(BaseStr):
+class HTTPStr(BaseStr):
     def validate(self, obj, name, value):
         if value.startswith("http://") or value.startswith("https://"):
             return value

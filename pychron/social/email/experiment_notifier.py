@@ -24,14 +24,13 @@ from datetime import datetime
 import socket
 
 # ============= local library imports  ==========================
-from pychron.social.email.emailer import Emailer
 from pychron.version import __version__
 from pychron.experiment.notifier.templates import email_template
 from pychron.loggable import Loggable
 
 
 class ExperimentNotifier(Loggable):
-    emailer = Instance(Emailer)
+    emailer = Instance("pychron.social.email.emailer.Emailer")
     include_log = Bool
 
     def __init__(self, *args, **kw):

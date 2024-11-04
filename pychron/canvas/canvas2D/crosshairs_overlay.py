@@ -73,7 +73,6 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
 
             if fill:
                 gc.set_fill_color(color)
-
         return color
 
     def _draw_radius_ch(self, gc, component, pt, radius, color=None, circle_only=False):
@@ -116,6 +115,7 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
     circle_only = False
     font = KivaFont("modern 10")
     tag = None
+    show_hole_label = True
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
@@ -169,8 +169,7 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                         circle_only=circle_only,
                         color=color,
                     )
-
-            if component.show_hole_label:
+            if component.show_hole_label and self.show_hole_label:
                 h = component.get_current_hole()
                 if h is not None:
                     x, y = mx + ox + radius, my + oy + radius
@@ -178,7 +177,7 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                     self.set_color(gc, color, fill=True)
 
                     gc.set_text_position(x, y)
-                    gc.set_font(self.component.hole_label_font)
+                    gc.set_font(component.hole_label_font)
                     gc.show_text(h.id)
 
 
