@@ -45,8 +45,8 @@ def get_key_binding(k_id):
 
     try:
         return user_key_map[k_id][0]
-    except KeyError:
-        pass
+    except (KeyError, IndexError, TypeError) as e:
+        print(f'Key binding "{k_id}" not found. {e}')
 
 
 class myTaskAction(TaskAction):
