@@ -250,6 +250,12 @@ class HumanErrorChecker(Loggable):
         # self._mass_spec_required = True
         self._set_extraction_line_required(run)
 
+        # check for syn extraction
+        if run.extraction_script:
+            if "syn" in run.extraction_script:
+                if not run.syn_extraction_script:
+                    return "syn extraction script missing"
+
     def _set_extraction_line_required(self, run):
         if any(
             (
