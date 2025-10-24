@@ -6,6 +6,8 @@ verbose = "true"
 # check = "true"
 
 [project]
+sys_platform = ['win32', 'macOS', 'linux']
+platform_machine = ['x86_64', 'AMD64', 'arm64', 'aarch64']
 name = "pychrondc"
 version = "0.1.0"
 description = "Add your description here"
