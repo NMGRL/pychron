@@ -140,7 +140,6 @@ class BaseLoader:
         for key in RECT_TAGS:
             for b in self._get_items(key):
                 c = self._color_dict.get(key, (0.8, 0.8, 0.8, 1))
-                print('loca reacts', c, key, self._color_dict)
                 klass = KLASS_MAP.get(key, RoundedRectangle)
                 self._new_rectangle(
                     scene, b, c, bw=5, origin=self._origin, klass=klass, type_tag=key
