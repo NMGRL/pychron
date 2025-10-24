@@ -292,7 +292,7 @@ class YAMLLoader(BaseLoader):
         key = "{}-{}-{}".format(lname, mname, rname)
 
         dim = float(conn.get("dimension", self._connection_dimension))
-        print("adsfadsf", dim)
+
         # if dim is not None:
         #     height = float(dim.strip())
         # klass = BorderLine
@@ -343,7 +343,6 @@ class YAMLLoader(BaseLoader):
             w, h = 5, 5
 
         color = elem.get("color")
-        print('color ele', color)
         if color is not None:
             c = color.strip()
             cobj = scene.get_item(c)
@@ -354,7 +353,6 @@ class YAMLLoader(BaseLoader):
         else:
             c = make_color(c)
 
-        print('setting default color', c)
         rect = klass(
             x + ox,
             y + oy,

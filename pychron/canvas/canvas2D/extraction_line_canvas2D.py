@@ -66,6 +66,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
     scene_klass = ExtractionLineScene
 
     use_backbuffer = True
+    backbuffer_padding = False
     border_visible = False
     active_item = Any
 

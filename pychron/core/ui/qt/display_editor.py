@@ -107,7 +107,10 @@ class _DisplayEditor(Editor):
                     return
 
                 fmt = ctrl.currentCharFormat()
-                fmt.setForeground(c.to_toolkit())
+                if isinstance(c, Color):
+                    c = c.to_toolkit()
+
+                fmt.setForeground(c)
                 fmt.setFontPointSize(self.font_size)
                 ctrl.setCurrentCharFormat(fmt)
 

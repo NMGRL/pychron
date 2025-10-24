@@ -628,8 +628,7 @@ class PointIndicator(Indicator):
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
-        if ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < self.radius:
-            return True
+        return ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < self.radius
 
     def adjust(self, dx, dy):
         super(PointIndicator, self).adjust(dx, dy)
