@@ -40,8 +40,6 @@ from traits.api import (
     List,
     Instance,
     HasTraits,
-    Any,
-    Long,
     Str,
     Enum,
     Date,
@@ -165,7 +163,7 @@ class ProjectDetail(HasTraits):
     name = Str
     samples = List
     reduction_state = Enum("notstarted", "incomplete", "complete")
-    unique_id = Long
+    unique_id = Int
 
     def __init__(self, record=None, *args, **kw):
         super().__init__(*args, **kw)

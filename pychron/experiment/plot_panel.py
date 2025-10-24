@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     Instance,
     Property,
@@ -26,7 +27,6 @@ from traits.api import (
     Str,
     CInt,
     Tuple,
-    Color,
     HasTraits,
     Any,
     Int,
@@ -134,7 +134,7 @@ class PlotPanel(Loggable):
     _ncycles = CInt
 
     current_cycle = Str
-    current_color = Color
+    current_color = PyfaceColor
 
     detectors = List
 

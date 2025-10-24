@@ -20,9 +20,10 @@ import os
 from datetime import datetime
 
 from numpy import polyfit, linspace
-from traits.api import HasTraits, Float, Any, Button, Bool, List, Color, Property, Str
+from traits.api import HasTraits, Float, Any, Button, Bool, List, Property, Str
 from traitsui.api import View, Item, spring, ButtonEditor, HGroup, VGroup, UItem
 from traitsui.tabular_adapter import TabularAdapter
+from pyface.ui_traits import PyfaceColor
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -88,8 +89,8 @@ class RiseRate(SpectrometerTask):
     clear_results_button = Button("Clear Results")
     calculated = Bool
 
-    end_color = Color("red")
-    start_color = Color("black")
+    end_color = PyfaceColor("red")
+    start_color = PyfaceColor("black")
 
     _start_time = None
     _start_intensity = None

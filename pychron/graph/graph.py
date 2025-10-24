@@ -32,7 +32,7 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
 from enable.container import Container
-from numpy import array, hstack, Inf, column_stack
+from numpy import array, hstack, column_stack, inf
 from pyface.timer.api import do_after as do_after_timer
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
@@ -888,7 +888,7 @@ class Graph(ContextMenuMixin):
             datum = (datum,)
 
         data = plot.data
-        mi, ma = -Inf, Inf
+        mi, ma = -inf, inf
         for i, (name, di) in enumerate(zip(names, datum)):
             d = data.get_data(name)
             nd = hstack((d, di))
@@ -1298,9 +1298,9 @@ class Graph(ContextMenuMixin):
             if mi is None:
                 mi = ra.low
 
-            if mi == -Inf:
+            if mi == -inf:
                 mi = 0
-            if ma == Inf:
+            if ma == inf:
                 ma = 100
 
             if ma is not None and mi is not None:
@@ -1341,7 +1341,7 @@ class Graph(ContextMenuMixin):
         if scale == "log":
             try:
                 if mi <= 0:
-                    mi = Inf
+                    mi = inf
                     data = plot.data
                     for di in data.list_data():
                         if "y" in di:

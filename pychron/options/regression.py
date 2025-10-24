@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum, Str, Color, Int
+from pyface.ui_traits import PyfaceColor
+from traits.api import Enum, Str, Int
 
 from pychron.options.options import FigureOptions
 from pychron.options.views.regression_views import VIEWS
@@ -24,7 +25,7 @@ class RegressionOptions(FigureOptions):
     regressor = Enum("NewYork")
     xtitle = Str("X")
     ytitle = Str("Y")
-    regression_color = Color
+    regression_color = PyfaceColor
     regression_width = Int(1)
 
     def initialize(self):

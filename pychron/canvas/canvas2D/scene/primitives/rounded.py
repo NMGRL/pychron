@@ -18,8 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import math
-from numpy import array
-from traits.traits import Color
+
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow, Cross

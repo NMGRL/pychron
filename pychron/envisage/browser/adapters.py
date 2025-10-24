@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Property, Str, Color, Bool, Event
+from traits.api import Int, Property, Str, Bool, Event
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 

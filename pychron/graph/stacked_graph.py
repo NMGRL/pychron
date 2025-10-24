@@ -18,7 +18,7 @@
 # =============enthought library imports=======================
 
 from chaco.api import ScatterPlot
-from numpy import Inf
+from numpy import inf
 from traits.api import Bool, on_trait_change, Event, Int
 
 # =============local library imports  ==========================
@@ -50,8 +50,8 @@ class StackedGraph(Graph):
         return [("Rescale All Y", "rescale_all_y", {})]
 
     def rescale_all_y(self):
-        ymi = Inf
-        yma = -Inf
+        ymi = inf
+        yma = -inf
         for plot in self.plots:
             yma = max(yma, plot.value_range.high)
             ymi = min(ymi, plot.value_range.low)

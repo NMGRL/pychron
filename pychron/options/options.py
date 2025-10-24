@@ -22,6 +22,7 @@ from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
 from pyface.message_dialog import warning
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     HasTraits,
     Str,
@@ -32,7 +33,6 @@ from traits.api import (
     Enum,
     List,
     Range,
-    Color,
     Button,
     Instance,
     Any,
@@ -630,8 +630,8 @@ class GroupMixin(HasTraits):
 
 
 class FigureOptions(BaseOptions, GroupMixin):
-    bgcolor = Color
-    plot_bgcolor = Color
+    bgcolor = PyfaceColor
+    plot_bgcolor = PyfaceColor
     plot_spacing = Range(0, 50)
     padding_left = Int(100)
     padding_right = Int(100)

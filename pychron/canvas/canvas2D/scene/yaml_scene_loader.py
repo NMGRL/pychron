@@ -171,7 +171,7 @@ class YAMLLoader(BaseLoader):
 
     def load_pipettes(self, scene):
         origin = self._origin
-        c = self._color_dict.get("pipette", (204, 204, 204))
+        c = self._color_dict.get("pipette", (0.8, 0.8, 0.8, 1))
         ox, oy = origin
         for p in self._yd.get("pipette") or []:
             rect = self._new_rectangle(scene, p, c, origin=origin, type_tag="pipette")
@@ -236,7 +236,7 @@ class YAMLLoader(BaseLoader):
         key = "_".join((lname, rname, tname, bname))
         dim = float(conn.get("dimension", self._connection_dimension))
 
-        cross = Cross(0, 0, default_color=(204, 204, 204), name=key, width=dim)
+        cross = Cross(0, 0, default_color=(0.8, 0.8, 0.8, 1), name=key, width=dim)
 
         for key, tag in (
             (lname, "left"),
@@ -296,7 +296,7 @@ class YAMLLoader(BaseLoader):
         # if dim is not None:
         #     height = float(dim.strip())
         # klass = BorderLine
-        tt = klass(0, 0, default_color=(204, 204, 204), name=key, width=dim)
+        tt = klass(0, 0, default_color=(0.8, 0.8, 0.8, 1), name=key, width=dim)
 
         lf = scene.get_item(lname)
         rt = scene.get_item(rname)
@@ -343,6 +343,7 @@ class YAMLLoader(BaseLoader):
             w, h = 5, 5
 
         color = elem.get("color")
+        print('color ele', color)
         if color is not None:
             c = color.strip()
             cobj = scene.get_item(c)
@@ -350,10 +351,10 @@ class YAMLLoader(BaseLoader):
                 c = cobj.default_color
             else:
                 c = colorify(c)
-
         else:
             c = make_color(c)
 
+        print('setting default color', c)
         rect = klass(
             x + ox,
             y + oy,
@@ -437,7 +438,7 @@ class YAMLLoader(BaseLoader):
             end=ekey,
             start_offset=start_offset,
             end_offset=end_offset,
-            default_color=(204, 204, 204),
+            default_color=(0.8, 0.8, 0.8, 1),
             name=key,
             width=dimension,
         )

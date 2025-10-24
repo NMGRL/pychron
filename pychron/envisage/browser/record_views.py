@@ -19,7 +19,7 @@ from __future__ import absolute_import
 
 import six
 from sqlalchemy.exc import InternalError
-from traits.api import HasTraits, Str, Date, Long, Bool
+from traits.api import HasTraits, Str, Date, Int, Bool
 
 from pychron.experiment.utilities.identifier import get_analysis_type
 
@@ -63,7 +63,7 @@ class InterpretedAgeRecordView(object):
 
 class SampleImageRecordView(RecordView):
     name = Str
-    record_id = Long
+    record_id = Int
     crete_date = Date
 
     def _create(self, dbrecord):
@@ -250,7 +250,7 @@ class ProjectRecordView(RecordView, NameView):
     principal_investigator = Str
     lab_contact = Str
     checkin_date = Date
-    unique_id = Long
+    unique_id = Int
 
     institution = Str
     comment = Str
@@ -282,7 +282,7 @@ class AnalysisGroupRecordView(RecordView):
     name = Str
     create_date = Date
     last_modified = Date
-    id = Long
+    id = Int
 
     def _create(self, dbrecord):
         self.id = dbrecord.id

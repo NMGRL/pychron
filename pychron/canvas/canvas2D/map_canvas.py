@@ -19,8 +19,8 @@ from __future__ import absolute_import
 
 import math
 
-from traits.api import Instance, Bool, Enum, Float, Color
-
+from traits.api import Instance, Bool, Enum, Float
+from pyface.ui_traits import PyfaceColor
 from pychron.canvas.canvas2D.scene.primitives.calibration import CalibrationObject
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.core.geometry.affine import AffineTransform
@@ -31,7 +31,7 @@ class MapCanvas(SceneCanvas):
     _map = Instance(BaseStageMap)
     calibration_item = Instance(CalibrationObject)
     calibrate = Bool(False)
-    hole_color = Color("white")
+    hole_color = PyfaceColor("white")
     # show_grids = False
     # show_axes = False
 

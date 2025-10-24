@@ -20,7 +20,7 @@ import re
 import time
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import array, Inf, arange
+from numpy import array, inf, arange
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
@@ -93,12 +93,12 @@ class BaseSeries(BaseArArFigure):
     def max_x(self, *args):
         if len(self.xs):
             return max(self.xs)
-        return -Inf
+        return -inf
 
     def min_x(self, *args):
         if len(self.xs):
             return min(self.xs)
-        return Inf
+        return inf
 
     def mean_x(self, *args):
         if len(self.xs):

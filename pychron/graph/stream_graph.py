@@ -26,7 +26,7 @@ set_qt()
 from pyface.timer.api import do_after as do_after_timer
 
 # =============standard library imports ========================
-from numpy import hstack, Inf
+from numpy import hstack, inf
 import time
 
 # =============local library imports  ==========================
@@ -107,8 +107,8 @@ class StreamGraph(Graph):
 
         self.scan_widths.append(sw)
         self.data_limits.append(dl)
-        self.cur_min.append(Inf)
-        self.cur_max.append(-Inf)
+        self.cur_min.append(inf)
+        self.cur_max.append(-inf)
 
         self.track_y_max.append(True)
         self.track_y_min.append(True)
@@ -231,9 +231,9 @@ class StreamGraph(Graph):
         ma = max(ys)
         mi = min(ys)
         if ma < self.cur_max[plotid]:
-            self.cur_max[plotid] = -Inf
+            self.cur_max[plotid] = -inf
         if mi > self.cur_min[plotid]:
-            self.cur_min[plotid] = Inf
+            self.cur_min[plotid] = inf
 
         self._set_xlimits(x, plotid=plotid)
         return x

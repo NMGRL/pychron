@@ -85,15 +85,30 @@ def colorify(a):
     if not isinstance(a, str):
         a = a.text.strip()
 
-    if a.startswith("0x"):
+    if ',' in a:
+        c = a.split(',')
+        a = tuple(map(float, c))
+        if any((ci>1 for ci in a)):
+            a = tuple(map(lambda x: x/255., a))
+
+        if len(a) == 3:
+            a = a + (1,)
+
+    elif a.startswith("0x"):
         a = int(a, 16)
     return a
 
 
 def make_color(c):
     if not isinstance(c, str):
-        c = ",".join(map(str, list(map(int, c))))
-        c = "({})".format(c)
+        if any((ci>1 for ci in c)):
+            c = tuple(map(lambda x: x/255., c))
+
+        if len(c) == 3:
+            c = c + (1,)
+        # c = ",".join(map(str, list(map(float, c))))
+        # c = "{})".format(c)
+
     return c
 
 
@@ -124,7 +139,8 @@ class BaseLoader:
     def load_rects(self, scene):
         for key in RECT_TAGS:
             for b in self._get_items(key):
-                c = self._color_dict.get(key, (204, 204, 204))
+                c = self._color_dict.get(key, (0.8, 0.8, 0.8, 1))
+                print('loca reacts', c, key, self._color_dict)
                 klass = KLASS_MAP.get(key, RoundedRectangle)
                 self._new_rectangle(
                     scene, b, c, bw=5, origin=self._origin, klass=klass, type_tag=key

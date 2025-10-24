@@ -1,6 +1,0 @@
-[tool.black]
-include = '\.py?$'
-extend-exclude= "^/[docs|sandbox|test|alembic_dvc|zobs]"
-max-line-length= "100"
-verbose = "true"
-# check = "true"

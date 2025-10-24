@@ -16,7 +16,8 @@
 
 import os
 
-from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
+from pyface.ui_traits import PyfaceColor
+from traits.api import Instance, Unicode, Property, DelegatesTo, Bool
 from traitsui.api import View, UItem
 
 from pychron.core.helpers.filetools import add_extension
@@ -133,7 +134,7 @@ class ExperimentEditor(BaseTraitsEditor):
     executed = DelegatesTo("queue")
     tabular_adapter_klass = AutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
-    bgcolor = Color
+    bgcolor = PyfaceColor
     tabular_adapter = Instance(AutomatedRunSpecAdapter)
     executed_tabular_adapter = Instance(ExecutedAutomatedRunSpecAdapter)
 

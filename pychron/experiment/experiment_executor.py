@@ -37,14 +37,13 @@ from traits.api import (
     Int,
     List,
     Any,
-    Color,
     Dict,
     on_trait_change,
-    Long,
     Float,
     Str,
 )
 from traits.trait_errors import TraitError
+from pyface.ui_traits import PyfaceColor
 from uncertainties import nominal_value, std_dev
 
 from pychron.consumer_mixin import consumable
@@ -249,9 +248,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_dvc_overlap_save = Bool(False)
     default_principal_investigator = Str
 
-    baseline_color = Color
-    sniff_color = Color
-    signal_color = Color
+    baseline_color = PyfaceColor
+    sniff_color = PyfaceColor
+    signal_color = PyfaceColor
 
     alive = Bool(False)
     _canceled = False

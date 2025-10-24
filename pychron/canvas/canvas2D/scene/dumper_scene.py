@@ -60,7 +60,7 @@ class DumperScene(ExtractionLineScene):
                 if key in color_dict:
                     c = color_dict[key]
                 else:
-                    c = (204, 204, 204)
+                    c = (0.8, 0.8, 0.8)
 
                 klass = KLASS_MAP.get(key, RoundedRectangle)
                 rect = self._new_rectangle(

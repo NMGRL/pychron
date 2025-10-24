@@ -23,6 +23,7 @@ from threading import Thread
 # =============enthought library imports=======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     Instance,
     List,
@@ -35,7 +36,6 @@ from traits.api import (
     File,
     Float,
     Enum,
-    Color,
 )
 
 from pychron.canvas.canvas_editor import CanvasEditor
@@ -120,7 +120,7 @@ class ExtractionLineManager(Manager, Consoleable):
     file_listener = None
 
     wait_group = Instance(WaitGroup, ())
-    console_bgcolor = Color("black")
+    console_bgcolor = PyfaceColor("black")
 
     _active = False
     _update_status_flag = None

@@ -28,7 +28,6 @@ from traits.api import (
     Enum,
     on_trait_change,
     CStr,
-    Long,
     HasTraits,
     Instance,
 )
@@ -150,7 +149,7 @@ class AutomatedRunSpec(HasTraits):
     step = Property(depends_on="_step")
     _step = Int(-1)
 
-    analysis_dbid = Long
+    analysis_dbid = Int
     analysis_timestamp = None
     # ===========================================================================
     # scripts

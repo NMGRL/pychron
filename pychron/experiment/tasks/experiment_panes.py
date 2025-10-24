@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
+from pyface.ui_traits import PyfaceColor
+from traits.api import Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import (
     View,
     Item,
@@ -685,15 +686,15 @@ Quick=   measure_iteration stopped at current step
 class ExplanationPane(TraitsDockPane):
     id = "pychron.experiment.explanation"
     name = "Explanation"
-    measurement = Color(MEASUREMENT_COLOR)
-    extraction = Color(EXTRACTION_COLOR)
-    success = Color(SUCCESS_COLOR)
-    skip = Color(SKIP_COLOR)
-    canceled = Color(CANCELED_COLOR)
-    truncated = Color(TRUNCATED_COLOR)
-    failed = Color(FAILED_COLOR)
-    not_executable = Color(NOT_EXECUTABLE_COLOR)
-    end_after = Color(END_AFTER_COLOR)
+    measurement = PyfaceColor(MEASUREMENT_COLOR)
+    extraction = PyfaceColor(EXTRACTION_COLOR)
+    success = PyfaceColor(SUCCESS_COLOR)
+    skip = PyfaceColor(SKIP_COLOR)
+    canceled = PyfaceColor(CANCELED_COLOR)
+    truncated = PyfaceColor(TRUNCATED_COLOR)
+    failed = PyfaceColor(FAILED_COLOR)
+    not_executable = PyfaceColor(NOT_EXECUTABLE_COLOR)
+    end_after = PyfaceColor(END_AFTER_COLOR)
 
     def set_colors(self, cd):
         for k, v in cd.items():

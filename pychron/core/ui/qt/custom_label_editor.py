@@ -14,11 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from pyface.color import Color
 from traits.api import (
     HasTraits,
     Str,
     Int,
-    Color,
     Button,
     Any,
     Instance,
@@ -26,12 +26,13 @@ from traits.api import (
     Bool,
 )
 from traitsui.api import View, UItem
-from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QLabel
+from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
 import random
+
 
 
 # ============= local library imports  ==========================
@@ -62,13 +63,13 @@ class _CustomLabelEditor(Editor):
             control = self.control
 
         if color is None:
-            color = self.color.name()
+            color = self.color.rgba
 
         if bgcolor is None:
             if self.bgcolor is None:
                 bgcolor = "transparent"
             else:
-                bgcolor = self.bgcolor.name()
+                bgcolor = self.bgcolor.rgba
 
         if size is None:
             size = self.text_size
@@ -99,8 +100,8 @@ class _CustomLabelEditor(Editor):
         control = QLabel()
         bgcolor = None
         if self.item.use_color_background:
-            bgcolor = self.item.bgcolor.name()
-        self._set_style(color=self.item.color.name(), bgcolor=bgcolor, control=control)
+            bgcolor = self.item.bgcolor
+        self._set_style(color=self.item.color, bgcolor=bgcolor, control=control)
 
         control.setMargin(5)
         parent.setSpacing(0)
@@ -121,10 +122,10 @@ class CustomLabel(UItem):
     size = Int(12)
     size_name = Str
 
-    color = Color("black")
+    color = Color.from_str("black")
     color_name = Str
 
-    bgcolor = Color("transparent")
+    bgcolor = Color.from_str("transparent")
     bgcolor_name = Str
     use_color_background = Bool(False)
     weight = Str("normal")
@@ -150,8 +151,8 @@ class CustomLabel(UItem):
 class Demo(HasTraits):
     a = Str("asdfsdf")
     foo = Button
-    color = Color("blue")
-    bgcolor = Color("green")
+    color = Color.from_str("blue")
+    bgcolor = Color.from_str("green")
     cnt = 0
     size = Int(12)
 

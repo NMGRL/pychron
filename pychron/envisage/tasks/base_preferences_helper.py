@@ -19,9 +19,10 @@ import re
 import requests
 from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+from pyface.ui_traits import PyfaceColor
 
 # ============= enthought library imports =======================
-from traits.api import List, Button, Any, Str, Enum, Color, BaseStr
+from traits.api import List, Button, Any, Str, Enum, BaseStr
 from traitsui.api import View, VGroup, UItem, HGroup, Item
 from traitsui.list_str_adapter import ListStrAdapter
 
@@ -75,7 +76,7 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
     remote = RepoString
     test_connection = Button
     _remote_status = Str
-    _remote_status_color = Color
+    _remote_status_color = PyfaceColor
 
     def _test_connection_fired(self):
         self._remote_status_color = "red"
@@ -136,8 +137,8 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
 class BaseConsolePreferences(BasePreferencesHelper):
     fontsize = Enum(6, 8, 10, 11, 12, 14, 16, 18, 22, 24, 36)
 
-    textcolor = Color("green")
-    bgcolor = Color("black")
+    textcolor = PyfaceColor("green")
+    bgcolor = PyfaceColor("black")
 
     preview = Str("Pychron is python + geochronology")
 

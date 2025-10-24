@@ -22,8 +22,9 @@ from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict
 from kiva.agg.agg import GraphicsContextArray
 from numpy import array
-from traits.api import Float, Any, Bool, Str, Property, List, Int, Color, String, Either
+from traits.api import Float, Any, Bool, Str, Property, List, Int, String, Either
 from traitsui.api import VGroup, Item, Group
+from pyface.ui_traits import PyfaceColor
 
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
 from pychron.canvas.canvas2D.scene.primitives.calibration import calc_rotation
@@ -341,10 +342,10 @@ class LoadIndicator(Circle):
     degas_indicator = False
     measured_indicator = False
     monitor_indicator = False
-    degas_color = Color("orange")
-    measured_color = Color("purple")
+    degas_color = PyfaceColor("orange")
+    measured_color = PyfaceColor("purple")
     default_color = "black"
-    fill_color = Color("white")
+    fill_color = PyfaceColor("white")
     identifier_label = None
     sample_label = None
     weight_label = None
@@ -482,7 +483,7 @@ class LoadIndicator(Circle):
 class Label(QPrimitive):
     text = String
     use_border = True
-    bgcolor = Color("white")
+    bgcolor = PyfaceColor("white")
     hjustify = "left"
     vjustify = "bottom"
     soffset_x = Float
@@ -560,7 +561,7 @@ class Indicator(QPrimitive):
     vline_length = 0.1
     use_simple_render = Bool(True)
     spot_size = Int(8)
-    spot_color = Color("yellow")
+    spot_color = PyfaceColor("yellow")
 
     def __init__(self, x, y, *args, **kw):
         super(Indicator, self).__init__(x, y, *args, **kw)
