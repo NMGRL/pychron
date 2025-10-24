@@ -21,7 +21,7 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
-from numpy import Inf, vstack, zeros_like, ma
+from numpy import inf, vstack, zeros_like, ma
 from traits.api import (
     HasTraits,
     Any,
@@ -237,10 +237,10 @@ class BaseArArFigure(SelectionFigure):
             self.plot(self.options.get_plotable_aux_plots())
 
     def max_x(self, *args):
-        return -Inf
+        return -inf
 
     def min_x(self, *args):
-        return Inf
+        return inf
 
     def mean_x(self, *args):
         return 0

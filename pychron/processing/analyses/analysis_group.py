@@ -19,6 +19,7 @@ import math
 from operator import attrgetter
 
 from numpy import array, nan, average
+from pyface.ui_traits import PyfaceColor
 
 # ============= enthought library imports =======================
 from traits.api import (
@@ -33,7 +34,6 @@ from traits.api import (
     Any,
     Enum,
     on_trait_change,
-    Color,
     Dict,
 )
 from traits.trait_errors import TraitError
@@ -186,7 +186,7 @@ class AnalysisGroup(IdeogramPlotable):
     exclude_non_plateau = Bool(False)
     omit_by_tag = Bool(True)
 
-    color = Color("black")
+    color = PyfaceColor("black")
 
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)

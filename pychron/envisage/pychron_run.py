@@ -142,6 +142,9 @@ def get_hardware_plugins():
 
 
 def get_klass(package, name):
+    m = __import__(package, globals(), locals(), [name])
+    klass = getattr(m, name)
+    
     try:
         m = __import__(package, globals(), locals(), [name])
         klass = getattr(m, name)

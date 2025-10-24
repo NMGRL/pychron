@@ -24,7 +24,7 @@ from binascii import hexlify
 from math import isnan, isinf
 
 import six
-from numpy import array, Inf, polyfit, gradient, array_split, mean, isfinite
+from numpy import array, inf, polyfit, gradient, array_split, mean, isfinite
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
@@ -306,7 +306,7 @@ class IsotopicMeasurement(BaseMeasurement):
                     s = int(s)
 
                 if e is "":
-                    e = Inf
+                    e = inf
                 else:
                     e = int(e)
 

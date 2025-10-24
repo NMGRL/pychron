@@ -25,7 +25,7 @@
 import os
 
 from numpy import (
-    Inf,
+    inf,
     isscalar,
     array,
     argmax,
@@ -108,7 +108,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
 
     # maxima and minima candidates are temporarily stored in
     # mx and mn respectively
-    mn, mx = Inf, -Inf
+    mn, mx = inf, -inf
 
     # Only detect peak if there is 'lookahead' amount of points after it
     for index, (x, y) in enumerate(zip(x_axis[:-lookahead], y_axis[:-lookahead])):
@@ -120,15 +120,15 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
             mnpos = x
 
         # look for max
-        if y < mx - delta and mx != Inf:
+        if y < mx - delta and mx != inf:
             # Maxima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
             if y_axis[index : index + lookahead].max() < mx:
                 max_peaks.append([mxpos, mx])
                 dump.append(True)
                 # set algorithm to only find minima now
-                mx = Inf
-                mn = Inf
+                mx = inf
+                mn = inf
                 if index + lookahead >= length:
                     # end is within lookahead no more peaks can be found
                     break
@@ -138,15 +138,15 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
                 #    mxpos = x_axis[np.where(y_axis[index:index+lookahead]==mx)]
 
         # look for min
-        if y > mn + delta and mn != -Inf:
+        if y > mn + delta and mn != -inf:
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
             if y_axis[index : index + lookahead].min() > mn:
                 min_peaks.append([mnpos, mn])
                 dump.append(False)
                 # set algorithm to only find maxima now
-                mn = -Inf
-                mx = -Inf
+                mn = -inf
+                mx = -inf
                 if index + lookahead >= length:
                     # end is within lookahead no more peaks can be found
                     break

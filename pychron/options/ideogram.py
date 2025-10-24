@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     Int,
     Bool,
@@ -27,7 +28,6 @@ from traits.api import (
     Dict,
     Button,
     Str,
-    Color,
 )
 
 from pychron.options.aux_plot import AuxPlot
@@ -145,9 +145,9 @@ class IdeogramOptions(AgeOptions):
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
     peak_label_sigfigs = Int
-    peak_label_bgcolor = Color
+    peak_label_bgcolor = PyfaceColor
     peak_label_border = Int
-    peak_label_border_color = Color
+    peak_label_border_color = PyfaceColor
     peak_label_bgcolor_enabled = Bool(False)
     aux_plot_name = "Ideogram"
 

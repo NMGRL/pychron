@@ -22,7 +22,7 @@ import os
 import pickle
 
 # ============= standard library imports ========================
-from numpy import Inf
+from numpy import inf
 from traits.api import Bool, Float, Property, Instance, Event, Button, Enum
 
 # ============= local library imports  ==========================
@@ -125,7 +125,7 @@ class StreamGraphManager(Manager):
             self.debug("no timer to stop")
 
     def _get_graph_y_min_max(self, plotid=0):
-        mi, ma = Inf, -Inf
+        mi, ma = inf, -inf
         for k, plot in self.graph.plots[plotid].plots.items():
             plot = plot[0]
             if plot.visible:

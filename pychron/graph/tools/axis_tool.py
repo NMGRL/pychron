@@ -18,7 +18,8 @@
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.base_tool import BaseTool
-from traits.api import on_trait_change, HasTraits, Font, Str
+from pyface.ui_traits import PyfaceFont
+from traits.api import on_trait_change, HasTraits, Str
 from traitsui.api import View, Item, HGroup, VGroup, TextEditor, Handler
 
 # ============= standard library imports ========================
@@ -97,7 +98,7 @@ class AxisViewHandler(Handler):
 
 
 class WrapAxis(HasTraits):
-    title_font = Font
+    title_font = PyfaceFont
     tick_label_format_str = Str(enter_set=True, auto_set=False)
 
     def __init__(self, comp, *args, **kw):

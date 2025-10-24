@@ -16,9 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Str, Instance, Color, Enum, Bool, Int
+from traits.api import Str, Instance, Enum, Bool, Int
+from pyface.ui_traits import PyfaceColor
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.code_editor import SourceEditor
+from traitsui.code_editor import SourceEditor
 
 
 # ============= standard library imports ========================
@@ -44,7 +45,7 @@ class PyScriptCodeEditor(BasicEditorFactory):
     mark_lines = Str
 
     # Background color for marking lines
-    mark_color = Color(0xECE9D8)
+    mark_color = PyfaceColor(0xECE9D8)
 
     # Object trait containing the currently selected line (optional)
     selected_line = Str
@@ -59,13 +60,13 @@ class PyScriptCodeEditor(BasicEditorFactory):
     selected_end_pos = Str
 
     # Background color for selected lines
-    selected_color = Color(0xA4FFFF)
+    selected_color = PyfaceColor(0xA4FFFF)
 
     # Where should the search toolbar be placed?
     search = Enum("top", "bottom", "none")
 
     # Background color for lines that match the current search
-    search_color = Color(0xFFFF94)
+    search_color = PyfaceColor(0xFFFF94)
 
     # Current line
     line = Str

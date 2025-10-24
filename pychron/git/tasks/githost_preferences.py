@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 import requests
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Password, Button, Color, Bool
+from pyface.ui_traits import PyfaceColor
+from traits.api import Str, Password, Button, Bool
 from traitsui.api import View, Item, VGroup, HGroup
 
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -38,7 +39,7 @@ class GitHostPreferences(BasePreferencesHelper):
     disable_authentication_message = Bool
     test_connection = Button
     _remote_status = Str
-    _remote_status_color = Color
+    _remote_status_color = PyfaceColor
 
     def _test_connection_fired(self):
         self._remote_status_color = "red"

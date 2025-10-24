@@ -31,7 +31,6 @@ from traits.api import (
     Str,
     HasTraits,
     Event,
-    Long,
 )
 from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
@@ -77,7 +76,7 @@ class NewRunBlockView(HasTraits):
 class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_selected = Any
     dclicked = Any
-    database_identifier = Long
+    database_identifier = Int
     display_executed_runs = Property(depends_on="executed_runs[]")
     n_executed_display = Int(5)
     executed_runs = List

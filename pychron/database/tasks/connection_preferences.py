@@ -27,7 +27,6 @@ from traits.api import (
     Enum,
     Button,
     on_trait_change,
-    Color,
     String,
     List,
     File,
@@ -35,6 +34,7 @@ from traits.api import (
     Bool,
     Int,
 )
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import (
     View,
     VGroup,
@@ -121,7 +121,7 @@ class ConnectionMixin(HasTraits):
     # _test_connection_button = Button
 
     _connected_label = String("Not Tested")
-    _connected_color = Color("orange")
+    _connected_color = PyfaceColor("orange")
     _adapter_klass = "pychron.database.core.database_adapter.DatabaseAdapter"
     _names = List
     _test_func = None

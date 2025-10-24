@@ -20,7 +20,7 @@ from math import ceil
 from operator import attrgetter
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import Inf, polyfit, polyval, arange, argmin
+from numpy import inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 from traits.api import Event, Dict, List, Str
@@ -335,13 +335,13 @@ def make_graph(
     g.clear()
 
     if not show_evo:
-        xmi = Inf
-        xma = -Inf
+        xmi = inf
+        xma = -inf
     else:
-        xmi, xma = 0, -Inf
+        xmi, xma = 0, -inf
 
     for i, iso in enumerate(isotopes):
-        ymi, yma = Inf, -Inf
+        ymi, yma = inf, -inf
 
         p = g.new_plot(padding=[80, 10, 10, 40], resizable=resizable)
         g.add_limit_tool(p, "x")

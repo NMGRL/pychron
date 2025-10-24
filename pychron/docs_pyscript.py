@@ -17,7 +17,6 @@
 import sys, os
 from types import FunctionType
 
-
 root = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(root)
 
@@ -52,14 +51,12 @@ def assemble_docs():
             # docstr = func.__doc__
             pass
 
-        # if docstr is None:
-        #     docstr = ""
-        # else:
-        docstr = ""
         if func is not None:
             # Select a module (e.g. my_module) to generate markdown documentation
             docstr = generator.func2md(func)
-
+            docstr = docstr.replace('_m_open', 'open')
+            docstr = docstr.replace('_m_info', 'info')
+            docstr = docstr.replace("classmethod", 'method')
             # command = f"### {ci[0]}\n{docstr}\n\n"
             contents.append(docstr)
 

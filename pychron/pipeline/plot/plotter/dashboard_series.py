@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-from numpy import Inf
+from numpy import inf
 from traits.api import Array, Dict
 
 # ============= standard library imports ========================
@@ -57,7 +57,7 @@ class DashboardSeries(BaseArArFigure):
             #            data = self.measurements[px.name]
             #            if data is None:
             #                return
-            _mi, _ma = Inf, -Inf
+            _mi, _ma = inf, -inf
             with graph.no_regression(refresh=True):
                 plots = [po for po in plots if po.use]
 

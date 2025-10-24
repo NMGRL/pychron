@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+from pyface.ui_traits import PyfaceColor
 from traits.api import Directory, Bool, String, Float, Int, Str, Property, Enum
 from traits.has_traits import MetaHasTraits
-from traits.traits import Color
 from traitsui.api import View, Item, VGroup
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -123,7 +123,7 @@ class AnalysisTypeColorMeta(MetaHasTraits):
 
         for k in ANALYSIS_MAPPING_UNDERSCORE_KEY.keys():
             name = "{}_color".format(k)
-            d[name] = Color
+            d[name] = PyfaceColor
 
         return super().__new__(cls, name, bases, d)
 
