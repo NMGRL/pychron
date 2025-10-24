@@ -5,9 +5,15 @@ max-line-length= "100"
 verbose = "true"
 # check = "true"
 
+[tool.uv]
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'darwin' and platform_machine == 'x86_64'"
+]
+
 [project]
-sys_platform = ['win32', 'macOS', 'linux']
-platform_machine = ['x86_64', 'AMD64', 'arm64', 'aarch64']
 name = "pychrondc"
 version = "0.1.0"
 description = "Add your description here"
@@ -22,7 +28,7 @@ dependencies = [
     "numpy>=2.3.4",
     "pygments>=2.19.2",
     "pymysql>=1.1.2",
-    "pyqt5>=5.15.11",
+    "pyqt6>=6.0.0",
     "pyyaml>=6.0.3",
     "reportlab>=4.4.4",
     "requests>=2.32.5",
