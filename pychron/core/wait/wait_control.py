@@ -19,7 +19,8 @@ import time
 from threading import Event
 
 # ============= enthought library imports =======================
-from traits.api import Str, Color, Button, Float, Bool, Property, Int, Event as TEvent
+from traits.api import Str, Button, Float, Bool, Property, Int, Event as TEvent
+from pyface.ui_traits import PyfaceColor
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
@@ -30,7 +31,7 @@ from pychron.loggable import Loggable
 class WaitControl(Loggable):
     page_name = Str("Wait")
     message = Str
-    message_color = Color("black")
+    message_color = PyfaceColor("black")
 
     high = Int(auto_set=False, enter_set=True)
     duration = Float(10)

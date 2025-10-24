@@ -125,7 +125,7 @@ class ErrorBarOverlay(AbstractOverlay):
                     component.x, component.y, component.width, component.height
                 )
                 # draw normal
-                color = component.color
+                color = component.color_
                 if isinstance(color, str):
                     color = color_table[color]
                 elif isinstance(color, QtGui.QColor):

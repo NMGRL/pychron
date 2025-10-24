@@ -28,7 +28,6 @@ from traits.api import (
     List,
     Date,
     Time,
-    Long,
     Bytes,
     Tuple,
 )
@@ -84,8 +83,11 @@ class PersistenceSpec(HasTraits):
     emission = Float
     active_detectors = List
 
+    baseline_modifiers = Dict
+    modified_baselines = Dict
+
     previous_blank_runid = Str
-    previous_blank_id = Long
+    previous_blank_id = Int
     previous_blanks = Dict
 
     rundate = Date

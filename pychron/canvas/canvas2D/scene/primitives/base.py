@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from kiva.fonttools import str_to_font
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     HasTraits,
     Str,
@@ -23,7 +24,6 @@ from traits.api import (
     Float,
     Property,
     on_trait_change,
-    Color,
     List,
 )
 from traitsui.api import View, Item, VGroup, HGroup
@@ -50,11 +50,11 @@ class Primitive(HasTraits):
     state = False
     selected = False
 
-    default_color = Color("red")
-    active_color = Color("(0,255,0)")
-    selected_color = Color("blue")
-    name_color = Color("black")
-    text_color = Color("black")
+    default_color = PyfaceColor("red")
+    active_color = PyfaceColor("green")
+    selected_color = PyfaceColor("blue")
+    name_color = PyfaceColor("black")
+    text_color = PyfaceColor("black")
 
     canvas = Any
 
@@ -298,16 +298,16 @@ class Primitive(HasTraits):
 class QPrimitive(Primitive):
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
-            c = c.red(), c.green(), c.blue(), c.alpha()
+            c = c.rgba
 
-        c = [x / 255.0 for x in c]
+        if any((ci > 1 for ci in c)):
+            c = [x / 255.0 for x in c]
         return c
 
     def is_in(self, x, y):
         mx, my = self.get_xy()
         w, h = self.get_wh()
-        if mx <= x <= (mx + w) and my <= y <= (my + h):
-            return True
+        return mx <= x <= (mx + w) and my <= y <= (my + h)
 
 
 class Connectable(QPrimitive):
@@ -319,16 +319,16 @@ class Connectable(QPrimitive):
         if not self._initialized:
             return
 
-        cvo = self.x != self.ox
-        cho = self.y != self.oy
-
+        # cvo = self.x != self.ox
+        # cho = self.y != self.oy
+        w, h = self.width, self.height
         for t, c in self.connections:
-            c.clear_vorientation = cvo
-            c.clear_horientation = cho
+            # c.clear_vorientation = cvo
+            # c.clear_horientation = cho
 
             func = getattr(c, "set_{}point".format(t))
-            w, h = self.width, self.height
             func((self.x + w / 2.0, self.y + h / 2.0))
+            c.request_layout()
 
         self.request_redraw()
 

@@ -90,7 +90,7 @@ class Handler(object):
     #         pos += cr
     #     return buff
 
-    def _recvall(self, recv, datasize=None, frame=None):
+    def _recvall(self, recv, datasize=None, frame=None, terminator=None):
         """
         recv: callable that accepts 1 argument (datasize). should return a str
         """
@@ -116,7 +116,8 @@ class Handler(object):
         if datasize is None:
             datasize = self.datasize
 
-        rt = self.read_terminator
+        if terminator is None:
+            terminator = self.read_terminator
 
         while 1:
             s = recv(datasize)
@@ -128,9 +129,8 @@ class Handler(object):
 
             sum += len(s)
             data += s
-
-            if rt is not None:
-                if data.endswith(rt):
+            if terminator is not None:
+                if data.endswith(terminator):
                     break
             else:
                 if msg_len and sum >= msg_len:
@@ -168,7 +168,7 @@ class Handler(object):
         inputs = [self.sock]
         outputs = []
         readable, writable, exceptional = select.select(
-            inputs, outputs, inputs, timeout=timeout
+            inputs, outputs, inputs, timeout
         )
 
         buff = bytearray(2**12)
@@ -178,6 +178,7 @@ class Handler(object):
                 st = time.time()
                 while 1:
                     rsock.recv_into(buff)
+                    print(buff)
                     if terminator in buff:
                         data = buff.split(terminator)[0]
                         return data.decode("utf-8")
@@ -199,6 +200,9 @@ class TCPHandler(Handler):
 
     def get_packet(self, datasize=None, message_frame=None):
         return self._recvall(self.sock.recv, datasize=datasize, frame=message_frame)
+
+    def readline(self, terminator):
+        return self._recvall(self.sock.recv, terminator=terminator, datasize=1)
 
     def send_packet(self, p):
         self.sock.send(p.encode("utf-8"))
@@ -248,7 +252,7 @@ class EthernetCommunicator(Communicator):
     message_frame = ""
     timeout = Float(1.0)
     strip = True
-    default_timeout = 3
+    # default_timeout = 3
     default_datasize = 2**12
 
     _comms_report_attrs = (
@@ -315,14 +319,14 @@ class EthernetCommunicator(Communicator):
         self.message_frame = self.config_get(
             config, "Communications", "message_frame", optional=True, default=""
         )
-        self.default_timeout = self.config_get(
-            config,
-            "Communications",
-            "default_timeout",
-            cast="int",
-            optional=True,
-            default=3,
-        )
+        # self.default_timeout = self.config_get(
+        #     config,
+        #     "Communications",
+        #     "default_timeout",
+        #     cast="int",
+        #     optional=True,
+        #     default=3,
+        # )
         self.default_datasize = self.config_get(
             config,
             "Communications",
@@ -457,7 +461,7 @@ class EthernetCommunicator(Communicator):
                 retries = 2
 
             if timeout is None:
-                timeout = self.default_timeout
+                timeout = self.timeout
 
             re = "ERROR: Connection refused: {}, timeout={}".format(
                 self.address, timeout
@@ -502,12 +506,29 @@ class EthernetCommunicator(Communicator):
         self._reset_connection()
 
     def select_read(self, *args, **kw):
-        timeout = self.default_timeout
+        timeout = self.timeout
         handler = self.get_handler(timeout=timeout)
         if handler:
             handler = self.get_read_handler(handler, timeout=timeout)
 
         return handler.select_read(*args, **kw)
+
+    def readline(self, terminator=b"\r\n"):
+        timeout = self._reset_error_mode()
+
+        handler = self.get_handler(timeout=timeout)
+        if handler:
+            handler = self.get_read_handler(handler, timeout=timeout)
+
+        if handler:
+            if isinstance(terminator, str):
+                terminator = terminator.encode("utf8")
+
+            try:
+                return handler.readline(terminator)
+            except socket.timeout as e:
+                self.warning("read. read packet. error: {}".format(e))
+                self.error_mode = True
 
     def read(self, datasize=None, *args, **kw):
         for i in range(3):
@@ -562,7 +583,7 @@ class EthernetCommunicator(Communicator):
                 timeout = 0.5
 
         if timeout is None:
-            timeout = self.default_timeout
+            timeout = self.timeout
 
         self.error_mode = False
         return timeout

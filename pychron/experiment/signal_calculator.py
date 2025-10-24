@@ -19,7 +19,16 @@ from __future__ import absolute_import
 import math
 
 import numpy as np
-from traits.api import HasTraits, Str, Float, on_trait_change, Instance, Enum, String
+from traits.api import (
+    HasTraits,
+    Str,
+    Float,
+    on_trait_change,
+    Instance,
+    Enum,
+    String,
+    List,
+)
 from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.core.ui.enum_editor import myEnumEditor
@@ -147,7 +156,7 @@ class VolumeIndex(Index):
 
 class IndexSelector(HasTraits):
     name = String("Weight")
-    names = ["Volume", "Weight"]
+    names = List(["Volume", "Weight"])
 
     def traits_view(self):
         v = View(Item("name", editor=myEnumEditor(name="names")))
@@ -241,7 +250,7 @@ class SignalCalculator(HasTraits):
         g.new_plot(
             xtitle="weight (mg)",
             ytitle="40Ar* (fA)",
-            padding=[60, 20, 60, 60]
+            padding=[60, 20, 60, 60],
             #                   padding=60
         )
 

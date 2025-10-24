@@ -29,7 +29,8 @@ from traits.api import (
     CStr,
     TraitError,
 )
-from traits.trait_handlers import TraitListObject
+from traits.trait_list_object import TraitListObject
+
 from traitsui.api import (
     View,
     UItem,

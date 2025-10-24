@@ -16,9 +16,9 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+from pyface.ui_traits import PyfaceColor
 from traits.api import Directory, Bool, String, Float, Int, Str, Property, Enum
 from traits.has_traits import MetaHasTraits
-from traits.traits import Color
 from traitsui.api import View, Item, VGroup
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -123,7 +123,7 @@ class AnalysisTypeColorMeta(MetaHasTraits):
 
         for k in ANALYSIS_MAPPING_UNDERSCORE_KEY.keys():
             name = "{}_color".format(k)
-            d[name] = Color
+            d[name] = PyfaceColor
 
         return super().__new__(cls, name, bases, d)
 
@@ -140,6 +140,7 @@ class BrowserPreferences(BasePreferencesHelper, metaclass=AnalysisTypeColorMeta)
     use_analysis_colors = Bool
     one_selected_is_all = Bool
     auto_scroll_kind = Enum(AUTO_SCROLL_KINDS)
+    use_quick_recall = Bool
 
 
 class BrowserPreferencesPane(PreferencesPane):
@@ -202,6 +203,7 @@ class BrowserPreferencesPane(PreferencesPane):
                 "you actually want the entire dataset",
             ),
             Item("auto_scroll_kind", label="AutoScroll"),
+            Item("use_quick_recall", label="Use Quick Recall"),
             Item("mounted_media_root", label="Mounted Media"),
             acgrp,
             load_grp,

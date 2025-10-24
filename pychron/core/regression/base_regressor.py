@@ -192,7 +192,7 @@ class BaseRegressor(HasTraits):
     def get_fit_dict(self):
         return {"fit": self.fit, "error_type": self.error_calc_type}
 
-    def determine_fit(self):
+    def determine_fit(self, *args, **kw):
         return self.fit
 
     def get_xsquared_coefficient(self):

@@ -65,6 +65,7 @@ class SeriesOptions(FitOptions):
     show_statistics = Bool(False)
     show_statistics_as_table = Bool(False)
     use_group_statistics = Bool(True)
+    show_current = Bool(True)
 
     display_min_max = Bool(False)
 

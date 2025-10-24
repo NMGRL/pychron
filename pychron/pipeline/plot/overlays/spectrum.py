@@ -19,15 +19,22 @@ from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
 
-# from chaco.data_label import draw_arrow
 from chaco.label import Label
 
 # from enable.colors import convert_from_pyqt_color
-from chaco.overlays.data_label import draw_arrow
+try:
+    from chaco.overlays.plot_label import PlotLabel
+except ImportError:
+    from chaco.api import PlotLabel
+
+try:
+    from chaco.overlays.data_label import draw_arrow
+except ImportError:
+    from chaco.api import draw_arrow
+
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from enable.api import ColorTrait
-from chaco.api import PlotLabel
 from kiva.trait_defs.kiva_font_trait import KivaFont
 
 # ============= standard library imports ========================
@@ -194,7 +201,10 @@ class SpectrumErrorOverlay(AbstractOverlay):
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
         with gc:
-            gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
+            # gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
+            gc.clip_to_rect(
+                *(float(p) for p in (comp.x, comp.y, comp.width, comp.height))
+            )
 
             xs = comp.index.get_data()
             ys = comp.value.get_data()
@@ -442,7 +452,11 @@ class PlateauOverlay(BasePlateauOverlay):
             pt1, pt2, y1, y2 = points
             with gc:
                 comp = self.component
-                gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
+                gc.clip_to_rect(
+                    *(float(p) for p in (comp.x, comp.y, comp.width, comp.height))
+                )
+
+                # gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
                 # color = convert_from_pyqt_color(None, None, self.line_color)
                 color = self.line_color_
                 gc.set_stroke_color(color)

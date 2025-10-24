@@ -45,11 +45,20 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     n_false = Enum(FIT_TYPES)
 
     def smart_filter_values(self, xx):
-        a, b, c, d = self.get_filter_coefficients()
-        return a * xx**b + c * xx + d
+        coeffs = self.get_filter_coefficients()
+        ret = 0
+        if coeffs is not None:
+            try:
+                a, b, c, d = coeffs
+                ret = a * xx**b + c * xx + d
+            except ValueError:
+                pass
+
+        return ret
 
     def get_filter_coefficients(self):
-        return (float(f) for f in self.filter_coefficients.split(","))
+        if self.filter_coefficients and "," in self.filter_coefficients:
+            return (float(f) for f in self.filter_coefficients.split(","))
 
     @cached_property
     def _get_fit_types(self):

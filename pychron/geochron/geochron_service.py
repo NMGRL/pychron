@@ -169,9 +169,9 @@ class GeochronService(Loggable):
         irradiation_elem = etree.SubElement(experiment_elem, "Irradiation")
 
         irradiation_elem.attrib["irradiationName"] = analysis.irradiation
-        irradiation_elem.attrib[
-            "irradiationReactorName"
-        ] = analysis.production_obj.reactor
+        irradiation_elem.attrib["irradiationReactorName"] = (
+            analysis.production_obj.reactor
+        )
 
         production = analysis.production_obj
         constants = analysis.arar_constants

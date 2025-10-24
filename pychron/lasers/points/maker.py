@@ -474,7 +474,9 @@ class GridOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
             comp = self.component
-            gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
+            gc.clip_to_rect(
+                *(float(p) for p in (comp.x, comp.y, comp.width, comp.height))
+            )
             pos = comp.get_offset_stage_screen_position()
 
             gc.translate_ctm(*pos)

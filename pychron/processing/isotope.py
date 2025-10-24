@@ -24,7 +24,7 @@ from binascii import hexlify
 from math import isnan, isinf
 
 import six
-from numpy import array, Inf, polyfit, gradient, array_split, mean, isfinite
+from numpy import array, inf, polyfit, gradient, array_split, mean, isfinite
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
@@ -192,6 +192,7 @@ class IsotopicMeasurement(BaseMeasurement):
     use_stored_value = False
     reviewed = False
     ic_factor_reviewed = False
+    ic_factor_fit = None
 
     _value = 0
     _error = 0
@@ -305,7 +306,7 @@ class IsotopicMeasurement(BaseMeasurement):
                     s = int(s)
 
                 if e is "":
-                    e = Inf
+                    e = inf
                 else:
                     e = int(e)
 
@@ -504,7 +505,7 @@ class IsotopicMeasurement(BaseMeasurement):
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
-            fit = reg.determine_fit()
+            fit = reg.determine_fit(lfit)
             self.fit = fit
             reg.calculate()
         except FitError as e:
@@ -690,6 +691,8 @@ class Isotope(BaseIsotope):
     discrimination = None
     interference_corrected_value = None
     blank_source = ""
+
+    klass = 1
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)

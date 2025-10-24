@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Int, Bool, Color, Button, Range
-
+from traits.api import HasTraits, Int, Bool, Button, Range
+from pyface.ui_traits import PyfaceColor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,10 +25,10 @@ from traits.api import HasTraits, Int, Bool, Color, Button, Range
 
 class BaseGroupOptions(HasTraits):
     group_id = Int
-    color = Color
+    color = PyfaceColor
     alpha = Range(0, 100, 70)
     use_fill = Bool(True)
-    line_color = Color
+    line_color = PyfaceColor
     line_width = Int(1)
 
     bind_colors = Bool(True)

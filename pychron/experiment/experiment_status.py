@@ -19,8 +19,8 @@ from __future__ import absolute_import
 import time
 from threading import Thread
 
-from traits.api import String, Color, HasTraits
-
+from traits.api import String, HasTraits
+from pyface.ui_traits import PyfaceColor
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -47,7 +47,7 @@ def make_pattern_gen(flash, period, label, color):
 
 class ExperimentStatus(HasTraits):
     label = String
-    color = Color
+    color = PyfaceColor
 
     _gen = None
     _flash_daemon = None

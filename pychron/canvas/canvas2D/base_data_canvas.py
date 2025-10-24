@@ -154,6 +154,11 @@ class BaseDataCanvas(DataView):
         self.x_grid.visible = self.show_grids
         self.y_grid.visible = self.show_grids
 
+    @on_trait_change("show_axes")
+    def _update_show_axes(self):
+        self.value_axis.visible = self.show_axes
+        self.index_axis.visible = self.show_axes
+
     @on_trait_change("view_x_range")
     def _update_xrange(self):
         self.set_mapper_limits("x", self.view_x_range)

@@ -47,7 +47,7 @@ class ManagerHandler(ViewableHandler):
 
     def init(self, info):
         info.object.initialized = True
-        super(ManagerHandler, self).init(info)
+        return super(ManagerHandler, self).init(info)
 
     #    def closed(self, info, is_ok):
     #        '''
@@ -115,6 +115,12 @@ class Manager(Viewable, ConfigLoadable):
     _mass_spec_params = None
 
     error_code = None
+
+    def activate(self):
+        pass
+
+    def prepare_destroy(self):
+        pass
 
     def finish_loading(self):
         """ """

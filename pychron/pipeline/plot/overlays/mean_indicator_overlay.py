@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.plot_label import PlotLabel
-from chaco.scatterplot import render_markers
-from enable.markers import MarkerNameDict
-from traits.api import Color, Instance, Str, Float, Int, Any, Enum, Bool
+from chaco.api import PlotLabel
+from chaco.api import render_markers
+from pyface.ui_traits import PyfaceColor
+from traits.api import Instance, Str, Float, Int, Any, Enum, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -103,9 +103,9 @@ try:
             marker_size = self.marker_size
             points = [(-10 - self.marker_size / 2, (height + marker_size) / 2)]
             # points = [(0, 100)]
-            color = self.color
+            color = self.color_
             line_width = 1
-            outline_color = self.color
+            outline_color = self.color_
             render_markers(
                 gc, points, marker, marker_size, color, line_width, outline_color
             )
@@ -193,7 +193,7 @@ def render_end_cap(gc, x, y, length=3):
 try:
 
     class MeanIndicatorOverlay(AbstractOverlay, MovableMixin):
-        color = Color
+        color = PyfaceColor
         label = Instance(PlotLabel)
         text = Str
         location = Enum("Mean", "Upper Right")

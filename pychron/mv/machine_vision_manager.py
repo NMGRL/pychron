@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Instance, Float, List
+from traits.api import Instance, Float, List, Int
 
 # ============= standard library imports ========================
 from threading import Timer
@@ -51,11 +51,13 @@ YOFFSET = 25
 class MachineVisionManager(Loggable):
     video = Instance(Video)
     pxpermm = Float(23)
+    offsetx = Int
+    offsety = Int
     open_images = List
 
-    def new_image_frame(self):
+    def new_image_frame(self, force=True):
         if self.video:
-            src = self.video.get_cached_frame()
+            src = self.video.get_cached_frame(force=force)
             return src
 
     def new_image(self, frame=None, title="AutoCenter", view_id="target", **kw):

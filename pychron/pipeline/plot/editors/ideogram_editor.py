@@ -20,6 +20,7 @@ from chaco.label import Label
 from pyface.timer.do_later import do_later
 from traits.api import Instance, List, Property, on_trait_change
 from traitsui.api import View, VSplit, VGroup, HSplit
+from traitsui.group import HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -158,12 +159,13 @@ class IdeogramEditor(InterpretedAgeEditor):
         )
 
         g = self.get_component_view()
-        g.height = 750
-
+        # g.height = 0.75
+        # v = View(g,
+        #          resizable=True)
         v = View(
             VSplit(
                 g,
-                HSplit(
+                HGroup(
                     tbl_grp, ttest_grp, rvalues_grp, visible_when="additional_visible"
                 ),
             ),

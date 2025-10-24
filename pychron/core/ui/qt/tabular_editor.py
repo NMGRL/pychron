@@ -31,20 +31,20 @@ from traits.api import (
     Property,
     Int,
     HasTraits,
-    Color,
     Either,
     Callable,
     Event,
 )
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
-from traitsui.qt4.tabular_editor import (
+from traitsui.qt.tabular_editor import (
     TabularEditor as qtTabularEditor,
     _TableView as TableView,
     HeaderEventFilter,
     _ItemDelegate,
 )
-from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
+from traitsui.qt.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -62,7 +62,7 @@ class myTabularEditor(TabularEditor):
     drag_external = Bool(False)
     drag_enabled = Bool(True)
 
-    bgcolor = Color
+    bgcolor = PyfaceColor
     row_height = Int
     mime_type = Str("pychron.tabular_item")
 
@@ -369,7 +369,7 @@ class _TableView(TableView):
 
     def sizeHintForColumn(self, column):
         try:
-            return super(_TableView, self).sizeHintForColumn(column)
+            return int(super(_TableView, self).sizeHintForColumn(column))
         except AttributeError:
             pass
 

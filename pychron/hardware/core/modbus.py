@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pymodbus.exceptions import ConnectionException
+
 try:
     from pymodbus.constants import Endian
     from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
@@ -26,21 +28,61 @@ class ModbusMixin:
     """
 
     def _read_float(self, register, *args, **kw):
-        result = self._read_holding_registers(int(register), 2, *args, **kw)
+        result = self._read_holding_registers(
+            address=int(register), count=2, *args, **kw
+        )
         return self._decode_float(result)
+
+    def _read_int(self, register, *args, **kw):
+        result = self._read_holding_registers(
+            address=int(register), count=2, *args, **kw
+        )
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            result.registers, self._get_byteorder(), wordorder=self._get_wordorder()
+        )
+        return decoder.decode_32bit_int()
 
     def _read_input_float(self, register, *args, **kw):
-        result = self._read_input_registers(int(register), 2, *args, **kw)
+        result = self._read_input_registers(address=int(register), count=2, *args, **kw)
         return self._decode_float(result)
 
-    def _decode_float(self, result):
+    def _read_input_int(self, register, *args, **kw):
+        result = self._read_input_registers(address=int(register), count=2, *args, **kw)
         decoder = BinaryPayloadDecoder.fromRegisters(
-            result.registers, Endian.Big, wordorder=Endian.Little
+            result.registers, self._get_byteorder(), wordorder=self._get_wordorder()
         )
-        return decoder.decode_32bit_float()
+        return decoder.decode_32bit_uint()
+
+    def _get_byteorder(self):
+        if hasattr(self.communicator, "byteorder"):
+            b = self.communicator.byteorder
+            if b.lower() == "big":
+                return Endian.BIG
+            else:
+                return Endian.LITTLE
+
+        return Endian.BIG
+
+    def _get_wordorder(self):
+        if hasattr(self.communicator, "wordorder"):
+            w = self.communicator.wordorder
+            if w.lower() == "big":
+                return Endian.BIG
+            else:
+                return Endian.LITTLE
+        return Endian.LITTLE
+
+    def _decode_float(self, result):
+        if result:
+            decoder = BinaryPayloadDecoder.fromRegisters(
+                result.registers, self._get_byteorder(), wordorder=self._get_wordorder()
+            )
+            return decoder.decode_32bit_float()
 
     def _get_payload(self, value, is_float=True):
-        builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Little)
+        builder = BinaryPayloadBuilder(
+            byteorder=self._get_byteorder(), wordorder=self._get_wordorder()
+        )
         if is_float:
             builder.add_32bit_float(value)
         else:
@@ -68,8 +110,13 @@ class ModbusMixin:
 
     def _func(self, funcname, *args, **kw):
         if self.communicator:
-            self.debug("ModbusMixin: {} {} {}".format(funcname, args, kw))
-            return getattr(self.communicator, funcname)(*args, **kw)
+            if kw.get("verbose", False):
+                self.debug("ModbusMixin: {} {} {}".format(funcname, args, kw))
+
+            try:
+                return getattr(self.communicator, funcname)(*args, **kw)
+            except ConnectionException:
+                pass
 
     def _read_coils(self, *args, **kw):
         return self._func("read_coils", *args, **kw)

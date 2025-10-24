@@ -15,7 +15,7 @@
 # ===============================================================================
 import uuid
 
-from traits.trait_types import Date as TDate, Long, Str, Float, Int, Bool, Any
+from traits.trait_types import Date as TDate, Str, Float, Int, Bool, Any
 from traitsui.group import HGroup
 from traitsui.item import Item
 from traitsui.view import View
@@ -27,7 +27,7 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 
 class InterpretedAge(IdeogramPlotable):
     create_date = TDate
-    id = Long
+    id = Int
 
     sample = Str
     lithology = Str

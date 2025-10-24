@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.default_colormaps import hot
-from chaco.scatterplot import render_markers
+from chaco.api import render_markers
 from traits.api import List, Float, Int, Enum, CFloat, Instance
 from traitsui.api import View, Item, UItem
 

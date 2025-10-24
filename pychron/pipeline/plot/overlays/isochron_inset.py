@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from chaco.lineplot import LinePlot
-from chaco.scatterplot import ScatterPlot
+from chaco.api import LinePlot
+from chaco.api import ScatterPlot
 from traits.api import Float
 
 # ============= standard library imports ========================

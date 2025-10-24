@@ -28,9 +28,6 @@ class BasicEntryTask(BaseManagerTask):
 
     tool_bars = [SToolBar(SaveAction())]
 
-    def activated(self):
-        self.manager.activated()
-
     def prepare_destroy(self):
         self.manager.prepare_destroy()
 

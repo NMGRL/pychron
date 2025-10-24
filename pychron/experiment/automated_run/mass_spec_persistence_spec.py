@@ -30,7 +30,7 @@ from traits.api import (
     Bool,
     List,
 )
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value, std_dev
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import csv_to_ints
@@ -46,6 +46,7 @@ class MassSpecPersistenceSpec(Loggable):
     irradpos = CStr
 
     isotopes = Dict
+    modified_baselines = Dict
 
     mass_spectrometer = Str
     extract_device = Str
@@ -238,36 +239,44 @@ class MassSpecPersistenceSpec(Loggable):
         self.debug("get baseline data {} {}".format(iso, det))
         # if self.is_peak_hop and det == self.peak_hop_detector:
         # iso = None
+        t, v = self._get_data("baseline", iso, det)
+        # self.debug(f'modified baselines ={self.modified_baselines}')
+        # if self.modified_baselines:
+        #     self.debug(f'detector {det}, {det in self.modified_baselines}')
+        #
+        #     if det in self.modified_baselines:
+        #         m = self.modified_baselines[det]
+        #         self.debug(f'applying baseline modifier to all points {m["modifier"]}')
+        #         v += nominal_value(m['modifier'])
 
-        return self._get_data("baseline", iso, det)
+        return t, v
 
     def get_signal_data(self, iso, det, **kw):
         self.debug("get signal data {} {}".format(iso, det))
         return self._get_data("signal", iso, det, **kw)
 
     def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1, error="sem"):
-        m, s, fncnts = 0, 0, 0
-        # n_filtered_pts = 0
+        """
+        filter baselines using nsigma threshold. i.e if a point is greater than nsigma from the mean
+        exclude it.
+
+        at the end add in the baseline_modifier if applicable
+        """
+        m, s, fncnts, mm = 0, 0, 0, None
+
         if iso in self.isotopes:
             iso = self.isotopes[iso]
             xs, ys = iso.baseline.xs, iso.baseline.ys
-            # s_dict={'filter_outliers':filter_outliers,
-            #                                    'iterations':iterations,
-            #                                    'std_devs':std_devs}
-            #         self.dirty=notify
             fod = iso.baseline.filter_outliers_dict
             niter = fod.get("iterations", niter)
             nsigma = fod.get("std_devs", nsigma)
-            # reg = MeanRegressor(xs=xs, ys=ys)
-            # reg.calculate()
-            # reg.
+
             for i in range(niter):
                 m, s = mean(ys), std(ys, ddof=1)
                 res = abs(ys - m)
 
                 outliers = where(res > (s * nsigma))[0]
                 ys = delete(ys, outliers)
-                # n_filtered_pts += len(outliers)
 
             m, s = mean(ys), std(ys, ddof=1)
             fncnts = ys.shape[0]
@@ -275,35 +284,54 @@ class MassSpecPersistenceSpec(Loggable):
         if error == "sem":
             s = (s / fncnts**0.5) if fncnts else 0
 
-        return ufloat(m, s), fncnts
+        rv = ufloat(m, s)
 
-    def get_baseline_uvalue(self, iso):
-        try:
-            v = self.isotopes[iso].baseline.uvalue
-        except KeyError:
-            v = ufloat(0, 0)
-        return v
+        self.debug(f"using modified baselines {self.modified_baselines}")
+        if self.modified_baselines:
+            if iso.detector in self.modified_baselines:
+                m = self.modified_baselines[iso.detector]
+                self.debug(f"using modified baseline modifier={m} obaseline={rv}")
+                rv = ufloat(nominal_value(rv), std_dev(m["modifier"]))
+                self.debug(f"using modified baseline {rv}")
+                # rv += m["modifier"]
 
-        # def get_baseline_uvalue(self, det):
-        # vb = []
-        #
-        # dm = self.data_manager
-        # hfile = dm._frame
-        # root = dm._frame.root
-        # v, e = 0, 0
-        # if hasattr(root, 'baseline'):
-        # baseline = root.baseline
-        # for isogroup in hfile.list_nodes(baseline):
-        # for dettable in hfile.list_nodes(isogroup):
-        #             if dettable.name == det:
-        #                 vb = [r['value'] for r in dettable.iterrows()]
-        #                 break
-        #
-        #     vb = array(vb)
-        #     v = vb.mean()
-        #     e = vb.std()
-        #
-        # return ufloat(v, e)
+        return rv, fncnts
+
+    # def get_baseline_uvalue(self, iso):
+    #     try:
+    #         io = self.isotopes[iso]
+    #         v = io.baseline.uvalue
+    #         if io.detector in self.modified_baselines:
+    #             mb = self.modified_baselines[io.detector]
+    #             m = mb["modifier"]
+    #             self.debug(f'using modified unfiltered baseline modifier={m} obaseline={v}')
+    #             v += m
+    #     except KeyError:
+    #         self.debug_exception()
+    #         v = ufloat(0, 0)
+    #
+    #     return v
+
+    # def get_baseline_uvalue(self, det):
+    # vb = []
+    #
+    # dm = self.data_manager
+    # hfile = dm._frame
+    # root = dm._frame.root
+    # v, e = 0, 0
+    # if hasattr(root, 'baseline'):
+    # baseline = root.baseline
+    # for isogroup in hfile.list_nodes(baseline):
+    # for dettable in hfile.list_nodes(isogroup):
+    #             if dettable.name == det:
+    #                 vb = [r['value'] for r in dettable.iterrows()]
+    #                 break
+    #
+    #     vb = array(vb)
+    #     v = vb.mean()
+    #     e = vb.std()
+    #
+    # return ufloat(v, e)
 
     # def _get_baseline_detector(self, iso, det):
     # if self.is_peak_hop:

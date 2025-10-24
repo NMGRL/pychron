@@ -31,7 +31,6 @@ from traits.api import (
     Str,
     HasTraits,
     Event,
-    Long,
 )
 from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
@@ -51,7 +50,6 @@ from pychron.experiment.utilities.runid import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
-from pychron.stage.maps.laser_stage_map import LaserStageMap
 
 
 class RepeatRunBlockView(HasTraits):
@@ -78,7 +76,7 @@ class NewRunBlockView(HasTraits):
 class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_selected = Any
     dclicked = Any
-    database_identifier = Long
+    database_identifier = Int
     display_executed_runs = Property(depends_on="executed_runs[]")
     n_executed_display = Int(5)
     executed_runs = List
@@ -148,6 +146,8 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         open_view(ve)
 
     def motion_saver(self):
+        from pychron.stage.maps.laser_stage_map import LaserStageMap
+
         stage_map_klass = LaserStageMap
 
         t = self.tray
