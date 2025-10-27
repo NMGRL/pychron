@@ -23,8 +23,8 @@ from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.qt import QtGui
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
-from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorAreaWidget
-from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
+from pyface.ui.qt.tasks.advanced_editor_area_pane import EditorAreaWidget
+from pyface.ui.qt.tasks.editor_area_pane import EditorAreaDropFilter
 
 # ============= standard library imports ========================
 import sys

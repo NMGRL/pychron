@@ -22,7 +22,7 @@ from pyface.qt.QtCore import Qt, QSize
 from pyface.qt.QtGui import QFont, QFontMetrics, QApplication
 from traits.api import Event, Callable, Bool
 from traitsui.editors.table_editor import TableEditor
-from traitsui.qt4.table_editor import TableView
+from traitsui.qt.table_editor import TableView
 
 
 # ============= standard library imports ========================

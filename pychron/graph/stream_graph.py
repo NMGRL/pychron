@@ -20,8 +20,6 @@ from six.moves import range
 from six.moves import zip
 
 from pychron.core.ui import set_qt
-
-set_qt()
 # =============enthought library imports=======================
 from pyface.timer.api import do_after as do_after_timer
 

@@ -29,7 +29,7 @@ from pyface.qt.QtGui import (
 )
 from traits.api import HasTraits, Int, Callable, Str, List
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
 

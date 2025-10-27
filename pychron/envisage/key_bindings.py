@@ -21,7 +21,6 @@ from traits.trait_types import List
 from pychron.core.ui import set_qt
 from pychron.core.yaml import yload
 
-set_qt()
 # ============= enthought library imports =======================
 import os
 from traits.api import HasTraits, Str

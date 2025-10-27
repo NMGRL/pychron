@@ -19,7 +19,7 @@
 from pickle import dumps
 
 import six
-from PyQt5.QtCore import QSize
+
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import (
@@ -377,7 +377,7 @@ class _TableView(TableView):
         try:
             return super(_TableView, self).sizeHint()
         except TypeError:
-            return QSize()
+            return QtCore.QSize()
 
     # private
     def _copy(self):

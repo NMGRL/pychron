@@ -25,7 +25,7 @@ import time
 
 from pyface.qt import QtGui
 from pyface.qt.QtCore import Qt
-from pyface.ui.qt4.progress_dialog import ProgressDialog
+from pyface.ui.qt.progress_dialog import ProgressDialog
 from traits.api import Property, Bool, Int
 
 

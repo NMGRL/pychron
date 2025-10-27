@@ -23,8 +23,6 @@ from pychron.persistence_loggable import (
     dump_persistence_values,
 )
 
-set_qt()
-
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Button, List, Int, on_trait_change

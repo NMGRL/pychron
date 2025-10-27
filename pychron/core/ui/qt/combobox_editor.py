@@ -28,8 +28,8 @@ from pyface.qt.QtGui import (
 from traits.api import Str, Bool, Event, List, Enum
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.constants import OKColor, ErrorColor
-from traitsui.qt4.enum_editor import SimpleEditor
+from traitsui.qt.constants import OKColor, ErrorColor
+from traitsui.qt.enum_editor import SimpleEditor
 
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
