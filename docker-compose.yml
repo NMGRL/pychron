@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  pychron:
+    build: .
+    container_name: pychron_app
+    environment:
+      - DISPLAY=${DISPLAY_VAR}
+      - QT_X11_NO_MITSHM=1
+      - PYTHONPATH=/app # for launcher.py to find 'pychron' module
+      - ETS_QT4_IMPORTS=1 # fix legacy imports for traitsui.qt4
+      - ETS_TOOLKIT=qt4
+    volumes:
+      - ./data/Pychron:/root/Pychron
+      - ./data/logs:/root/.pychron
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    stdin_open: true
+    tty: true
