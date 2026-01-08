@@ -98,7 +98,13 @@ class _ComboboxEditor(SimpleEditor):
                 # QtCore.QObject.connect(control.lineEdit(),
                 #                        QtCore.SIGNAL('editingFinished()'),
                 #                        self.update_autoset_text_object)
-            control.setInsertPolicy(QtGui.QComboBox.NoInsert)
+            insert_policy = getattr(QComboBox, "NoInsert", None)
+            if insert_policy is None:
+                insert_policy = getattr(
+                    getattr(QComboBox, "InsertPolicy", None), "NoInsert", None
+                )
+            if insert_policy is not None:
+                control.setInsertPolicy(insert_policy)
 
         # self._no_enum_update = 0
         self.set_tooltip()
