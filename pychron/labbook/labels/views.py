@@ -20,7 +20,8 @@ from six.moves import map
 
 set_qt()
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Color
+from traits.api import HasTraits, Str
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import View, UItem, VGroup
 
 
@@ -30,7 +31,7 @@ from traitsui.api import View, UItem, VGroup
 
 class NewLabelView(HasTraits):
     text = Str
-    color = Color
+    color = PyfaceColor
 
     @property
     def color_str(self):

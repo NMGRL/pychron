@@ -18,7 +18,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.api import (
-    Color,
     Float,
     Any,
     Bool,
@@ -29,6 +28,7 @@ from traits.api import (
     File,
     Int,
 )
+from pyface.ui_traits import PyfaceColor
 
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
@@ -143,7 +143,7 @@ class LaserTrayCanvas(StageCanvas):
 
     beam_radius = Float(0)
     crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
-    crosshairs_offset_color = Color("blue")
+    crosshairs_offset_color = PyfaceColor("blue")
 
     crosshairs_radius = Range(0.0, 10.0, 1.0)
     crosshairs_offsetx = Float
@@ -155,16 +155,16 @@ class LaserTrayCanvas(StageCanvas):
     aux_desired_position = None
     aux_desired_position_color = None
 
-    aux_crosshairs_color = Color("red")
+    aux_crosshairs_color = PyfaceColor("red")
     aux_crosshairs_kind = Enum("UserRadius")
-    aux_crosshairs_offset_color = Color("red")
+    aux_crosshairs_offset_color = PyfaceColor("red")
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float
     aux_crosshairs_offsety = Float
     aux_crosshairs_line_width = Float(1.0)
 
     show_hole_label = Bool(True)
-    hole_label_color = Color
+    hole_label_color = PyfaceColor
     hole_label_size = Int
     hole_label_font = Font("Consolas")
 
