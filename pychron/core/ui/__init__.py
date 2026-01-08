@@ -16,8 +16,11 @@ def _patch_qdialog_exec():
         except Exception:
             return
 
-    if not hasattr(QDialog, "exec_") and hasattr(QDialog, "exec"):
-        QDialog.exec_ = QDialog.exec
+    if hasattr(QDialog, "exec"):
+        def _exec_(self):
+            return self.exec()
+
+        QDialog.exec_ = _exec_
 
 _patch_qdialog_exec()
 def set_qt():
