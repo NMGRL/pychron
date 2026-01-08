@@ -19,7 +19,6 @@ def _patch_qdialog_exec():
     if not hasattr(QDialog, "exec_") and hasattr(QDialog, "exec"):
         QDialog.exec_ = QDialog.exec
 
-
+_patch_qdialog_exec()
 def set_qt():
     set_toolkit("qt4")
-    _patch_qdialog_exec()
