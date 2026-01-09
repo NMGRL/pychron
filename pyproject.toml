@@ -29,7 +29,6 @@ dependencies = [
     "pygments>=2.19.2",
     "pymysql>=1.1.2",
     "pyqt5>=5.15.2",
-    "pyqt6>=6.0.0",
     "pyyaml>=6.0.3",
     "reportlab>=4.4.4",
     "requests>=2.32.5",
