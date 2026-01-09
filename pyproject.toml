@@ -18,7 +18,7 @@ name = "pychrondc"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = "==3.12"
+requires-python = "==3.12.*"
 dependencies = [
     "chaco>=6.1.1",
     "cryptography>=46.0.3",
