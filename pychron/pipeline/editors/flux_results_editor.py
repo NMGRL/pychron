@@ -17,7 +17,7 @@ from operator import attrgetter
 import csv
 
 # ============= enthought library imports =======================
-from numpy import average, array, diff, arctan, Inf
+from numpy import average, array, diff, arctan, inf
 from scipy.stats import mode
 from traits.api import (
     HasTraits,
@@ -262,7 +262,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             vs = abs(diff(vs))
             vs = vs[vs.astype(bool)].mean()
         else:
-            vs = [p[1] / p[0] if p[0] else Inf for p in geom]
+            vs = [p[1] / p[0] if p[0] else inf for p in geom]
             vs = arctan(vs)
 
             vs = abs(diff(vs))

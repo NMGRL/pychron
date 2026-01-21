@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from pyface.color import Color
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     HasTraits,
     Str,
@@ -122,10 +122,10 @@ class CustomLabel(UItem):
     size = Int(12)
     size_name = Str
 
-    color = Color.from_str("black")
+    color = PyfaceColor("black")
     color_name = Str
 
-    bgcolor = Color.from_str("transparent")
+    bgcolor = PyfaceColor("transparent")
     bgcolor_name = Str
     use_color_background = Bool(False)
     weight = Str("normal")
@@ -151,8 +151,8 @@ class CustomLabel(UItem):
 class Demo(HasTraits):
     a = Str("asdfsdf")
     foo = Button
-    color = Color.from_str("blue")
-    bgcolor = Color.from_str("green")
+    color = PyfaceColor("blue")
+    bgcolor = PyfaceColor("green")
     cnt = 0
     size = Int(12)
 

@@ -19,6 +19,7 @@
 from pickle import dumps
 
 import six
+
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import (

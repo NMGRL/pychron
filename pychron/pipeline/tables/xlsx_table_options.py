@@ -16,7 +16,8 @@
 import json
 import os
 
-from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
+from traits.api import Enum, Bool, Str, Int, Float, List, Directory
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import VGroup, HGroup, Tabbed, Item, UItem, EnumEditor
 from traitsui.item import UCustom, spring
 
@@ -100,7 +101,7 @@ class XLSXAnalysisTableWriterOptions(BaseOptions):
     # kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
     highlight_non_plateau = dumpable(Bool(True))
-    highlight_color = dumpable(Color)
+    highlight_color = dumpable(PyfaceColor)
 
     root_name = dumpable(Str)
     root_names = List

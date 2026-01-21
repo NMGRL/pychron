@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Event, Color, Str, Any, Int
+from traits.api import Event, Str, Any, Int
+from pyface.ui_traits import PyfaceColor
 from traitsui.qt4.editor import Editor
 
 # ============= standard library imports ========================
@@ -218,7 +219,7 @@ class _FastTextTableEditor(_TextTableEditor):
 
 class TextTableEditor(BasicEditorFactory):
     klass = _TextTableEditor
-    bg_color = Color
+    bg_color = PyfaceColor
     odd_color = Str
     even_color = Str
     header_color = Str

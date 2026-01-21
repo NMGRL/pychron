@@ -25,13 +25,13 @@ from traits.api import (
     Enum,
     Float,
     Int,
-    Color,
     Bool,
     Range,
     Instance,
     on_trait_change,
     List,
 )
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 
 from pychron.loggable import Loggable
@@ -54,10 +54,10 @@ class BaseMaker(Loggable):
     clear_mode = Enum("all", "current point")
     accept_point = Button
 
-    point_color = Color("blue")
+    point_color = PyfaceColor("blue")
 
     use_simple_render = Bool(False)
-    spot_color = Color("yellow")
+    spot_color = PyfaceColor("yellow")
     spot_size = Int(8)
 
     def initialize(self):
