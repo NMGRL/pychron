@@ -390,12 +390,27 @@ class MainOptions(SubOptions):
 
 def convert_color(ss):
     from pyface.qt.QtGui import QColor
+    try:
+        from pyface.color import Color as PyfaceColorClass
+    except Exception:
+        PyfaceColorClass = None
 
-    nd = {}
-    for k, v in ss.items():
+    def convert_value(v):
         if isinstance(v, QColor):
-            nd[k] = v.rgba()
-    ss.update(**nd)
+            return v.rgba()
+        if PyfaceColorClass is not None and isinstance(v, PyfaceColorClass):
+            return v.rgba
+        if isinstance(v, dict):
+            convert_color(v)
+            return v
+        if isinstance(v, list):
+            return [convert_value(i) for i in v]
+        if isinstance(v, tuple):
+            return tuple(convert_value(i) for i in v)
+        return v
+
+    for k, v in list(ss.items()):
+        ss[k] = convert_value(v)
 
 
 class BaseOptions(HasTraits):
