@@ -46,8 +46,42 @@ class Square(QFrame):
 
     def set_value(self, v):
         if v is not None:
-            self.value = v
+            self.value = self._coerce_qcolor(v)
             self.update()
+
+    def _coerce_qcolor(self, color):
+        if isinstance(color, QColor):
+            return color
+        if hasattr(color, "rgba"):
+            rgba = color.rgba
+            if len(rgba) == 4:
+                return QColor.fromRgbF(*rgba)
+        if isinstance(color, str):
+            if color.startswith("0x"):
+                try:
+                    color = int(color, 16)
+                except ValueError:
+                    return QColor(color)
+            else:
+                return QColor(color)
+        if isinstance(color, int):
+            return QColor((color >> 16) & 255, (color >> 8) & 255, color & 255)
+        if isinstance(color, (tuple, list)):
+            if len(color) == 3:
+                r, g, b = color
+                a = 1.0
+            elif len(color) == 4:
+                r, g, b, a = color
+            else:
+                return QColor(color)
+            if all(isinstance(v, float) for v in (r, g, b, a)) and max(
+                r, g, b, a
+            ) <= 1.0:
+                return QColor.fromRgbF(r, g, b, a)
+            if a <= 1.0:
+                a = int(round(a * 255))
+            return QColor(int(r), int(g), int(b), int(a))
+        return QColor(color)
 
 
 class _ColorSquareEditor(Editor):

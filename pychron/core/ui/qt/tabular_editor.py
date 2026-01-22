@@ -212,8 +212,32 @@ class _TableView(TableView):
         #     bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
         # self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
         p = self.palette()
-        p.setColor(QtGui.QPalette.Base, bgcolor)
+        p.setColor(QtGui.QPalette.Base, self._coerce_qcolor(bgcolor))
         self.setPalette(p)
+
+    def _coerce_qcolor(self, color):
+        if isinstance(color, QtGui.QColor):
+            return color
+        if hasattr(color, "rgba"):
+            rgba = color.rgba
+            if len(rgba) == 4:
+                return QtGui.QColor.fromRgbF(*rgba)
+        if isinstance(color, (tuple, list)):
+            if len(color) == 3:
+                r, g, b = color
+                a = 1.0
+            elif len(color) == 4:
+                r, g, b, a = color
+            else:
+                return QtGui.QColor(color)
+            if all(isinstance(v, float) for v in (r, g, b, a)) and max(
+                r, g, b, a
+            ) <= 1.0:
+                return QtGui.QColor.fromRgbF(r, g, b, a)
+            if a <= 1.0:
+                a = int(round(a * 255))
+            return QtGui.QColor(int(r), int(g), int(b), int(a))
+        return QtGui.QColor(color)
 
     def set_vertical_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)

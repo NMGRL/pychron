@@ -364,7 +364,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
                     Item(
                         "dac",
                         editor=RangeEditor(
-                            low_name="dacmin", high_name="dacmax", format="%0.5f"
+                            low_name="dacmin", high_name="dacmax", format_str="%0.5f"
                         ),
                     ),
                     Item(
