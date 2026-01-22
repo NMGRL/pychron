@@ -30,7 +30,7 @@ from reportlab.platypus.flowables import Spacer
 from reportlab.platypus.frames import Frame
 from six.moves import range
 from traits.api import Bool
-from traits.api import Color as TraitsColor
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import Item, VGroup
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -53,7 +53,7 @@ class LoadingPDFOptions(BasePDFOptions):
     show_hole_numbers = dumpable(Bool)
     view_pdf = dumpable(Bool)
     use_alternating_background = dumpable(Bool)
-    alternating_background = dumpable(TraitsColor)
+    alternating_background = dumpable(PyfaceColor)
 
     def _show_colors_changed(self, new):
         if new:

@@ -40,7 +40,8 @@ from kiva.trait_defs.kiva_font_trait import KivaFont
 # ============= standard library imports ========================
 from numpy import where, array
 from six.moves import zip
-from traits.api import Array, Int, Float, Str, Color, Bool, List
+from traits.api import Array, Int, Float, Str, Bool, List
+from pyface.ui_traits import PyfaceColor
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
@@ -193,7 +194,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
     use_fill = Bool(False)
     selections = List
     use_user_color = Bool(False)
-    user_color = Color
+    user_color = PyfaceColor
 
     platbounds = None
     dim_non_plateau = Bool(False)

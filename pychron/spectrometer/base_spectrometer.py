@@ -541,6 +541,13 @@ class BaseSpectrometer(SpectrometerDevice):
             dets = [di.toyaml() for di in self.detectors]
             yaml.dump(dets, wfile)
 
+    def _normalize_detector_color(self, color):
+        if isinstance(color, int):
+            return "#{:06X}".format(color & 0xFFFFFF)
+        if isinstance(color, str) and color.startswith("0x"):
+            return "#{}".format(color[2:].zfill(6))
+        return color
+
     def _load_detectors_yaml(self, ypath):
         self.debug("loading detectors yaml {}".format(ypath))
         with open(ypath, "r") as rfile:
@@ -548,7 +555,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 name = det.get("name")
                 software_gain = float(det.get("software_gain", 1.0))
 
-                color = det.get("color", "black")
+                color = self._normalize_detector_color(det.get("color", "black"))
                 default_state = bool(det.get("default_state", True))
                 isotope = det.get("isotope", "")
                 kind = det.get("kind", "Faraday")

@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, Str, List, Color, Button
+from traits.api import HasTraits, Str, List, Button
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import VGroup, UItem, Item, HGroup
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -31,7 +32,7 @@ class LabelAdapter(TabularAdapter):
 
 class Label(HasTraits):
     name = Str
-    color = Color
+    color = PyfaceColor
 
     def __init__(self, gh_label, *args, **kw):
         super(Label, self).__init__(*args, **kw)

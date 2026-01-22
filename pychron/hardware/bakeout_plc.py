@@ -23,7 +23,6 @@ from traits.api import (
     HasTraits,
     Bool,
     Property,
-    Color,
     CInt,
     observe,
     Str,
@@ -32,6 +31,7 @@ from traits.api import (
     Button,
     Instance,
 )
+from pyface.ui_traits import PyfaceColor
 from traitsui.group import HGroup
 from traitsui.item import UItem
 from traitsui.view import View
@@ -73,7 +73,7 @@ class BakeoutChannel(HasTraits):
     shortname = Property
     name = Property
     index = Int
-    color = Color("red")
+    color = PyfaceColor("red")
     tag = Str
 
     def _get_name(self):

@@ -21,7 +21,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from PySide import QtCore, QtGui
-from traits.api import Bool, Int, Color, Dict
+from traits.api import Bool, Int, Dict
+from pyface.ui_traits import PyfaceColor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -89,7 +90,7 @@ class _KeywordEditor(SimpleEditor):
 class KeywordEditor(BasicEditorFactory):
     klass = _KeywordEditor
     editable = Bool(True)
-    bgcolor = Color
+    bgcolor = PyfaceColor
     fontsize = Int
     mapping = Dict
     evaluate = None
