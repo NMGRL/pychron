@@ -18,7 +18,7 @@ import os
 import time
 from threading import Thread
 
-from numpy import array, hstack, average, Inf
+from numpy import array, hstack, average, inf as Inf
 
 # ============= enthought library imports =======================
 from traits.api import Instance, HasTraits, Str, Bool, Float

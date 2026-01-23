@@ -19,7 +19,7 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from __future__ import print_function
-from numpy import Inf
+from numpy import inf as Inf
 
 from pychron.graph.tools.point_inspector import PointInspector, PointInspectorOverlay
 from pychron.graph.tools.regression_inspector import (

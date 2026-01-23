@@ -225,9 +225,17 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 func = gc.stroke_path
 
             color = self.user_color
+            def _component(value):
+                return value() if callable(value) else value
+
             color = [
                 x / 255.0
-                for x in (color.red(), color.green(), color.blue(), color.alpha())
+                for x in (
+                    _component(getattr(color, "red", 0)),
+                    _component(getattr(color, "green", 0)),
+                    _component(getattr(color, "blue", 0)),
+                    _component(getattr(color, "alpha", 255)),
+                )
             ]
 
             color = color[0], color[1], color[2], alpha

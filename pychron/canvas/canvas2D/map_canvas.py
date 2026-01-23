@@ -131,7 +131,15 @@ class MapCanvas(SceneCanvas):
 
     def _convert_color(self, color):
         if not isinstance(color, (list, tuple)):
-            color = color.red(), color.green(), color.blue(), color.alpha()
+            def _component(value):
+                return value() if callable(value) else value
+
+            color = (
+                _component(getattr(color, "red", 0)),
+                _component(getattr(color, "green", 0)),
+                _component(getattr(color, "blue", 0)),
+                _component(getattr(color, "alpha", 1)),
+            )
 
         if not all([0 <= c <= 1 for c in color]):
             color = [x / 255 for x in color]

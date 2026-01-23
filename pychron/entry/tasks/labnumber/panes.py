@@ -21,7 +21,8 @@ from enable.component_editor import ComponentEditor
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Instance, Int, Button, Event, Date, HasTraits
+from traits.api import Instance, Int, Button, Event, HasTraits
+from traits.trait_types import Datetime
 from traitsui.api import (
     View,
     Item,
@@ -80,8 +81,8 @@ class LevelInfoPane(TraitsDockPane):
 
 
 class FluxHistoryOptions(HasTraits):
-    after = Date
-    before = Date
+    after = Datetime
+    before = Datetime
     max_count = PositiveInteger(1000)
 
     def traits_view(self):

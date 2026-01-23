@@ -216,7 +216,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
     def get_measurements(self, device, name, low=None, high=None):
         q = self.session.query(Measurement)
-        q = q.join(ProcessInfo, Device)
+        q = q.join(ProcessInfo).join(Device)
         q = q.filter(Device.name == device)
         q = q.filter(ProcessInfo.name == name)
 

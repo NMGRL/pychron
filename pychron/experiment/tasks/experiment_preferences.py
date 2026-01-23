@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, Bool, Password, Property, Float, Enum
-from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
-from pyface.ui_traits import PyfaceColor
+from traitsui.api import View, Item, Group, VGroup, HGroup, UItem, Color
 
 from pychron.core.pychron_traits import PositiveInteger, PositiveFloat
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -56,12 +55,12 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_auto_save = Bool
     auto_save_delay = PositiveInteger
 
-    baseline_color = PyfaceColor
-    sniff_color = PyfaceColor
-    signal_color = PyfaceColor
+    baseline_color = Color
+    sniff_color = Color
+    signal_color = Color
 
-    bg_color = PyfaceColor
-    even_bg_color = PyfaceColor
+    bg_color = Color
+    even_bg_color = Color
 
     min_ms_pumptime = PositiveInteger
 
@@ -82,19 +81,19 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_xls_persistence = Bool
     use_db_persistence = Bool
 
-    success_color = PyfaceColor
-    extraction_color = PyfaceColor
-    measurement_color = PyfaceColor
-    canceled_color = PyfaceColor
-    truncated_color = PyfaceColor
-    failed_color = PyfaceColor
-    end_after_color = PyfaceColor
-    invalid_color = PyfaceColor
+    success_color = Color
+    extraction_color = Color
+    measurement_color = Color
+    canceled_color = Color
+    truncated_color = Color
+    failed_color = Color
+    end_after_color = Color
+    invalid_color = Color
 
     use_analysis_type_colors = Bool
-    blank_color = PyfaceColor
-    air_color = PyfaceColor
-    cocktail_color = PyfaceColor
+    blank_color = Color
+    air_color = Color
+    cocktail_color = Color
 
     use_equilibration_analysis = Bool
 

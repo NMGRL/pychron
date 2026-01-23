@@ -553,7 +553,15 @@ class BaseOptions(HasTraits):
     def formatted_attr(self, key):
         obj = getattr(self, key)
         if "color" in key:
-            obj = obj.red(), obj.green(), obj.blue(), obj.alpha()
+            def _component(value):
+                return value() if callable(value) else value
+
+            obj = (
+                _component(getattr(obj, "red", 0)),
+                _component(getattr(obj, "green", 0)),
+                _component(getattr(obj, "blue", 0)),
+                _component(getattr(obj, "alpha", 1)),
+            )
         return obj
 
     def to_dict_test(self, k):

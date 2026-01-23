@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from numpy import Inf
+from numpy import inf as Inf
 from uncertainties import nominal_value
 
 from pychron.envisage.view_util import open_view

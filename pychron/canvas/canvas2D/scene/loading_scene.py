@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-from numpy import Inf
+from numpy import inf as Inf
 
 # ============= enthought library imports =======================
 from traits.api import Int

@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.has_traits import HasTraits
-from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
+from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Int
 
 # ============= standard library imports ========================
 import os
@@ -83,7 +83,7 @@ def get_position(extraction):
 
 
 class DBAnalysis(Analysis):
-    meas_analysis_id = Long
+    meas_analysis_id = Int
     analysis_view_klass = (
         "pychron.processing.analyses.analysis_view",
         "DBAnalysisView",
@@ -125,7 +125,7 @@ class DBAnalysis(Analysis):
     extraction_script_blob = Str
     measurement_script_blob = Str
 
-    selected_blanks_id = Long
+    selected_blanks_id = Int
 
     source_parameters = List
     deflections = List

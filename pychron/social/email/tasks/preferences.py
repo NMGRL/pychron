@@ -18,8 +18,7 @@
 from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Int, Button, on_trait_change
-from traitsui.api import View, Item, Group, HGroup, VGroup
-from pyface.ui_traits import PyfaceColor
+from traitsui.api import View, Item, Group, HGroup, VGroup, Color
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -38,7 +37,7 @@ class EmailPreferences(BasePreferencesHelper):
     preferences_path = "pychron.email"
     _test_connection_button = Button
     _status = Str("Not Tested")
-    _status_color = PyfaceColor("orange")
+    _status_color = Color("orange")
 
     @on_trait_change("server+")
     def _server_trait_changed(self):

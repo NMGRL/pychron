@@ -28,7 +28,6 @@ from traits.api import (
     Int,
     Property,
     Instance,
-    Long,
     Event,
 )
 from traitsui.api import View, UItem, HGroup, VGroup, HSplit, spring, TabularEditor
@@ -46,7 +45,7 @@ class ImageRecordAdapter(TabularAdapter):
 class ImageRecord(HasTraits):
     path = Str
     note = Str
-    id = Long
+    id = Int
 
     @property
     def name(self):

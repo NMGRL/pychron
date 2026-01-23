@@ -35,7 +35,6 @@ from traits.api import (
     Event,
     Date,
     Enum,
-    Long,
     Any,
     Int,
 )
@@ -93,7 +92,7 @@ class SampleRecord(HasTraits):
 
 
 class PrepStepRecord(HasTraits):
-    id = Long
+    id = Int
     crush = Str
     sieve = Str
     wash = Str

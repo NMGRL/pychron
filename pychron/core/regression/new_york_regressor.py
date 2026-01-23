@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from numpy import linspace, Inf, zeros_like
+from numpy import linspace, inf as Inf, zeros_like
 from scipy.optimize import fsolve
 from traits.api import Array, Property, Float
 

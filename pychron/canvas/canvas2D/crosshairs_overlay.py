@@ -64,7 +64,15 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
     def set_color(self, gc, color, stroke=True, fill=False):
         if color is not None:
             if not isinstance(color, (list, tuple)):
-                color = color.red(), color.green(), color.blue(), color.alpha()
+                def _component(value):
+                    return value() if callable(value) else value
+
+                color = (
+                    _component(getattr(color, "red", 0)),
+                    _component(getattr(color, "green", 0)),
+                    _component(getattr(color, "blue", 0)),
+                    _component(getattr(color, "alpha", 1)),
+                )
 
             if not all([0 <= xx <= 1.0 for xx in color]):
                 color = [xx / 255.0 for xx in color]

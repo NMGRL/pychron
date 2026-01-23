@@ -21,7 +21,7 @@ from traits.api import Any, Float, DelegatesTo, List, Bool, Property
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 
 # ============= standard library imports ========================
-from numpy import linspace, hstack, array, Inf
+from numpy import linspace, hstack, array, inf as Inf
 from numpy.core.umath import exp
 import random
 import time

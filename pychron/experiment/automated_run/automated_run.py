@@ -26,7 +26,7 @@ import weakref
 from pprint import pformat
 from threading import Event as TEvent, Thread
 
-from numpy import Inf, polyfit, linspace, polyval, array
+from numpy import inf as Inf, polyfit, linspace, polyval, array
 from traits.api import (
     Any,
     Str,
@@ -38,7 +38,6 @@ from traits.api import (
     HasTraits,
     Float,
     Int,
-    Long,
     Tuple,
     Dict,
 )
@@ -197,7 +196,7 @@ class AutomatedRun(Loggable):
     spec = Any
     runid = Str
     uuid = Str
-    analysis_id = Long
+    analysis_id = Int
     fits = List
     eqtime = Float
 

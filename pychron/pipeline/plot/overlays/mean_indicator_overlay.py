@@ -249,9 +249,17 @@ try:
             color = self.color
             # if isinstance(color, str):
             #    color=color_table[color]
+            def _component(value):
+                return value() if callable(value) else value
+
             self._color = [
                 x / 255.0
-                for x in (color.red(), color.green(), color.blue(), color.alpha())
+                for x in (
+                    _component(getattr(color, "red", 0)),
+                    _component(getattr(color, "green", 0)),
+                    _component(getattr(color, "blue", 0)),
+                    _component(getattr(color, "alpha", 255)),
+                )
             ]
             # self._color=color
 
