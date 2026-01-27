@@ -58,6 +58,7 @@ class InfoInspector(ScatterInspector):
         super(InfoInspector, self).__init__(*args, **kw)
         self.selection_mode = "multi"
         self.multiselect_modifier = KeySpec(None)
+        self._pointer_active = False
 
     # select_event = Event
 
@@ -82,12 +83,14 @@ class InfoInspector(ScatterInspector):
         xy = event.x, event.y
         try:
             pos = self.component.hittest(xy, threshold=self.hittest_threshold)
-            event.window.set_pointer("cross")
         except (IndexError, ValueError):
-            event.window.set_pointer("arrow")
+            self._pointer_active = False
             return
 
         if isinstance(pos, (tuple, list)):
+            if not self._pointer_active:
+                event.window.set_pointer("cross")
+                self._pointer_active = True
             try:
                 self.current_position = (pos[0][0], pos[1][0])
             except IndexError:
@@ -95,7 +98,9 @@ class InfoInspector(ScatterInspector):
             self.current_screen = xy
             event.handled = True
         else:
-            event.window.set_pointer("arrow")
+            if self._pointer_active:
+                event.window.set_pointer("arrow")
+            self._pointer_active = False
             self.current_position = None
             self.current_screen = None
 
@@ -115,6 +120,8 @@ class InfoInspector(ScatterInspector):
         self.current_position = None
         self.metadata_changed = True
         # event.window.set_pointer('arrow')
+        self._pointer_active = False
+        event.window.set_pointer("arrow")
 
     # def _generate_inspector_event(self):
     #     if self.current_position:
