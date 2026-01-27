@@ -101,6 +101,7 @@ PACKAGE_DICT = dict(
     # outside database/repositories
     IGSNPlugin="pychron.igsn.tasks.igsn_plugin",
     GeochronPlugin="pychron.geochron.tasks.geochron_plugin",
+    AusGeochemPlugin="pychron.ausgeochem.tasks.ausgeochem_plugin",
     # social
     EmailPlugin="pychron.social.email.tasks.plugin",
     GoogleCalendarPlugin="pychron.social.google_calendar.tasks.plugin",
