@@ -340,8 +340,9 @@ class IrradiationCanvasPane(TraitsDockPane):
     def traits_view(self):
         v = View(
             VGroup(
-                HGroup(Item("irradiation_tray", style="readonly")),
+                HGroup(Item("irradiation_tray", style="readonly"), padding=0),
                 UItem("canvas", editor=ComponentEditor()),
+                padding=0,
             )
         )
         return v

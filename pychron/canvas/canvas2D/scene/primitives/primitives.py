@@ -440,9 +440,13 @@ class LoadIndicator(Circle):
         if self.space == "data":
             r = self.map_dimension(r)
 
-        f = 2**0.5 / 2
-        self.name_offsetx = (r * f) + 8
-        self.name_offsety = (r * f) + 8
+        if getattr(self.canvas, "label_offset_mode", "diagonal") == "side":
+            self.name_offsetx = r + 8
+            self.name_offsety = 0
+        else:
+            f = 2**0.5 / 2
+            self.name_offsetx = (r * f) + 8
+            self.name_offsety = (r * f) + 8
 
         if self.state:
             with gc:
