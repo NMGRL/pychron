@@ -49,8 +49,10 @@ def rounded_rect(gc, x, y, width, height, corner_radius):
         )
         gc.arc_to(x, y + height, x, y, corner_radius)
         gc.arc_to(x, y, x + width + corner_radius, y, corner_radius)
-        gc.draw_path()
-
+        try:
+            gc.draw_path()
+        except OverflowError:
+            pass
 
 # class Stop:
 #     def __init__(self, idx, r,g,b,a):

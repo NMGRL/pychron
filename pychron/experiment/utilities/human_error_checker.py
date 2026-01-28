@@ -185,7 +185,14 @@ class HumanErrorChecker(Loggable):
         ed = run.extract_device
         if self.extraction_script_enabled:
             if run.analysis_type == "unknown" and ed not in NULL_EXTRACT_DEVICES and es:
-                ds = ed.split(" ")[1].lower()
+                if " " in ed:
+                    ds = ed.split(" ")[1].lower()
+                else:
+                    if ed=='ChromiumCO2':
+                        ds='co2'
+                    else:
+                        ds = ed
+
                 if ds not in es:
                     return (
                         'Extraction script "{}" does not match the default "{}". An easy solution is to make sure '

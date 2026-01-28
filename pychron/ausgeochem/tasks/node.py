@@ -23,21 +23,23 @@ from pychron.processing.analyses.analysis_group import AnalysisGroup
 
 
 class AusGeochemNode(BaseNode):
-    service = Instance("pychron.ausgeochem.earthdata_service.AusGeochemEarthDataService")
+    service = Instance("pychron.ausgeochem.earthdata_service.AusGeochemEarthDataService", ())
+    name = 'AusGeochem EarthBank'
+    skip_configure = True
 
-    def configure(self):
-        return True
+    #def configure(self, *args, **kw):
+    #    return True
 
     def run(self, state):
+
         if not state.unknowns:
+            self.service.warning('no unknowns selected to upload')
             return
 
-        if self.service is None:
-            return
-
+    
         ag = AnalysisGroup(analyses=state.unknowns)
         self.service.info(
-            "Uploading {} analyses to AusGeochem EarthData".format(len(state.unknowns))
+            "Uploading {} analyses to AusGeochem EarthBank".format(len(state.unknowns))
         )
         result = self.service.upload_analysis_group(ag)
         if result:

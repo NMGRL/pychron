@@ -153,8 +153,8 @@ class Primitive(HasTraits):
         self.x += dx
         self.y += dy
 
-    def get_xy(self, x=None, y=None, clear_layout_needed=True):
-        if self._layout_needed or not self._cached_xy:
+    def get_xy(self, x=None, y=None, clear_layout_needed=True, force=False):
+        if force or self._layout_needed or not self._cached_xy:
             if x is None:
                 x = self.x
             if y is None:

@@ -22,7 +22,7 @@ try:
     import vlc
 except ImportError:
     pass
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 from traits.api import Any
 

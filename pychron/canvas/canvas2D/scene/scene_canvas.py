@@ -29,6 +29,11 @@ class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
     scene_klass = Scene
     legend = None
+    
+    _padding_top = 5
+    _padding_bottom = 5
+    _padding_left = 5
+    _padding_right= 5
 
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)

@@ -20,7 +20,7 @@ from __future__ import absolute_import
 import math
 from traits.api import HasTraits, Property, Int, Callable, Any, Str, Dict
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
 from pyface.qt.QtGui import (

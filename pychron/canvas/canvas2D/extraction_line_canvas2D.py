@@ -65,7 +65,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     scene_klass = ExtractionLineScene
 
-    use_backbuffer = True
+    use_backbuffer = False
     backbuffer_padding = False
     border_visible = False
     active_item = Any
@@ -75,10 +75,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
     show_grids = False
     use_zoom = False
     use_pan = False
-    padding_left = 0
-    padding_right = 0
-    padding_bottom = 0
-    padding_top = 0
 
     manager = Any
 

@@ -27,7 +27,7 @@ from pyface.ui_traits import PyfaceColor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.text_editor import SimpleEditor
+from traitsui.qt.text_editor import SimpleEditor
 
 
 class _KeywordEditor(SimpleEditor):
