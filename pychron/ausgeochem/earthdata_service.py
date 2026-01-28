@@ -16,8 +16,12 @@
 
 from __future__ import absolute_import
 
+import re
+from datetime import datetime
+
 import requests
 from traits.api import Str
+from uncertainties import nominal_value, std_dev
 
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.loggable import Loggable
@@ -32,6 +36,59 @@ AGE_CALC_FIELDS = (
     "fluxMonitorId",
     "fluxMonitorName",
     "id",
+)
+
+AGE_SUMMARY_FIELDS = (
+    "age",
+    "ageCalcTypeId",
+    "ageCalcTypeName",
+    "ageUncertainty",
+    "ageUncertaintyTypeId",
+    "ageUncertaintyTypeName",
+    "agepvalue",
+    "arArDataPointId",
+    "calculatedAgeUncertaintyTypeId",
+    "calculatedAgeUncertaintyTypeName",
+    "calculatedAgeUncertaintyTypeUnitsId",
+    "calculatedAgeUncertaintyTypeUnitsName",
+    "dataInterpretationToolId",
+    "dataInterpretationToolName",
+    "description",
+    "id",
+    "interpretationId",
+    "interpretationName",
+    "mswd",
+    "nAnalysisGrouped",
+    "preferredAge",
+)
+
+DATA_POINT_FIELDS = (
+    "analysisDate",
+    "analysisScaleId",
+    "analysisScaleName",
+    "analysisUnits",
+    "analyticalUncertaintyTypeId",
+    "analyticalUncertaintyTypeName",
+    "analyticalUncertaintyUnitId",
+    "analyticalUncertaintyUnitName",
+    "apparentAgeUncertaintyTypeId",
+    "apparentAgeUncertaintyTypeName",
+    "apparentAgeUncertaintyUnitId",
+    "apparentAgeUncertaintyUnitName",
+    "arArAnalyticalSetUpId",
+    "arMethodId",
+    "arMethodName",
+    "commentAnalyte",
+    "grainDiameterMax",
+    "grainDiameterMin",
+    "id",
+    "irradiationBatchIDId",
+    "jvalueUncertaintyUnitId",
+    "jvalueUncertaintyUnitName",
+    "lithologyId",
+    "lithologyName",
+    "mineralId",
+    "mineralName",
 )
 
 
@@ -107,6 +164,95 @@ class AusGeochemEarthDataService(Loggable):
             return
 
         return self.create_age_calculation(payload)
+
+    def build_age_summary_payload(self, analysis_group=None, **overrides):
+        """Map an AnalysisGroup into an ArArAgeSummaryDTO structure."""
+
+        payload = dict(((field, None) for field in AGE_SUMMARY_FIELDS))
+        payload.update(overrides)
+
+        if analysis_group is None:
+            return self._cleanup_payload(payload)
+
+        pv = analysis_group.get_preferred_obj("age")
+        calc_name = getattr(pv, "computed_kind", pv.kind)
+        age_units = getattr(getattr(analysis_group, "arar_constants", None), "age_units", "Ma")
+        scaled_age = analysis_group.get_ma_scaled_age()
+        mswd, _, _, pvalue = analysis_group.get_preferred_mswd_tuple()
+
+        payload.setdefault("age", float(nominal_value(scaled_age)))
+        payload.setdefault("ageUncertainty", float(std_dev(scaled_age)))
+        payload.setdefault("ageCalcTypeName", calc_name)
+        payload.setdefault("ageUncertaintyTypeName", pv.error_kind)
+        payload.setdefault("calculatedAgeUncertaintyTypeName", pv.error_kind)
+        payload.setdefault("calculatedAgeUncertaintyTypeUnitsName", age_units)
+        payload.setdefault("nAnalysisGrouped", analysis_group.nanalyses)
+        payload.setdefault("mswd", mswd)
+        payload.setdefault("agepvalue", pvalue)
+        payload.setdefault("preferredAge", True)
+        payload.setdefault("dataInterpretationToolName", "Pychron")
+        payload.setdefault(
+            "description", self._analysis_group_description(analysis_group)
+        )
+        payload.setdefault(
+            "interpretationName",
+            self._interpretation_name(analysis_group, calc_name),
+        )
+
+        return self._cleanup_payload(payload)
+
+    def build_data_point_payload(self, analysis_group=None, analysis=None, **overrides):
+        """Map an Analysis or AnalysisGroup to an ArArDataPointDTO."""
+
+        payload = dict(((field, None) for field in DATA_POINT_FIELDS))
+        payload.update(overrides)
+
+        if analysis is None and analysis_group is not None:
+            analysis = analysis_group.analyses[0] if analysis_group.analyses else None
+
+        if analysis is None:
+            return self._cleanup_payload(payload)
+
+        grain_min, grain_max = self._parse_grain_size(
+            getattr(analysis, "grainsize", None)
+            or getattr(analysis_group, "grainsize", None)
+        )
+        payload.setdefault("analysisDate", self._format_analysis_date(analysis))
+        payload.setdefault("analysisUnits", "fA")
+        payload.setdefault(
+            "analysisScaleName", self._analysis_scale_name(analysis_group)
+        )
+        payload.setdefault(
+            "analyticalUncertaintyTypeName",
+            getattr(analysis_group, "age_error_kind", None),
+        )
+        payload.setdefault("analyticalUncertaintyUnitName", "Absolute")
+        payload.setdefault(
+            "apparentAgeUncertaintyTypeName",
+            getattr(analysis_group, "age_error_kind", None),
+        )
+        payload.setdefault("apparentAgeUncertaintyUnitName", "Absolute")
+        payload.setdefault(
+            "arMethodName",
+            getattr(analysis, "experiment_type", None)
+            or getattr(analysis, "analysis_type", None),
+        )
+        payload.setdefault("commentAnalyte", self._analysis_comment(analysis))
+        payload.setdefault("grainDiameterMin", grain_min)
+        payload.setdefault("grainDiameterMax", grain_max)
+        payload.setdefault(
+            "lithologyName",
+            getattr(analysis_group, "lithology", None)
+            or getattr(analysis, "lithology", None),
+        )
+        payload.setdefault(
+            "mineralName",
+            getattr(analysis_group, "material", None)
+            or getattr(analysis, "material", None),
+        )
+        payload.setdefault("jvalueUncertaintyUnitName", "Absolute")
+
+        return self._cleanup_payload(payload)
 
     # ------------------------------------------------------------------
     # private helpers
@@ -208,6 +354,72 @@ class AusGeochemEarthDataService(Loggable):
         if sample:
             return sample
         return None
+
+    def _analysis_group_description(self, analysis_group):
+        pieces = []
+        sample = getattr(analysis_group, "sample", None)
+        project = getattr(analysis_group, "project", None)
+        comments = getattr(analysis_group, "comments", None)
+
+        if sample:
+            pieces.append("Sample {}".format(sample))
+        if project:
+            pieces.append("Project {}".format(project))
+        if comments:
+            pieces.append(comments)
+
+        return "; ".join(pieces) if pieces else None
+
+    def _interpretation_name(self, analysis_group, calc_name):
+        sample = getattr(analysis_group, "sample", None)
+        if sample and calc_name:
+            return "{} {}".format(sample, calc_name)
+        if sample:
+            return sample
+        return calc_name
+
+    def _format_analysis_date(self, analysis):
+        dt = getattr(analysis, "rundate", None)
+        if dt is None:
+            ts = getattr(analysis, "timestamp", None)
+            if isinstance(ts, datetime):
+                dt = ts
+            elif isinstance(ts, (int, float)):
+                dt = datetime.fromtimestamp(ts)
+        if dt is None:
+            return None
+        try:
+            return dt.strftime("%d/%m/%Y")
+        except (AttributeError, ValueError):
+            return None
+
+    def _analysis_scale_name(self, analysis_group):
+        if analysis_group is None:
+            return None
+        n = analysis_group.nanalyses if analysis_group.nanalyses else 0
+        if n == 1:
+            return "Single analysis"
+        if n > 1:
+            return "{} analyses".format(n)
+        return None
+
+    def _analysis_comment(self, analysis):
+        comments = []
+        for attr in ("sample_note", "sample_prep_comment"):
+            val = getattr(analysis, attr, None)
+            if val:
+                comments.append(val)
+        return "; ".join(comments) if comments else None
+
+    def _parse_grain_size(self, grainsize):
+        if not grainsize:
+            return None, None
+        values = [float(v) for v in re.findall(r"[0-9]+\.?[0-9]*", str(grainsize))]
+        if not values:
+            return None, None
+        if len(values) == 1:
+            return values[0], values[0]
+        return min(values), max(values)
 
 
 # ============= EOF =============================================
