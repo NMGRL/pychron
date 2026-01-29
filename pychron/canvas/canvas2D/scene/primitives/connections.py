@@ -420,7 +420,6 @@ class Tee(Fork):
         rx, ry = self.right.get_xy(force=True)
         mx, my = self.mid.get_xy(force=True)
 
-        print('rendering', self, lx, ly)
         # ly, ry = ly - 30, ry - 30
         if self.is_vertical:
             self._render_vertical(gc, lx, ly, rx, ry, mx, my)
