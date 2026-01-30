@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from pyface.qt import QtGui
+from pyface.qt import QtCore, QtGui
 from traits.api import Any, Str, Event, Bool
 
 # ============= standard library imports ========================
@@ -43,6 +43,16 @@ class _EnumEditor(SimpleEditor):
         control.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         control.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Fixed)
         return control
+
+    def rebuild_editor(self):
+        super().rebuild_editor()
+        # Ensure selection is re-applied after values refresh.
+        def _safe_update():
+            if self.factory is None or self.control is None:
+                return
+            self.update_editor()
+
+        QtCore.QTimer.singleShot(0, _safe_update)
 
 
 class myEnumEditor(BasicEditorFactory):

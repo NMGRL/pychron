@@ -293,18 +293,18 @@ class ExperimentFactoryPane(TraitsDockPane):
                 tooltip="Enter a Identifier, aka L#",
                 width=-200,
                 label="Identifier",
-                enabled_when='{} == "{}"'.format(
-                    run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
-                ),
+                # enabled_when='{} == "{}"'.format(
+                #     run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
+                # ),
                 editor=myEnumEditor(name=run_factory_name("display_labnumbers")),
             ),
         )
         grp = BorderVGroup(
             a,
             HGroup(
-                run_factory_uitem(
-                    "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
-                ),
+                # run_factory_uitem(
+                #     "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
+                # ),
                 run_factory_uitem(
                     "run_block",
                     editor=myEnumEditor(name=run_factory_name("run_blocks")),
