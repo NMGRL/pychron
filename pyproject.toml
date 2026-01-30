@@ -28,6 +28,7 @@ dependencies = [
     "lxml>=6.0.2",
     "matplotlib>=3.10.8",
     "numpy>=2.3.4",
+    "peakutils>=1.3.5",
     "pygments>=2.19.2",
     "pymysql>=1.1.2",
     "pyproj>=3.7.2",

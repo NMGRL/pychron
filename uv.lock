@@ -586,6 +586,19 @@ wheels = [
 ]
 
 [[package]]
+name = "peakutils"
+version = "1.3.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7b/92/f873496baf53ec9ca29e2e9e6e802b177dcd5fb34f85b14ea3b4dc14194e/peakutils-1.3.5.tar.gz", hash = "sha256:4ff2e7f3330b93024fe8da1ee04e00389e26bcb2ef79bd2f9cf86ccd4962e114", size = 117498, upload-time = "2024-06-27T01:33:32.519Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/6f/ad8db42b3a744e910e62a8781282acadf7b95ff16f714f05347f6fb6129b/PeakUtils-1.3.5-py3-none-any.whl", hash = "sha256:5c54ca98ba3177b8c1ae4c5fdfd1b09d7bec947b9c25d9e4bd25334526ca98e5", size = 7722, upload-time = "2024-06-27T01:33:28.172Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "12.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -635,6 +648,7 @@ dependencies = [
     { name = "lxml" },
     { name = "matplotlib" },
     { name = "numpy" },
+    { name = "peakutils" },
     { name = "pygments" },
     { name = "pymysql" },
     { name = "pyproj" },
@@ -670,6 +684,7 @@ requires-dist = [
     { name = "lxml", specifier = ">=6.0.2" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.3.4" },
+    { name = "peakutils", specifier = ">=1.3.5" },
     { name = "pygments", specifier = ">=2.19.2" },
     { name = "pymysql", specifier = ">=1.1.2" },
     { name = "pyproj", specifier = ">=3.7.2" },
