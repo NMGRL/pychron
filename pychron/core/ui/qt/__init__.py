@@ -95,3 +95,47 @@ def _patch_traitsui_tabular_colors():
 
 
 _patch_traitsui_tabular_colors()
+
+
+def _patch_traitsui_range_spin_ints():
+    try:
+        from traitsui.qt import range_editor as re
+    except Exception:
+        return
+
+    if getattr(re, "_pychron_range_spin_patch", False):
+        return
+
+    orig_init = re.SimpleSpinEditor.init
+
+    def _init(self, parent):
+        factory = self.factory
+        if not factory.low_name:
+            self.low = factory.low
+        if not factory.high_name:
+            self.high = factory.high
+        self.sync_value(factory.low_name, "low", "from")
+        self.sync_value(factory.high_name, "high", "from")
+        low = self.low
+        high = self.high
+
+        self.control = re.QtGui.QSpinBox()
+        try:
+            self.control.setMinimum(int(low))
+        except Exception:
+            self.control.setMinimum(0)
+        try:
+            self.control.setMaximum(int(high))
+        except Exception:
+            self.control.setMaximum(100)
+        self.control.setValue(int(self.value))
+        self.control.valueChanged.connect(self.update_object)
+        if not factory.auto_set:
+            self.control.setKeyboardTracking(False)
+        self.set_tooltip()
+
+    re.SimpleSpinEditor.init = _init
+    re._pychron_range_spin_patch = True
+
+
+_patch_traitsui_range_spin_ints()

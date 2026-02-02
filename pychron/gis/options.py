@@ -30,8 +30,7 @@ from traits.api import (
     Bool,
     on_trait_change,
 )
-from pyface.ui_traits import PyfaceColor
-from traitsui.api import HGroup, Item, View, UItem
+from traitsui.api import HGroup, Item, View, UItem, Color
 from traitsui.editors.api import EnumEditor
 from traitsui.item import spring
 
@@ -111,7 +110,7 @@ class VectorLayerOption(LayerOption):
     is_vector = True
     size = Int
     kind = Enum(MARKERS)
-    color = PyfaceColor
+    color = Color
 
     @property
     def symbolargs(self):

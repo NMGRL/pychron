@@ -20,7 +20,7 @@ from chaco.abstract_overlay import AbstractOverlay
 from chaco.api import PlotLabel
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import List, Bool, Int, on_trait_change
-from pyface.ui_traits import PyfaceColor
+from traitsui.api import Color
 from six.moves import zip
 
 
@@ -83,7 +83,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
     font = KivaFont
     _cached_labels = List
     use_user_color = Bool
-    user_color = PyfaceColor
+    user_color = Color
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
         if not self._cached_labels:

@@ -18,8 +18,17 @@
 from reportlab.lib.pagesizes import A4, letter, landscape, A2, A0
 from reportlab.lib.units import inch, cm
 from traits.api import Str, Bool, Enum, Button, Float
-from pyface.ui_traits import PyfaceColor
-from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
+from traitsui.api import (
+    View,
+    Item,
+    UItem,
+    HGroup,
+    Group,
+    VGroup,
+    spring,
+    Spring,
+    Color,
+)
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import UNITS_MAP
@@ -166,7 +175,7 @@ class PDFTableOptions(BasePDFOptions):
     auto_title = Bool
 
     use_alternating_background = Bool
-    alternating_background = PyfaceColor
+    alternating_background = Color
 
     default_row_height = Float(0.22)
     default_header_height = Float(0.22)

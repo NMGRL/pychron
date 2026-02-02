@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
 from pyface.qt import QtGui
-from pyface.ui_traits import PyfaceColor
+from traitsui.api import Color
 from traits.api import (
     Int,
     Bool,
@@ -171,9 +171,9 @@ class IdeogramOptions(AgeOptions):
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
     peak_label_sigfigs = Int
-    peak_label_bgcolor = PyfaceColor
+    peak_label_bgcolor = Color
     peak_label_border = Int
-    peak_label_border_color = PyfaceColor
+    peak_label_border_color = Color
     peak_label_bgcolor_enabled = Bool(False)
     aux_plot_name = "Ideogram"
 
