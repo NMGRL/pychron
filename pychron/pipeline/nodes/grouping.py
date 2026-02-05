@@ -19,7 +19,7 @@ from operator import attrgetter
 from numpy import array, array_split
 
 # ============= enthought library imports =======================
-from traits.api import Str, Enum, Tuple
+from traits.api import Str, Enum, List
 from traitsui.api import UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
@@ -40,22 +40,24 @@ from pychron.pychron_constants import (
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = Tuple(
-        "Aliquot",
-        "Comment",
-        "Identifier",
-        "Sample",
-        "Step",
-        "SubGroup",
-        "Group Name",
-        "Label Name",
-        "No Grouping",
+    keys = List(
+        [
+            "Aliquot",
+            "Comment",
+            "Identifier",
+            "Sample",
+            "Step",
+            "SubGroup",
+            "Group Name",
+            "Label Name",
+            "No Grouping",
+        ]
     )
     analysis_kind = "unknowns"
     name = "Grouping"
     title = "Edit Grouping"
 
-    attribute = Enum("Group", "Graph", "Tab", "Aux")
+    attribute = Enum("Group", "Graph", "Tab", "Aux", "SubGroup")
     # _attr = 'group_id'
     _id_func = None
 
@@ -153,10 +155,10 @@ class GraphGroupingNode(GroupingNode):
 
 class SubGroupingNode(GroupingNode, Preferred):
     title = "Edit SubGrouping"
-    keys = ("Aliquot", "Identifier", "Step", "Comment", "No Grouping")
+    keys = List(["Aliquot", "Identifier", "Step", "Comment", "No Grouping"])
     name = "SubGroup"
     by_key = "Aliquot"
-    attribute = "subgroup"
+    attribute = "SubGroup"
 
     # include_j_error_in_individual_analyses = Bool(False)
     # include_j_error_in_mean = Bool(True)

@@ -2591,13 +2591,9 @@ class DVCDatabase(DatabaseAdapter):
     def get_flux_monitor_analyses(self, irradiation, levels, sample):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
-            q = q.join(
-                IrradiationPositionTbl,
-                LevelTbl,
-                IrradiationTbl,
-                # SampleTbl,
-                # AnalysisChangeTbl,
-            )
+            q = q.join(IrradiationPositionTbl)
+            q = q.join(LevelTbl)
+            q = q.join(IrradiationTbl)
             if sample:
                 q = q.join(SampleTbl)
 
