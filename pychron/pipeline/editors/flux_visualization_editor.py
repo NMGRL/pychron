@@ -239,6 +239,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             WEIGHTED_MEAN,
             MATCHING,
             BRACKETING,
+            WEIGHTED_MEAN_1D,
+            LEAST_SQUARES_1D
         ):
             # n = z.shape[0] * 10
             # r = max((max(abs(x)), max(abs(y))))

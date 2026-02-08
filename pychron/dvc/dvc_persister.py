@@ -236,6 +236,10 @@ class DVCPersister(BasePersister):
                         self.debug("invalid extraction position")
 
                 try:
+                    if isinstance(pos, str):
+                        p = pos.strip()
+                        if p and p[0] in ("s", "S") and p[1:].isdigit():
+                            pos = p[1:]
                     pos = int(pos)
                 except BaseException:
                     pos = None
