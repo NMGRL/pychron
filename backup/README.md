@@ -3,6 +3,7 @@
 This folder contains scripts for Windows, macOS, and Linux:
 
 - `mysql-backup-rotate.ps1` and `mysql-restore-latest.ps1` for Windows 11 (PowerShell)
+- `windows-zdrive-backup.ps1` for copying `setupfiles`, `scripts`, `data`, `.appdata`, `experiments`, `preferences`, and `queue_conditionals` to a Z: drive
 - `mysql-backup-rotate.sh` and `mysql-restore-latest.sh` for macOS/Linux (Bash)
 
 All backup scripts support:
@@ -49,6 +50,14 @@ powershell -ExecutionPolicy Bypass -File .\backup\mysql-backup-rotate.ps1 `
   -RootBackupDirectory "D:\MySQLBackups"
 ```
 
+Z: drive file backup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\backup\windows-zdrive-backup.ps1 `
+  -SourceRoot "C:\path\to\repo" `
+  -DestinationRoot "Z:\pychron_umelbourne"
+```
+
 Restore latest daily:
 
 ```powershell
@@ -67,7 +76,7 @@ powershell -ExecutionPolicy Bypass -File .\backup\mysql-restore-latest.ps1 `
   -Rotation all
 ```
 
-Schedule daily in Task Scheduler:
+Schedule nightly in Task Scheduler (for example 2:00 AM):
 
 - Program/script: `powershell.exe`
 - Arguments:
@@ -77,6 +86,15 @@ Schedule daily in Task Scheduler:
 ```
 
 You can also set `MYSQL_BACKUP_ROOT` and omit `-RootBackupDirectory`.
+
+Schedule the Z: drive backup nightly in Task Scheduler (for example 2:30 AM):
+
+- Program/script: `powershell.exe`
+- Arguments:
+
+```text
+-ExecutionPolicy Bypass -File "C:\path\to\repo\backup\windows-zdrive-backup.ps1" -SourceRoot "C:\path\to\repo" -DestinationRoot "Z:\pychron"
+```
 
 ## macOS/Linux usage
 
