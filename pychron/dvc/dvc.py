@@ -2561,9 +2561,11 @@ class DVC(Loggable):
 
     def _repository_root_changed(self):
         if self.repository_root:
-            paths.repository_dataset_dir = os.path.join(
-                paths.dvc_dir, self.repository_root
-            )
+            repo_root = self.repository_root
+            if os.path.isabs(repo_root) or repo_root.startswith("~"):
+                paths.repository_dataset_dir = os.path.expanduser(repo_root)
+            else:
+                paths.repository_dataset_dir = os.path.join(paths.dvc_dir, repo_root)
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()
@@ -2576,7 +2578,10 @@ class DVC(Loggable):
         if self.meta_repo_dirname:
             name = self.meta_repo_dirname
 
-        paths.meta_root = os.path.join(paths.dvc_dir, name)
+        if os.path.isabs(name) or name.startswith("~"):
+            paths.meta_root = os.path.expanduser(name)
+        else:
+            paths.meta_root = os.path.join(paths.dvc_dir, name)
 
     def _defaults(self):
         self.debug("writing defaults")
