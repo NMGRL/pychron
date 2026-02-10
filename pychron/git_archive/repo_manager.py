@@ -128,6 +128,7 @@ class GitRepoManager(Loggable):
         else:
             os.mkdir(p)
             repo = Repo.init(p)
+            self._ensure_safe_directory(p)
             self.debug("created new repo {}".format(p))
             self._repo = repo
             return False
@@ -147,7 +148,17 @@ class GitRepoManager(Loggable):
             else:
                 self.debug("{} is not a valid repo. Initializing now".format(path))
                 self._repo = Repo.init(path)
+                self._ensure_safe_directory(path)
                 self.set_name(path)
+
+    def _ensure_safe_directory(self, path):
+        p = os.path.normpath(os.path.abspath(path))
+        cmd = ["git", "config", "--global", "--add", "safe.directory", p]
+        try:
+            subprocess.check_call(cmd)
+            self.debug("added git safe.directory {}".format(p))
+        except (subprocess.CalledProcessError, OSError) as e:
+            self.warning("failed to set git safe.directory for {}. error={}".format(p, e))
 
     def delete_local_commits(self, remote="origin", branch=None):
         if branch is None:
@@ -169,6 +180,24 @@ class GitRepoManager(Loggable):
     def add_paths(self, apaths):
         if not isinstance(apaths, (list, tuple)):
             apaths = (apaths,)
+
+        repo_root = os.path.normcase(os.path.normpath(os.path.abspath(self.path)))
+
+        def normalize_path(p):
+            if not os.path.isabs(p):
+                p = os.path.join(self.path, p)
+            return os.path.normcase(os.path.normpath(os.path.abspath(p)))
+
+        def to_repo_relative(p):
+            np = normalize_path(p)
+            try:
+                rel = os.path.relpath(np, repo_root)
+            except ValueError:
+                return None
+
+            if rel.startswith("..") or os.path.isabs(rel):
+                return None
+            return rel
 
         changes = self.get_local_changes(change_type=("A", "R", "M"))
         changes = [os.path.join(self.path, c) for c in changes]
@@ -192,24 +221,33 @@ class GitRepoManager(Loggable):
         changes.extend(untracked)
 
         self.debug("add paths {}".format(apaths))
+        napaths = [(p, normalize_path(p)) for p in apaths]
+        nchanges = {normalize_path(p) for p in changes}
 
-        ps = [p for p in apaths if p in changes]
+        ps = [np for p, np in napaths if np in nchanges]
         self.debug("changed paths {}".format(ps))
-        changed = bool(ps)
+        changed = False
         if ps:
-            for p in ps:
-                self.debug("adding to index: {}".format(os.path.relpath(p, self.path)))
-            self.index.add(ps)
+            rps = [to_repo_relative(p) for p in ps]
+            rps = [p for p in rps if p]
+            for p in rps:
+                self.debug("adding to index: {}".format(p))
+            if rps:
+                self.index.add(rps)
+                changed = True
 
-        ps = [p for p in apaths if p in deletes]
+        ndeletes = {normalize_path(p) for p in deletes}
+        ps = [np for p, np in napaths if np in ndeletes]
         self.debug("delete paths {}".format(ps))
-        delete_changed = bool(ps)
+        delete_changed = False
         if ps:
-            for p in ps:
-                self.debug(
-                    "removing from index: {}".format(os.path.relpath(p, self.path))
-                )
-            self.index.remove(ps, working_tree=True)
+            rps = [to_repo_relative(p) for p in ps]
+            rps = [p for p in rps if p]
+            for p in rps:
+                self.debug("removing from index: {}".format(p))
+            if rps:
+                self.index.remove(rps, working_tree=True)
+                delete_changed = True
 
         return changed or delete_changed
 
@@ -466,14 +504,36 @@ class GitRepoManager(Loggable):
 
     def get_local_changes(self, change_type=("M",)):
         repo = self._repo
+        root = self.path
 
-        diff = repo.index.diff(None)
+        try:
+            diff = repo.index.diff(None)
 
-        return [
-            di.a_blob.abspath
-            for change_type in change_type
-            for di in diff.iter_change_type(change_type)
-        ]
+            changes = []
+            for ct in change_type:
+                for di in diff.iter_change_type(ct):
+                    p = di.a_path or di.b_path
+                    if p:
+                        changes.append(os.path.join(root, p))
+            return changes
+        except GitCommandError as e:
+            # Fallback for environments where GitPython index.diff can fail with
+            # "git diff ... --raw -z" (exit 129). Use plain git output instead.
+            self.warning(
+                "get_local_changes fallback. index.diff failed: {}".format(e)
+            )
+            try:
+                diff_filter = "".join(change_type)
+                txt = repo.git.diff("--name-only", "--diff-filter={}".format(diff_filter))
+            except GitCommandError:
+                self.warning("get_local_changes fallback failed")
+                return []
+
+            return [
+                os.path.join(root, p)
+                for p in txt.splitlines()
+                if p and p.strip()
+            ]
 
         # diff_str = repo.git.diff('HEAD', '--full-index')
         # diff_str = StringIO(diff_str)
@@ -1037,7 +1097,15 @@ class GitRepoManager(Loggable):
             dest.checkout()
 
         if from_.startswith("origin"):
-            remote = repo.remotes.origin
+            remote = self._get_remote("origin")
+            if remote is None:
+                msg = (
+                    "Could not locate remote 'origin' for merge source {}".format(from_)
+                )
+                self.warning(msg)
+                if inform:
+                    self.warning_dialog(msg)
+                return
             try:
                 bn = from_[7:]
                 from_ = getattr(remote.refs, bn)
