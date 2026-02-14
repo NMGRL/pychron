@@ -26,8 +26,7 @@ from traits.api import (
     Enum,
     Range,
 )
-from pyface.ui_traits import PyfaceColor
-from traitsui.api import Item
+from traitsui.api import Item, Color
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.options.aux_plot import AuxPlot
@@ -140,7 +139,7 @@ class SpectrumOptions(PlateauOptions):
     # step_label_font_size = Enum(*SIZES)
 
     envelope_alpha = Range(0, 100, style="simple")
-    envelope_color = PyfaceColor
+    envelope_color = Color
     user_envelope_color = Bool
     # center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)

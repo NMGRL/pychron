@@ -32,7 +32,7 @@ from traits.api import (
     HasTraits,
     Event,
 )
-from traits.trait_types import Date
+from traits.trait_types import Datetime
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
@@ -82,7 +82,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
-    start_timestamp = Date
+    start_timestamp = Datetime
     auto_save_detector_ic = Bool
     patterns = List
 

@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
-from pyface.ui_traits import PyfaceColor
+from pyface.qt import QtGui
+from traitsui.api import Color
 from traits.api import (
     Int,
     Bool,
@@ -54,6 +55,31 @@ from pychron.pychron_constants import (
     SCHAEN2020_3youngest,
     GUIDES,
 )
+
+
+def _as_qcolor(color):
+    if color is None:
+        return None
+    if hasattr(color, "toRgb"):
+        return color
+    if hasattr(color, "to_toolkit"):
+        try:
+            return color.to_toolkit()
+        except Exception:
+            pass
+    if hasattr(color, "rgba"):
+        rgba = color.rgba() if callable(color.rgba) else color.rgba
+        comps = list(rgba)
+        if comps and max(comps) <= 1:
+            comps = [int(round(c * 255)) for c in comps]
+        if len(comps) >= 4:
+            return QtGui.QColor(comps[0], comps[1], comps[2], comps[3])
+        if len(comps) == 3:
+            return QtGui.QColor(comps[0], comps[1], comps[2])
+    try:
+        return QtGui.QColor(color)
+    except Exception:
+        return None
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -145,9 +171,9 @@ class IdeogramOptions(AgeOptions):
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
     peak_label_sigfigs = Int
-    peak_label_bgcolor = PyfaceColor
+    peak_label_bgcolor = Color
     peak_label_border = Int
-    peak_label_border_color = PyfaceColor
+    peak_label_border_color = Color
     peak_label_bgcolor_enabled = Bool(False)
     aux_plot_name = "Ideogram"
 
@@ -250,10 +276,13 @@ class IdeogramOptions(AgeOptions):
         }
 
         if fg.use_fill:
-            color = fg.color.toRgb()
-            color.setAlphaF(fg.alpha * 0.01)
-            d["fill_color"] = color
-            d["type"] = "filled_line"
+            qcolor = _as_qcolor(fg.color)
+            if qcolor is not None:
+                if hasattr(qcolor, "toRgb"):
+                    qcolor = qcolor.toRgb()
+                qcolor.setAlphaF(fg.alpha * 0.01)
+                d["fill_color"] = qcolor
+                d["type"] = "filled_line"
 
         if fg.marker_non_default():
             d["marker"] = fg.marker

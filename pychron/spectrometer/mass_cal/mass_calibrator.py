@@ -41,7 +41,7 @@ from traitsui.api import (
 )
 
 # ============= standard library imports ========================
-from numpy import array, hstack, Inf, savetxt
+from numpy import array, hstack, inf as Inf, savetxt
 import csv
 import os
 from threading import Thread

@@ -24,7 +24,7 @@ from chaco.api import DataLabel
 from chaco.api import render_markers
 from chaco.api import ToolTip
 from enable.colors import ColorTrait
-from numpy import array, arange, Inf, argmax, asarray
+from numpy import array, arange, inf as Inf, argmax, asarray
 from pyface.message_dialog import warning
 from traits.api import Array
 from uncertainties import nominal_value, std_dev

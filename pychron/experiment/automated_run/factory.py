@@ -1871,36 +1871,36 @@ syn_extraction_script:name"""
         self.debug("level changed")
         self._clear_labnumber()
 
-    def _special_labnumber_changed(self):
-        if self._suppress_special_labnumber_change:
-            return
+    # def _special_labnumber_changed(self):
+    #     if self._suppress_special_labnumber_change:
+    #         return
 
-        if self.special_labnumber not in (SPECIAL_IDENTIFIER, LINE_STR, ""):
-            ln = convert_special_name(self.special_labnumber)
-            self.debug("special ln changed {}, {}".format(self.special_labnumber, ln))
-            if ln:
-                if ln not in ("dg", "pa"):
-                    msname = self.mass_spectrometer[0].capitalize()
-                    if ln in SPECIAL_KEYS and not ln.startswith("bu"):
-                        ln = make_standard_identifier(ln, "##", msname)
-                    else:
-                        edname = ""
-                        ed = self.extract_device
-                        if ed not in ("Extract Device", LINE_STR):
-                            edname = "".join([x[0].capitalize() for x in ed.split(" ")])
-                        ln = make_special_identifier(ln, edname, msname)
+    #     if self.special_labnumber not in (SPECIAL_IDENTIFIER, LINE_STR, ""):
+    #         ln = convert_special_name(self.special_labnumber)
+    #         self.debug("special ln changed {}, {}".format(self.special_labnumber, ln))
+    #         if ln:
+    #             if ln not in ("dg", "pa"):
+    #                 msname = self.mass_spectrometer[0].capitalize()
+    #                 if ln in SPECIAL_KEYS and not ln.startswith("bu"):
+    #                     ln = make_standard_identifier(ln, "##", msname)
+    #                 else:
+    #                     edname = ""
+    #                     ed = self.extract_device
+    #                     if ed not in ("Extract Device", LINE_STR):
+    #                         edname = "".join([x[0].capitalize() for x in ed.split(" ")])
+    #                     ln = make_special_identifier(ln, edname, msname)
 
-                self._labnumber_changed(self.labnumber, ln)
-                self.labnumber = ln
+    #             self._labnumber_changed(self.labnumber, ln)
+    #             self.labnumber = ln
 
-            self._frequency_enabled = True
+    #         self._frequency_enabled = True
 
-            if not self._selected_runs:
-                self.edit_mode = True
-        else:
-            self.debug("special labnumber changed else")
-            self.labnumber = ""
-            self._frequency_enabled = False
+    #         if not self._selected_runs:
+    #             self.edit_mode = True
+    #     else:
+    #         self.debug("special labnumber changed else")
+    #         self.labnumber = ""
+    #         self._frequency_enabled = False
 
     def _auto_fill_comment_changed(self):
         if self.auto_fill_comment:

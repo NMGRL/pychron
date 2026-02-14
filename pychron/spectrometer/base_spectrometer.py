@@ -42,6 +42,7 @@ class NoIntensityChange(BaseException):
 class BaseSpectrometer(SpectrometerDevice):
     integration_time = Any
     default_integration_time = 1
+    reset_scan_timer_on_integration = False
     magnet = Any
     source = Any
     magnet_klass = Any
@@ -175,6 +176,8 @@ class BaseSpectrometer(SpectrometerDevice):
     def get_update_period(self, it=None, *args, **kw):
         if it is None:
             it = self.integration_time
+
+        self.debug(f'update period {it}')
         return it
 
     def correct_dac(self, det, dac, current=True):
@@ -483,12 +486,23 @@ class BaseSpectrometer(SpectrometerDevice):
         if os.path.isfile(p):
             self.info('loading "molecular_weights.csv" file. {}'.format(p))
             with open(p, "r") as f:
-                reader = csv.reader(f, delimiter="\t")
+
+                sample = f.read(10)
+        
+                # Use the Sniffer to analyze the sample
                 try:
-                    mws = {l[0]: float(l[1]) for l in reader}
-                except BaseException:
-                    self.debug_exception()
-                    mws = None
+                    dialect = csv.Sniffer().sniff(sample, delimiters=[',', ';', '|', '\\t'])
+                    delimiter = dialect.delimiter
+                    f.seek(0)
+                    reader = csv.reader(f, delimiter=delimiter)
+                    try:
+                        mws = {l[0]: float(l[1]) for l in reader}
+                    except BaseException:
+                        self.debug_exception()
+                        mws = None
+                except csv.Error:
+                    print("Could not determine delimiter, defaulting to comma.")
+                    
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
             try:

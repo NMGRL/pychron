@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Str, Enum, Float
+from traits.api import Str, Enum, Float, Instance
 from traitsui.api import View, Item, HGroup, Label, UItem
 
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive
@@ -169,9 +169,9 @@ def fork(gc, lx, ly, rx, ry, mx, my, h):
 
 class Fork(ConnectionMixin, QPrimitive, Bordered):
     tag = "fork"
-    left = None
-    right = None
-    mid = None
+    left = Instance(Point)
+    right = Instance(Point)
+    mid = Instance(Point)
     height = 10
     inverted = False
     border_width = 10
@@ -416,9 +416,10 @@ class Tee(Fork):
             gc.line_to(x2, y2)
 
     def _render(self, gc):
-        lx, ly = self.left.get_xy()
-        rx, ry = self.right.get_xy()
-        mx, my = self.mid.get_xy()
+        lx, ly = self.left.get_xy(force=True)
+        rx, ry = self.right.get_xy(force=True)
+        mx, my = self.mid.get_xy(force=True)
+
         # ly, ry = ly - 30, ry - 30
         if self.is_vertical:
             self._render_vertical(gc, lx, ly, rx, ry, mx, my)

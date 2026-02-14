@@ -20,8 +20,8 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from traits.api import HasTraits, Instance, Str, Event, on_trait_change, Float, Range
 from traitsui.api import View, Item, HGroup, VGroup
 from traitsui.item import UReadonly, UItem
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.basic_editor_factory import BasicEditorFactory
+from traitsui.qt.editor import Editor
 
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.pipeline.plot.editors.base_editor import BaseEditor

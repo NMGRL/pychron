@@ -36,12 +36,12 @@ from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from enable.api import ColorTrait
 from kiva.trait_defs.kiva_font_trait import KivaFont
+from traitsui.api import Color
+from traits.api import Array, Int, Float, Str, Bool, List
 
 # ============= standard library imports ========================
 from numpy import where, array
 from six.moves import zip
-from traits.api import Array, Int, Float, Str, Bool, List
-from pyface.ui_traits import PyfaceColor
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
@@ -194,7 +194,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
     use_fill = Bool(False)
     selections = List
     use_user_color = Bool(False)
-    user_color = PyfaceColor
+    user_color = Color
 
     platbounds = None
     dim_non_plateau = Bool(False)
@@ -225,9 +225,17 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 func = gc.stroke_path
 
             color = self.user_color
+            def _component(value):
+                return value() if callable(value) else value
+
             color = [
                 x / 255.0
-                for x in (color.red(), color.green(), color.blue(), color.alpha())
+                for x in (
+                    _component(getattr(color, "red", 0)),
+                    _component(getattr(color, "green", 0)),
+                    _component(getattr(color, "blue", 0)),
+                    _component(getattr(color, "alpha", 255)),
+                )
             ]
 
             color = color[0], color[1], color[2], alpha

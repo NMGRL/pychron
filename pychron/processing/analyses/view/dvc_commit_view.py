@@ -19,6 +19,7 @@
 import os
 
 from git import Repo
+from git.exc import GitCommandError
 from pyface.message_dialog import information
 from traits.api import (
     HasTraits,
@@ -590,7 +591,26 @@ class HistoryView(DVCCommitView):
         args.append("--")
         args.extend(self._paths)
 
-        txt = repo.git.log(*args)
+        try:
+            txt = repo.git.log(*args)
+        except GitCommandError as e:
+            self.commits = []
+            estr = str(e)
+            if "dubious ownership" in estr:
+                rpath = repo.working_tree_dir
+                information(
+                    None,
+                    "Git blocked repository access due to ownership trust rules.\n\n"
+                    "Run this command once for the current user:\n"
+                    "git config --global --add safe.directory \"{}\"".format(rpath),
+                )
+            else:
+                information(
+                    None,
+                    "Failed loading commit history.\n\n{}".format(estr),
+                )
+            return
+
         cs = []
         if txt:
             cs = [from_gitlog(l.strip()) for l in txt.split("\n")]

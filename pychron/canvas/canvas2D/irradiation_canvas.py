@@ -87,10 +87,37 @@ class IrradiationCanvas(LoadingCanvas):
     _scene_klass = IrradiationScene
     editable = False
     mode_overlay_enabled = False
+    padding_y_px = 10
+    _base_view_y_range = None
 
     def __init__(self, *args, **kw):
         self.legend = Legend()
+        # Place hole labels to the side so they don't look offset by one in linear trays.
+        self.label_offset_mode = "side"
         super(IrradiationCanvas, self).__init__(*args, **kw)
+
+    def load_scene(self, t, **kw):
+        super(IrradiationCanvas, self).load_scene(t, **kw)
+        self._base_view_y_range = self.view_y_range
+        self._apply_vertical_padding()
+
+    def _bounds_changed(self, old, new):
+        super(IrradiationCanvas, self)._bounds_changed(old, new)
+        self._apply_vertical_padding()
+
+    def _apply_vertical_padding(self):
+        if not self._base_view_y_range:
+            return
+
+        height = float(self.bounds[1]) if self.bounds is not None else 0.0
+        if height <= 0:
+            return
+
+        ylow, yhigh = self._base_view_y_range
+        data_per_px = (yhigh - ylow) / height
+        dy = data_per_px * self.padding_y_px
+        if dy:
+            self.view_y_range = (ylow - dy, yhigh + dy)
 
 
 # ============= EOF =============================================

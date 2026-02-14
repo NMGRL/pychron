@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from traits.api import Event, Str, Any, Int
 from pyface.ui_traits import PyfaceColor
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
 from pyface.qt.QtGui import (

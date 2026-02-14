@@ -249,7 +249,7 @@ class ProjectRecordView(RecordView, NameView):
     name = Str
     principal_investigator = Str
     lab_contact = Str
-    checkin_date = Date
+    checkin_date = Date(allow_none=True)
     unique_id = Int
 
     institution = Str

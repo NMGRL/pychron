@@ -17,7 +17,7 @@ import os
 
 # ============= enthought library imports =======================
 from pyface.message_dialog import information
-from traits.api import Str, Instance
+from traits.api import Str, Instance, Any
 from traitsui.api import Item, HGroup, EnumEditor, View, VGroup, UItem
 from traitsui.editors.api import DirectoryEditor
 from uncertainties import ufloat, std_dev, nominal_value
@@ -80,7 +80,8 @@ class DVCPersistNode(PersistNode):
     dvc = Instance("pychron.dvc.dvc.DVC")
     commit_message = Str
     commit_tag = Str
-    modifier = Str
+    # Can be a single modifier (str) or multiple modifiers (tuple/list).
+    modifier = Any
 
     # def __init__(self, *args, **kwargs):
     #     super(DVCPersistNode, self).__init__(*args, **kwargs)

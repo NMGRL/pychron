@@ -101,7 +101,7 @@ def main_regtest():
 
 
 def main_coltest():
-    from numpy import Inf, linspace
+    from numpy import inf as Inf, linspace
     from math import ceil
 
     isotopes = ["a", "b", "c", "d", "e"]

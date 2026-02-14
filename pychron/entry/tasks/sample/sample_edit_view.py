@@ -21,11 +21,10 @@ from traits.api import (
     Instance,
     List,
     Str,
-    Long,
+    Int,
     Float,
     BaseFloat,
     Enum,
-    Int,
     CStr,
 )
 from traits.trait_errors import TraitError
@@ -90,7 +89,7 @@ class SampleEditItem(HasTraits):
     project = Str
     material = Str
     grainsize = Str
-    id = Long
+    id = Int
     note = Str
 
     location_mode = Enum("Lat/Lon", "UTM")

@@ -18,7 +18,7 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.api import PlotLabel
 from chaco.api import render_markers
-from pyface.ui_traits import PyfaceColor
+from traitsui.api import Color
 from traits.api import Instance, Str, Float, Int, Any, Enum, Bool
 
 # ============= standard library imports ========================
@@ -193,7 +193,7 @@ def render_end_cap(gc, x, y, length=3):
 try:
 
     class MeanIndicatorOverlay(AbstractOverlay, MovableMixin):
-        color = PyfaceColor
+        color = Color
         label = Instance(PlotLabel)
         text = Str
         location = Enum("Mean", "Upper Right")
@@ -249,9 +249,17 @@ try:
             color = self.color
             # if isinstance(color, str):
             #    color=color_table[color]
+            def _component(value):
+                return value() if callable(value) else value
+
             self._color = [
                 x / 255.0
-                for x in (color.red(), color.green(), color.blue(), color.alpha())
+                for x in (
+                    _component(getattr(color, "red", 0)),
+                    _component(getattr(color, "green", 0)),
+                    _component(getattr(color, "blue", 0)),
+                    _component(getattr(color, "alpha", 255)),
+                )
             ]
             # self._color=color
 

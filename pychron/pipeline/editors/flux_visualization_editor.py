@@ -91,6 +91,7 @@ from pychron.pychron_constants import (
     GRIDDATA,
     IDW,
     HIGH_ORDER_POLY,
+    BRACKETING_1D
 )
 
 HEADER_KEYS = [
@@ -239,6 +240,9 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             WEIGHTED_MEAN,
             MATCHING,
             BRACKETING,
+            WEIGHTED_MEAN_1D,
+            LEAST_SQUARES_1D,
+            BRACKETING_1D,
         ):
             # n = z.shape[0] * 10
             # r = max((max(abs(x)), max(abs(y))))
@@ -304,7 +308,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         elif options.plot_kind == "Grid":
             self._graph_grid(x, y, z, ze, r, reg, refresh)
         else:
-            if options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D):
+            if options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, BRACKETING_1D):
                 self._graph_linear_j(x, y, r, reg, refresh)
             else:
                 self._graph_hole_vs_j(x, y, r, reg, refresh)
@@ -331,6 +335,11 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         elif model_kind in (WEIGHTED_MEAN, WEIGHTED_MEAN_1D):
             xs = x if po.one_d_axis == "X" else y
             klass = WeightedMeanRegressor
+        elif model_kind == BRACKETING_1D:
+            xs = x if po.one_d_axis == "X" else y
+            klass = IDWRegressor
+            #kw["n"] = 2
+            #kw["interpolation_style"] = po.interpolation_style
         else:
             if model_kind == BOWL:
                 klass = BowlFluxRegressor
@@ -339,7 +348,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             elif model_kind == MATCHING:
                 klass = NearestNeighborFluxRegressor
                 kw["n"] = 1
-            elif model_kind == BRACKETING:
+            elif model_kind in (BRACKETING, BRACKETING_1D):
                 klass = NearestNeighborFluxRegressor
                 kw["n"] = 2
                 kw["interpolation_style"] = po.interpolation_style
@@ -623,9 +632,11 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         plot = g.new_plot(padding=po.get_paddings())
         if po.model_kind == WEIGHTED_MEAN_1D:
             fit = "weighted mean"
+        elif po.model_kind == BRACKETING_1D:
+            fit = None
         else:
             fit = po.least_squares_fit
-
+        print("fit", fit)
         _, scatter, line = g.new_series(x=reg.xs, y=reg.ys, yerror=reg.yserr, fit=fit)
         ebo = ErrorBarOverlay(component=scatter, orientation="y")
         scatter.underlays.append(ebo)
@@ -998,7 +1009,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         return s, iys
 
     def _sort_individuals(self, p, m, k, slope, padding):
-        if self.plotter_options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D):
+        if self.plotter_options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, BRACKETING_1D):
             pp = p.x if self.plotter_options.one_d_axis == "X" else p.y
         else:
             pp = arctan2(p.x, p.y)

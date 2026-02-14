@@ -19,8 +19,7 @@ from __future__ import absolute_import
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, Enum, Directory, Range, Float, Int
-from pyface.ui_traits import PyfaceColor
-from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
+from traitsui.api import View, Item, VGroup, HGroup, Group, UItem, Color
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
@@ -55,10 +54,10 @@ class LaserPreferences(BasePreferencesHelper):
     show_map = Bool(False)
 
     crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
-    crosshairs_color = PyfaceColor("maroon")
+    crosshairs_color = Color("maroon")
     crosshairs_radius = Range(0.0, 10.0, 1.0)
 
-    desired_position_color = PyfaceColor("green")
+    desired_position_color = Color("green")
     calibration_style = Enum("Tray", "Free")
     scaling = Range(1.0, 2.0, 1)
 
@@ -76,7 +75,7 @@ class LaserPreferences(BasePreferencesHelper):
     render_with_markup = Bool(False)
     crosshairs_offsetx = Float(0)
     crosshairs_offsety = Float(0)
-    crosshairs_offset_color = PyfaceColor("blue")
+    crosshairs_offset_color = Color("blue")
     crosshairs_line_width = Float(1.0)
 
     aux_crosshairs_enabled = Bool
@@ -84,12 +83,12 @@ class LaserPreferences(BasePreferencesHelper):
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float(0)
     aux_crosshairs_offsety = Float(0)
-    aux_crosshairs_offset_color = PyfaceColor("red")
-    aux_crosshairs_color = PyfaceColor("red")
+    aux_crosshairs_offset_color = Color("red")
+    aux_crosshairs_color = Color("red")
     aux_crosshairs_line_width = Float(1.0)
 
     show_hole_label = Bool
-    hole_label_color = PyfaceColor
+    hole_label_color = Color
     hole_label_size = Enum(*SIZES)
 
     show_patterning = Bool(True)

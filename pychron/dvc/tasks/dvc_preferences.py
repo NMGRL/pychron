@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Bool, Int
+from traits.api import Str, Bool, Int, Directory
 from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.core.helpers.strtools import to_bool
@@ -32,8 +32,8 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 class DVCConnectionItem(ConnectionFavoriteItem):
     organization = Str
     meta_repo_name = Str
-    meta_repo_dir = Str
-    repository_root = Str
+    meta_repo_dir = Directory
+    repository_root = Directory
     attributes = (
         "name",
         "kind",

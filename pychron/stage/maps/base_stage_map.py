@@ -100,6 +100,7 @@ class BaseStageMap(Loggable):
                 if "#" in line:
                     line = line.split("#")[0]
 
+
                 if cnt == 0:
                     # line 0 shape, dimension
                     args = line.split(",")
@@ -367,6 +368,11 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
                 x, y, ah = args
                 ah = ah.strip()
                 ah = ah[1:-1]
+            elif y.startswith('r'):
+                hole = str(hi + 1)
+                x, y, d = args
+                print(line)
+                dimension = float(d[1:].strip())
 
         elif len(args) == 4:
             hole, x, y, ah = args
@@ -431,6 +437,5 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
         lines[0] = "{},{}\n".format(self.g_shape, self.g_dimension)
         with open(self.file_path, "w") as f:
             f.writelines(lines)
-
 
 # ============= EOF =============================================

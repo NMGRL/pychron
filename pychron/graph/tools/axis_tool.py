@@ -18,13 +18,14 @@
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.base_tool import BaseTool
-from pyface.ui_traits import PyfaceFont
-from traits.api import on_trait_change, HasTraits, Str
+from pyface.qt import QtGui
+from traits.api import on_trait_change, HasTraits, Str, Any
 from traitsui.api import View, Item, HGroup, VGroup, TextEditor, Handler
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors.api import FontEditor
+from kiva.fonttools.font import Font as KivaFont
 
 limit_grp = VGroup(
     Item(
@@ -98,13 +99,13 @@ class AxisViewHandler(Handler):
 
 
 class WrapAxis(HasTraits):
-    title_font = PyfaceFont
+    title_font = Any
     tick_label_format_str = Str(enter_set=True, auto_set=False)
 
     def __init__(self, comp, *args, **kw):
         super(WrapAxis, self).__init__(*args, **kw)
         self._comp = comp
-        self.title_font = str(comp.title_font)
+        self.title_font = self._kiva_to_qt_font(comp.title_font)
         self.on_trait_change(self._update_title_font, "title_font")
 
     @on_trait_change("tick_label_format_str")
@@ -119,8 +120,41 @@ class WrapAxis(HasTraits):
         self._comp.tick_label_formatter = func
 
     def _update_title_font(self, *args, **kw):
-        self._comp.title_font = str(self.title_font)
+        self._comp.title_font = self._qt_to_kiva_font(self.title_font)
         self._comp.request_redraw()
+
+    def _kiva_to_qt_font(self, font):
+        if isinstance(font, QtGui.QFont):
+            return font
+        if isinstance(font, KivaFont):
+            qf = QtGui.QFont(font.face_name, int(font.size))
+            if font.weight >= 600:
+                qf.setWeight(QtGui.QFont.Weight.Bold)
+            else:
+                qf.setWeight(QtGui.QFont.Weight.Normal)
+            qf.setItalic(bool(font.style))
+            qf.setUnderline(bool(font.underline))
+            return qf
+        if isinstance(font, str):
+            return QtGui.QFont(font)
+        return QtGui.QFont()
+
+    def _qt_to_kiva_font(self, font):
+        if isinstance(font, KivaFont):
+            return font
+        if not isinstance(font, QtGui.QFont):
+            font = QtGui.QFont(font)
+        weight = 700 if font.bold() else 400
+        style = 1 if font.italic() else 0
+        return KivaFont(
+            face_name=font.family(),
+            size=font.pointSize(),
+            family=0,
+            weight=weight,
+            style=style,
+            underline=font.underline(),
+            encoding=0,
+        )
 
     def trait_context(self):
         return {"object": self._comp, "wrapper": self}

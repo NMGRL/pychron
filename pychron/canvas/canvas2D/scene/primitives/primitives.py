@@ -417,9 +417,19 @@ class LoadIndicator(Circle):
     def _render(self, gc):
         c = (0, 0, 0)
         color = self.fill_color
-        fc = sum((color.red(), color.green(), color.blue()))
+        # Support PyfaceColor APIs that expose components as attributes vs callables.
+        def _component(value):
+            return value() if callable(value) else value
+
+        fc = sum(
+            (
+                _component(getattr(color, "red", 0)),
+                _component(getattr(color, "green", 0)),
+                _component(getattr(color, "blue", 0)),
+            )
+        )
         if self.fill and self.fill_color and fc < 1.5:
-            c = (255, 255, 255)
+            c = (1.0, 1.0, 1.0)
 
         self.text_color = c
         for p in self.primitives:
@@ -430,9 +440,13 @@ class LoadIndicator(Circle):
         if self.space == "data":
             r = self.map_dimension(r)
 
-        f = 2**0.5 / 2
-        self.name_offsetx = (r * f) + 8
-        self.name_offsety = (r * f) + 8
+        if getattr(self.canvas, "label_offset_mode", "diagonal") == "side":
+            self.name_offsetx = r + 8
+            self.name_offsety = 0
+        else:
+            f = 2**0.5 / 2
+            self.name_offsetx = (r * f) + 8
+            self.name_offsety = (r * f) + 8
 
         if self.state:
             with gc:

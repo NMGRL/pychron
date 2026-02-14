@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-from numpy import Inf
+from numpy import inf as Inf
 
 # ============= enthought library imports =======================
 from traits.api import Int
@@ -56,10 +56,15 @@ class LoadingScene(Scene):
 
         xd = (xma - xmi) / 2.0 + xmi
         yd = (yma - ymi) / 2.0 + ymi
-        w = (xma + mr - (xmi - mr)) * 1.2
-        h = (yma + mr - (ymi - mr)) * 1.2
-        w /= 2.0
-        h /= 2.0
+
+        # Keep x/y scales comparable so circular holes don't inflate when the tray
+        # is effectively 1-D (e.g., a vertical tube).
+        span_x = (xma - xmi) + 2 * mr
+        span_y = (yma - ymi) + 2 * mr
+        span = max(span_x, span_y)
+
+        w = span / 2.0
+        h = span / 2.0
         self._xrange = -w + xd, w + xd
         self._yrange = -h + yd, h + yd
 

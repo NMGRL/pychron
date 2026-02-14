@@ -17,8 +17,7 @@ import json
 import os
 
 from traits.api import Enum, Bool, Str, Int, Float, List, Directory
-from pyface.ui_traits import PyfaceColor
-from traitsui.api import VGroup, HGroup, Tabbed, Item, UItem, EnumEditor
+from traitsui.api import VGroup, HGroup, Tabbed, Item, UItem, EnumEditor, Color
 from traitsui.item import UCustom, spring
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
@@ -101,7 +100,7 @@ class XLSXAnalysisTableWriterOptions(BaseOptions):
     # kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
     highlight_non_plateau = dumpable(Bool(True))
-    highlight_color = dumpable(PyfaceColor)
+    highlight_color = dumpable(Color)
 
     root_name = dumpable(Str)
     root_names = List

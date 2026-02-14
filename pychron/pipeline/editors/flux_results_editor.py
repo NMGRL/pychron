@@ -63,6 +63,7 @@ from pychron.processing.flux import mean_j
 from pychron.pychron_constants import (
     LEAST_SQUARES_1D,
     WEIGHTED_MEAN_1D,
+    BRACKETING_1D,
     WEIGHTED_MEAN,
     AVERAGE,
     LINEAR,
@@ -256,7 +257,8 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
 
         # calculate padding of the individuals analyses
         # by taking mean of the diffs between adjacent positions divided by 4
-        if opt.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D):
+        
+        if opt.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, BRACKETING_1D):
             idx = 0 if self.plotter_options.one_d_axis == "X" else 1
             vs = array([p[idx] for p in geom])
             vs = abs(diff(vs))

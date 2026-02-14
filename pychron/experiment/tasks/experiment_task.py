@@ -553,6 +553,12 @@ class ExperimentEditorTask(EditorTask):
             self.manager.experiment_factory.edit_enabled = True
             self.manager.experiment_queue = self.active_editor.queue
             self.manager.executor.active_editor = self.active_editor
+            # Keep executor state in sync during editing (executor.experiment_queues
+            # is normally populated at execution time).
+            try:
+                self.manager.executor.experiment_queue = self.active_editor.queue
+            except Exception:
+                pass
             self._show_pane(self.experiment_factory_pane)
         else:
             self.manager.experiment_factory.edit_enabled = False
@@ -652,7 +658,14 @@ class ExperimentEditorTask(EditorTask):
 
     @on_trait_change("editor_area:editors[]")
     def _update_editors(self, new):
-        self.manager.experiment_queues = [ei.queue for ei in new]
+        qs = [ei.queue for ei in new]
+        self.manager.experiment_queues = qs
+        # Mirror open queues onto the executor so panes (e.g. StatsPane) can
+        # recalculate even when the executor is idle.
+        try:
+            self.manager.executor.experiment_queues = qs
+        except Exception:
+            pass
 
     @on_trait_change("manager:executor:measuring_run:plot_panel")
     def _update_plot_panel(self, new):

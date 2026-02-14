@@ -37,7 +37,20 @@ class NewLabelView(HasTraits):
     def color_str(self):
         f = lambda x: "{:X}".format(x).zfill(2)
         color = self.color
-        args = list(map(f, (color.red(), color.green(), color.blue(), color.alpha())))
+        def _component(value):
+            return value() if callable(value) else value
+
+        args = list(
+            map(
+                f,
+                (
+                    _component(getattr(color, "red", 0)),
+                    _component(getattr(color, "green", 0)),
+                    _component(getattr(color, "blue", 0)),
+                    _component(getattr(color, "alpha", 255)),
+                ),
+            )
+        )
         return "".join(args)
 
     def traits_view(self):

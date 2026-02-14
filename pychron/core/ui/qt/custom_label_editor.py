@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from pyface.ui_traits import PyfaceColor
 from traits.api import (
     HasTraits,
     Str,
@@ -25,9 +24,11 @@ from traits.api import (
     on_trait_change,
     Bool,
 )
-from traitsui.api import View, UItem
+from traitsui.api import View, UItem, Color
 from traitsui.basic_editor_factory import BasicEditorFactory
-from pyface.qt.QtGui import QLabel
+import re
+
+from pyface.qt.QtGui import QLabel, QColor
 from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
@@ -63,13 +64,13 @@ class _CustomLabelEditor(Editor):
             control = self.control
 
         if color is None:
-            color = self.color.rgba
+            color = self.color
 
         if bgcolor is None:
             if self.bgcolor is None:
                 bgcolor = "transparent"
             else:
-                bgcolor = self.bgcolor.rgba
+                bgcolor = self.bgcolor
 
         if size is None:
             size = self.text_size
@@ -81,6 +82,9 @@ class _CustomLabelEditor(Editor):
             if not weight:
                 weight = self.item.weight
 
+        color = self._qss_color(color)
+        bgcolor = self._qss_color(bgcolor)
+
         css = """QLabel {{color:{};
         background-color:{};
         font-size:{}px;
@@ -90,6 +94,78 @@ class _CustomLabelEditor(Editor):
         )
 
         control.setStyleSheet(css)
+
+    @staticmethod
+    def _qss_color(value):
+        """Return a Qt style sheet compatible color string.
+
+        Accepts common Pychron/Traits representations:
+        - 'red', '#RRGGBB', 'transparent', 'rgb(...)', 'rgba(...)'
+        - '(r, g, b)' or '(r, g, b, a)' strings
+        - (r, g, b) / (r, g, b, a) tuples/lists
+        - QColor
+        - QRgb/rgba integer
+        """
+
+        if value is None:
+            return "transparent"
+
+        if isinstance(value, str):
+            s = value.strip()
+            if not s:
+                return "transparent"
+
+            # Handle stringified tuples e.g. "(255, 0, 0, 255)"
+            m = re.match(
+                r"^[\(\[]\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*(\d+))?\s*[\)\]]$",
+                s,
+            )
+            if m:
+                r, g, b = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                a = m.group(4)
+                if a is None:
+                    return f"rgb({r},{g},{b})"
+                return f"rgba({r},{g},{b},{int(a)})"
+
+            return s
+
+        if isinstance(value, QColor):
+            r, g, b, a = value.red(), value.green(), value.blue(), value.alpha()
+            if a >= 255:
+                return f"rgb({r},{g},{b})"
+            return f"rgba({r},{g},{b},{a})"
+
+        if isinstance(value, int):
+            qc = QColor.fromRgba(value)
+            r, g, b, a = qc.red(), qc.green(), qc.blue(), qc.alpha()
+            if a >= 255:
+                return f"rgb({r},{g},{b})"
+            return f"rgba({r},{g},{b},{a})"
+
+        if isinstance(value, (tuple, list)):
+            if len(value) == 3:
+                r, g, b = (int(value[0]), int(value[1]), int(value[2]))
+                return f"rgb({r},{g},{b})"
+            if len(value) == 4:
+                r, g, b, a = (
+                    int(value[0]),
+                    int(value[1]),
+                    int(value[2]),
+                    int(value[3]),
+                )
+                if a >= 255:
+                    return f"rgb({r},{g},{b})"
+                return f"rgba({r},{g},{b},{a})"
+
+        # TraitsUI Color or other objects often expose .name() (QColor-like)
+        try:
+            name = value.name()
+        except Exception:
+            name = None
+        if name:
+            return str(name)
+
+        return str(value)
 
     # def update_editor(self):
     #     if self.control:
@@ -122,10 +198,10 @@ class CustomLabel(UItem):
     size = Int(12)
     size_name = Str
 
-    color = PyfaceColor("black")
+    color = Color("black")
     color_name = Str
 
-    bgcolor = PyfaceColor("transparent")
+    bgcolor = Color("transparent")
     bgcolor_name = Str
     use_color_background = Bool(False)
     weight = Str("normal")
@@ -151,8 +227,8 @@ class CustomLabel(UItem):
 class Demo(HasTraits):
     a = Str("asdfsdf")
     foo = Button
-    color = PyfaceColor("blue")
-    bgcolor = PyfaceColor("green")
+    color = Color("blue")
+    bgcolor = Color("green")
     cnt = 0
     size = Int(12)
 
@@ -175,8 +251,8 @@ class Demo(HasTraits):
                 #                             color='blue',
                 size=24,
                 size_name="size",
-                top_padding=10,
-                left_padding=10,
+                #top_padding=10,
+                #left_padding=10,
                 color_name="color",
                 bgcolor_name="bgcolor",
             ),

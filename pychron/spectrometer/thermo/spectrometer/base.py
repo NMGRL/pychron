@@ -40,6 +40,7 @@ from pychron.spectrometer.thermo.spectrometer import normalize_integration_time
 
 
 class ThermoSpectrometer(BaseSpectrometer):
+    reset_scan_timer_on_integration = True
     integration_time = Float
     integration_times = List(QTEGRA_INTEGRATION_TIMES)
     magnet_dac = DelegatesTo("magnet", prefix="dac")

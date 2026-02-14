@@ -13,18 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QTimer, QSize, Qt, QPoint
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
-from pyface.qt import QtCore
+from pyface.qt import QtWidgets, QtCore
+from pyface.qt.QtCore import QTimer, QSize, Qt, QPoint
+from pyface.qt.QtGui import QImage, QPixmap, QPainter, QPen, QLabel
 from traitsui.basic_editor_factory import BasicEditorFactory
 
 try:
     import vlc
 except ImportError:
     pass
-from PyQt5.QtWidgets import QLabel
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 from traits.api import Any
 

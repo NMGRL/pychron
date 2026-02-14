@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from pyface.ui_traits import PyfaceColor
 from traits.api import Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import (
     View,
@@ -32,6 +31,7 @@ from traitsui.api import (
     UReadonly,
     ListEditor,
     Readonly,
+    Color
 )
 from traitsui.editors.api import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
@@ -293,18 +293,18 @@ class ExperimentFactoryPane(TraitsDockPane):
                 tooltip="Enter a Identifier, aka L#",
                 width=-200,
                 label="Identifier",
-                enabled_when='{} == "{}"'.format(
-                    run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
-                ),
+                # enabled_when='{} == "{}"'.format(
+                #     run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
+                # ),
                 editor=myEnumEditor(name=run_factory_name("display_labnumbers")),
             ),
         )
         grp = BorderVGroup(
             a,
             HGroup(
-                run_factory_uitem(
-                    "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
-                ),
+                # run_factory_uitem(
+                #     "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
+                # ),
                 run_factory_uitem(
                     "run_block",
                     editor=myEnumEditor(name=run_factory_name("run_blocks")),
@@ -531,7 +531,21 @@ class StatsPane(TraitsDockPane):
     executor = Any
 
     def _recalculate_button_fired(self):
-        self.model.experiment_queues = self.executor.experiment_queues
+        queues = list(getattr(self.executor, "experiment_queues", []) or [])
+
+        active_queue = None
+        active_editor = getattr(self.executor, "active_editor", None)
+        if active_editor is not None:
+            active_queue = getattr(active_editor, "queue", None)
+
+        if active_queue is None:
+            active_queue = getattr(self.executor, "experiment_queue", None)
+
+        if active_queue is not None and active_queue not in queues:
+            queues.insert(0, active_queue)
+
+        self.model.experiment_queues = queues
+        self.model.active_queue = active_queue
         self.model.reset()
 
     def traits_view(self):
@@ -686,15 +700,15 @@ Quick=   measure_iteration stopped at current step
 class ExplanationPane(TraitsDockPane):
     id = "pychron.experiment.explanation"
     name = "Explanation"
-    measurement = PyfaceColor(MEASUREMENT_COLOR)
-    extraction = PyfaceColor(EXTRACTION_COLOR)
-    success = PyfaceColor(SUCCESS_COLOR)
-    skip = PyfaceColor(SKIP_COLOR)
-    canceled = PyfaceColor(CANCELED_COLOR)
-    truncated = PyfaceColor(TRUNCATED_COLOR)
-    failed = PyfaceColor(FAILED_COLOR)
-    not_executable = PyfaceColor(NOT_EXECUTABLE_COLOR)
-    end_after = PyfaceColor(END_AFTER_COLOR)
+    measurement = Color(MEASUREMENT_COLOR)
+    extraction = Color(EXTRACTION_COLOR)
+    success = Color(SUCCESS_COLOR)
+    skip = Color(SKIP_COLOR)
+    canceled = Color(CANCELED_COLOR)
+    truncated = Color(TRUNCATED_COLOR)
+    failed = Color(FAILED_COLOR)
+    not_executable = Color(NOT_EXECUTABLE_COLOR)
+    end_after = Color(END_AFTER_COLOR)
 
     def set_colors(self, cd):
         for k, v in cd.items():

@@ -61,7 +61,14 @@ class LoadingPDFOptions(BasePDFOptions):
 
     def get_alternating_background(self):
         color = self.alternating_background
-        t = color.red(), color.green(), color.blue()
+        def _component(value):
+            return value() if callable(value) else value
+
+        t = (
+            _component(getattr(color, "red", 0)),
+            _component(getattr(color, "green", 0)),
+            _component(getattr(color, "blue", 0)),
+        )
         return [x / 255.0 for x in t]
 
     def traits_view(self):

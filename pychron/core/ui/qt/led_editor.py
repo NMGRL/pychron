@@ -58,7 +58,14 @@ class ButtonLED(LED):
 
 
 def change_intensity(color, fac):
-    rgb = [color.red(), color.green(), color.blue()]
+    def _component(value):
+        return value() if callable(value) else value
+
+    rgb = [
+        _component(getattr(color, "red", 0)),
+        _component(getattr(color, "green", 0)),
+        _component(getattr(color, "blue", 0)),
+    ]
     rgb = [min(int(round(c * fac, 0)), 255) for c in rgb]
     return QColor(*rgb)
 

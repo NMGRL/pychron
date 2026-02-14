@@ -681,7 +681,9 @@ class ExtractionPyScript(AutomatedRunPyScript):
         st = time.time()
         # set block=True to wait for pattern completion
         self._extraction_action(
-            ("execute_pattern", (pattern,), {"block": block, "duration": duration})
+            ("execute_pattern", (pattern,), {"block": block,
+                                             "duration": duration,
+                                             "position": self.position[0]})
         )
 
         return time.time() - st

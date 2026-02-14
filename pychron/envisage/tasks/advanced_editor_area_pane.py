@@ -66,6 +66,19 @@ from six.moves import range
 
 
 class myEditorAreaWidget(EditorAreaWidget):
+    def __init__(self, *args, **kw):
+        super(myEditorAreaWidget, self).__init__(*args, **kw)
+        # Pyface expects _rubber_band to exist in eventFilter paths.
+        if not hasattr(self, "_rubber_band"):
+            self._rubber_band = None
+
+    def focusInEvent(self, event):
+        try:
+            super(myEditorAreaWidget, self).focusInEvent(event)
+        except AttributeError:
+            # Some editors don't create a control; avoid crashing on focus.
+            pass
+
     def contextMenuEvent(self, event):
         epos = event.pos()
 
@@ -158,6 +171,16 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         pane.
         """
         self.control = control = myEditorAreaWidget(self, parent)
+        # Ensure Pyface's eventFilter has a valid rubber band to query.
+        try:
+            from pyface.qt import QtWidgets
+
+            if getattr(control, "_rubber_band", None) is None:
+                control._rubber_band = QtWidgets.QRubberBand(
+                    QtWidgets.QRubberBand.Rectangle, control
+                )
+        except Exception:
+            pass
         self._filter = EditorAreaDropFilter(self)
         self.control.installEventFilter(self._filter)
 

@@ -43,7 +43,7 @@ class CSVExportNode(BaseNode):
     def run(self, state):
         p = os.path.join(paths.csv_data_dir, add_extension(self.pathname, ".csv"))
 
-        with open(p, "w") as wfile:
+        with open(p, "w", newline="") as wfile:
             writer = csv.writer(wfile, delimiter=self.delimiter)
             for ans in (state.unknowns, state.references):
                 if ans:

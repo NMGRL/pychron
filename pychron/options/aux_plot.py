@@ -31,7 +31,7 @@ from traits.api import (
     Trait,
     Button,
 )
-from pyface.ui_traits import PyfaceColor
+from traitsui.api import Color
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import FilterPredicate
@@ -111,7 +111,7 @@ class AuxPlot(HasTraits):
 
     marker = Str("circle")
     marker_size = Float(2)
-    marker_color = PyfaceColor("black")
+    marker_color = Color("black")
 
     calculated_ymax = Dict(transient=True)
     calculated_ymin = Dict(transient=True)

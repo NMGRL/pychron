@@ -22,7 +22,6 @@ from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.axis_view import float_or_auto
 from enable.markers import marker_names
 from pyface.message_dialog import warning
-from pyface.ui_traits import PyfaceColor
 from traits.api import (
     HasTraits,
     Str,
@@ -53,6 +52,7 @@ from traitsui.api import (
     InstanceEditor,
     CheckListEditor,
     TextEditor,
+    Color
 )
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
@@ -390,12 +390,52 @@ class MainOptions(SubOptions):
 
 def convert_color(ss):
     from pyface.qt.QtGui import QColor
+    try:
+        from pyface.color import Color as ColorClass
+    except Exception:
+        ColorClass = None
 
-    nd = {}
-    for k, v in ss.items():
+    def convert_value(v):
         if isinstance(v, QColor):
-            nd[k] = v.rgba()
-    ss.update(**nd)
+            return v.rgba()
+        if ColorClass is not None and isinstance(v, ColorClass):
+            return v.rgba
+        if isinstance(v, dict):
+            convert_color(v)
+            return v
+        if isinstance(v, list):
+            return [convert_value(i) for i in v]
+        if isinstance(v, tuple):
+            return tuple(convert_value(i) for i in v)
+        return v
+
+    for k, v in list(ss.items()):
+        ss[k] = convert_value(v)
+
+
+def _coerce_color_value(value):
+    if isinstance(value, dict):
+        _coerce_color_dict(value)
+        return value
+    if isinstance(value, list):
+        return [_coerce_color_value(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_coerce_color_value(v) for v in value)
+    if isinstance(value, (list, tuple)):
+        return value
+    return value
+
+
+def _coerce_color_dict(d):
+    for k, v in list(d.items()):
+        if "color" in k and isinstance(v, (list, tuple)) and v:
+            if all(isinstance(c, (int, float)) for c in v):
+                if max(v) <= 1:
+                    d[k] = tuple(int(round(c * 255)) for c in v)
+                else:
+                    d[k] = tuple(int(round(c)) for c in v)
+                continue
+        d[k] = _coerce_color_value(v)
 
 
 class BaseOptions(HasTraits):
@@ -463,6 +503,7 @@ class BaseOptions(HasTraits):
                     ctx.pop("_plot_names")
                 elif "error_types" in ctx:
                     ctx.pop("error_types")
+            _coerce_color_dict(ctx)
 
             return cls(**ctx)
 
@@ -538,7 +579,15 @@ class BaseOptions(HasTraits):
     def formatted_attr(self, key):
         obj = getattr(self, key)
         if "color" in key:
-            obj = obj.red(), obj.green(), obj.blue(), obj.alpha()
+            def _component(value):
+                return value() if callable(value) else value
+
+            obj = (
+                _component(getattr(obj, "red", 0)),
+                _component(getattr(obj, "green", 0)),
+                _component(getattr(obj, "blue", 0)),
+                _component(getattr(obj, "alpha", 1)),
+            )
         return obj
 
     def to_dict_test(self, k):
@@ -630,8 +679,8 @@ class GroupMixin(HasTraits):
 
 
 class FigureOptions(BaseOptions, GroupMixin):
-    bgcolor = PyfaceColor
-    plot_bgcolor = PyfaceColor
+    bgcolor = Color
+    plot_bgcolor = Color
     plot_spacing = Range(0, 50)
     padding_left = Int(100)
     padding_right = Int(100)

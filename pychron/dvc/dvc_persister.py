@@ -236,6 +236,10 @@ class DVCPersister(BasePersister):
                         self.debug("invalid extraction position")
 
                 try:
+                    if isinstance(pos, str):
+                        p = pos.strip()
+                        if p and p[0] in ("s", "S") and p[1:].isdigit():
+                            pos = p[1:]
                     pos = int(pos)
                 except BaseException:
                     pos = None
@@ -620,9 +624,13 @@ class DVCPersister(BasePersister):
             if rs.load_name and rs.load_name != NULL_STR:
                 load_name = rs.load_name
                 load_holder = rs.load_holder
+                load_user = rs.username or getattr(db, "save_username", "") or "root"
 
-                db.add_load(load_name, load_holder, rs.username)
-                db.flush()
+                if not db.get_user(load_user):
+                    db.add_user(load_user)
+                    db.commit()
+
+                db.add_load(load_name, load_holder, load_user)
                 db.commit()
 
                 for position in self._positions:

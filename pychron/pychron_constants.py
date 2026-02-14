@@ -374,6 +374,7 @@ FLUX_CONSTANTS = {
 
 LEAST_SQUARES_1D = "LeastSquares1D"
 WEIGHTED_MEAN_1D = "WeightedMean1D"
+BRACKETING_1D = "Bracketing1D"
 MATCHING = "Matching"
 BRACKETING = "Bracketing"
 NN = "Nearest Neighbors"
@@ -395,8 +396,10 @@ FLUX_MODEL_KINDS = (
     BRACKETING,
     LEAST_SQUARES_1D,
     WEIGHTED_MEAN_1D,
+    BRACKETING_1D,
     RBF,
     GRIDDATA,
+    IDW
 )
 
 if paths.setup_dir:
