@@ -39,6 +39,9 @@ from pychron.core.yaml import yload
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
+from pychron.experiment.utilities.repository_identifier import (
+    normalize_repository_identifier,
+)
 from pychron.pychron_constants import (
     NULL_STR,
     LINE_STR,
@@ -548,6 +551,11 @@ class BaseExperimentQueue(RunBlock):
     def _delay_after_air_changed(self, new):
         self.stats.delay_after_air = new
         self.invalidate_stats()
+
+    def _repository_identifier_changed(self, new):
+        normalized = normalize_repository_identifier(new)
+        if normalized != new:
+            self.repository_identifier = normalized
 
     def _mass_spectrometer_changed(self):
         ms = self.mass_spectrometer

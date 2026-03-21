@@ -19,8 +19,32 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from datetime import datetime
+import re
 
 from pychron.experiment.utilities.identifier import is_special
+
+
+REPOSITORY_IDENTIFIER_REGEX = re.compile(r"^[\w-]+$")
+
+
+def is_valid_repository_identifier(identifier):
+    if not identifier:
+        return False
+    return bool(REPOSITORY_IDENTIFIER_REGEX.match(identifier))
+
+
+def normalize_repository_identifier(identifier):
+    if identifier is None:
+        return ""
+
+    identifier = identifier.strip()
+    if not identifier:
+        return ""
+
+    if is_valid_repository_identifier(identifier):
+        return identifier
+
+    return re.sub(r"[^\w-]+", "", identifier)
 
 
 def get_curtag():

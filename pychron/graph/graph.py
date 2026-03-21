@@ -39,6 +39,7 @@ from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
+from pychron.core.helpers.color_utils import normalize_color_name
 from pychron.core.helpers.filetools import add_extension
 from pychron.graph.context_menu_mixin import ContextMenuMixin
 from pychron.graph.ml_label import MPlotAxis
@@ -84,6 +85,8 @@ def get_file_path(action="save as", **kw):
 def add_aux_axis(po, p, title="", color="black"):
     """ """
     from chaco.axis import PlotAxis
+
+    color = normalize_color_name(color)
 
     axis = PlotAxis(
         p,
@@ -157,6 +160,8 @@ def container_factory(**kw):
     for k in options:
         if k not in list(kw.keys()):
             kw[k] = options[k]
+    if "bgcolor" in kw:
+        kw["bgcolor"] = normalize_color_name(kw["bgcolor"])
     container = cklass(**kw)
     return container
 

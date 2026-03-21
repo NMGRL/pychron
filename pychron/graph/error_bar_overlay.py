@@ -25,6 +25,7 @@ from traits.api import Enum, Bool, Float, on_trait_change
 
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.color_utils import to_rgba_float
 
 
 class ErrorBarOverlay(AbstractOverlay):
@@ -126,16 +127,16 @@ class ErrorBarOverlay(AbstractOverlay):
                 )
                 # draw normal
                 color = component.color_
-                if isinstance(color, str):
+                normalized = to_rgba_float(color)
+                if normalized is not None:
+                    color = normalized[:3] if normalized[3] >= 1 else normalized
+                elif isinstance(color, str):
                     color = color_table[color]
                 elif isinstance(color, QtGui.QColor):
-                    def _component(value):
-                        return value() if callable(value) else value
-
                     color = (
-                        _component(getattr(color, "red", 0)) / 255.0,
-                        _component(getattr(color, "green", 0)) / 255.0,
-                        _component(getattr(color, "blue", 0)) / 255.0,
+                        color.red() / 255.0,
+                        color.green() / 255.0,
+                        color.blue() / 255.0,
                     )
 
                 gc.set_line_width(self.line_width)

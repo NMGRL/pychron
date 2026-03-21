@@ -10,7 +10,10 @@ from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestC
 from pychron.core.tests.spell_correct import SpellCorrectTestCase
 from pychron.core.tests.filtering_tests import FilteringTestCase
 from pychron.core.tests.bootstrap_profiles_test import BootstrapProfilesTestCase
+from pychron.core.tests.color_utils_test import ColorUtilsTestCase
+from pychron.core.tests.install_validation_test import InstallValidationTestCase
 from pychron.core.tests.install_support_test import InstallSupportTestCase
+from pychron.core.tests.starter_bundles_test import StarterBundlesTestCase
 
 from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
 from pychron.core.helpers.tests.strtools import CamelCaseTestCase
@@ -50,6 +53,7 @@ from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase2
 from pychron.experiment.tests.position_regex_test import XYTestCase
 from pychron.experiment.tests.pyscript_integration import PyScriptIntegrationTestCase
 from pychron.experiment.tests.queue_metadata import QueueMetadataPropagationTestCase
+from pychron.experiment.tests.repository_identifier import ExperimentIdentifierTestCase
 from pychron.experiment.tests.renumber_aliquot_test import RenumberAliquotTestCase
 from pychron.experiment.tests.stats_responsiveness import StatsResponsivenessTestCase
 from pychron.experiment.tests.state_machine import AutomatedRunStateMachineTestCase
@@ -97,6 +101,9 @@ def suite():
         SpellCorrectTestCase,
         FilteringTestCase,
         BootstrapProfilesTestCase,
+        ColorUtilsTestCase,
+        StarterBundlesTestCase,
+        InstallValidationTestCase,
         InstallSupportTestCase,
         MultiPeakDetectionTestCase,
         FloatfmtTestCase,
@@ -131,6 +138,7 @@ def suite():
         XYTestCase,
         PyScriptIntegrationTestCase,
         QueueMetadataPropagationTestCase,
+        ExperimentIdentifierTestCase,
         RenumberAliquotTestCase,
         StatsResponsivenessTestCase,
         AutomatedRunStateMachineTestCase,

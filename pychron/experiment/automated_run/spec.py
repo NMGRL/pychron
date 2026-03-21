@@ -50,6 +50,7 @@ from pychron.experiment.utilities.identifier import (
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.experiment.utilities.repository_identifier import (
     make_references_repository_identifier,
+    normalize_repository_identifier,
 )
 from pychron.experiment.utilities.runid import make_rid, make_runid
 from pychron.pychron_constants import (
@@ -659,7 +660,8 @@ class AutomatedRunSpec(HasTraits):
     # ===============================================================================
     @on_trait_change(
         """measurement_script, post_measurement_script,
-post_equilibration_script, extraction_script, syn_extraction_script, script_options, position, duration, cleanup, pre_cleanup, post_cleanup"""
+post_equilibration_script, extraction_script, syn_extraction_script, script_options,
+position, duration, cleanup, pre_cleanup, post_cleanup"""
     )
     def _change_handler(self, name, new):
         if new == "None":
@@ -669,6 +671,11 @@ post_equilibration_script, extraction_script, syn_extraction_script, script_opti
 
     def _state_changed(self, old, new):
         logger.debug("state changed from {} to {}".format(old, new))
+
+    def _repository_identifier_changed(self, new):
+        normalized = normalize_repository_identifier(new)
+        if normalized != new:
+            self.repository_identifier = normalized
 
     def normalize_state(self, state):
         if state is None:

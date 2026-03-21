@@ -28,6 +28,7 @@ from pyface.color import Color
 from traitsui.api import View, UItem, Controller
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.color_utils import coerce_qcolor, contrast_color
 from pychron.core.ui.display_editor import DisplayEditor
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -113,10 +114,11 @@ class DisplayController(Controller):
         if "color" not in kw or kw["color"] is None:
             kw["color"] = self.default_color
 
-        tol = 5
-        if isinstance(kw["color"], str):
-            q = QColor(kw["color"])
-            kw["color"] = q
+        qcolor = coerce_qcolor(kw["color"], qcolor_class=QColor)
+        if qcolor is None:
+            fallback = contrast_color(self.bgcolor)
+            qcolor = coerce_qcolor(fallback, qcolor_class=QColor, default="black")
+        kw["color"] = qcolor
 
         # rgba = kw['color'].toTuple()
         # b_rgba = self.bgcolor.toTuple()

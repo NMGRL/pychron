@@ -15,6 +15,12 @@ Recommended workflow
 Examples
 --------
 
+List the available versioned starter bundles:
+
+.. code-block:: bash
+
+   pychron bundles --verbose
+
 List the available generic profiles:
 
 .. code-block:: bash
@@ -25,13 +31,19 @@ Print a supported install plan for a target machine:
 
 .. code-block:: bash
 
-   pychron install-plan --profile ngx --profile chromiumco2
+   pychron install-plan --bundle ngx --bundle chromiumco2-lab
 
 Bootstrap a new installation:
 
 .. code-block:: bash
 
    pychron-bootstrap --root ~/Pychron --profile data-reduction
+
+Bootstrap using a versioned starter bundle:
+
+.. code-block:: bash
+
+   pychron-bootstrap --root ~/Pychron --bundle ngx-collection
 
 Bootstrap using generic profiles plus external example bundles:
 
@@ -49,6 +61,7 @@ Validate an installation:
 .. code-block:: bash
 
    pychron-doctor --root ~/Pychron --profile data-reduction
+   pychron-doctor --root ~/Pychron --bundle ngx-collection --strict
 
 Export and import site configuration bundles:
 

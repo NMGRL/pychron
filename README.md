@@ -67,12 +67,15 @@ Setup utilities
 
 The repo now exposes a Typer-based CLI for basic setup and diagnostics:
 
+- `pychron bundles --verbose`
 - `pychron profiles --verbose`
-- `pychron install-plan --profile ngx --profile chromiumco2`
+- `pychron install-plan --bundle ngx --bundle chromiumco2-lab`
 - `pychron-bootstrap --root ~/Pychron --profile data-reduction`
+- `pychron-bootstrap --root ~/Pychron --bundle ngx-collection`
 - `pychron-bootstrap --root ~/Pychron --profile ngx --profile chromiumco2`
 - `pychron-bootstrap --root ~/Pychron --profile experiment --source-profile felix --setupfiles-source "<setupfiles-dir>" --scripts-source "<scripts-dir>"`
 - `pychron-doctor --root ~/Pychron --profile data-reduction`
+- `pychron-doctor --root ~/Pychron --bundle ngx-collection --strict`
 - `pychron export-config --root ~/Pychron --output ~/pychron-config.zip`
 - `pychron import-config --root ~/Pychron_clone --archive ~/pychron-config.zip`
 - `python -m pychron doctor`

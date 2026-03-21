@@ -8,10 +8,10 @@ RoadMap
    - [x] add `pychron-doctor` environment and configuration diagnostics
    - [x] add `pychron-bootstrap` first-run setup/bootstrap command
    - add a first-run setup wizard for GUI users
-   - ship versioned starter configuration bundles by workflow
+   - [x] ship versioned starter configuration bundles by workflow
    - [x] split dependencies into clearer install profiles/extras
    - [x] maintain supported installer/launcher paths per OS
-   - validate environment and config at startup with actionable errors
+   - [x] validate environment and config at startup with actionable errors
    - [x] support export/import of site configuration bundles
 
 v3.0.0

@@ -34,6 +34,7 @@ from pychron.core.yaml import yload
 from pychron.envisage.view_util import open_view, close_views, report_view_stats
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
+from pychron.install_validation import validate_runtime_root
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.startup_test.results_view import ResultsView
@@ -52,8 +53,43 @@ class BaseTasksApplication(TasksApplication, Loggable):
         self._task_window_layouts = self._load_task_window_layouts()
 
     def _application_initialized_fired(self):
+        self._report_startup_validation()
         if globalv.use_startup_tests:
             self.do_startup_tests()
+
+    def _report_startup_validation(self):
+        issues = [
+            issue
+            for issue in validate_runtime_root(paths.root_dir)
+            if issue.status in ("FAIL", "WARN")
+        ]
+        if not issues:
+            return
+
+        for issue in issues:
+            message = "{}: {}".format(issue.name, issue.detail)
+            if issue.hint:
+                message = "{} {}".format(message, issue.hint)
+            if issue.status == "FAIL":
+                self.warning(message)
+            else:
+                self.debug(message)
+
+        failures = [issue for issue in issues if issue.status == "FAIL"]
+        if failures:
+            lines = [
+                "Pychron startup validation found {} blocking issue(s).".format(
+                    len(failures)
+                )
+            ]
+            for issue in failures[:5]:
+                lines.append("- {}: {}".format(issue.name, issue.detail))
+            lines.append(
+                "Run `pychron-doctor --root {}` for a full report.".format(
+                    paths.root_dir
+                )
+            )
+            self.warning_dialog("\n".join(lines))
 
     def do_startup_tests(self, force_show_results=False, **kw):
         st = StartupTester()
