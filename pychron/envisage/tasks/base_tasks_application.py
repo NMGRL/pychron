@@ -49,6 +49,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.init_logger()
+        self._task_window_layouts = self._load_task_window_layouts()
 
     def _application_initialized_fired(self):
         if globalv.use_startup_tests:
@@ -101,7 +102,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
                 if win.active_task.id == tid:
                     return win, win.active_task, True
         else:
-            win = self.create_window(TaskWindowLayout(tid))
+            win = self.create_window(self._get_task_window_layout(tid))
             return win, win.active_task, False
 
     def task_is_open(self, tid):
@@ -120,7 +121,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
                         win.activate()
                     break
         else:
-            w = TaskWindowLayout(tid)
+            w = self._get_task_window_layout(tid)
             win = self.create_window(w)
             if activate:
                 win.open()
@@ -154,6 +155,30 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def _cleanup_services(self):
         for si in self.get_services(ICoreDevice):
             si.close()
+
+    def _get_task_window_layout(self, tid):
+        return self._task_window_layouts.get(tid, TaskWindowLayout(tid))
+
+    def _task_window_layouts_path(self):
+        return os.path.join(self.state_location, "task_window_layouts")
+
+    def _load_task_window_layouts(self):
+        path = self._task_window_layouts_path()
+        if os.path.isfile(path):
+            try:
+                with open(path, "rb") as rfile:
+                    return pickle.load(rfile)
+            except BaseException:
+                logger.exception("Restoring task window layouts from %s", path)
+        return {}
+
+    def _save_task_window_layouts(self):
+        path = self._task_window_layouts_path()
+        try:
+            with open(path, "wb") as wfile:
+                pickle.dump(self._task_window_layouts, wfile)
+        except BaseException:
+            logger.exception("Saving task window layouts to %s", path)
 
     # def _load_state(self):
     #     """Loads saved application state, if possible."""
@@ -203,6 +228,9 @@ class BaseTasksApplication(TasksApplication, Loggable):
             # Store the layout of the window.
             window_layout = window.get_window_layout()
             self._state.push_window_layout(window_layout)
+            if window.active_task:
+                self._task_window_layouts[window.active_task.id] = window_layout
+                self._save_task_window_layouts()
 
             # If we're exiting implicitly and this is the last window, save
             # state, because we won't get another chance.

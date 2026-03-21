@@ -18,7 +18,7 @@
 # ============= EOF =============================================
 from uncertainties import ufloat
 
-from pychron.dvc import analysis_path, dvc_dump
+from pychron.dvc import REDUCTION_TAGS, dvc_dump, reduction_path
 from pychron.processing.interpreted_age import InterpretedAge
 
 
@@ -38,8 +38,7 @@ class Tag(object):
         tag.record_id = an.record_id
         tag.uuid = an.uuid
         tag.repository_identifier = an.repository_identifier
-        # tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
-        tag.path = analysis_path(an, an.repository_identifier, modifier="tags")
+        tag.path = reduction_path(an, an.repository_identifier, modifier=REDUCTION_TAGS)
         tag.subgroup = an.subgroup
 
         for k, v in kw.items():
@@ -50,8 +49,11 @@ class Tag(object):
     def dump(self):
         obj = {"name": self.name, "note": self.note, "subgroup": self.subgroup}
         if not self.path:
-            self.path = analysis_path(
-                self.uuid, self.repository_identifier, modifier="tags", mode="w"
+            self.path = reduction_path(
+                self.uuid,
+                self.repository_identifier,
+                modifier=REDUCTION_TAGS,
+                mode="w",
             )
 
         dvc_dump(obj, self.path)

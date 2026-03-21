@@ -41,9 +41,11 @@ from pychron.dvc import (
     dvc_dump,
     dvc_load,
     analysis_path,
+    REDUCTION_TAGS,
     make_ref_list,
     get_spec_sha,
     get_masses,
+    reduction_path,
     repository_path,
     AnalysisNotAnvailableError,
 )
@@ -841,7 +843,7 @@ class DVCAnalysis(Analysis):
 
     @property
     def tag_path(self):
-        return self._analysis_path(modifier="tags")
+        return reduction_path((self.uuid, self.record_id), self.repository_identifier, modifier=REDUCTION_TAGS)
 
 
 # ============= EOF ============================================

@@ -97,6 +97,7 @@ from pychron.pychron_constants import (
     TRUNCATED,
     SUCCESS,
     CANCELED,
+    ABORTED,
     SYN_EXTRACTION,
 )
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
@@ -1063,7 +1064,7 @@ class AutomatedRun(Loggable):
         self.finish()
 
         if self.spec.state != "not run":
-            self.spec.state = "aborted"
+            self.spec.set_state(ABORTED, force=True)
             self.experiment_queue.refresh_table_needed = True
 
     def cancel_run(self, state="canceled", do_post_equilibration=True):
@@ -1102,7 +1103,7 @@ class AutomatedRun(Loggable):
 
         if state:
             if self.spec.state != "not run":
-                self.spec.state = state
+                self.spec.set_state(state, force=True)
                 self.experiment_queue.refresh_table_needed = True
 
     def truncate_run(self, style="normal"):
@@ -1124,7 +1125,7 @@ class AutomatedRun(Loggable):
 
             self.collector.set_truncated()
             self.truncated = True
-            self.spec.state = "truncated"
+            self.spec.set_state(TRUNCATED)
             self.experiment_queue.refresh_table_needed = True
 
     # ===============================================================================
@@ -1170,7 +1171,7 @@ class AutomatedRun(Loggable):
                 TRUNCATED,
                 "aborted",
             ):
-                self.spec.state = FAILED
+                self.spec.set_state(FAILED, force=True)
                 self.experiment_queue.refresh_table_needed = True
 
         self.spectrometer_manager.spectrometer.active_detectors = []
@@ -1611,7 +1612,7 @@ class AutomatedRun(Loggable):
         script = self.extraction_script
         msg = "Extraction Started {}".format(script.name)
         self.heading("{}".format(msg))
-        self.spec.state = "extraction"
+        self.spec.set_state(EXTRACTION)
         self.experiment_queue.refresh_table_needed = True
 
         self.debug("DO EXTRACTION {}".format(self.runner))
@@ -1739,7 +1740,7 @@ class AutomatedRun(Loggable):
         self.info_color = MEASUREMENT_COLOR
         msg = "Measurement Started {}".format(script.name)
         self.heading("{}".format(msg))
-        self.spec.state = MEASUREMENT
+        self.spec.set_state(MEASUREMENT)
         self.experiment_queue.refresh_table_needed = True
 
         # get current spectrometer values

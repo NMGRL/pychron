@@ -32,6 +32,7 @@ from traits.api import (
 )
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.timer import Timer
 
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
@@ -138,10 +139,23 @@ class BaseExperimentQueue(RunBlock):
 
     _no_update = False
     _frequency_group_counter = 0
+    _stats_timer = None
 
     @property
     def no_update(self):
         return self._no_update
+
+    def invalidate_stats(self):
+        self.stats.invalidate()
+        if self._stats_timer:
+            self._stats_timer.stop()
+        self._stats_timer = Timer(250, self._flush_stats)
+
+    def _flush_stats(self):
+        if self._stats_timer:
+            self._stats_timer.stop()
+            self._stats_timer = None
+        self.refresh_info_needed = True
 
     # ===============================================================================
     # persistence
@@ -521,9 +535,19 @@ class BaseExperimentQueue(RunBlock):
     # ===============================================================================
     def _delay_between_analyses_changed(self, new):
         self.stats.delay_between_analyses = new
+        self.invalidate_stats()
 
     def _delay_before_analyses_changed(self, new):
         self.stats.delay_before_analyses = new
+        self.invalidate_stats()
+
+    def _delay_after_blank_changed(self, new):
+        self.stats.delay_after_blank = new
+        self.invalidate_stats()
+
+    def _delay_after_air_changed(self, new):
+        self.stats.delay_after_air = new
+        self.invalidate_stats()
 
     def _mass_spectrometer_changed(self):
         ms = self.mass_spectrometer
@@ -537,6 +561,16 @@ class BaseExperimentQueue(RunBlock):
         )
         for a in self.automated_runs:
             a.spectrometer_manager = sm
+        self.invalidate_stats()
+
+    @on_trait_change(
+        "automated_runs:[measurement_script,post_measurement_script,post_equilibration_script,"
+        "extraction_script,syn_extraction_script,script_options,position,duration,cleanup,"
+        "pre_cleanup,post_cleanup,extract_value,extract_units,light_value,beam_diameter,"
+        "ramp_duration,ramp_rate,pattern,delay_after,skip,end_after,state]"
+    )
+    def _handle_automated_run_updates(self, obj, name, old, new):
+        self.invalidate_stats()
 
     # ===============================================================================
     # property get/set

@@ -566,7 +566,6 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change("manager:experiment_queue:changed")
     def _handle_queue_change(self, obj, name, old, new):
         if self.loading_manager:
-            print("asdf", obj)
             runs = obj.cleaned_automated_runs
             self.loading_manager.set_loaded_runs(runs)
 
@@ -871,14 +870,14 @@ class ExperimentEditorTask(EditorTask):
             ),
             right=Splitter(
                 Tabbed(
-                    PaneItem("pychron.experiment.stats"),
+                    PaneItem("pychron.experiment.stats", height=0.22),
                     PaneItem("pychron.console"),
                     PaneItem("pychron.experiment.timeseries"),
                     PaneItem("pychron.experiment.conditionals"),
                     PaneItem("pychron.experiment.connection_status"),
                     PaneItem("pychron.experiment.explanation"),
                 ),
-                PaneItem("pychron.extraction_line.canvas_dock"),
+                PaneItem("pychron.extraction_line.canvas_dock", height=0.78),
                 orientation="vertical",
             ),
             top=PaneItem("pychron.experiment.controls"),

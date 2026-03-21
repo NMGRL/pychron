@@ -76,7 +76,10 @@ class Handler(object):
 
     def end(self):
         if self.sock:
-            self.sock.close()
+            try:
+                self.sock.close()
+            finally:
+                self.sock = None
 
     # private
     # def _recv_into(self, datasize):
@@ -95,7 +98,7 @@ class Handler(object):
         recv: callable that accepts 1 argument (datasize). should return a str
         """
         # ss = []
-        sum = 0
+        total = 0
 
         # disable message len checking
         # msg_len = 1
@@ -127,13 +130,13 @@ class Handler(object):
             if msg_len is not None:
                 msg_len = int(s[:nm], 16)
 
-            sum += len(s)
+            total += len(s)
             data += s
             if terminator is not None:
                 if data.endswith(terminator):
                     break
             else:
-                if msg_len and sum >= msg_len:
+                if msg_len and total >= msg_len:
                     break
                 else:
                     break
@@ -148,7 +151,6 @@ class Handler(object):
             data = data[:-nc]
             comp = computeCRC(data)
             if comp != checksum:
-                print("checksum fail computed={}, expected={}".format(comp, checksum))
                 return
 
         # else:
@@ -178,7 +180,6 @@ class Handler(object):
                 st = time.time()
                 while 1:
                     rsock.recv_into(buff)
-                    print(buff)
                     if terminator in buff:
                         data = buff.split(terminator)[0]
                         return data.decode("utf-8")
@@ -190,13 +191,9 @@ class Handler(object):
 class TCPHandler(Handler):
     def open_socket(self, addr, timeout=1.0, **kw):
         self.address = addr
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = socket.create_connection(addr, timeout=timeout)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, self.keep_alive)
-        if globalv.communication_simulation:
-            timeout = 0.01
-
         self.sock.settimeout(timeout)
-        self.sock.connect(addr)
 
     def get_packet(self, datasize=None, message_frame=None):
         return self._recvall(self.sock.recv, datasize=datasize, frame=message_frame)
@@ -205,7 +202,7 @@ class TCPHandler(Handler):
         return self._recvall(self.sock.recv, terminator=terminator, datasize=1)
 
     def send_packet(self, p):
-        self.sock.send(p.encode("utf-8"))
+        self.sock.sendall(p.encode("utf-8"))
 
 
 class UDPHandler(Handler):
@@ -221,14 +218,15 @@ class UDPHandler(Handler):
                 addr = "", addr[1]
                 self.sock.bind(addr)
         except BaseException:
-            print("failed binding", addr)
+            self.end()
+            raise
 
-    def get_packet(self, **kw):
+    def get_packet(self, datasize=None, message_frame=None):
         def recv(ds):
             rx, _ = self.sock.recvfrom(ds)
             return rx
 
-        return self._recvall(recv)
+        return self._recvall(recv, datasize=datasize, frame=message_frame)
 
     def send_packet(self, p):
         self.sock.sendto(p.encode("utf-8"), self.address)
@@ -413,14 +411,16 @@ class EthernetCommunicator(Communicator):
                 self.handler = h
             return h
         except socket.error as e:
-            print("ewafs", e, self.host, self.port)
             self.debug(
                 "Get Handler {}. timeout={}. comms simulation={}".format(
                     str(e), timeout, globalv.communication_simulation
                 )
             )
             self.error_mode = True
-            self.handler = None
+            if bind:
+                self.read_handler = None
+            else:
+                self.handler = None
 
     def ask(
         self,
@@ -488,12 +488,7 @@ class EthernetCommunicator(Communicator):
             #     self.error_mode = True
 
             if self.use_end:
-                # self.debug('ending connection. Handler: {}, cmd={}'.format(self.handler, cmd))
-                if self.handler:
-                    self.handler.end()
-                if self.read_handler:
-                    self.read_handler.end()
-                self._reset_connection()
+                self.reset()
 
             if verbose or (self.verbose and not quiet):
                 self.log_response(cmd, re, info)
@@ -503,6 +498,8 @@ class EthernetCommunicator(Communicator):
     def reset(self):
         if self.handler:
             self.handler.end()
+        if self.read_handler:
+            self.read_handler.end()
         self._reset_connection()
 
     def select_read(self, *args, **kw):
@@ -567,6 +564,7 @@ class EthernetCommunicator(Communicator):
     # private
     def _reset_connection(self):
         self.handler = None
+        self.read_handler = None
         self.error_mode = False
 
     def _reset_error_mode(self, timeout=None, use_error_mode=True):

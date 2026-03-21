@@ -401,6 +401,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def set_queue_modified(self):
         self.queue_modified = True
+        self.stats.refresh_on_queue_change()
 
     def is_alive(self):
         try:
@@ -562,7 +563,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.warning_dialog("Saving run failed to complete success fully")
                     self._save_complete_evt.set()
                     # run.cancel_run()
-                    spec.state = FAILED
+                    spec.set_state(FAILED, force=True)
                     return
 
             self.debug("waiting complete")
@@ -972,7 +973,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.stats.start_run(run)
 
         self._do_event(events.START_RUN)
-        run.spec.state = "not run"
+        run.spec.set_state("not run", force=True)
 
         q = self.experiment_queue
         # is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
@@ -1005,7 +1006,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if self.monitor and self.monitor.has_fatal_error():
                 run.cancel_run()
-                run.spec.state = FAILED
+                run.spec.set_state(FAILED, force=True)
                 break
 
             if not getattr(self, step)(run):
@@ -1013,7 +1014,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if (
                     step != "_post_measurement"
                 ):  # save data even if post measurement fails
-                    run.spec.state = FAILED
+                    run.spec.set_state(FAILED, force=True)
                 break
 
         else:
@@ -1021,7 +1022,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 "$$$$$$$$$$$$$$$$$$$$ state at run end {}".format(run.spec.state)
             )
             if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
-                run.spec.state = SUCCESS
+                run.spec.set_state(SUCCESS)
 
         self._do_event(events.SAVE_RUN, run=run)
         if self.save_all_runs or run.spec.state in ("success", "truncated"):
@@ -1075,7 +1076,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # mem_log('end run')
         self.stats.finish_run()
-        if run.spec.state == "success":
+        if run.spec.state == SUCCESS:
             self.stats.update_run_duration(run, t)
             self.stats.recalculate_etf()
 
@@ -1321,7 +1322,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not run.start():
             self.alive = False
             ret = False
-            run.spec.state = FAILED
+            run.spec.set_state(FAILED, force=True)
 
             msg = "Run {} did not start properly".format(run.runid)
             self._err_message = msg

@@ -1397,7 +1397,11 @@ class DVCDatabase(DatabaseAdapter):
                 q = sess.query(AnalysisTbl.aliquot)
 
                 idn = self.get_identifier(identifier)
-                print("-----------------idn", idn, identifier)
+                self.debug(
+                    "greatest aliquot lookup resolved identifier=%s query_input=%s",
+                    idn,
+                    identifier,
+                )
                 if not self.get_identifier(identifier):
                     q = q.filter(AnalysisTbl.simple_identifier == int(identifier))
                 else:

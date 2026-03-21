@@ -23,6 +23,7 @@ import re
 from pprint import pformat
 
 from pychron import json
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.core.helpers.strtools import camel_case
 from pychron.paths import paths
@@ -34,6 +35,10 @@ __version__ = "2.1"
 # 2.1 added pre/post cleanup
 
 USE_GIT_TAGGING = False
+DATA_COLLECTION_BRANCH = "data_collection"
+REDUCTION_ROOT = "reduction"
+REDUCTION_TAGS = "tags"
+REDUCTION_IA = "ia"
 
 MASS_SPEC_REDUCED = "MASS SPEC REDUCED"
 HISTORY_TAGS = (
@@ -63,6 +68,8 @@ static = (PEAKCENTER, "extraction", "monitor")
 PATH_MODIFIERS = HISTORY_PATHS + static
 NPATH_MODIFIERS = (None, DATA, TAGS) + static
 
+logger = new_logger("dvc")
+
 
 class DVCException(BaseException):
     def __init__(self, attr):
@@ -88,14 +95,14 @@ class AnalysisNotAnvailableError(BaseException):
 
 def dvc_dump(obj, path):
     if obj is None:
-        print("no object to dump")
+        logger.warning("No object to dump to %s", path)
         return
 
     with open(path, "w") as wfile:
         try:
             json.dump(obj, wfile, indent=4, sort_keys=True)
         except TypeError as e:
-            print("dvc dump exception. error:{}, {}".format(e, pformat(obj)))
+            logger.warning("dvc dump exception. error:%s, %s", e, pformat(obj))
 
 
 def dvc_load(path, default=None):
@@ -108,7 +115,7 @@ def dvc_load(path, default=None):
             try:
                 ret = json.load(rfile)
             except ValueError as e:
-                print("dvc load exception. error: {}, {}".format(e, path))
+                logger.warning("dvc load exception. error: %s, %s", e, path)
     return ret
 
 
@@ -254,6 +261,40 @@ def _analysis_path(
 
 def repository_path(*args):
     return os.path.join(paths.repository_dataset_dir, *args)
+
+
+def reduction_path(analysis, repository, *args, **kw):
+    if isinstance(analysis, tuple):
+        uuid, record_id = analysis
+    elif isinstance(analysis, str):
+        uuid, record_id = analysis, analysis
+    else:
+        uuid, record_id = analysis.uuid, analysis.record_id
+
+    root = repository_path(repository, REDUCTION_ROOT)
+    mode = kw.get("mode", "r")
+
+    try:
+        ret = _analysis_path(uuid, "", root=root, *args, **kw)
+    except AnalysisNotAnvailableError:
+        try:
+            ret = _analysis_path(record_id, "", root=root, *args, **kw)
+        except AnalysisNotAnvailableError as e:
+            if kw.get("mode", "r") == "r":
+                ret = None
+            else:
+                raise e
+
+    legacy = analysis_path(analysis, repository, *args, **kw)
+    if mode == "r":
+        if ret and os.path.isfile(ret):
+            return ret
+        return legacy
+
+    if legacy and os.path.isfile(legacy):
+        return legacy
+
+    return ret
 
 
 # def make_ref_plot_list(refs):

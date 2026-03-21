@@ -25,7 +25,7 @@ from traits.api import Str, Bool, HasTraits
 from uncertainties import nominal_value, std_dev
 
 from pychron import json
-from pychron.dvc import analysis_path, repository_path
+from pychron.dvc import REDUCTION_IA, repository_path
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pychron_constants import SAMPLE_METADATA
 
@@ -145,20 +145,10 @@ def get_review_status(record):
 def find_interpreted_age_path(idn, repositories, prefixlen=3):
     prefix = idn[:prefixlen]
     suffix = "{}*.ia.json".format(idn[prefixlen:])
-    # ret = []
-    # for e in repositories:
-    #     pathname = os.path.join(paths.repository_dataset_dir,
-    #                             e, prefix, 'ia', suffix)
-    #     ps = glob.glob(pathname)
-    #     if ps:
-    #         ret.extend(ps)
-
-    ret = [
-        p
-        for repo in repositories
-        for p in glob.glob(repository_path(repo, prefix, "ia", suffix))
-    ]
-    print(prefix, ret)
+    ret = []
+    for repo in repositories:
+        ret.extend(glob.glob(repository_path(repo, "reduction", prefix, REDUCTION_IA, suffix)))
+        ret.extend(glob.glob(repository_path(repo, prefix, "ia", suffix)))
     return ret
 
 
