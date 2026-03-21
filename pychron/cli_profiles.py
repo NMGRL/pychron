@@ -133,7 +133,11 @@ PROFILES = {
             "setupfiles/irradiation_tray_maps",
         ),
         files=(
-            ProfileFile("setupfiles/pid_degasser.yaml", "# CO2 PID degasser settings.\n", required=False),
+            ProfileFile(
+                "setupfiles/pid_degasser.yaml",
+                "# CO2 PID degasser settings.\n",
+                required=False,
+            ),
         ),
     ),
     "laser-diode": ProfileSpec(
@@ -150,7 +154,11 @@ PROFILES = {
             "setupfiles/irradiation_tray_maps",
         ),
         files=(
-            ProfileFile("setupfiles/pid_degasser.yaml", "# Diode PID degasser settings.\n", required=False),
+            ProfileFile(
+                "setupfiles/pid_degasser.yaml",
+                "# Diode PID degasser settings.\n",
+                required=False,
+            ),
         ),
     ),
     "spectrometer": ProfileSpec(

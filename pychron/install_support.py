@@ -47,7 +47,9 @@ def build_install_plan(profiles=None, root="~/Pychron", python_version="3.12"):
             sync_cmd, " ".join("--extra {}".format(extra) for extra in extras)
         )
 
-    profile_args = " ".join("--profile {}".format(profile) for profile in merged.requested)
+    profile_args = " ".join(
+        "--profile {}".format(profile) for profile in merged.requested
+    )
     bootstrap_cmd = "pychron-bootstrap --root {}".format(root)
     if profile_args:
         bootstrap_cmd = "{} {}".format(bootstrap_cmd, profile_args)
@@ -62,14 +64,22 @@ def build_install_plan(profiles=None, root="~/Pychron", python_version="3.12"):
     system = platform.system()
     notes = [
         "Use Python {} for supported installs.".format(python_version),
-        "Profile selection controls bootstrap layout; extras add optional comms/runtime dependencies.",
+        "Profile selection controls bootstrap layout; extras add optional "
+        "comms/runtime dependencies.",
     ]
     if system == "Darwin":
-        notes.append("macOS installs should verify Qt platform plugin loading and app nap settings.")
+        notes.append(
+            "macOS installs should verify Qt platform plugin loading and app nap settings."
+        )
     elif system == "Windows":
-        notes.append("Windows installs should verify serial permissions, path length, and antivirus exclusions.")
+        notes.append(
+            "Windows installs should verify serial permissions, path length, "
+            "and antivirus exclusions."
+        )
     elif system == "Linux":
-        notes.append("Linux installs should verify Qt/xcb libraries and serial device group membership.")
+        notes.append(
+            "Linux installs should verify Qt/xcb libraries and serial device group membership."
+        )
 
     return InstallPlan(
         platform_name=system,
