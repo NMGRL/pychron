@@ -98,6 +98,33 @@ from pychron.pychron_constants import (
 logger = new_logger("AutomatedRunSpec")
 
 
+STATE_ALIASES = {
+    "success": SUCCESS,
+    "failed": FAILED,
+    "truncated": TRUNCATED,
+    "canceled": CANCELED,
+    "cancelled": CANCELED,
+    "aborted": ABORTED,
+    "invalid": INVALID,
+    "not run": NOT_RUN,
+    "terminated": FAILED,
+}
+
+TERMINAL_STATES = {SUCCESS, FAILED, TRUNCATED, CANCELED, ABORTED, INVALID}
+STATE_TRANSITIONS = {
+    NOT_RUN: {EXTRACTION, MEASUREMENT, CANCELED, FAILED, ABORTED, INVALID},
+    EXTRACTION: {MEASUREMENT, SUCCESS, FAILED, TRUNCATED, CANCELED, ABORTED, INVALID},
+    MEASUREMENT: {SUCCESS, FAILED, TRUNCATED, CANCELED, ABORTED, INVALID},
+    SUCCESS: set(),
+    FAILED: set(),
+    TRUNCATED: {SUCCESS},
+    CANCELED: set(),
+    INVALID: set(),
+    ABORTED: set(),
+    "test": TERMINAL_STATES | {EXTRACTION, MEASUREMENT},
+}
+
+
 class AutomatedRunSpec(HasTraits):
     """
     this class is used to as a simple container and factory for
@@ -623,7 +650,7 @@ class AutomatedRunSpec(HasTraits):
 
         if verbose:
             for t in traits:
-                print("{} ==> {}".format(t, getattr(self, t)))
+                logger.debug("%s ==> %s", t, getattr(self, t))
 
         return self.clone_traits(traits)
 
@@ -642,6 +669,35 @@ post_equilibration_script, extraction_script, syn_extraction_script, script_opti
 
     def _state_changed(self, old, new):
         logger.debug("state changed from {} to {}".format(old, new))
+
+    def normalize_state(self, state):
+        if state is None:
+            return None
+        return STATE_ALIASES.get(state, state)
+
+    def is_terminal_state(self, state=None):
+        if state is None:
+            state = self.state
+        return self.normalize_state(state) in TERMINAL_STATES
+
+    def set_state(self, state, force=False):
+        state = self.normalize_state(state)
+        current = self.normalize_state(self.state)
+
+        if state is None or state == current:
+            return True
+
+        allowed = STATE_TRANSITIONS.get(current, set())
+        if force or state in allowed:
+            self.state = state
+            return True
+
+        logger.warning(
+            "Rejected invalid state transition for {}: {} -> {}".format(
+                self.runid, current, state
+            )
+        )
+        return False
 
     # ===============================================================================
     # property get/set

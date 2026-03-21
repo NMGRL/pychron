@@ -23,6 +23,11 @@
 # from canvas.canvas3D.elements.components import Valve, Shaft
 from __future__ import print_function
 
+from logging import getLogger
+
+
+logger = getLogger(__name__)
+
 
 class Section(object):
     """
@@ -99,7 +104,15 @@ class Section(object):
         # update the state based on the initial valve state change
         state, prec = self._update_state_(action, valve, sg)
 
-        print(action, valve.name, state, prec, self.cur_precedence, self.cur_state)
+        logger.debug(
+            "Section update action=%s valve=%s state=%s precedence=%s current_precedence=%s current_state=%s",
+            action,
+            valve.name,
+            state,
+            prec,
+            self.cur_precedence,
+            self.cur_state,
+        )
         if action:
             # if the state change was to open the valve
             if prec is not None:
@@ -151,7 +164,7 @@ class Section(object):
                         avalve = valves[vk]
 
             if avalve is not None:
-                print(avalve.name)
+                logger.debug("Applying fallback section state using valve %s", avalve.name)
                 if gas_type is not None and state == "measuring":
                     state = "_".join((state, gas_type))
                 self.set_state(avalve, state, sg)

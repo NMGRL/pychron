@@ -45,7 +45,12 @@ def crc_caller(func):
             return func(*args, **kw)
         except CRCError:
             stack = inspect.stack()
-            print("{} called by {}".format(func.__name__, stack[1][3]))
+            obj = args[0]
+            msg = "{} called by {}".format(func.__name__, stack[1][3])
+            if hasattr(obj, "warning"):
+                obj.warning(msg)
+            if hasattr(obj, "debug_exception"):
+                obj.debug_exception()
 
     return d
 
@@ -71,8 +76,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     # ICoreDevice protocol
     def close(self):
-        if self.communicator:
-            self.communicator.close()
+        self.close_communicator()
 
     def get(self, *args, **kw):
         return self.current_scan_value
@@ -81,16 +85,19 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         pass
 
     def is_connected(self):
-        if self.communicator:
-            return not self.communicator.simulation
+        comm = self.communicator
+        if comm:
+            return not comm.simulation
 
     def test_connection(self):
-        if self.communicator:
-            return self.communicator.test_connection()
+        comm = self.require_communicator("test connection")
+        if comm:
+            return comm.test_connection()
 
     def set_simulation(self, tf):
-        if self.communicator:
-            self.communicator.simulation = tf
+        comm = self.require_communicator("set simulation")
+        if comm:
+            comm.simulation = tf
 
     def load(self, *args, **kw):
         """
@@ -191,7 +198,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 self._communicate_hook(cmd, r)
             return r
         else:
-            self.info("no communicator for this device {}".format(self.name))
+            self.require_communicator("ask")
 
     @crc_caller
     def write(self, *args, **kw):
@@ -201,17 +208,19 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     @crc_caller
     def tell(self, *args, **kw):
         """ """
-        if self.communicator is not None:
+        comm = self.require_communicator("tell")
+        if comm is not None:
             cmd = " ".join([str(a) for a in args] + [str(a) for a in kw.items()])
 
             self._communicate_hook(cmd, "-")
-            return self.communicator.tell(*args, **kw)
+            return comm.tell(*args, **kw)
 
     @crc_caller
     def read(self, *args, **kw):
         """ """
-        if self.communicator is not None:
-            return self.communicator.read(*args, **kw)
+        comm = self.require_communicator("read")
+        if comm is not None:
+            return comm.read(*args, **kw)
 
     # if self.simulation:
     #            return 'simulation'
@@ -258,8 +267,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 self.set_scheduler(sc)
 
     def set_scheduler(self, s):
-        if self.communicator is not None:
-            self.communicator.scheduler = s
+        comm = self.require_communicator("set scheduler")
+        if comm is not None:
+            comm.scheduler = s
 
     def repeat_command(
         self,

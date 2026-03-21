@@ -39,6 +39,8 @@ class CanvasPane(TraitsTaskPane):
                 defined_when="not plugin_canvases",
                 editor=InstanceEditor(),
                 style="custom",
+                height=700,
+                width=900,
             ),
             UItem(
                 "canvases",
@@ -49,6 +51,8 @@ class CanvasPane(TraitsTaskPane):
                     editor=InstanceEditor(),
                 ),
                 style="custom",
+                height=700,
+                width=900,
             ),
         )
         return v
@@ -65,6 +69,8 @@ class CanvasDockPane(TraitsDockPane):
                 "canvas",
                 editor=InstanceEditor(),
                 style="custom",
+                height=700,
+                width=900,
             ),
         )
         return v

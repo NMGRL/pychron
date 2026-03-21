@@ -190,9 +190,6 @@ class DataCollector(Consoleable):
 
         self.debug("measurement finished")
 
-    def _pre_trigger_hook(self):
-        return True
-
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
             self.isotope_group.calculate_age(force=True)
@@ -416,14 +413,16 @@ class DataCollector(Consoleable):
         queue = ex.experiment_queue
         tr.do_modifications(run, ex, queue)
 
-        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        if self.measurement_script is not None:
+            self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
         if tr.use_truncation:
             return self._set_truncated()
         elif tr.use_termination:
             return "terminate"
 
     def _truncation_func(self, tr):
-        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        if self.measurement_script is not None:
+            self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
         return self._set_truncated()
 
     def _action_func(self, tr):
@@ -434,7 +433,7 @@ class DataCollector(Consoleable):
     def _set_truncated(self):
         self.state = "truncated"
         self.automated_run.truncated = True
-        self.automated_run.spec.state = "truncated"
+        self.automated_run.spec.set_state("truncated")
         return "break"
 
     def _check_iteration(self, i):
@@ -488,35 +487,36 @@ class DataCollector(Consoleable):
             return self._set_truncated()
 
         if self.check_conditionals:
-            for tag, func, conditionals in (
-                (
-                    "modification",
-                    self._modification_func,
-                    self.modification_conditionals,
-                ),
-                ("truncation", self._truncation_func, self.truncation_conditionals),
-                ("action", self._action_func, self.action_conditionals),
-                ("termination", lambda x: "terminate", self.termination_conditionals),
-                ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
-                (
-                    "equilibration",
-                    self._equilibration_func,
-                    self.equilibration_conditionals,
-                ),
-            ):
-                if tag == "equilibration" and self.collection_kind != SNIFF:
-                    continue
+            result = self._check_run_conditionals(i, j, original_counts)
+            if result:
+                return result
 
-                tripped = self._check_conditionals(conditionals, i)
-                if tripped:
-                    self.info(
-                        "{} conditional {}. measurement iteration executed {}/{} counts".format(
-                            tag, tripped.message, j, original_counts
-                        ),
-                        color="red",
-                    )
-                    self.automated_run.show_conditionals(tripped=tripped)
-                    return func(tripped)
+    def _check_run_conditionals(self, i, executed_counts, original_counts):
+        for tag, func, conditionals in self._iter_conditionals():
+            tripped = self._check_conditionals(conditionals, i)
+            if tripped:
+                self.info(
+                    "{} conditional {}. measurement iteration executed {}/{} counts".format(
+                        tag, tripped.message, executed_counts, original_counts
+                    ),
+                    color="red",
+                )
+                self.automated_run.show_conditionals(tripped=tripped)
+                return func(tripped)
+
+    def _iter_conditionals(self):
+        for tag, func, conditionals in (
+            ("modification", self._modification_func, self.modification_conditionals),
+            ("truncation", self._truncation_func, self.truncation_conditionals),
+            ("action", self._action_func, self.action_conditionals),
+            ("termination", lambda x: "terminate", self.termination_conditionals),
+            ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
+            ("equilibration", self._equilibration_func, self.equilibration_conditionals),
+        ):
+            if tag == "equilibration" and self.collection_kind != SNIFF:
+                continue
+            if conditionals:
+                yield tag, func, conditionals
 
     @property
     def isotope_group(self):

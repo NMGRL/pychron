@@ -553,9 +553,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def _make_diff_changes(self, rev, d):
         rev = self._repo.get_commit(rev)
-        print("asdf", d)
+        self.debug("building diff changes for %s", d)
         if d.change_type == "A":
-            print(rev.stats)
+            self.debug("added file stats=%s", rev.stats)
         elif d.change_type == "M":
             pass
         # txt = self._repo.diff('{}~1'.format(oid), oid, '--', new)
