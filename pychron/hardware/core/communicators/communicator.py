@@ -88,6 +88,7 @@ class Communicator(HeadlessConfigLoadable):
     _lock = None
     simulation = True
     write_terminator = chr(13)  # '\r'
+    read_terminator = ""
     handle = None
     scheduler = None
     address = None
@@ -117,10 +118,28 @@ class Communicator(HeadlessConfigLoadable):
             optional=True,
         )
 
+        self.set_attribute(
+            config,
+            "read_terminator",
+            "Communications",
+            "read_terminator",
+            default="",
+            optional=True,
+        )
+
         if self.write_terminator == "chr(10)":
             self.write_terminator = chr(10)
         if self.write_terminator == "chr(0)":
             self.write_terminator = chr(0)
+        if self.write_terminator == "CRLF":
+            self.write_terminator = "\r\n"
+
+        if self.read_terminator == "chr(10)":
+            self.read_terminator = chr(10)
+        if self.read_terminator == "chr(0)":
+            self.read_terminator = chr(0)
+        if self.read_terminator == "CRLF":
+            self.read_terminator = "\r\n"
 
         return True
 

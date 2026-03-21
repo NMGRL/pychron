@@ -42,7 +42,7 @@ from qgis.gui import (
 )
 from traits.api import HasTraits, Instance, Str, Event, Float, Any, List, Button, Bool
 from traitsui.api import View, Item, UItem, HSplit, HGroup, BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.options.options_manager import IdeogramOptionsManager
@@ -396,7 +396,6 @@ class GISFigureEditor(BaseEditor):
         self.ideogram.refresh_needed = True
 
     def load(self):
-
         p = IdeogramOptionsManager()
         options = p.selected_options
 
@@ -462,7 +461,6 @@ class GISFigureEditor(BaseEditor):
         self.refresh_map()
 
     def traits_view(self):
-
         # center_grp = VGroup(HGroup(
         #     UReadonly('object.fmap.center.ylabel'), UItem('object.fmap.center.y'),
         #     UReadonly('object.fmap.center.xlabel'), UItem('object.fmap.center.x')))

@@ -18,6 +18,7 @@ import os
 import subprocess
 import sys
 
+import git
 import requests
 
 # ============= enthought library imports =======================
@@ -34,6 +35,7 @@ from pychron.loggable import Loggable
 from pychron.paths import r_mkdir
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
+from pychron.globals import globalv
 
 
 def gitcommand(repo, name, tag, func):
@@ -115,8 +117,9 @@ class Updater(Loggable):
         branch = self.branch
         remote = self.remote
 
-        repo = self._repo
+        repo = self._get_working_repo()
         if not repo:
+            self.debug("no repo")
             return
 
         if self.use_tag:
@@ -136,6 +139,7 @@ class Updater(Loggable):
                     repo.git.fetch()
                     repo.git.checkout("-b", mrtag.name, mrtag.name)
         else:
+            self.debug(f"checking for updates. branch={branch}, remote={remote}")
             if remote and branch:
                 if self._validate_origin(remote):
                     if self._validate_branch(branch):
@@ -192,6 +196,8 @@ class Updater(Loggable):
                             #             "may be required. Set CONDA_ENV and CONDA_DISTRO environment "
                             #             "variables to resolve this issue"
                             #         )
+                            # self._install_dependencies_edm()
+
                             if os.getenv("PYCHRON_UPDATE_DATABASE", False):
                                 self._update_database()
 
@@ -252,7 +258,13 @@ class Updater(Loggable):
                 "PYCHRON_ALEMBIC_URL is correct"
             )
 
-    def _install_dependencies(self, conda_distro, conda_env):
+    def _install_dependencies_pip(self):
+        from library_manager import LibraryManager
+
+        lm = LibraryManager()
+        lm.install_dependencies()
+
+    def _install_dependencies_conda(self, conda_distro, conda_env):
         # install dependencies
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
@@ -322,7 +334,10 @@ class Updater(Loggable):
     def _validate_origin(self, name):
         cmd = "https://github.com/{}".format(name)
         try:
-            requests.get(cmd)
+            kw = {}
+            if globalv.cert_file:
+                kw["verify"] = globalv.cert_file
+            requests.get(cmd, **kw)
             return True
         except BaseException as e:
             print("excepiton validating origin", cmd, e)
@@ -365,7 +380,7 @@ class Updater(Loggable):
 
     def _get_local_remote_commits(self, fetch=True):
         branchname = self.branch
-        self.debug("checking for updates on {}".format(branchname))
+        self.debug("checking for updates on branch={}".format(branchname))
 
         if self.use_tag:
             local_commit, remote_commit = (
@@ -423,7 +438,7 @@ class Updater(Loggable):
             local_commit="{} ({})".format(ld, lha),
             head_hexsha=lc.hexsha,
             latest_remote_commit="{} ({})".format(rd, rha),
-            **kw
+            **kw,
         )
 
         repo = self._repo
@@ -462,7 +477,17 @@ class Updater(Loggable):
                     )
                     return
             else:
-                repo = Repo(p)
+                try:
+                    repo = Repo(p)
+                except git.GitError as e:
+                    self.information_dialog(
+                        "The build directory you have selected is invalid. {}".format(
+                            e
+                        ),
+                        position=STARTUP_MESSAGE_POSITION,
+                    )
+                    return
+
             self._repo = repo
         return self._repo
 

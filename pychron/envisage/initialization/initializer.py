@@ -76,7 +76,6 @@ class Initializer(Loggable):
         return ok
 
     def info(self, msg, **kw):
-
         pd = self._pd
         if pd is not None:
             offset = pd.get_value()
@@ -89,7 +88,6 @@ class Initializer(Loggable):
         super(Initializer, self).info(msg, **kw)
 
     def _run(self, name=None, manager=None, plugin_name=None):
-
         parser = self._parser
         if manager is not None:
             self.info("Manager loading {}".format(name))
@@ -185,7 +183,6 @@ class Initializer(Loggable):
             return
 
         for device in devices:
-
             if not device:
                 continue
 

@@ -25,7 +25,6 @@ class FieldMixin(HasTraits):
         return self.field_table.path
 
     def field_table_setup(self):
-        print("asdfasfsaf", self.spectrometer)
         if self.spectrometer:
             molweights = self.spectrometer.molecular_weights
             name = self.spectrometer.name
@@ -35,7 +34,6 @@ class FieldMixin(HasTraits):
             )
 
             name = ""
-        print("moasdf", molweights)
         self.field_table.initialize(molweights)
         self.field_table.spectrometer_name = name.lower()
 

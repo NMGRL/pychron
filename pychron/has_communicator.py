@@ -32,7 +32,6 @@ class HasCommunicator(object):
         self.communicator = communicator
 
     def create_communicator(self, comm_type, **kw):
-
         c = self._communicator_factory(comm_type)
         c.open(**kw)
         self.communicator = c

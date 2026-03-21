@@ -194,7 +194,6 @@ class FitSelector(HasTraits):
                 self.update_needed = True
 
     def load_fits(self, keys, fits):
-
         nfs = []
         for ki, fi in zip(keys, fits):
             pf = next((fa for fa in self.fits if fa.name == ki), None)

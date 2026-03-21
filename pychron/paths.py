@@ -236,6 +236,7 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    checkpoint_file = None
     labspy_client_config = None
     template_manifest_file = None
     pipeline_template_file = None
@@ -274,6 +275,9 @@ class Paths(object):
     ratio_change_detection = None
     actuation_tracker_file = None
 
+    oauth_file = None
+    packages_file = None
+    baseline_model = None
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -377,7 +381,10 @@ class Paths(object):
 
         self.peak_center_config_dir = join(self.appdata_dir, "peak_center_configs")
 
-        self.actuation_tracker_file = join(self.appdata_dir, "actuation_tracker.yaml")
+        self.actuation_tracker_file = join(self.appdata_dir, "actuation_tracker.json")
+        self.actuation_tracker_file_yaml = join(
+            self.appdata_dir, "actuation_tracker.yaml"
+        )
 
         # login
         self.login_file = join(self.appdata_dir, "login")
@@ -513,6 +520,14 @@ class Paths(object):
 
         self.ratio_change_detection = join(
             paths.setup_dir, "ratio_change_detection.yaml"
+        )
+
+        self.oauth_file = join(self.appdata_dir, "oauth.json")
+
+        self.packages_file = join(self.appdata_dir, "packages.json")
+
+        self.baseline_model = join(
+            self.scripts_dir, "syn_extraction", "baseline_model.csv"
         )
 
         build_directories()

@@ -218,7 +218,6 @@ class InterpretedAgeTableNode(TableNode):
         ta = editor.tabular_adapter
         cols = [c for c in ta.columns if c[1] in self.options.column_keys]
         if cols:
-
             ta.kca_nsigma = self.options.kca_nsigma
             ta.display_age_nsigma = self.options.age_nsigma
 

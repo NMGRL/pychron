@@ -34,9 +34,9 @@ from traits.api import (
     Str,
     on_trait_change,
     Bool,
-    Color,
     List,
 )
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import View, Item, VGroup, HGroup, ListEditor, InstanceEditor
 
 # ============= standard library imports ========================
@@ -54,7 +54,7 @@ from chaco.tools.pan_tool import PanTool
 class Band(HasTraits):
     center = Int(enter_set=True, auto_set=False)
     threshold = Int(enter_set=True, auto_set=False)
-    color = Color
+    color = PyfaceColor
     use = Bool(False)
 
     def traits_view(self):

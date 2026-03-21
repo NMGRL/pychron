@@ -13,26 +13,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pymodbus.client.sync import ModbusTcpClient
+import logging
+
+from pymodbus.client import ModbusTcpClient
 
 from pychron.hardware.core.communicators.communicator import Communicator
-from pymodbus.constants import Defaults
 
 
 class ModbustcpCommunicator(Communicator):
     host = None
     timeout = None
+    port = 502
+    byteorder = "big"
+    wordorder = "little"
 
     def load(self, config, path):
+
+        logger = logging.getLogger("pymodbus.logging")
+        logger.setLevel(logging.ERROR)
         self.host = self.config_get(config, "Communications", "host")
+        self.port = self.config_get(
+            config, "Communications", "port", cast="int", default=502
+        )
+        self.byteorder = self.config_get(
+            config, "Communications", "byteorder", default="big"
+        )
+        self.wordorder = self.config_get(
+            config, "Communications", "wordorder", default="little"
+        )
         self.timeout = self.config_get(
-            config, "Communications", "timeout", cast="int", default=Defaults.Timeout
+            config, "Communications", "timeout", cast="int", default=2
         )
         return super(ModbustcpCommunicator, self).load(config, path)
 
     def open(self, *args, **kw):
         a = self.host
-        self.handle = ModbusTcpClient(a, timeout=self.timeout)
+        self.handle = ModbusTcpClient(a, timeout=self.timeout, port=self.port)
         return True
 
     def initialize(self, *args, **kw):

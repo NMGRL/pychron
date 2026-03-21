@@ -73,7 +73,6 @@ class HopsAction(ListAction):
     _alive = False
 
     def perform(self, event):
-
         hc = HopConfig()
         info = hc.edit_traits(kind="livemodal")
         if not info.result:

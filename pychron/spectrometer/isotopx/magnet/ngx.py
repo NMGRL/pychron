@@ -24,15 +24,16 @@ class NGXMagnet(IsotopxMagnet):
         return self.read_mass()
 
     def set_dac(self, v, *args, **kw):
-        return self.set_mass(v)
+        return self.set_mass(v, **kw)
 
     @get_float()
     def read_mass(self):
-        self.ask("StopAcq")
-        self.microcontroller.triggered = False
+        # self.ask("StopAcq")
+        self.microcontroller.stop_acquisition()
+        # self.microcontroller.triggered = False
         return self.ask("GETMASS")
 
-    def set_mass(self, v, delay=None, deflect=False):
+    def set_mass(self, v, delay=None, deflect=False, **kw):
         """
 
         :param v: mass
@@ -43,14 +44,24 @@ class NGXMagnet(IsotopxMagnet):
         if delay is None:
             delay = int(self.settling_time * 1000)
 
-        self.ask("StopAcq")
-        deflect = ",deflect" if deflect else ""
-        self.ask("SetMass {},{}{}".format(v, delay, deflect))
-        self.microcontroller.triggered = False
+        # self.ask("StopAcq")
+        self.microcontroller.stop_acquisition()
+        # self.microcontroller.triggered = False
+
         dv = abs(self._dac - v)
         self._dac = v
-        change = dv > 1e-7
 
+        if self.use_beam_blank:
+            deflect = dv > self.beam_blank_threshold
+
+        self.debug(
+            f"use beam blank={deflect}. dv={dv}, threshold={self.beam_blank_threshold}"
+        )
+
+        deflect = ",deflect" if deflect else ""
+        self.ask(f"SetMass {v},{delay}{deflect}")
+
+        change = dv > 1e-7
         return change
 
 

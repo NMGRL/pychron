@@ -153,7 +153,6 @@ class IsoDBTransfer(Loggable):
         )
 
     def bulk_import_irradiations(self, irradiations, creator, dry=True):
-
         # for i in xrange(251, 277):
         # for i in xrange(258, 259):
         # for i in (258, 259, 260, 261,):
@@ -169,7 +168,6 @@ class IsoDBTransfer(Loggable):
             #             wfile.write('{}\n'.format(o))
 
     def bulk_import_irradiation(self, irradname, creator, dry=True):
-
         src = self.processor.db
         tol_hrs = 6
         self.debug("bulk import irradiation {}".format(irradname))
@@ -410,7 +408,6 @@ class IsoDBTransfer(Loggable):
         create_repo=False,
         monitor_mapping=None,
     ):
-
         # self._init_src_dest()
         src = self.processor.db
         dest = self.dvc.db
@@ -497,7 +494,6 @@ class IsoDBTransfer(Loggable):
         return repo
 
     def _transfer_meta(self, dest, dban, monitor_mapping):
-
         pi = "Iverson,N"
 
         self.debug("transfer meta {}".format(monitor_mapping))

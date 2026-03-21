@@ -53,7 +53,6 @@ class IdentifierMapper(Loggable):
 
     # private
     def _get_spectrometer_mapping(self, spec, destination):
-
         mapping = self._get_mapping()
         dmapping = mapping.get(destination, {})
         return dmapping.get(spec, {})

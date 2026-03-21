@@ -22,12 +22,13 @@ import time
 from operator import itemgetter
 from pickle import PickleError
 from string import digits
-
+import json
 import yaml
+
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.iterfuncs import groupby_key
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, streq
 from pychron.core.yaml import yload
 from pychron.extraction_line import VERBOSE_DEBUG, VERBOSE
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
@@ -35,7 +36,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.hardware.switch import Switch, ManualSwitch
-from pychron.hardware.valve import HardwareValve
+from pychron.hardware.valve import HardwareValve, DoubleActuationValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -50,9 +51,9 @@ def parse_interlocks(vobj, tag):
         vs = vobj.get("{}s".format(tag))
 
     if isinstance(vs, (tuple, list)):
-        interlocks = [i.strip() for i in vs]
+        interlocks = [str(i).strip() for i in vs]
     else:
-        interlocks = [vs.strip()]
+        interlocks = [str(vs).strip()]
 
     return interlocks
 
@@ -283,7 +284,6 @@ class SwitchManager(Manager):
             if clear_prev_keys and len(keys) == len(self.switches):
                 self._prev_keys = []
             else:
-
                 self._prev_keys = keys
 
         if version:
@@ -382,6 +382,16 @@ class SwitchManager(Manager):
             act = self.application.get_services(ICoreDevice)
         return act
 
+    def get_pipette_counts(self):
+        return [p.to_dict() for p in self.pipette_trackers]
+
+    def get_pipette_count(self, name):
+        for p in self.pipette_trackers:
+            if streq(name, p.name):
+                return p.counts
+        else:
+            return 0
+
     def get_actuator_by_name(self, name):
         act = None
         if self.actuators:
@@ -479,8 +489,8 @@ class SwitchManager(Manager):
         :return:
         """
         # self.debug('load owners')
-        # update = False
-        states = []
+        update = False
+
         for k, v in self.switches.items():
             if not isinstance(v, HardwareValve):
                 continue
@@ -491,11 +501,11 @@ class SwitchManager(Manager):
                 s = None
 
             if ostate != s:
-                states.append((k, s, False))
-                # update = True
+                self.refresh_owned_state = (k, s, False)
+                # states.append((k, s, False))
+                update = True
 
-        if states:
-            self.refresh_owned_state = states
+        if update:
             if refresh_canvas:
                 self.refresh_canvas_needed = True
             return True
@@ -512,6 +522,7 @@ class SwitchManager(Manager):
         words = {}
         for k, v in self.switches.items():
             a = (k, v.address, v.state)
+            print(a, v, v.use_state_word)
             if v.use_state_word:
                 if v.actuator not in words:
                     words[v.actuator] = [a]
@@ -529,6 +540,7 @@ class SwitchManager(Manager):
 
         for actuator, items in words.items():
             stateword = actuator.get_state_word()
+            print("statword", stateword)
             if stateword:
                 for k, address, ostate in items:
                     try:
@@ -602,7 +614,6 @@ class SwitchManager(Manager):
             self._verbose_debug("interlocks {}".format(interlocks))
             switches = self.switches
             for interlock in interlocks:
-
                 if interlock in switches:
                     v = switches[interlock]
                     if v.state:
@@ -674,66 +685,68 @@ class SwitchManager(Manager):
         :return:
         """
 
-        def tokenize(keys):
-            buf = ""
-            add = False
-            if "<" in keys:
-
-                for k in keys:
-                    if add:
-                        if k == ">":
-                            add = False
-                            yield buf
-                            buf = ""
-                            continue
-
-                        buf += k
-                        continue
-
-                    if "<" == k:
-                        add = True
-                        continue
-
-                    yield k
-            else:
-                cnt = 0
-                c = 0
-                for k in keys:
-                    if add:
-                        cnt += 1
-                        if cnt > c:
-                            yield buf
-
-                            buf = ""
-                            cnt = 0
-                            if k in digits:
-                                c = int(k)
-                            else:
-                                add = False
-                                yield k
-
-                            continue
-
-                        buf += k
-                        continue
-
-                    if k in digits:
-                        c = int(k)
-                        add = True
-                        continue
-                    yield k
-
-                if buf:
-                    yield buf
+        # def tokenize(keys):
+        #     buf = ""
+        #     add = False
+        #     if "<" in keys:
+        #
+        #         for k in keys:
+        #             if add:
+        #                 if k == ">":
+        #                     add = False
+        #                     yield buf
+        #                     buf = ""
+        #                     continue
+        #
+        #                 buf += k
+        #                 continue
+        #
+        #             if "<" == k:
+        #                 add = True
+        #                 continue
+        #
+        #             yield k
+        #     else:
+        #         cnt = 0
+        #         c = 0
+        #         for k in keys:
+        #             if add:
+        #                 cnt += 1
+        #                 if cnt > c:
+        #                     yield buf
+        #
+        #                     buf = ""
+        #                     cnt = 0
+        #                     if k in digits:
+        #                         c = int(k)
+        #                     else:
+        #                         add = False
+        #                         yield k
+        #
+        #                     continue
+        #
+        #                 buf += k
+        #                 continue
+        #
+        #             if k in digits:
+        #                 c = int(k)
+        #                 add = True
+        #                 continue
+        #             yield k
+        #
+        #         if buf:
+        #             yield buf
 
         d = {}
         if word is not None:
             try:
-                if ":" in word:
-                    keys, states = word.split(":")
+                if "|" in word:
+                    keys, states = word.split("|")
                     states = int(states, 16)
 
-                    for k in tokenize(keys):
+                    for k in keys.split(",")[::-1]:
+                        if k.startswith("<") and k.endswith(">"):
+                            k = k[1:-1]
                         d[k] = bool(states & 1)
                         states = states >> 1
 
@@ -793,7 +806,6 @@ class SwitchManager(Manager):
                     return
 
                 for v in self.switches:
-
                     if v in sls and sls[v]:
                         self.lock(v, save=False)
                     else:
@@ -909,8 +921,10 @@ class SwitchManager(Manager):
             if v.track_actuation:
                 self._update_actuation_tracker(v)
 
-        if result is None and globalv.communication_simulation:
-            result = action.lower() == "set_open"
+        if result is None and (
+            globalv.communication_simulation or globalv.experiment_debug
+        ):
+            result = True
             changed = True
 
         return result, changed
@@ -919,6 +933,9 @@ class SwitchManager(Manager):
         obj = self._load_actuation_tracker()
 
         vobj = obj.get(v.name, {})
+        if "start" not in vobj:
+            vobj["start"] = v.last_actuation
+            vobj["start_count"] = vobj.get("count", 1)
 
         vobj["count"] = a = vobj.get("count", 0) + 1
 
@@ -928,14 +945,21 @@ class SwitchManager(Manager):
         obj[v.name] = vobj
 
         p = paths.actuation_tracker_file
+
         with open(p, "w") as wfile:
-            yaml.dump(obj, wfile)
+            json.dump(obj, wfile)
 
     def _load_actuation_tracker(self):
         p = paths.actuation_tracker_file
         obj = {}
-        if p and os.path.isfile(p):
-            obj = yload(p)
+        if p:
+            if os.path.isfile(p):
+                with open(p, "r") as rfile:
+                    obj = json.load(rfile)
+            else:
+                p = paths.actuation_tracker_file_yaml
+                if p and os.path.isfile(p):
+                    obj = yload(p)
 
         return obj or {}
 
@@ -973,8 +997,10 @@ class SwitchManager(Manager):
             for klass, func in (
                 (Switch, parser.get_switches),
                 (ManualSwitch, parser.get_manual_valves),
+                (DoubleActuationValve, parser.get_double_actuation_valves),
             ):
                 for s in func():
+                    print(s, klass)
                     factory(s, use_explanation=False, klass=klass)
 
             ps = []
@@ -1033,7 +1059,7 @@ class SwitchManager(Manager):
         outer = pobj.get("outer")
         if inner in self.switches and outer in self.switches:
             return PipetteTracker(
-                name=pobj.get("name", "Pipette"), inner=inner, outer=outer
+                name=pobj.get("name", "Pipette"), inner=str(inner), outer=str(outer)
             )
 
     def _pipette_factory_xml(self, p):
@@ -1108,9 +1134,11 @@ class SwitchManager(Manager):
         state_invert = False
         if klass != ManualSwitch:
             if state_dev_obj is not None:
-                state_dev_name = state_dev_obj.get("name")
-                state_address = state_dev_obj.get("address")
-                state_invert = to_bool(state_dev_obj.get("inverted"))
+                state_dev_name = state_dev_obj.get("name", "")
+                state_address = state_dev_obj.get("address", "")
+                state_invert = to_bool(state_dev_obj.get("inverted", False))
+            else:
+                state_address = vobj.get("state_address", "")
 
         parent = vobj.get("parent")
         parent_name = ""
@@ -1130,7 +1158,7 @@ class SwitchManager(Manager):
             check_actuation_delay=float(vobj.get("check_actuation_delay", 0)),
             actuator_name=actuator_name,
             state_device_name=state_dev_name,
-            state_address=state_address,
+            state_address=str(state_address),
             state_invert=state_invert,
             description=str(vobj.get("description", "")),
             query_state=to_bool(vobj.get("query_state", True)),
@@ -1142,7 +1170,6 @@ class SwitchManager(Manager):
         return ctx
 
     def _make_switch_xml_ctx(self, v_elem, klass):
-
         if not v_elem.text:
             self.warning(
                 "Must specify a name for all switches. i.e. must provide text in <valve></valve> tags"

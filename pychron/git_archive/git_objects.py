@@ -18,6 +18,7 @@
 from datetime import datetime
 
 from traits.api import HasTraits, Str, Bool, Date
+from traits.trait_types import Datetime
 
 
 # ============= standard library imports ========================
@@ -26,7 +27,7 @@ from traits.api import HasTraits, Str, Bool, Date
 
 class GitTag(HasTraits):
     message = Str
-    date = Date
+    date = Datetime
     name = Str
     hexsha = Str
     commit_message = Str
@@ -46,7 +47,7 @@ class GitTag(HasTraits):
 
 class GitSha(HasTraits):
     message = Str
-    date = Date
+    date = Datetime
     blob = Str
     name = Str
     hexsha = Str

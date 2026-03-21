@@ -36,6 +36,12 @@ class BaseIrradiationExporter(Loggable):
                 dbirr = db.get_irradiation(irr)
                 self.info("exporting irradiation {}".format(dbirr.name))
                 self._export(dbirr)
+            self.information_dialog(
+                "Exported Irradiations ={} successfully".format(irradiations)
+            )
+            return
+
+        self.warning_dialog("Failed to export Irradiations ={}".format(irradiations))
 
     def setup(self):
         return True

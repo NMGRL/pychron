@@ -63,6 +63,7 @@ class HardwarePreferences(BasePreferencesHelper):
             ("OsTechDiodeProtocol", "pychron.tx.factories.OsTechDiodeFactory"),
             ("FusionsUVProtocol", "pychron.tx.factories.FusionsUVFactory"),
             ("FurnaceProtocol", "pychron.tx.factories.FurnaceFactory"),
+            ("AquAProtocol", "pychron.tx.factories.AquAFactory"),
         )
         self._protocols = [
             Protocol(

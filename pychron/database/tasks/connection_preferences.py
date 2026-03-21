@@ -27,7 +27,6 @@ from traits.api import (
     Enum,
     Button,
     on_trait_change,
-    Color,
     String,
     List,
     File,
@@ -46,6 +45,7 @@ from traitsui.api import (
     ObjectColumn,
     TableEditor,
     UItem,
+    Color,
 )
 from traitsui.editors.api import TextEditor
 

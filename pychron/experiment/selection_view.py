@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.data_label import DataLabel
+from chaco.api import DataLabel
 from chaco.tools.scatter_inspector import ScatterInspector
 from chaco.tools.zoom_tool import ZoomTool
 from kiva.fonttools import Font
@@ -37,7 +37,6 @@ from six.moves import zip
 
 class LegendOverlay(AbstractOverlay):
     def overlay(self, component, gc, *args, **kw):
-
         gc.save_state()
         gc.set_font(Font("Monaco"))
         x = component.x
@@ -120,7 +119,6 @@ class SelectionView(Viewable):
         return g
 
     def build_graph(self):
-
         skw = dict(type="scatter", marker_size=3)
         #            skw = dict(type='bar')
         g = self.graph

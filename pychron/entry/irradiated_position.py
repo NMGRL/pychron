@@ -81,7 +81,7 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
         ("Sample", "sample"),
         ("Project", "project"),
         ("J", "j"),
-        (u"{}J".format(PLUSMINUS), "j_err"),
+        ("{}J".format(PLUSMINUS), "j_err"),
         ("Note", "note"),
     ]
 
@@ -103,7 +103,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         #               ('Size', 'size'),
         ("Weight", "weight"),
         ("J", "j"),
-        (u"{}J".format(PLUSMINUS), "j_err"),
+        ("{}J".format(PLUSMINUS), "j_err"),
         ("Note", "note"),
     ]
 

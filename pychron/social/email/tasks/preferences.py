@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Password, Int, Button, on_trait_change, Color
-from traitsui.api import View, Item, Group, HGroup, VGroup
+from traits.api import Str, Password, Int, Button, on_trait_change
+from traitsui.api import View, Item, Group, HGroup, VGroup, Color
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

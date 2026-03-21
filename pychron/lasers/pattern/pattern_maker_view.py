@@ -40,7 +40,6 @@ from pychron.core.helpers.filetools import add_extension, glob_list_directory
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
 from pychron.saveable import Saveable, SaveableButtons
-from pychron.stage.stage_manager import get_stage_map_names
 
 
 class PatternMakerHandler(Handler):
@@ -111,7 +110,13 @@ class PatternMakerView(Saveable, Patternable):
             self.save_enabled = False
 
     def save_as(self):
-        self.trays = get_stage_map_names()
+        try:
+            from pychron.stage.stage_manager import get_stage_map_names
+
+            self.trays = get_stage_map_names()
+        except ImportError:
+            self.trays = []
+            self.debug_exception()
 
         v = self._save_as_view()
         while 1:

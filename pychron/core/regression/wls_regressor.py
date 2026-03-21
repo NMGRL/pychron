@@ -78,7 +78,7 @@ class WeightedPolynomialRegressor(OLSRegressor):
     def _get_weights(self):
         es = self.clean_yserr
         # es = asarray(self._clean_array(self.yserr))
-        return es ** -2
+        return es**-2
 
 
 class WeightedMultipleLinearRegressor(

@@ -75,7 +75,7 @@ class PowerMapProcessor(HasTraits):
             padding=0,
             width=400,
             height=400,
-            resizable=""
+            resizable="",
             #                             aspect_ratio=1
         )
         center_plot.index_axis.visible = False
@@ -288,7 +288,6 @@ class PowerMapProcessor(HasTraits):
         metadata = []
         reader_meta = False
         for _index, row in enumerate(reader):
-
             if reader_meta:
                 metadata.append(row)
                 continue

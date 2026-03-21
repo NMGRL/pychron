@@ -188,7 +188,6 @@ class LimitOverlay(AbstractOverlay):
         )
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-
         tool = self.tool
         y, y2 = other_component.y, other_component.y2
         x, x2 = other_component.x, other_component.x2

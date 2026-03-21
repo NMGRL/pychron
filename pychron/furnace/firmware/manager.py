@@ -351,7 +351,6 @@ class FirmwareManager(HeadlessLoggable):
                 period = 3
                 if data:
                     if isinstance(data, dict):
-
                         period = data.get("period", 3)
                     else:
                         period = data

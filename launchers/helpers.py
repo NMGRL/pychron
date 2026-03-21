@@ -26,8 +26,8 @@ from pyface.confirmation_dialog import confirm
 from pyface.message_dialog import warning
 from pyface.qt import QtGui, QtCore
 from traits.etsconfig.api import ETSConfig
-from traitsui.qt4.table_editor import TableDelegate
-from traitsui.qt4.ui_panel import heading_text
+from traitsui.qt.table_editor import TableDelegate
+from traitsui.qt.ui_panel import heading_text
 
 from pychron.environment.util import set_application_home
 
@@ -83,9 +83,9 @@ def monkey_patch_preferences():
     Preferences._set = setfunc
 
 
-from traitsui.qt4.ui_base import BasePanel
+from traitsui.qt.ui_base import BasePanel
 from traitsui.menu import UndoButton, RevertButton, HelpButton
-from traitsui.qt4.ui_panel import panel, _size_hint_wrapper
+from traitsui.qt.ui_panel import panel, _size_hint_wrapper
 from traitsui.undo import UndoHistory
 
 
@@ -141,7 +141,7 @@ class myPanel(BasePanel):
         # superceded by the title of an "outer" widget (eg. a dock widget).
         title = view.title
         if (is_subpanel or (isinstance(parent, QtGui.QMainWindow) and
-                                not isinstance(parent.parent(), QtGui.QDialog)) or
+                            not isinstance(parent.parent(), QtGui.QDialog)) or
                 isinstance(parent, QtGui.QTabWidget)):
             title = ""
 
@@ -216,7 +216,7 @@ class myPanel(BasePanel):
 
 
 def monkey_patch_panel():
-    from traitsui.qt4 import ui_panel
+    from traitsui.qt import ui_panel
     ui_panel._Panel = myPanel
 
 
@@ -301,10 +301,101 @@ def monkey_patch_checkbox_render():
             return style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
                                           QtCore.QSize(), None)
 
-    from traitsui.qt4.extra import checkbox_renderer
+    from traitsui.qt.extra import checkbox_renderer
 
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
+
+def monkey_patch_table_view():
+    from traitsui.qt.table_editor import TableView
+
+    def sizeHint(self):
+        size_hint = QtGui.QTableView.sizeHint(self)
+
+        # This method is sometimes called by Qt after the editor has been
+        # disposed but before this control has been deleted:
+        if self._editor.factory is None:
+            return size_hint
+
+        try:
+            width = self.style().pixelMetric(
+                QtGui.QStyle.PixelMetric.PM_ScrollBarExtent, QtGui.QStyleOptionHeader(), self
+            )
+        except AttributeError:
+            width = 100
+
+        for column in range(len(self._editor.columns)):
+            width += self.sizeHintForColumn(column)
+
+        size_hint.setWidth(int(width))
+        return size_hint
+
+    def resizeColumnsToContents(self):
+        """Support proportional column width specifications."""
+
+        # TODO: The proportional size specification approach found in the
+        # TableColumns is not entirely compatible with the ability to
+        # specify the resize_mode.  Namely, there are combinations of
+        # specifications that are redundant, and others which are
+        # contradictory.  Rework this method so that the various values
+        # for **width** have a well-defined, sensible meaning for each
+        # of the possible values of resize_mode.
+
+        editor = self._editor
+        available_space = self.viewport().width()
+        hheader = self.horizontalHeader()
+
+        # Compute sizes for columns with absolute or no size requests
+        proportional = []
+        for column_index in range(len(editor.columns)):
+            column = editor.columns[column_index]
+            requested_width = column.get_width()
+            if (
+                    column.resize_mode in ("interactive", "stretch")
+                    and 0 < requested_width <= 1.0
+            ):
+                proportional.append((column_index, requested_width))
+            elif (
+                    column.resize_mode == "interactive"
+                    and requested_width < 0
+                    and self._initial_size
+            ):
+                # Keep previous size if initial sizing has been done
+                available_space -= hheader.sectionSize(column_index)
+            else:
+                base_width = hheader.sectionSizeHint(column_index)
+                width = int(max(base_width, self.sizeHintForColumn(column_index)))
+                hheader.resizeSection(column_index, width)
+                available_space -= width
+
+        # Now use the remaining space for columns with proportional width
+        # requests
+        for column_index, percent in proportional:
+            base_width = hheader.sectionSizeHint(column_index)
+            width = int(max(base_width, int(percent * available_space)))
+            hheader.resizeSection(column_index, width)
+
+    TableView.resizeColumnsToContents = resizeColumnsToContents
+    TableView.sizeHint = sizeHint
+
+def monkey_patch_toolbar():
+    from pyface.ui.qt.application_window import ApplicationWindow
+    from traits.api import observe
+
+    @observe("tool_bar_managers.items")
+    def _update_tool_bar_managers(self, event):
+        if self.control is not None:
+            # Remove the old toolbars.
+            for child in self.control.children():
+                if isinstance(child, QtGui.QToolBar):
+                    self.control.removeToolBar(child)
+                    child.deleteLater()
+
+            # Add the new toolbars.
+            if event.new is not None:
+                self._create_tool_bar(self.control)
+
+    ApplicationWindow._update_tool_bar_managers = _update_tool_bar_managers
 
 KLASS_MAP = {'pyexperiment': 'PyExperiment',
              'pyview': 'PyView',
@@ -324,6 +415,8 @@ def entry_point(appname, debug=False):
     monkey_patch_preferences()
     monkey_patch_checkbox_render()
     monkey_patch_panel()
+    monkey_patch_table_view()
+    monkey_patch_toolbar()
 
     # set_stylesheet('darkorange.css')
     env = initialize_version(appname, debug)
@@ -358,7 +451,7 @@ def check_dependencies(debug):
     logger.info('================ Checking Dependencies ================')
     for npkg, req in (('uncertainties', '2.1'),
                       ('pint', '0.5'),
-                      # ('fant', '0.1')
+            # ('fant', '0.1')
                       ):
         try:
             pkg = __import__(npkg)
@@ -481,10 +574,28 @@ def initialize_version(appname, debug):
     paths.write_defaults()
 
     # setup logging. set a basename for log files and logging level
-    logging_setup('pychron', level='DEBUG')
 
     from pychron.core.helpers.exception_helper import set_exception_handler
     set_exception_handler()
+
+    try:
+        logging_setup('pychron', level='DEBUG')
+    except PermissionError as e:
+        warning(None, 'Failed to setup logging due to a PermissionError. '
+                      'Is Pychron already open? Please quit any running instance of Pychron '
+                      'before trying to relaunch.  Error: {}'.format(e))
+        return False
+    except FileExistsError as e:
+        warning(None, 'Failed to setup logging. '
+                      ' Error: {}'.format(e))
+
+        return False
+    except FileExistsError as e:
+        emsg = str(e)
+        path = emsg.split('File exists:')[-1]
+        warning(None, """Failed to setup logging.  Error: {}\n\n
+Delete directory {} to proceed""".format(e, path))
+        return False
 
     return env
 

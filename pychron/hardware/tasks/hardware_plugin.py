@@ -169,7 +169,6 @@ class HardwarePlugin(BaseTaskPlugin):
     #     return RemoteHardwareManager(application=self.application)
 
     def _service_offers_default(self):
-
         # so_hm = self.service_offer_factory(
         #     protocol=HardwareManager,
         #     factory=self._hardware_manager_factory)

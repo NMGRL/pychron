@@ -51,7 +51,6 @@ class CSVDataManager(DataManager):
             return loadtxt(frame, delimiter=",")
 
     def write_metadata(self, md, frame_key=None):
-
         sline = ["#<metadata>==================================================="]
         eline = ["#</metadata>==================================================="]
         data = [sline] + md + [eline]

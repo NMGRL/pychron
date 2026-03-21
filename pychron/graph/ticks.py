@@ -105,7 +105,7 @@ class SparseLogTicks(DefaultTickGenerator):
         while 1:
             if data_low < data_high:
                 break
-            data_low = min(10 ** -i, data_low)
+            data_low = min(10**-i, data_low)
             i += 1
 
         oticks = super(SparseLogTicks, self).get_ticks(

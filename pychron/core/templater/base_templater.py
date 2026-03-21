@@ -62,13 +62,14 @@ class BaseTemplater(HasTraits):
 
     # persistence
     def load(self):
-        p = os.path.join(paths.hidden_dir, self.persistence_name)
-        if os.path.isfile(p):
-            with open(p, "r") as rfile:
-                try:
-                    self.user_predefined_labels = pickle.load(rfile)
-                except BaseException:
-                    pass
+        if paths.hidden_dir:
+            p = os.path.join(paths.hidden_dir, self.persistence_name)
+            if os.path.isfile(p):
+                with open(p, "r") as rfile:
+                    try:
+                        self.user_predefined_labels = pickle.load(rfile)
+                    except BaseException:
+                        pass
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, self.persistence_name)

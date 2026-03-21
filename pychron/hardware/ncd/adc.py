@@ -7,6 +7,7 @@
    http://www.controlanything.com/Relay/Device/A0010
    http://assets.controlanything.com/manuals/ProXR.pdf
 """
+
 # ===============================================================================
 # Copyright 2012 Jake Ross
 #
@@ -129,7 +130,7 @@ class ProXRADC(NCDDevice):
         if nbits == 12:
             f, s = "<h", 2
 
-        m = 2 ** nbits - 1
+        m = 2**nbits - 1
 
         def vfunc(v):
             nd = int(math.log10(m))

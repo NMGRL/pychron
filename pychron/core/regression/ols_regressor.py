@@ -32,6 +32,7 @@ from traits.api import Int, Property
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import FITS, fit_to_degree
+from pychron.core.helpers.strtools import streq
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.pychron_constants import MSEM, SEM, AUTO_LINEAR_PARABOLIC
 
@@ -86,15 +87,15 @@ class OLSRegressor(BaseRegressor):
         """
         if not hasattr(self, "pinv_wexog"):
             self.pinv_wexog = linalg.pinv(self._ols.wexog)
+
         beta = dot(self.pinv_wexog, endog)
 
         return dot(exog, beta)
 
-    def determine_fit(self):
-        if self._fit == AUTO_LINEAR_PARABOLIC:
+    def determine_fit(self, fit):
+        if isinstance(fit, str) and streq(fit, AUTO_LINEAR_PARABOLIC):
             self.set_degree("linear", refresh=False)
             self.calculate()
-
             linear_r = self.rsquared_adj
 
             self.set_degree("parabolic", refresh=False)
@@ -260,14 +261,14 @@ class OLSRegressor(BaseRegressor):
 
             def func(xi):
                 varY_hat = calc_hat(xi)
-                m = mswd ** 0.5 if mswd > 1 else 1
+                m = mswd**0.5 if mswd > 1 else 1
                 return sef * sqrt(varY_hat) * m
 
         else:
 
             def func(xi):
                 varY_hat = calc_hat(xi)
-                return sqrt(sef ** 2 + sef ** 2 * varY_hat)
+                return sqrt(sef**2 + sef**2 * varY_hat)
 
         if not self._result:
             return zeros_like(x)
@@ -295,9 +296,9 @@ class OLSRegressor(BaseRegressor):
             bx_covar = asarray(bx_covar)[0]
             var = sum(bx * bx_covar)
             #            print var
-            s = se * var ** 0.5
+            s = se * var**0.5
             if error_calc == "sd":
-                s = (se ** 2 + s ** 2) ** 0.5
+                s = (se**2 + s**2) ** 0.5
 
             return s
 
@@ -322,10 +323,14 @@ class OLSRegressor(BaseRegressor):
     def _get_rsquared(self):
         if self._result:
             return self._result.rsquared
+        else:
+            return 0
 
     def _get_rsquared_adj(self):
         if self._result:
             return self._result.rsquared_adj
+        else:
+            return 0
 
     def _calculate_coefficients(self):
         """

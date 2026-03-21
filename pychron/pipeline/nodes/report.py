@@ -46,7 +46,6 @@ class ReportNode(BaseNode):
     options_klass = ReportOptions
 
     def configure(self, *args, **kw):
-
         self._configure_hook()
 
         ret = super(ReportNode, self).configure(*args, **kw)
@@ -61,7 +60,6 @@ class ReportNode(BaseNode):
                 iso_keys = unk.isotope_keys
 
                 if iso_keys:
-
                     if AR40 in iso_keys and AR40 not in names:
                         if AR39 in iso_keys:
                             names.extend([AR4039, UAR4039])

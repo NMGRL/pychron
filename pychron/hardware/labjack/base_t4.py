@@ -40,7 +40,6 @@ class BaseT4(BaseLabjack, HasTraits):
         return True
 
     def load_additional_args(self, config):
-
         ct = self.config_get(config, "Communications", "type")
         if ct:
             try:

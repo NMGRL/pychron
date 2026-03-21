@@ -130,7 +130,7 @@ class LeastSquaresRegressor(BaseRegressor):
             if error_calc == "sem":
                 se = sef * sqrt(varY_hat)
             else:
-                se = sqrt(sef ** 2 + sef ** 2 * varY_hat)
+                se = sqrt(sef**2 + sef**2 * varY_hat)
 
             return se[0, 0]
 

@@ -124,7 +124,6 @@ if __name__ == "__main__":
             cr.add_conflicts("Foo", conflicts)
 
         if cr.conflicts:
-
             info = cr.edit_traits(kind="livemodal")
             if info.result:
                 cr.apply()

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from traits.api import Int, Property, List
+from traits.api import Int, Property, List, Instance
 from traitsui.api import VGroup, UItem, HGroup, Group, Tabbed
 
 # ============= standard library imports ========================
@@ -73,7 +73,10 @@ class TagAdapter(CommitAdapter):
 
 
 class BaseCommitsView(Controller):
-    model = BaseGitHistory
+    # Override Controller.model with a concrete Instance trait.
+    # Using "()" provides a non-None default and avoids Traits clone/validate
+    # errors on newer Traits versions.
+    model = Instance(BaseGitHistory, ())
 
     def traits_view(self):
         v = okcancel_view(

@@ -20,8 +20,8 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 
-from chaco.lineplot import LinePlot
-from chaco.scatterplot import ScatterPlot
+from chaco.api import LinePlot
+from chaco.api import ScatterPlot
 
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.pipeline.plot.overlays.base_inset import BaseInset
@@ -67,7 +67,6 @@ try:
             self.y_axis.trait_set(tick_label_formatter=lambda x: "", tick_visible=False)
             # self.set_limits()
 
-
 except TypeError:
     # documentation auto doc hack
     class IdeogramInset:
@@ -104,7 +103,6 @@ try:
                 visible=visible,
             )
             self.overlays.append(ebo)
-
 
 except TypeError:
     # documentation auto doc hack

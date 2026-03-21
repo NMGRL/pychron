@@ -23,8 +23,8 @@ from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.qt import QtGui
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
-from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorAreaWidget
-from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
+from pyface.ui.qt.tasks.advanced_editor_area_pane import EditorAreaWidget
+from pyface.ui.qt.tasks.editor_area_pane import EditorAreaDropFilter
 
 # ============= standard library imports ========================
 import sys
@@ -66,6 +66,19 @@ from six.moves import range
 
 
 class myEditorAreaWidget(EditorAreaWidget):
+    def __init__(self, *args, **kw):
+        super(myEditorAreaWidget, self).__init__(*args, **kw)
+        # Pyface expects _rubber_band to exist in eventFilter paths.
+        if not hasattr(self, "_rubber_band"):
+            self._rubber_band = None
+
+    def focusInEvent(self, event):
+        try:
+            super(myEditorAreaWidget, self).focusInEvent(event)
+        except AttributeError:
+            # Some editors don't create a control; avoid crashing on focus.
+            pass
+
     def contextMenuEvent(self, event):
         epos = event.pos()
 
@@ -158,6 +171,16 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         pane.
         """
         self.control = control = myEditorAreaWidget(self, parent)
+        # Ensure Pyface's eventFilter has a valid rubber band to query.
+        try:
+            from pyface.qt import QtWidgets
+
+            if getattr(control, "_rubber_band", None) is None:
+                control._rubber_band = QtWidgets.QRubberBand(
+                    QtWidgets.QRubberBand.Rectangle, control
+                )
+        except Exception:
+            pass
         self._filter = EditorAreaDropFilter(self)
         self.control.installEventFilter(self._filter)
 
@@ -176,12 +199,16 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         # Add shortcuts for switching to a specific tab.
         mod = "Ctrl+" if sys.platform == "darwin" else "Alt+"
         mapper = QtCore.QSignalMapper(self.control)
-        mapper.mapped.connect(self._activate_tab)
-        for i in range(1, 10):
-            sequence = QtGui.QKeySequence(mod + str(i))
-            shortcut = QtGui.QShortcut(sequence, self.control)
-            shortcut.activated.connect(mapper.map)
-            mapper.setMapping(shortcut, i - 1)
+        try:
+            mapper.mapped.connect(self._activate_tab)
+            for i in range(1, 10):
+                sequence = QtGui.QKeySequence(mod + str(i))
+                shortcut = QtGui.QShortcut(sequence, self.control)
+                shortcut.activated.connect(mapper.map)
+                mapper.setMapping(shortcut, i - 1)
+        except AttributeError as e:
+            # pyside6 does not have mapped signal
+            print(f"mapped signal not available {e}")
 
     def remove_editor(self, editor):
         """Removes an editor from the pane."""

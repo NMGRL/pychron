@@ -59,7 +59,6 @@ class DeviceProperty(object):
         *args,
         **kw
     ):
-
         self.fget = fget
         self.fset = fset
         self.frandom = frandom

@@ -26,7 +26,7 @@ class CorrelationEllipsesOverlay(AbstractOverlay):
         super(CorrelationEllipsesOverlay, self).__init__(*args, **kw)
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        for ((k, ci), color) in zip(self.correlation_ellipses, self.colors):
+        for (k, ci), color in zip(self.correlation_ellipses, self.colors):
             with gc:
                 age = ci["age"]
                 kca = ci["kca"]

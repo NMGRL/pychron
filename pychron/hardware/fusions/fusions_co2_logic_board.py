@@ -55,7 +55,6 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
 
         coeffs = self.config_get(config, "PowerOutput", "coefficients")
         if coeffs is not None:
-
             p = os.path.join(
                 paths.hidden_dir, "{}_power_calibration".format(self.name.split(".")[0])
             )
@@ -113,11 +112,9 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
 
     def _disable_laser(self):
         """ """
-        #        cmd = self._build_command('PDC', '0.00')
         cmd = ("PDC", "0.00")
         self._request_power = 0.0
 
-        #        callback = lambda :self._parse_response(self.ask(cmd))
         resp = self.repeat_command(cmd, check_val="OK")
         if resp is not None:
             return super(FusionsCO2LogicBoard, self)._disable_laser()
@@ -128,9 +125,9 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
 
     def _enable_laser(self, **kw):
         """ """
-        cmd = self._build_command("PWE", "1")
+        # cmd = self._build_command("PWE", "1")
+        cmd = ("PWE", "1")
 
-        #        callback = lambda :self._parse_response(self.ask(cmd))
         resp = self.repeat_command(cmd, check_val="OK")
         if resp is not None:
             return super(FusionsCO2LogicBoard, self)._enable_laser()

@@ -17,6 +17,7 @@
 # # ============= enthought library imports =======================
 
 import ast
+import datetime
 import importlib
 import os
 import re
@@ -25,7 +26,7 @@ import weakref
 from pprint import pformat
 from threading import Event as TEvent, Thread
 
-from numpy import Inf, polyfit, linspace, polyval
+from numpy import inf as Inf, polyfit, linspace, polyval, array
 from traits.api import (
     Any,
     Str,
@@ -37,13 +38,13 @@ from traits.api import (
     HasTraits,
     Float,
     Int,
-    Long,
     Tuple,
     Dict,
 )
 from traits.trait_errors import TraitError
+from uncertainties import ufloat, std_dev, nominal_value
 
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, unique_path2
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
@@ -55,6 +56,7 @@ from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
+
 from pychron.experiment.conditional.conditional import (
     TruncationConditional,
     ActionConditional,
@@ -74,7 +76,7 @@ from pychron.experiment.utilities.conditionals import (
 )
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
-from pychron.experiment.utilities.script import assemble_script_blob
+from pychron.experiment.utilities.script import assemble_script_blob, resolve_script_name
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -95,6 +97,7 @@ from pychron.pychron_constants import (
     TRUNCATED,
     SUCCESS,
     CANCELED,
+    SYN_EXTRACTION,
 )
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
@@ -163,6 +166,7 @@ class AutomatedRun(Loggable):
     extraction_line_manager = Any
     # experiment_executor = Any
     ion_optics_manager = Any
+    syn_extractor = Any
 
     multi_collector = Instance(
         "pychron.experiment.automated_run.multi_collector.MultiCollector"
@@ -192,7 +196,7 @@ class AutomatedRun(Loggable):
     spec = Any
     runid = Str
     uuid = Str
-    analysis_id = Long
+    analysis_id = Int
     fits = List
     eqtime = Float
 
@@ -246,6 +250,7 @@ class AutomatedRun(Loggable):
 
     previous_blanks = Tuple
     previous_baselines = Dict
+    baseline_modifiers = Dict
 
     _active_detectors = List
     _peak_center_detectors = List
@@ -256,6 +261,7 @@ class AutomatedRun(Loggable):
     _truncate_signal = Bool
     _equilibration_done = False
     _integration_seconds = Float(1.1)
+    _previous_loaded = False
 
     min_ms_pumptime = Int(60)
     overlap_evt = None
@@ -277,6 +283,8 @@ class AutomatedRun(Loggable):
 
     failed_intensity_count_threshold = Int(3)
     use_equilibration_analysis = Bool(False)
+
+    _syn_extraction_active = Bool(False)
 
     def set_preferences(self, preferences):
         self.debug("set preferences")
@@ -307,8 +315,59 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_sink_data(self, n=100, delay=1, root=None, buffer_delay=5):
+        """
+
+        new measurement interface for just sinking the data from a ring buffer
+        """
+        import csv
+
+        man = self.spectrometer_manager
+        if man.__class__.__name__ != "QuaderaSpectrometerManager":
+            try:
+                man = self.spectrometer_manager.application.get_service(
+                    "pychron.spectrometer.pfeiffer.manager.quadera.QuaderaSpectrometerManager"
+                )
+            except BaseException:
+                self.debug_exception()
+                self.warning_dialog("Spectrometer not available")
+                return
+
+        spec = man.spectrometer
+
+        spec.set_data_pump_mode(1)
+
+        if root is None:
+            root = paths.csv_data_dir
+
+        if not os.path.isdir(root):
+            root = paths.csv_data_dir
+
+        rid = self.runid
+        if os.environ.get("LAB") == "UIllinoisHAL":
+            v = self.extraction_line_manager.get_valve_by_name("9")
+            rid = f"{rid}-{v.actuations}"
+
+        p, _ = unique_path2(root, rid, extension=".csv")
+        self.debug(f"saving analysis to {p}")
+        with open(p, "w") as rfile:
+            writer = csv.writer(rfile)
+            ig = spec.sink_data(writer, n, delay, buffer_delay)
+
+            if self.use_dvc_persistence:
+                pspec = self.persistence_spec
+                pspec.isotope_group = ig
+
+                # self.save()
+                # self.dvc_persister.per_spec_save(pspec)
+
+        spec.set_data_pump_mode(0)
+
     def py_measure(self):
         return self.spectrometer_manager.measure()
+
+    def py_get_deflection(self, detector):
+        return self.get_deflection(detector, current=True)
 
     def py_get_intensity(self, detector):
         if self._intensities:
@@ -328,7 +387,11 @@ class AutomatedRun(Loggable):
             self.plot_panel.add_isotope_graph(name)
 
     def py_generate_ic_mftable(self, detectors, refiso, peak_center_config=None, n=1):
-        return self._generate_ic_mftable(detectors, refiso, peak_center_config, n)
+        pairs = [(di, refiso) for di in detectors]
+        return self._generate_mftable(pairs, peak_center_config, n)
+
+    def py_generate_peakhop_mftable(self, pairs, peak_center_config=None, n=1):
+        return self._generate_mftable(pairs, peak_center_config, n)
 
     def py_whiff(
         self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0
@@ -617,7 +680,6 @@ class AutomatedRun(Loggable):
         use_dac=False,
         check_conditionals=True,
     ):
-
         if not self._alive:
             return
 
@@ -770,12 +832,10 @@ class AutomatedRun(Loggable):
         fit_series=0,
         group="signal",
     ):
-
         if not self._alive:
             return
 
         with self.ion_optics_manager.mftable_ctx(mftable):
-
             is_baseline = False
             self.peak_hop_collector.is_baseline = is_baseline
             self.peak_hop_collector.fit_series_idx = fit_series
@@ -819,7 +879,7 @@ class AutomatedRun(Loggable):
         check_intensity=None,
         peak_center_threshold=None,
         peak_center_threshold_window=None,
-        **kw
+        **kw,
     ):
         if not self._alive:
             return
@@ -859,7 +919,7 @@ class AutomatedRun(Loggable):
                     )
 
             if not self.plot_panel:
-                p = self._new_plot_panel(self.plot_panel, stack_order="top_to_bottom")
+                p = self._new_plot_panel(stack_order="top_to_bottom")
                 self.plot_panel = p
 
             self.debug("peak center started")
@@ -873,7 +933,7 @@ class AutomatedRun(Loggable):
                 directions=directions,
                 config_name=config_name,
                 use_configuration_dac=False,
-                **kw
+                **kw,
             )
             self.peak_center = pc
             self.debug("do peak center. {}".format(pc))
@@ -1071,13 +1131,15 @@ class AutomatedRun(Loggable):
     #
     # ===============================================================================
     def show_conditionals(self, tripped=None):
-
         self.tripped_conditional = tripped
 
         self.executor_event = {"kind": "show_conditionals", "tripped": tripped}
 
     def teardown(self):
         self.debug("tear down")
+
+        self._previous_loaded = False
+
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
@@ -1091,6 +1153,8 @@ class AutomatedRun(Loggable):
         #     self.plot_panel.automated_run = None
 
         self._persister_action("trait_set", persistence_spec=None, monitor=None)
+        if self.runner:
+            self.runner.clear()
 
     def finish(self):
         self.debug("----------------- finish -----------------")
@@ -1291,10 +1355,10 @@ class AutomatedRun(Loggable):
             else:
                 self.debug("no log path to save")
 
-    def save(self):
+    def save(self, exception_queue=None, complete_event=None):
         self.debug(
-            "post measurement save measured={} aborted={}".format(
-                self._measured, self._aborted
+            "post measurement save measured={} aborted={}, exception_queue={}, complete_event={}".format(
+                self._measured, self._aborted, exception_queue, complete_event
             )
         )
         if self._measured and not self._aborted:
@@ -1310,9 +1374,11 @@ class AutomatedRun(Loggable):
                 self.equilibration_conditionals,
             )
 
+            # get environmental values such as temperature, pneumatics etc
             env = self._get_environmentals()
-            if env:
-                set_environmentals(self.spec, env)
+
+            # if env:
+            #     set_environmentals(self.spec, env)
 
             tag = "ok"
             if self.spec.state in (CANCELED, FAILED):
@@ -1323,28 +1389,128 @@ class AutomatedRun(Loggable):
                 conditionals=[c for cond in conds for c in cond],
                 tag=tag,
                 tripped_conditional=self.tripped_conditional,
-                **env
+                pipette_counts=self.extraction_line_manager.get_pipette_counts(),
+                **env,
             )
-
-            # save to database
-            self._persister_save_action("post_measurement_save")
 
             self.spec.new_result(self)
 
-            if self.plot_panel:
-                self.plot_panel.analysis_view.refresh_needed = True
+            self._apply_baseline_modification()
 
-            if self.persister.secondary_database_fail:
-                self.executor_event = {
-                    "kind": "cancel",
-                    "cancel_run": True,
-                    "msg": self.persister.secondary_database_fail,
-                }
-
+            # save to database
+            if exception_queue:  # parallel save not currently working
+                t = Thread(
+                    target=self._persister_save_action,
+                    args=("post_measurement_save",),
+                    kwargs={
+                        "exception_queue": exception_queue,
+                        "complete_event": complete_event,
+                    },
+                )
+                t.start()
             else:
-                return True
-        else:
-            return True
+                self._persister_save_action("post_measurement_save")
+
+            # if self.plot_panel:
+            #     self.plot_panel.analysis_view.refresh_needed = True
+
+        #     if self.persister.secondary_database_fail:
+        #         self.executor_event = {
+        #             "kind": "cancel",
+        #             "cancel_run": True,
+        #             "msg": self.persister.secondary_database_fail,
+        #         }
+        #
+        #     else:
+        #         return True
+        # else:
+        #     return True
+
+    def _apply_baseline_modification(self):
+        if not os.path.isfile(paths.baseline_model):
+            self.warning("No baseline model file available to do baseline modification")
+
+        def modifier_function(model, detector):
+            config = self.baseline_modifiers[detector]
+            ar40iso = self.isotope_group.get_isotope("Ar40")
+            ar40 = self.isotope_group.get_isotope("Ar40").uvalue
+            ar39 = self.isotope_group.get_isotope("Ar39").uvalue
+            xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
+
+            if config["function"] == "model":
+                if model:
+                    prediction = model.get_prediction(nominal_value(xvalue))
+                    v, e = prediction.predicted_mean, prediction.se_mean
+                else:
+                    v, e = 0, 0
+                mb = ufloat(v, e, tag="baseline_modifier")
+            else:
+                mb = eval(config["function"], {"x": xvalue})
+
+            fe = config.get("function_err", "")
+            if "countingstatistics" in fe:
+                countingtime = ar40iso.baseline.xs[-1] - ar40iso.baseline.xs[0]
+                cpsTofA = 6250.0 * countingtime
+                n = nominal_value(mb) * cpsTofA
+                self.debug(
+                    f"using counting statistics error n={n} countingtime={countingtime} modified_baseline={mb}"
+                )
+
+                sigma = n**0.5  # n/n**-0.5
+                self.debug("counting stats")
+                sigma = eval(fe, {"countingstatistics": sigma})
+                mb = ufloat(
+                    nominal_value(mb), (sigma) / cpsTofA, tag="baseline_modifier"
+                )
+
+            self.debug(
+                f'applying baseline modification det={detector} {config["function"]} x={xvalue} modification={mb}'
+            )
+            return mb
+
+        if self.baseline_modifiers:
+            self._update_persister_spec(baseline_modifiers=self.baseline_modifiers)
+
+            model = None
+            if os.path.isfile(paths.baseline_model):
+                import pandas as pd
+                from statsmodels.api import OLS, WLS
+
+                with open(paths.baseline_model) as rfile:
+                    data = pd.read_csv(rfile)
+                    a40 = data["ar40"]
+                    a40e = data["ar40err"]
+                    a39 = data["ar39"]
+                    a39e = data["ar39err"]
+
+                    a40u = [ufloat(a, e) for a, e in zip(a40, a40e)]
+                    a39u = [ufloat(a, e) for a, e in zip(a39, a39e)]
+                    x = [a + b for a, b in zip(a40u, a39u)]
+                    exo = [nominal_value(xi) for xi in x]
+                    endo = data["baseline"]
+                    w = array([std_dev(xi) for xi in x])
+                    model = WLS(endo, exo, weights=1.0 / (w**2)).fit()
+
+            md = {}
+            for key, iso in self.persistence_spec.isotope_group.items():
+                if iso.detector in self.baseline_modifiers:
+                    m = modifier_function(model, iso.detector)
+                    iso.baseline.ys += m.nominal_value
+
+                    # this needs to incorporate filtering
+                    # use logic from MassSpecPersistenceSpec.get_filtered_baseline_uvalue
+                    # refactor into Isotope
+
+                    # nm = iso.baseline.ys.mean()
+                    # ns = iso.baseline.ys.std()
+                    md[iso.detector] = {
+                        # "modified_baseline": ufloat(
+                        #     nm + nominal_value(m), (ns**2 + std_dev(m) ** 2) ** 0.5
+                        # ),
+                        "modifier": m,
+                    }
+            self.debug(f"modified baselines {md}")
+            self.update_persister_spec(modified_baselines=md)
 
     # ===============================================================================
     # setup
@@ -1431,12 +1597,15 @@ class AutomatedRun(Loggable):
         return self._start_script(EXTRACTION)
 
     def start_measurement(self):
+        self.persister.insure_run()
         return self._start_script(MEASUREMENT)
 
-    def do_extraction(self):
+    def do_extraction(self, syn_extractor=None):
         self.debug("do extraction")
 
         self._persister_action("pre_extraction_save")
+
+        self.syn_extractor = syn_extractor
 
         self.info_color = EXTRACTION_COLOR
         script = self.extraction_script
@@ -1451,24 +1620,27 @@ class AutomatedRun(Loggable):
         queue = self.experiment_queue
         script.set_load_identifier(queue.load_name)
 
-        syn_extractor = None
+        self._syn_extraction_active = False
+        use_syn_extraction = False
         if script.syntax_ok(warn=False):
-            if self.use_syn_extraction and self.spec.syn_extraction:
-                p = os.path.join(
-                    paths.scripts_dir, "syn_extraction", self.spec.syn_extraction
+            if self.use_syn_extraction and self.spec.syn_extraction_script:
+
+                pp = self._make_script_name(
+                    self.spec.syn_extraction_script,
+                    root=os.path.join(paths.scripts_dir, "syn_extraction"),
+                    extension=".yaml",
                 )
-                p = add_extension(p, ".yaml")
-
+                p = os.path.join(paths.scripts_dir, "syn_extraction", pp)
+                self.debug(f"using syn_extracion file: {p}")
                 if os.path.isfile(p):
-                    from pychron.experiment.automated_run.syn_extraction import (
-                        SynExtractionCollector,
-                    )
-
-                    dur = script.calculate_estimated_duration(force=True)
-                    syn_extractor = SynExtractionCollector(
-                        arun=weakref.ref(self)(), path=p, extraction_duration=dur
-                    )
-                    syn_extractor.start()
+                    # dur = script.calculate_estimated_duration(force=True)
+                    # syn_extractor = SynExtractionCollector(
+                    #     arun=weakref.ref(self)(), path=p, extraction_duration=dur
+                    # )
+                    self.syn_extractor.arun = self
+                    self.syn_extractor.path = p
+                    self.syn_extractor.start()
+                    use_syn_extraction = True
                 else:
                     self.warning(
                         "Cannot start syn extraction collection. Configuration file does not exist. {}".format(
@@ -1485,15 +1657,18 @@ class AutomatedRun(Loggable):
             ex_result = False
             self.debug("extraction exception={}".format(e))
 
-        if ex_result:
-            if syn_extractor:
-                syn_extractor.stop()
+        if syn_extractor:
+            syn_extractor.stop()
 
+        if use_syn_extraction:
+            self._syn_extraction_active = True
+        if ex_result:
             # report the extraction results
             ach, req = script.output_achieved()
             self.info("Requested Output= {:0.3f}".format(req))
             self.info("Achieved Output=  {:0.3f}".format(ach))
 
+            cblob = script.get_cryo_response_blob()
             rblob = script.get_response_blob()
             oblob = script.get_output_blob()
             sblob = script.get_setpoint_blob()
@@ -1516,6 +1691,7 @@ class AutomatedRun(Loggable):
                 videos=videos,
                 extraction_positions=ext_pos,
                 extraction_context=extraction_context,
+                cryo_response_blob=cblob,
             )
 
             self._persister_save_action("post_extraction_save")
@@ -1527,8 +1703,6 @@ class AutomatedRun(Loggable):
             self._wait_for_min_ms_pumptime()
 
         else:
-            if syn_extractor:
-                syn_extractor.stop()
 
             self.do_post_equilibration()
             self.do_post_measurement()
@@ -1551,8 +1725,10 @@ class AutomatedRun(Loggable):
             self.warning("run is not alive")
             return
 
+        self.debug(f"do measurement script {script}")
         if script is None:
             script = self.measurement_script
+            self.debug(f"using measurement script {script}, {script.name}")
 
         if script is None:
             self.warning("no measurement script")
@@ -1594,8 +1770,10 @@ class AutomatedRun(Loggable):
             return True
         else:
             if use_post_on_fail:
-                self.do_post_equilibration()
-                self.do_post_measurement()
+                if not self._aborted:
+                    self.do_post_equilibration()
+                    self.do_post_measurement()
+
             self.finish()
 
             self.heading(
@@ -1640,7 +1818,6 @@ class AutomatedRun(Loggable):
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
-
         self.heading("Post Termination Started")
         if do_post_equilibration:
             self.do_post_equilibration()
@@ -1690,13 +1867,13 @@ anaylsis_type={}
         )
 
     def get_baselines(self):
+        ret = {}
         if self.isotope_group:
-            return {
+            ret = {
                 iso.name: (iso.detector, iso.baseline.uvalue)
                 for iso in self.isotope_group.values()
             }
-            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-            #              self.isotope_group.values()])
+        return ret
 
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
@@ -1761,7 +1938,6 @@ anaylsis_type={}
         return env
 
     def _start(self):
-
         # for testing only
         # self._get_environmentals()
 
@@ -1847,6 +2023,9 @@ anaylsis_type={}
 
         if self.measurement_script:
             self.measurement_script.reset(self)
+
+            self._setup_context(self.measurement_script)
+
             # set the interpolation path
             self.measurement_script.interpolation_path = ip
 
@@ -1890,6 +2069,9 @@ anaylsis_type={}
             fod = _get_filter_outlier_dict(i, "baseline")
             i.baseline.set_filtering(fod)
             self.debug("setting fod for {}= {}".format(i.detector, fod))
+
+    def update_persister_spec(self, **kw):
+        self._update_persister_spec(**kw)
 
     def _update_persister_spec(self, **kw):
         ps = self.persistence_spec
@@ -1955,14 +2137,23 @@ anaylsis_type={}
         else:
             self.heading("Post Equilibration Finished unsuccessfully")
 
-    def _generate_ic_mftable(self, detectors, refiso, peak_center_config, n):
+    def _generate_mftable(self, det_iso_pairs, peak_center_config, n):
         ret = True
         from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
 
         e = ICMFTableGenerator()
-        if not e.make_mftable(self, detectors, refiso, peak_center_config, n):
+        if not e.make_mftable(self, det_iso_pairs, peak_center_config, n):
             ret = False
         return ret
+
+    # def _generate_ic_mftable(self, detectors, refiso, peak_center_config, n):
+    #     ret = True
+    #     from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
+    #
+    #     e = ICMFTableGenerator()
+    #     if not e.make_mftable(self, detectors, refiso, peak_center_config, n):
+    #         ret = False
+    #     return ret
 
     def _add_system_conditionals(self):
         self.debug("add default conditionals")
@@ -2025,6 +2216,8 @@ anaylsis_type={}
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
+            if name == SYN_EXTRACTION:
+                continue
             setattr(self, "{}_script".format(name), self._load_script(name))
 
     def _get_default_fits_file(self):
@@ -2130,16 +2323,17 @@ anaylsis_type={}
 
         """
         self.debug("activate detectors")
+        p = self.plot_panel
 
-        create = True
+        create = not self._syn_extraction_active or p is None
         # if self.plot_panel is None:
         #     create = True
         # else:
         #     cd = set([d.name for d in self.plot_panel.detectors])
         #     ad = set(dets)
         #     create = cd - ad or ad - cd
-
-        p = self._new_plot_panel(self.plot_panel, stack_order="top_to_bottom")
+        if create:
+            p = self._new_plot_panel(stack_order="top_to_bottom")
 
         self._active_detectors = self._set_active_detectors(dets)
 
@@ -2152,9 +2346,10 @@ anaylsis_type={}
 
         self.debug("clear isotope group")
 
-        self.isotope_group.clear_isotopes()
-        self.isotope_group.clear_error_components()
-        self.isotope_group.clear_blanks()
+        if not self._syn_extraction_active:
+            self.isotope_group.clear_isotopes()
+            self.isotope_group.clear_error_components()
+            self.isotope_group.clear_blanks()
 
         cb = (
             False
@@ -2170,10 +2365,17 @@ anaylsis_type={}
         self._load_previous()
 
         # self.debug('load analysis view')
-        # p.analysis_view.load(self)
+        p.analysis_view.load(self)
         self.plot_panel = p
 
     def _load_previous(self):
+        # this is necessary for measuring the baseline before doing a peakhop or multicollect
+        if self._previous_loaded:
+            self.debug("previous blanks and baselines already loaded")
+            return
+
+        self._previous_loaded = True
+
         if not self.spec.analysis_type.startswith(
             "blank"
         ) and not self.spec.analysis_type.startswith("background"):
@@ -2187,14 +2389,14 @@ anaylsis_type={}
                 previous_blanks=blanks, previous_blank_runid=runid
             )
 
-        self.isotope_group.clear_baselines()
+        if not self._syn_extraction_active:
+            self.isotope_group.clear_baselines()
 
-        baselines = self.previous_baselines
-        for iso, v in baselines.items():
-            self.isotope_group.set_baseline(iso, v[0], v[1])
+            baselines = self.previous_baselines
+            for iso, v in baselines.items():
+                self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
-
         t = self.spec.conditionals
         self.debug("adding conditionals {}".format(t))
         if t:
@@ -2267,8 +2469,7 @@ anaylsis_type={}
     def _get_extraction_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
-    def _new_plot_panel(self, plot_panel, stack_order="bottom_to_top"):
-
+    def _new_plot_panel(self, stack_order="bottom_to_top"):
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
         if sample:
@@ -2302,7 +2503,6 @@ anaylsis_type={}
             valve = str(valve)
 
         if valve and not isinstance(valve, (tuple, list)):
-
             if "," in valve:
                 valve = [v.strip() for v in valve.split(",")]
             else:
@@ -2500,7 +2700,6 @@ anaylsis_type={}
                     items = list(items)
                     if len(items) > 1:
                         for det, items in groupby_key(items, key2):
-
                             items = list(items)
                             if len(items) > 1:
                                 for k, v in items:
@@ -2548,7 +2747,6 @@ anaylsis_type={}
                     )
                 )
                 if cnt >= fcnt:
-
                     try:
                         self.info("Saving run. Analysis did not complete successfully")
                         self.save()
@@ -2690,7 +2888,6 @@ anaylsis_type={}
         color,
         script=None,
     ):
-
         if script is None:
             script = self.measurement_script
 
@@ -2725,6 +2922,8 @@ anaylsis_type={}
             experiment_type=self.experiment_type,
             refresh_age=self.spec.analysis_type in ("unknown", "cocktail"),
         )
+
+        self._update_persister_spec(time_zero=starttime)
 
         m.set_starttime(starttime)
         if hasattr(self.spectrometer_manager.spectrometer, "trigger_acq"):
@@ -2819,7 +3018,6 @@ anaylsis_type={}
 
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
-
             idx = self._get_plot_id_by_ytitle(graph, k, iso)
 
             if idx is not None:
@@ -2935,7 +3133,6 @@ anaylsis_type={}
         script = None
         sname = getattr(self.script_info, "{}_script_name".format(name))
         if sname and sname != NULL_STR:
-            sname = self._make_script_name(sname)
             script = self._bootstrap_script(sname, name)
 
         return script
@@ -2968,7 +3165,6 @@ anaylsis_type={}
         from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
         sname = self.script_info.measurement_script_name
-        sname = self._make_script_name(sname)
 
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
@@ -2990,50 +3186,69 @@ anaylsis_type={}
 
             klass = QuaderaMeasurementPyScript
 
-        ms = klass(
-            root=paths.measurement_dir,
-            name=sname,
-            automated_run=self,
-            runner=self.runner,
-        )
-        return ms
+        return self._script_factory(paths.measurement_dir, sname, klass=klass)
 
     def _extraction_script_factory(self, klass=None):
-        ext = self._ext_factory(
+        return self._script_factory(
             paths.extraction_dir, self.script_info.extraction_script_name, klass=klass
         )
-        if ext is not None:
-            ext.automated_run = self
-        return ext
 
     def _post_measurement_script_factory(self):
-        return self._ext_factory(
-            paths.post_measurement_dir, self.script_info.post_measurement_script_name
+        from pychron.pyscripts.post_measurement_pyscript import PostMeasurementPyScript
+
+        return self._script_factory(
+            paths.post_measurement_dir,
+            self.script_info.post_measurement_script_name,
+            klass=PostMeasurementPyScript,
         )
 
     def _post_equilibration_script_factory(self):
-        return self._ext_factory(
+        return self._script_factory(
             paths.post_equilibration_dir,
             self.script_info.post_equilibration_script_name,
         )
 
-    def _ext_factory(self, root, file_name, klass=None):
-        file_name = self._make_script_name(file_name)
+    # def _ext_factory(self, root, file_name, klass=None):
+    #     file_name = self._make_script_name(file_name)
+    #     if os.path.isfile(os.path.join(root, file_name)):
+    #         if klass is None:
+    #             from pychron.pyscripts.extraction_line_pyscript import (
+    #                 ExtractionPyScript,
+    #             )
+    #
+    #             klass = ExtractionPyScript
+    #
+    #         obj = klass(root=root,
+    #                     automated_run=self,
+    #                     name=file_name, runner=self.runner)
+    #
+    #         return obj
+
+    def _script_factory(self, root, file_name, klass=None):
+        if klass is None:
+            from pychron.pyscripts.extraction_line_pyscript import (
+                ExtractionPyScript,
+            )
+
+            klass = ExtractionPyScript
+
+        file_name = self._make_script_name(file_name, root=root)
         if os.path.isfile(os.path.join(root, file_name)):
-            if klass is None:
-                from pychron.pyscripts.extraction_line_pyscript import (
-                    ExtractionPyScript,
-                )
-
-                klass = ExtractionPyScript
-
-            obj = klass(root=root, name=file_name, runner=self.runner)
+            obj = klass(
+                root=root, automated_run=self, name=file_name, runner=self.runner
+            )
 
             return obj
 
-    def _make_script_name(self, name):
-        name = "{}_{}".format(self.spec.mass_spectrometer.lower(), name)
-        return add_extension(name, ".py")
+    def _make_script_name(self, name, root=None, extension=".py"):
+        if root is None:
+            root = paths.scripts_dir
+        return resolve_script_name(
+            root,
+            name,
+            mass_spectrometer=self.spec.mass_spectrometer,
+            extension=extension,
+        )
 
     def _setup_context(self, script):
         """
@@ -3087,6 +3302,10 @@ anaylsis_type={}
         okinds = []
         bs = []
         for s in kinds:
+
+            if s is SYN_EXTRACTION:
+                continue
+
             sc = getattr(self, "{}_script".format(s))
             if sc is not None:
                 bs.append((sc.name, sc.toblob()))

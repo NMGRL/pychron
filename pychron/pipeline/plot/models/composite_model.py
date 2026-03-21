@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import copy
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
@@ -24,13 +25,17 @@ from pychron.pipeline.plot.panels.spectrum_panel import SpectrumPanel
 
 class CompositeModel(FigureModel):
     def _make_panel_groups(self):
+        # do to a quirk in how ArArFigure.build is handling columns we need to artifically double the fixed width
+        # for the options layout
+        specopts = copy.deepcopy(self.plot_options.spectrum_options)
+        specopts.layout.fixed_width *= 2
+
+        isoopts = copy.deepcopy(self.plot_options.isochron_options)
+        isoopts.layout.fixed_width *= 2
+
         gs = [
-            SpectrumPanel(
-                analyses=self.analyses, plot_options=self.plot_options.spectrum_options
-            ),
-            InverseIsochronPanel(
-                analyses=self.analyses, plot_options=self.plot_options.isochron_options
-            ),
+            SpectrumPanel(analyses=self.analyses, plot_options=specopts),
+            InverseIsochronPanel(analyses=self.analyses, plot_options=isoopts),
         ]
         return gs
 

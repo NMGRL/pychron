@@ -74,7 +74,6 @@ class FusionsDiodeManager(FusionsLaserManager, WatlowMixin, PyrometerMixin):
         if super(
             FusionsDiodeManager, self
         )._enable_hook():  # logic board sucessfully enabled
-
             # disable the temperature_controller unit a value is set
             self.temperature_controller.disable()
 
@@ -84,7 +83,6 @@ class FusionsDiodeManager(FusionsLaserManager, WatlowMixin, PyrometerMixin):
             return self.control_module_manager.enable()
 
     def _disable_hook(self):
-
         self.response_recorder.stop()
         self.temperature_controller.disable()
         self.control_module_manager.disable()
@@ -96,7 +94,6 @@ class FusionsDiodeManager(FusionsLaserManager, WatlowMixin, PyrometerMixin):
 
     def _try(self, obj, func, kw):
         try:
-
             obj = getattr(self, obj)
             func = getattr(obj, func)
             return func(**kw)

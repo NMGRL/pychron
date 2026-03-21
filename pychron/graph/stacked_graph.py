@@ -17,8 +17,8 @@
 
 # =============enthought library imports=======================
 
-from chaco.scatterplot import ScatterPlot
-from numpy import Inf
+from chaco.api import ScatterPlot
+from numpy import inf
 from traits.api import Bool, on_trait_change, Event, Int
 
 # =============local library imports  ==========================
@@ -50,8 +50,8 @@ class StackedGraph(Graph):
         return [("Rescale All Y", "rescale_all_y", {})]
 
     def rescale_all_y(self):
-        ymi = Inf
-        yma = -Inf
+        ymi = inf
+        yma = -inf
         for plot in self.plots:
             yma = max(yma, plot.value_range.high)
             ymi = min(ymi, plot.value_range.low)
@@ -105,19 +105,19 @@ class StackedGraph(Graph):
         return c
 
     def new_plot(self, **kw):
-
         if "title" in kw:
             if self._has_title:
                 kw.pop("title")
             self._has_title = True
 
         n = len(self.plotcontainer.components)
-        if n > 0:
-            if "resizable" not in kw:
-                kw["resizable"] = "h"
-            # kw['resizable'] = 'h'
-            if "bounds" not in kw:
-                kw["bounds"] = (1, self.panel_height)
+        # if n > 0:
+        if "resizable" not in kw:
+            kw["resizable"] = "h"
+        # kw['resizable'] = 'h'
+        if "bounds" not in kw:
+            # kw["bounds"] = (1, self.panel_height)
+            kw["resizable"] = kw.get("resizable", "hv")
 
         p = super(StackedGraph, self).new_plot(**kw)
         # p.value_axis.ensure_labels_bounded = True
@@ -131,8 +131,7 @@ class StackedGraph(Graph):
 
         self.set_paddings()
         self._bounds_changed(self.plotcontainer.bounds)
-        # p.fill_padding=True
-        # p.bgcolor='green'
+
         return p
 
     def set_paddings(self):
@@ -208,7 +207,7 @@ class StackedGraph(Graph):
 
                 if si.index is not obj:
                     if hasattr(si, "bind_id"):
-                        if si.bind_id == bind_id:
+                        if si.bind_id is not None and si.bind_id == bind_id:
                             si.index.suppress_update = True
                             si.index.metadata = obj.metadata
                             si.index.suppress_update = False

@@ -20,13 +20,13 @@ from __future__ import print_function
 
 import six
 from pyface.qt import QtGui
-from traits.api import Bool, Int, Color, Str
+from traits.api import Bool, Int, Str
 from traits.trait_errors import TraitError
-
+from pyface.ui_traits import PyfaceColor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.editor import Editor
 
 
 class _TextEditor(Editor):
@@ -120,7 +120,7 @@ class myTextEditor(BasicEditorFactory):
     wrap = Bool
     tab_width = Int
     editable = Bool(True)
-    bgcolor = Color
+    bgcolor = PyfaceColor
     fontsize = Int
     fontsize_name = Str
     fontname = "courier"

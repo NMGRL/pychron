@@ -80,7 +80,6 @@ class Credentials(Loggable):
 
     @classmethod
     def generate_hashed_password(cls, password, salt=None, use_hex=True):
-
         if use_hex:
             attr = "hex"
             func = "hexdigest"

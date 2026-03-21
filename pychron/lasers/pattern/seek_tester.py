@@ -137,7 +137,7 @@ class SeekTester(HasTraits):
         src = zeros((int(self.width * self.pxpermm), int(self.height * self.pxpermm)))
         radius = int(self.radius * self.pxpermm)
         y, x = ogrid[-radius:radius, -radius:radius]
-        index = x ** 2 + y ** 2 <= radius ** 2
+        index = x**2 + y**2 <= radius**2
 
         src[cy - radius : cy + radius, cx - radius : cx + radius][index] = 255
         return src

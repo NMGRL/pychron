@@ -236,7 +236,6 @@ class CSVNode(BaseCSVNode):
             return ans
 
         except (TypeError, ValueError) as e:
-
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
 
     def _analysis_factory(self, d):
@@ -622,7 +621,6 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
         st = None
         if updated:
-
             self.state.unknowns = unks
             self.unknowns = unks
             self.engine.run(

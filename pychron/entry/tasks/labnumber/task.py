@@ -163,7 +163,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.db.close_session()
 
     def _opened_hook(self):
-        self.db.create_session()
+        self.db.create_session(force=True)
 
     def _closed_hook(self):
         self.db.close_session()
@@ -424,7 +424,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         return LabnumbersPane(model=self.manager)
 
     def create_dock_panes(self):
-
         return [
             IrradiationPane(model=self.manager),
             ChronologyPane(model=self.manager),

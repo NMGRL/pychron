@@ -25,9 +25,9 @@ from pyface.qt import QtGui
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QMessageBox, QPrintDialog, QPrinter
 from pyface.qt.QtGui import QSizePolicy, QCheckBox
-from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
-from pyface.ui.qt4.dialog import Dialog
-from pyface.ui.qt4.window import Window
+from pyface.ui.qt.confirmation_dialog import ConfirmationDialog
+from pyface.ui.qt.dialog import Dialog
+from pyface.ui.qt.window import Window
 
 # ============= local library imports  ==========================
 from traits.api import Str

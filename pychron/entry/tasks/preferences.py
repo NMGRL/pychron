@@ -54,6 +54,7 @@ class IrradiationEntryPreferences(BasePreferencesHelper):
     allow_multiple_null_identifiers = Bool
     use_packet_for_default_identifier = Bool
     use_consecutive_identifiers = Bool
+    check_monitor_sample_project = Bool(True)
     mode = Enum(AR_AR, SIMPLE)
 
 
@@ -96,6 +97,11 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
                 tooltip="If unchecked partition monitors and unknowns when generated "
                 "identifiers, otherwise identifiers are generated as "
                 "a continuous sequence",
+            ),
+            Item(
+                "check_monitor_sample_project",
+                label="Validate Monitor Sample Project",
+                tooltip="Warn if monitor samples are not associated with the expected project",
             ),
             label="Irradiations",
             visible_when='mode=="Ar/Ar"',

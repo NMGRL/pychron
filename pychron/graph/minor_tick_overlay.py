@@ -63,7 +63,6 @@ class MinorTicksOverlay(AbstractOverlay):
                 s, e, s, e, (nt + 2) * -self.interval, use_endpoints=self.use_endpoints
             )
             for ti in ts:
-
                 if self.orientation == "v":
                     ti = round(c.map_screen([[ti, 0]])[0][0])
                     if self.placement == "normal":

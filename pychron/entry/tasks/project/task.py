@@ -29,9 +29,6 @@ class ProjectTask(BaseManagerTask):
     name = "Project Database"
     id = "pychron.entry.project.task"
 
-    def activated(self):
-        self.manager.activated()
-
     def create_central_pane(self):
         return ProjectPane(model=self.manager)
 

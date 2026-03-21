@@ -194,7 +194,6 @@ class MeasurementFitsSelectorView(Controller):
         return grp
 
     def traits_view(self):
-
         name_grp = HGroup(
             UItem("name", editor=myEnumEditor(name="available_names")),
             icon_button_editor("controller.duplicate_button", "duplicate"),

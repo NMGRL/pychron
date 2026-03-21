@@ -60,7 +60,7 @@ class ExtractionLineTask(BaseHardwareTask):
         return g
 
     def create_dock_panes(self):
-        self.wait_pane = WaitPane(model=self.manager.wait_group)
+        self.wait_pane = WaitPane(model=self.manager.wait_group, closable=True)
         panes = [
             GaugePane(model=self.manager),
             CryoPane(model=self.manager),

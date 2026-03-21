@@ -22,7 +22,7 @@ from pyface.qt.QtCore import Qt, QSize
 from pyface.qt.QtGui import QFont, QFontMetrics, QApplication
 from traits.api import Event, Callable, Bool
 from traitsui.editors.table_editor import TableEditor
-from traitsui.qt4.table_editor import TableView
+from traitsui.qt.table_editor import TableView
 
 
 # ============= standard library imports ========================
@@ -68,7 +68,7 @@ class myTableView(TableView):
 
     def sizeHintForColumn(self, column_index):
         try:
-            return super(myTableView, self).sizeHintForColumn(column_index)
+            return int(super(myTableView, self).sizeHintForColumn(column_index))
         except AttributeError:
             return 0
 

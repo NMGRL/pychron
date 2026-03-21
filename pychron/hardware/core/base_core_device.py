@@ -58,6 +58,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     _no_response_counter = 0
     _scheduler_name = None
 
+    def load_from_device(self):
+        pass
+
     def send_email_notification(self, message):
         if self.application:
             tm = self.application.get_service("pychron.social.emailer.Emailer")
@@ -96,7 +99,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         config = self.get_configuration()
         if config:
-
             if config.has_section("General"):
                 name = self.config_get(config, "General", "name", optional=True)
                 if name is not None:
@@ -243,7 +245,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         return random.randint(mi, ma) if globalv.communication_simulation else None
 
     def setup_scheduler(self, name=None):
-
         if self.application:
             if name is None:
                 name = self._scheduler_name
@@ -268,9 +269,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         check_type=None,
         break_val=None,
         verbose=True,
+        delay=None,
         **kw
     ):
-
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)
         else:
@@ -280,9 +281,10 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         for i in range(ntries + 1):
             resp = self._parse_response(self.ask(cmd, verbose=verbose))
             if verbose:
-                m = "repeat command {} response = {} len={} ".format(
-                    i + 1, resp, len(str(resp)) if resp is not None else None
-                )
+                resp = resp or ""
+                resp = resp.strip()
+                n = len(str(resp))
+                m = "repeat command {} response = {} len={} ".format(i + 1, resp, n)
                 self.debug(m)
 
             if break_val and resp == break_val:
@@ -295,6 +297,8 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 if resp == check_val:
                     break
                 else:
+                    if delay:
+                        time.sleep(delay)
                     continue
 
             if check_type is not None:

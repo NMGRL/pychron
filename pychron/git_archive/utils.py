@@ -149,20 +149,20 @@ def get_repo(repo):
 def fu(repo, text):
     for header in Diff.re_header.finditer(text):
         groups = header.groups()
-
-        a_path_fallback = groups[0]
-        b_path_fallback = groups[1]
+        # a_path_fallback = groups[0]
+        # b_path_fallback = groups[1]
         old_mode = groups[2]
         new_mode = groups[3]
-        rename_from = groups[4]
-        rename_to = groups[5]
+        # rename_from = groups[4]
+        # rename_to = groups[5]
         new_file_mode = groups[6]
         deleted_file_mode = groups[7]
-        a_blob_id = groups[8]
-        b_blob_id = groups[9]
-        b_mode = groups[10]
-        a_path = groups[11]
-        b_path = groups[12]
+        # copied_file_name = groups[8]
+        a_blob_id = groups[9]
+        b_blob_id = groups[10]
+        b_mode = groups[11]
+        a_path = groups[12]
+        b_path = groups[13]
 
         # print groups
         # print len(groups)
@@ -193,11 +193,18 @@ def fu(repo, text):
 
 
 if __name__ == "__main__":
-    repo = "/Users/ross/Pychron_dev/data/.dvc/experiments/J-Curve"
+    repo = "/Users/ross/PychronDev/data/.dvc/experiments/J-Curve"
     # for c in get_commits(repo, 'master', 'a-01/tag/-J-2562.tag.json', '--grep=^Update'):
     #     print c.hexsha, c.date, c.message
     # get_diff(repo, 'HEAD', '0ed461408fc8939909a907a73d2d991efc334eec')
     # get_diff(repo, '0ed461408fc8939909a907a73d2d991efc334eec', 'HEAD')
-    get_diff(repo, "HEAD~1", "HEAD")
+    repo = "/Users/ross/PychronDev/data/.dvc/repositories/GeometricProgression/.git"
+    a = "ce34b8861e558c60d0eeb13dc970b85a7e1a192e"
+    a = "7a41f191db9de477b85578e71bee994a30172f5a"
+
+    b = "a0a5b9232984f7b8425f173e80226584656f5a65"
+
+    p = "/Users/ross/PychronDev/data/.dvc/repositories/GeometricProgression/670/icfactors/24-03.icfa.json"
+    get_diff(repo, a, b, p)
 
 # ============= EOF =============================================

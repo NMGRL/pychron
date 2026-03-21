@@ -175,7 +175,6 @@ class FusionsUVManager(FusionsLaserManager):
         sm = self.stage_manager
 
         if mode == "smooth":
-
             atl.set_burst_mode(False)
 
             sc = sm.stage_controller
@@ -323,7 +322,6 @@ class FusionsUVManager(FusionsLaserManager):
         return resp
 
     def _add_reference_mark(self):
-
         if not self.enabled:
             self.warning_dialog("Please enable the laser and wait for it to warm up")
             return

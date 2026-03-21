@@ -21,8 +21,8 @@ from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 # ============= enthought library imports =======================
-from traits.api import List, Button, Any, Str, Enum, Color, BaseStr
-from traitsui.api import View, VGroup, UItem, HGroup, Item
+from traits.api import List, Button, Any, Str, Enum, BaseStr
+from traitsui.api import View, VGroup, UItem, HGroup, Item, Color
 from traitsui.list_str_adapter import ListStrAdapter
 
 from pychron.core.ui.custom_label_editor import CustomLabel

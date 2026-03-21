@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Instance, Button, Property, Color
+from pyface.ui_traits import PyfaceColor
+from traits.api import Instance, Button, Property
 
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.ui.preference_binding import bind_preference
@@ -124,7 +125,7 @@ class AnalysisBrowserModel(BrowserModel):
         for analysis_type in ANALYSIS_MAPPING_UNDERSCORE_KEY.keys():
             key = "{}_color".format(analysis_type)
             if not hasattr(adapter, key):
-                adapter.add_trait(key, Color)
+                adapter.add_trait(key, PyfaceColor)
             bind_preference(adapter, key, "{}.{}_color".format(prefid, analysis_type))
 
         return at

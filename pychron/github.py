@@ -25,6 +25,7 @@ import requests
 # ============= local library imports  ==========================
 from pychron import json
 from pychron.core.helpers.datetime_tools import format_iso_datetime
+from pychron.globals import globalv
 
 GITHUB_API_URL = "https://api.github.com"
 
@@ -42,7 +43,7 @@ def get_list(cmd, attr="name", headers=None):
     with requests.Session() as s:
 
         def _rget(ci):
-            r = s.get(ci, headers=headers)
+            r = s.get(ci, headers=headers, verify=globalv.cert_file)
 
             result = r.json()
             if attr:
@@ -54,7 +55,10 @@ def get_list(cmd, attr="name", headers=None):
                 return result
 
             if attr:
-                dd = [di[attr] for di in dd]
+                try:
+                    dd = [di[attr] for di in dd]
+                except TypeError:
+                    pass
 
             result.extend(dd)
             return result
@@ -79,17 +83,17 @@ def get_organization_repositiories(name, attr="name"):
     return get_list(cmd, attr=attr)
 
 
-def create_organization_repository(org, name, usr, pwd, **kw):
-    cmd = "/orgs/{}/repos".format(org)
-    cmd = make_request(cmd)
-    payload = {"name": name}
-    payload.update(**kw)
-    auth = base64.encodestring("{}:{}".format(usr, pwd)).replace("\n", "")
-    headers = {"Authorization": "Basic {}".format(auth)}
-    r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-    print(cmd, payload, usr, pwd)
-    print(r)
-    return r
+# def create_organization_repository(org, name, usr, pwd, **kw):
+#     cmd = "/orgs/{}/repos".format(org)
+#     cmd = make_request(cmd)
+#     payload = {"name": name}
+#     payload.update(**kw)
+#     auth = base64.encodestring("{}:{}".format(usr, pwd)).replace("\n", "")
+#     headers = {"Authorization": "Basic {}".format(auth)}
+#     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+#     print(cmd, payload, usr, pwd)
+#     print(r)
+#     return r
 
 
 class GithubObject(object):
@@ -143,7 +147,6 @@ class Organization(GithubObject):
         return [self._repo_factory(ri, attributes) for ri in self.get_repos()]
 
     def get_repos(self):
-
         cmd = "/orgs/{}/repos".format(self._name)
         r = get_list(cmd, attr=None, headers=self._make_headers())
 
@@ -155,14 +158,14 @@ class Organization(GithubObject):
     def has_repo(self, name):
         return name in self.repo_names
 
-    def create_repo(self, name, usr, pwd, **payload):
-        return create_organization_repository(self._name, name, usr, pwd, **payload)
-        # cmd = make_request(self.base_cmd)
-        # payload['name'] = name
-        #
-        # headers = self._make_headers(auth=True)
-        # r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-        # self._process_post(r)
+    # def create_repo(self, name, usr, pwd, **payload):
+    #    return create_organization_repository(self._name, name, usr, pwd, **payload)
+    # cmd = make_request(self.base_cmd)
+    # payload['name'] = name
+    #
+    # headers = self._make_headers(auth=True)
+    # r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+    # self._process_post(r)
 
     def _repo_factory(self, ri, attributes):
         repo = RepositoryRecord()

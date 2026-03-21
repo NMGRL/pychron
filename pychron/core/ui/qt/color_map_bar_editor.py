@@ -21,7 +21,7 @@ from chaco.default_colormaps import color_map_dict, color_map_name_dict
 from pyface.qt.QtGui import QPainter, QColor, QFrame
 from traits.api import Float, Int, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from numpy import array
 
 
@@ -60,12 +60,18 @@ class Bar(QFrame):
         """
         if self.scale == "power":
             N = 1 / float(self.color_scalar)
-            A = 1 / self.high ** N
-            nv = A * v ** N
+            A = 1 / self.high**N
+            nv = A * v**N
         else:
             nv = min(1, max(0, (v - self.low) / (self.high - self.low)))
 
-        vs = self.cmap.map_screen(array([nv,]))[
+        vs = self.cmap.map_screen(
+            array(
+                [
+                    nv,
+                ]
+            )
+        )[
             0
         ][:3]
         self.value = [x * 255 for x in vs]

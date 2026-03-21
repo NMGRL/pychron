@@ -20,13 +20,11 @@ from six.moves import range
 from six.moves import zip
 
 from pychron.core.ui import set_qt
-
-set_qt()
 # =============enthought library imports=======================
 from pyface.timer.api import do_after as do_after_timer
 
 # =============standard library imports ========================
-from numpy import hstack, Inf
+from numpy import hstack, inf
 import time
 
 # =============local library imports  ==========================
@@ -42,7 +40,6 @@ def time_generator(start):
     yt = start
     prev_time = 0
     while 1:
-
         current_time = time.time()
         if prev_time != 0:
             interval = current_time - prev_time
@@ -108,8 +105,8 @@ class StreamGraph(Graph):
 
         self.scan_widths.append(sw)
         self.data_limits.append(dl)
-        self.cur_min.append(Inf)
-        self.cur_max.append(-Inf)
+        self.cur_min.append(inf)
+        self.cur_max.append(-inf)
 
         self.track_y_max.append(True)
         self.track_y_min.append(True)
@@ -168,7 +165,6 @@ class StreamGraph(Graph):
         self.set_x_limits(max_=ma, min_=mi, plotid=plotid)
 
     def record(self, y, x=None, series=0, plotid=0, track_x=True, track_y=True):
-
         xn, yn = self.series[plotid][series]
 
         plot = self.plots[plotid]
@@ -193,7 +189,6 @@ class StreamGraph(Graph):
             self._set_xlimits(nx, plotid)
 
         if track_y and (self.track_y_min[plotid] or self.track_y_max[plotid]):
-
             if not self.track_y_max[plotid]:
                 ma = None
             else:
@@ -234,9 +229,9 @@ class StreamGraph(Graph):
         ma = max(ys)
         mi = min(ys)
         if ma < self.cur_max[plotid]:
-            self.cur_max[plotid] = -Inf
+            self.cur_max[plotid] = -inf
         if mi > self.cur_min[plotid]:
-            self.cur_min[plotid] = Inf
+            self.cur_min[plotid] = inf
 
         self._set_xlimits(x, plotid=plotid)
         return x

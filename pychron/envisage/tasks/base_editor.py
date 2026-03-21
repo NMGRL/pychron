@@ -63,7 +63,6 @@ try:
             self.prepare_destroy()
             super().destroy()
 
-
 except TypeError:
     # documentation auto doc hack
     class BaseTraitsEditor:

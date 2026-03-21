@@ -29,6 +29,7 @@ from pychron.canvas.canvas2D.scene.primitives.connections import (
     Tee,
     Fork,
     Connection,
+    Cross,
 )
 from pychron.canvas.canvas2D.scene.primitives.primitives import ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
@@ -42,6 +43,15 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.core.yaml import yload
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.hardware.core.i_core_device import ICoreDevice
+
+
+def extract_name(elem):
+    if isinstance(elem, (str, int)):
+        name = str(elem).strip()
+    else:
+        name = str(elem["name"]).strip()
+
+    return name
 
 
 class YAMLLoader(BaseLoader):
@@ -96,7 +106,7 @@ class YAMLLoader(BaseLoader):
             pass
 
         for v in self._yd.get("valve") or []:
-            key = v["name"].strip()
+            key = str(v["name"]).strip()
             # x, y = self._get_floats(v, 'translation')
             x, y = self._get_translation(v)
             w, h = self._get_floats(v, "dimension", default=self._valve_dimension)
@@ -144,7 +154,16 @@ class YAMLLoader(BaseLoader):
             if vv is not None:
                 desc = vv.find("description")
                 desc = desc.text.strip() if desc is not None else ""
-            v = ManualSwitch(x + ox, y + oy, display_name=desc, name=key)
+
+            w, h = self._get_floats(mv, "dimension", default=self._valve_dimension)
+            v = ManualSwitch(
+                x + ox,
+                y + oy,
+                display_name=desc,
+                name=key,
+                width=w,
+                height=h,
+            )
             scene.add_item(v, layer=1)
             ndict[key] = v
 
@@ -152,7 +171,7 @@ class YAMLLoader(BaseLoader):
 
     def load_pipettes(self, scene):
         origin = self._origin
-        c = self._color_dict.get("pipette", (204, 204, 204))
+        c = self._color_dict.get("pipette", (0.8, 0.8, 0.8, 1))
         ox, oy = origin
         for p in self._yd.get("pipette") or []:
             rect = self._new_rectangle(scene, p, c, origin=origin, type_tag="pipette")
@@ -185,6 +204,9 @@ class YAMLLoader(BaseLoader):
             for conn in self._yd.get(tag, []):
                 self._new_connection(scene, conn, orientation_default=od)
 
+        for i, conn in enumerate(self._yd.get("cross_connection", [])):
+            self._new_cross(scene, conn)
+
         for i, conn in enumerate(self._yd.get("elbow", [])):
             l = self._new_connection(scene, conn, Elbow)
             corner = conn.get("corner", "ul")
@@ -200,6 +222,100 @@ class YAMLLoader(BaseLoader):
         pass
 
     # private
+    def _new_cross(self, scene, conn):
+        left = conn.get("left")
+        right = conn.get("right")
+        top = conn.get("top")
+        bot = conn.get("bottom")
+
+        lname = extract_name(left)
+        rname = extract_name(right)
+        tname = extract_name(top)
+        bname = extract_name(bot)
+
+        key = "_".join((lname, rname, tname, bname))
+        dim = float(conn.get("dimension", self._connection_dimension))
+
+        cross = Cross(0, 0, default_color=(0.8, 0.8, 0.8, 1), name=key, width=dim)
+
+        for key, tag in (
+            (lname, "left"),
+            (rname, "right"),
+            (tname, "top"),
+            (bname, "bottom"),
+        ):
+            item = scene.get_item(key)
+            if item is not None:
+                item.connections.append((tag, cross))
+
+        # lf = scene.get_item(lname)
+        # rt = scene.get_item(rname)
+        # tp = scene.get_item(tname)
+        # bt = scene.get_item(bname)
+        #
+        # lf.connections.append(("left", cross))
+        # rt.connections.append(("right", cross))
+        # tp.connections.append(("top", cross))
+        # bt.connections.append(("bottom", cross))
+
+        def get_xy(item, elem):
+            ret = 0, 0
+            if item:
+                default = item.width / 2.0, item.height / 2.0
+                ox, oy, txt = get_offset(elem, default=default)
+                ret = item.x + ox, item.y + oy
+            return ret
+
+        args = []
+        for sname, obj in ((lname, left), (rname, right), (tname, top), (bname, bot)):
+            x, y = get_xy(scene.get_item(sname), obj)
+            args.append(x)
+            args.append(y)
+        # lx, ly = get_xy(sc, left)
+        # rx, ry = get_xy(rt, right)
+        # tx, ty = get_xy(tp, top)
+        # bx, by = get_xy(bt, bot)
+        # cross.set_points(lx, ly, rx, ry, tx, ty, bx, by)
+        cross.set_points(*args)
+
+        scene.add_item(cross, layer=0)
+
+    def _new_fork(self, scene, klass, conn):
+        left = conn.get("left")
+        right = conn.get("right")
+        mid = conn.get("mid")
+
+        lname = extract_name(left)
+        mname = extract_name(mid)
+        rname = extract_name(right)
+
+        key = "{}-{}-{}".format(lname, mname, rname)
+
+        dim = float(conn.get("dimension", self._connection_dimension))
+
+        # if dim is not None:
+        #     height = float(dim.strip())
+        # klass = BorderLine
+        tt = klass(0, 0, default_color=(0.8, 0.8, 0.8, 1), name=key, width=dim)
+
+        lf = scene.get_item(lname)
+        rt = scene.get_item(rname)
+        mm = scene.get_item(mname)
+        lf.connections.append(("left", tt))
+        rt.connections.append(("right", tt))
+        mm.connections.append(("mid", tt))
+
+        def get_xy(item, elem):
+            default = item.width / 2.0, item.height / 2.0
+            ox, oy, txt = get_offset(elem, default=default)
+            return item.x + ox, item.y + oy
+
+        lx, ly = get_xy(lf, left)
+        rx, ry = get_xy(rt, right)
+        mx, my = get_xy(mm, mid)
+        tt.set_points(lx, ly, rx, ry, mx, my)
+        scene.add_item(tt, layer=0)
+
     def _new_rectangle(
         self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
     ):
@@ -234,7 +350,6 @@ class YAMLLoader(BaseLoader):
                 c = cobj.default_color
             else:
                 c = colorify(c)
-
         else:
             c = make_color(c)
 
@@ -250,6 +365,7 @@ class YAMLLoader(BaseLoader):
             default_color=c,
             type_tag=type_tag,
             fill=fill,
+            use_symbol=elem.get("use_symbol", False),
         )
         font = elem.get("font")
         if font is not None:
@@ -276,8 +392,9 @@ class YAMLLoader(BaseLoader):
         start = conn.get("start")
         end = conn.get("end")
 
-        skey = start["name"].strip()
-        ekey = end["name"].strip()
+        skey = extract_name(start)
+        ekey = extract_name(end)
+
         key = "{}_{}".format(skey, ekey)
 
         orient = conn.get("orientation")
@@ -310,6 +427,7 @@ class YAMLLoader(BaseLoader):
         elif orient == "horizontal":
             y1 = y
 
+        dimension = float(conn.get("dimension", self._connection_dimension))
         connection = klass(
             (x, y),
             (x1, y1),
@@ -318,9 +436,9 @@ class YAMLLoader(BaseLoader):
             end=ekey,
             start_offset=start_offset,
             end_offset=end_offset,
-            default_color=(204, 204, 204),
+            default_color=(0.8, 0.8, 0.8, 1),
             name=key,
-            width=10,
+            width=dimension,
         )
 
         if sanchor:

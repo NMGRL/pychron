@@ -27,11 +27,10 @@ from traits.api import (
     HasTraits,
     Button,
     Int,
-    Color,
     Bool,
     on_trait_change,
 )
-from traitsui.api import HGroup, Item, View, UItem
+from traitsui.api import HGroup, Item, View, UItem, Color
 from traitsui.editors.api import EnumEditor
 from traitsui.item import spring
 

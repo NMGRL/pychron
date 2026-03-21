@@ -51,7 +51,6 @@ class Radial(BaseArArFigure):
             g.set_y_limits(l, h, pad="0.1", plotid=i)
 
     def _plot_radial(self, po, plot, pid):
-
         zs = array([nominal_value(a.uage) for a in self.analyses])
         es = array([std_dev(a.uage) for a in self.analyses])
 

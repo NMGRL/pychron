@@ -47,10 +47,20 @@ class PychronGPActuator(GPActuator, ClientMixin):
         return self.ask(cmd, verbose=verbose)
 
     @trim
+    def get_pipette_count(self, name, verbose=False):
+        cmd = "GetPipetteCount {}".format(name)
+        return self.ask(cmd, verbose=verbose)
+
+    @trim
+    def get_pipette_counts(self, verbose=False):
+        cmd = "GetPipetteCounts"
+        return self.ask(cmd, verbose=verbose)
+
+    @trim
     def get_state_word(self, verbose=False):
         cmd = (
             "GetStateWord"
-            if os.getenv("PYCHRON_VALVE_VERSION", 0) == 1
+            if os.getenv("PYCHRON_VALVE_VERSION", 0) == "1"
             else "GetValveStates"
         )
         return self.ask(cmd, verbose=verbose)
@@ -59,7 +69,7 @@ class PychronGPActuator(GPActuator, ClientMixin):
     def get_lock_word(self, verbose=False):
         cmd = (
             "GetLockWord"
-            if os.getenv("PYCHRON_VALVE_VERSION", 0) == 1
+            if os.getenv("PYCHRON_VALVE_VERSION", 0) == "1"
             else "GetValveLockStates"
         )
         return self.ask(cmd, verbose=verbose)

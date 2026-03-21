@@ -178,7 +178,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ("T_o Offset", "collection_time_zero_offset"),
         ("Measurement", "measurement_script"),
         ("Conditionals", "conditionals"),
-        ("SynExtraction", "syn_extraction"),
+        ("SynExtraction", "syn_extraction_script"),
         ("CDDWarm", USE_CDD_WARMING),
         ("Post Eq.", "post_equilibration_script"),
         ("Post Meas.", "post_measurement_script"),
@@ -286,7 +286,6 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             elif item.end_after:
                 color = END_AFTER_COLOR
             elif self.use_analysis_type_colors:
-
                 atype = item.analysis_type
                 if atype.startswith("blank"):
                     atype = "blank"
@@ -303,7 +302,6 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_AutomatedRunSpec_menu(self):
         item = self.item
         if item.state in ("success", "truncated"):
-
             evo_actions = [
                 Action(name="Show All", action="show_evolutions"),
                 Action(name="Show All w/Equilibration", action="show_evolutions_w_eq"),
@@ -348,11 +346,11 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         at = self.item.analysis_type
         p = self.item.position
 
-        if at == BLANK_UNKNOWN:
-            if "," not in p:
-                p = ""
-
-        elif at not in (UNKNOWN, DEGAS):
+        # if at == BLANK_UNKNOWN:
+        #     if "," not in p:
+        #         p = ""
+        #
+        if at not in (UNKNOWN, DEGAS, BLANK_UNKNOWN):
             p = ""
 
         return p

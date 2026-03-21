@@ -17,7 +17,7 @@ from operator import attrgetter
 from numpy import array, argmax, delete
 from numpy.random import normal
 from scipy.stats import shapiro, skew, norm, ttest_rel
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value
 
 from pychron.core.stats import calculate_mswd, validate_mswd, calculate_weighted_mean
 from pychron.pychron_constants import (
@@ -30,7 +30,7 @@ from pychron.pychron_constants import (
 
 
 def age_errors(ais):
-    xs = [ai.age for ai in ais]
+    xs = [nominal_value(ai.age) for ai in ais]
     es = [ai.age_err for ai in ais]
 
     return array(xs), array(es)
@@ -221,9 +221,7 @@ def plot(s, mu, sigma, um3, um2):
     count, bins, ignored = plt.hist(s, 30, density=True)
     plt.plot(
         bins,
-        1
-        / (sigma * np.sqrt(2 * np.pi))
-        * np.exp(-((bins - mu) ** 2) / (2 * sigma ** 2)),
+        1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-((bins - mu) ** 2) / (2 * sigma**2)),
         linewidth=2,
         color="r",
     )

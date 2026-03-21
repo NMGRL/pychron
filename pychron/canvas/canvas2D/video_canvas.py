@@ -29,7 +29,7 @@ class VideoCanvas(SceneCanvas):
     video = Any
     padding = 0
     closed_event = Event
-    fps = Int(24)
+    fps = Int(5)
     video_underlay = Instance(VideoUnderlay)
 
     def __init__(self, *args, **kw):
@@ -64,6 +64,17 @@ class VideoCanvas(SceneCanvas):
 
         if self.video:
             self.fps = self.video.fps
+
+    def shift_left(self, px=1):
+        ox, oy = self.video_underlay.offset
+        self.video_underlay.offset = (ox - px, oy)
+
+    def shift_right(self, px=1):
+        ox, oy = self.video_underlay.offset
+        self.video_underlay.offset = (ox + px, oy)
+
+    def set_offset(self, x):
+        self.video_underlay.offset = (x, 0)
 
     def close_video(self):
         self.closed_event = True

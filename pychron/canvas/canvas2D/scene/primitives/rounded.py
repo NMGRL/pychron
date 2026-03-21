@@ -18,11 +18,10 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import math
-from numpy import array
-from traits.traits import Color
+
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
-from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
+from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow, Cross
 from pychron.canvas.canvas2D.scene.primitives.primitives import (
     Rectangle,
     Bordered,
@@ -50,8 +49,10 @@ def rounded_rect(gc, x, y, width, height, corner_radius):
         )
         gc.arc_to(x, y + height, x, y, corner_radius)
         gc.arc_to(x, y, x + width + corner_radius, y, corner_radius)
-        gc.draw_path()
-
+        try:
+            gc.draw_path()
+        except OverflowError:
+            pass
 
 # class Stop:
 #     def __init__(self, idx, r,g,b,a):
@@ -98,7 +99,6 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
     def _render_border(self, gc, x, y, width, height, use_border_gaps=True):
         if self.use_border:
-
             corner_radius = self.corner_radius
             with gc:
                 gc.set_line_width(self.border_width)
@@ -113,89 +113,23 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                 rounded_rect(gc, x, y, width, height, corner_radius)
 
             if self.use_border_gaps and use_border_gaps:
-                # from pychron.canvas.canvas2D.scene.primitives.connections import Fork, Tee
+                # with gc:
+                for t, c in self.connections:
+                    cw4 = c.width / 2
+                    with gc:
+                        gc.set_line_width(self.border_width + 1)
+                        if isinstance(c, (BorderLine, Tee, Elbow, Cross)):
+                            c.render_border_gaps(
+                                gc, t, x, y, self.x, self.y, width, height, cw4
+                            )
 
-                with gc:
-                    for t, c in self.connections:
-                        with gc:
-                            w2 = self.border_width
-                            gc.set_line_width(self.border_width + 1)
-                            if isinstance(c, Elbow):
-                                p1, p2 = c.start_point, c.end_point
+                        elif isinstance(c, Fork):
+                            yy = y if c.left.y < self.y else y + height
+                            mx = c.get_midx()
+                            gc.move_to(mx - cw4, yy)
+                            gc.line_to(mx + cw4, yy)
 
-                                if p1.y < p2.y:
-                                    p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x - 5, y + height)
-                                    gc.line_to(p1x + 5, y + height)
-
-                                else:
-                                    if c.corner == "ll":
-                                        p1x, p1y = p1.get_xy()
-                                        gc.move_to(p1x - 5, p1y)
-                                        gc.line_to(p1x + 5, p1y)
-
-                                    else:
-                                        p2x, p2y = p2.get_xy()
-                                        xx = x
-
-                                        if p1.x >= self.x:
-                                            xx = x + width
-                                        gc.move_to(xx, p2y - 5)
-                                        gc.line_to(xx, p2y + 5)
-
-                            elif isinstance(c, BorderLine):
-                                w2 = c.width / 2
-                                p1, p2 = c.start_point, c.end_point
-                                p2x, p2y = p2.get_xy()
-                                if p1.x == p2.x:
-                                    yy = y
-                                    if p1.y >= self.y:
-                                        if p1.y - self.y != 1:
-                                            yy = y + height
-
-                                    p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x - w2, yy)
-                                    gc.line_to(p1x + w2, yy)
-                                else:
-                                    xx = x
-
-                                    if p1.x >= self.x:
-                                        xx = x + width
-                                    gc.move_to(xx, p2y - w2)
-                                    gc.line_to(xx, p2y + w2)
-
-                            elif isinstance(c, Tee):
-
-                                if t == "mid":
-                                    # tee is vertical
-                                    if abs(c.left.x - c.right.x) <= 1:
-                                        xx = x if c.left.x < self.x else x + width
-                                        yy = y + height / 2
-                                        gc.move_to(xx, yy - w2)
-                                        gc.line_to(xx, yy + w2)
-                                    else:
-                                        mx = c.get_midx()
-                                        yy = y if c.left.y < self.y else y + height
-                                        gc.move_to(mx - w2, yy)
-                                        gc.line_to(mx + w2, yy)
-                                else:
-                                    gc.set_line_width(self.border_width + 2)
-                                    # gc.set_stroke_color((1,0,0))
-                                    if t == "left":
-                                        xx, yy = c.left.get_xy()
-                                        xx += 2.5
-                                    else:
-                                        xx, yy = c.right.get_xy()
-
-                                    gc.move_to(xx, yy - w2)
-                                    gc.line_to(xx, yy + w2)
-                            elif isinstance(c, Fork):
-                                yy = y if c.left.y < self.y else y + height
-                                mx = c.get_midx()
-                                gc.move_to(mx - w2, yy)
-                                gc.line_to(mx + w2, yy)
-
-                            gc.draw_path()
+                        gc.draw_path()
 
 
 class Spectrometer(RoundedRectangle):
@@ -238,7 +172,6 @@ class CircleStage(Connectable, Bordered):
                 self._render_name(gc, x, y, width, height)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
-
         tw, th, _, _ = gc.get_full_text_extent(txt)
         x = x - tw / 2.0
         y = y - th / 2.0
@@ -285,19 +218,19 @@ class CircleStage(Connectable, Bordered):
 
                     dx = p2x - p1x
                     dy = p2y - p1y
-                    dr = (dx ** 2 + dy ** 2) ** 0.5
+                    dr = (dx**2 + dy**2) ** 0.5
                     D = p1x * p2y - p2x * p1y
 
-                    ss = (r ** 2 * dr ** 2 - D ** 2) ** 0.5
+                    ss = (r**2 * dr**2 - D**2) ** 0.5
                     plus_x = D * dy + sgn(dy) * dx * ss
                     minus_x = D * dy - sgn(dy) * dx * ss
 
                     plus_y = -D * dx + abs(dy) * ss
                     minus_y = -D * dx - abs(dy) * ss
-                    plus_x /= dr ** 2
-                    plus_y /= dr ** 2
-                    minus_x /= dr ** 2
-                    minus_y /= dr ** 2
+                    plus_x /= dr**2
+                    plus_y /= dr**2
+                    minus_x /= dr**2
+                    minus_y /= dr**2
 
                     if p2y > p1y:
                         if p2x > p1x:

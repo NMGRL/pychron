@@ -88,7 +88,6 @@ class BaseDataCanvas(DataView):
 
             self.add(self.plot)
         else:
-
             datax = self.plot.index.get_data()
             datay = self.plot.value.get_data()
             nx = hstack((datax, [x]))
@@ -154,6 +153,11 @@ class BaseDataCanvas(DataView):
 
         self.x_grid.visible = self.show_grids
         self.y_grid.visible = self.show_grids
+
+    @on_trait_change("show_axes")
+    def _update_show_axes(self):
+        self.value_axis.visible = self.show_axes
+        self.index_axis.visible = self.show_axes
 
     @on_trait_change("view_x_range")
     def _update_xrange(self):

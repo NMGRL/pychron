@@ -19,7 +19,16 @@ from __future__ import absolute_import
 import math
 
 import numpy as np
-from traits.api import HasTraits, Str, Float, on_trait_change, Instance, Enum, String
+from traits.api import (
+    HasTraits,
+    Str,
+    Float,
+    on_trait_change,
+    Instance,
+    Enum,
+    String,
+    List,
+)
 from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.core.ui.enum_editor import myEnumEditor
@@ -61,7 +70,7 @@ class Index(HasTraits):
         e39 = powerlaw(p, n39)
         e40 = powerlaw(p, n40) * e40_scalar
 
-        es = (e39 ** 2 + e40 ** 2) ** 0.5
+        es = (e39**2 + e40**2) ** 0.5
         #        es = age * 1e3 * es
         #        es = 0.2 * nys ** (-0.5)
 
@@ -129,7 +138,7 @@ class VolumeIndex(Index):
             if self.shape == "circle":
                 v = math.pi * (d / 2.0) ** 2 * depth
             else:
-                v = d ** 2 * depth
+                v = d**2 * depth
 
             m = rho * v
             # convert mass to mg 1e6 mg in 1 kg
@@ -147,7 +156,7 @@ class VolumeIndex(Index):
 
 class IndexSelector(HasTraits):
     name = String("Weight")
-    names = ["Volume", "Weight"]
+    names = List(["Volume", "Weight"])
 
     def traits_view(self):
         v = View(Item("name", editor=myEnumEditor(name="names")))
@@ -241,7 +250,7 @@ class SignalCalculator(HasTraits):
         g.new_plot(
             xtitle="weight (mg)",
             ytitle="40Ar* (fA)",
-            padding=[60, 20, 60, 60]
+            padding=[60, 20, 60, 60],
             #                   padding=60
         )
 

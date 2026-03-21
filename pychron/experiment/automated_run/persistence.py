@@ -20,7 +20,7 @@ import math
 import os
 import time
 
-from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
+from traits.api import Instance, Bool, Interface, provides, Str, Float, Int
 from xlwt import Workbook, struct
 
 from pychron.core.helpers.datetime_tools import get_datetime
@@ -141,7 +141,7 @@ class ExcelPersister(BasePersister):
     #     """
     #     self.info('pre measurement save')
 
-    def post_measurement_save(self):
+    def post_measurement_save(self, **kw):
         if DEBUG:
             self.debug("Not measurement saving to xls")
             return
@@ -158,7 +158,6 @@ class ExcelPersister(BasePersister):
 
     def _save_isotopes(self, sh):
         for i, (k, iso) in enumerate(self.per_spec.isotope_group.items()):
-
             sh.write(0, i, "{} time".format(k))
             sh.write(0, i + 1, "{} intensity".format(k))
 
@@ -214,13 +213,13 @@ class AutomatedRunPersister(BasePersister):
     """
     Save automated run data to file and database(s)
 
-    #. save meta data to the local_lab database. This keeps are local record of all analyses run on the local system
+    #. save meta data to the local_lab database. This keeps a local record of all analyses run on the local system
     #. save data to an HDF5 file using a ``H5DataManager``
     #. use the ``Datahub`` to save data to databases
 
     """
 
-    dbexperiment_identifier = Long
+    dbexperiment_identifier = Int
     # local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance("pychron.experiment.datahub.Datahub")
 
@@ -268,6 +267,12 @@ class AutomatedRunPersister(BasePersister):
             to_bool,
         )
 
+    def insure_run(self):
+        """
+        save the analysis to the local lab db now before the run has actually executed
+        """
+        self._local_db_save()
+
     # ===============================================================================
     # data writing
     # ===============================================================================
@@ -279,7 +284,6 @@ class AutomatedRunPersister(BasePersister):
         """
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
-
             dm.new_group("peak_centers")
             for result in pc.get_results():
                 tab = dm.new_table("/peak_centers", result.detector)
@@ -334,11 +338,12 @@ class AutomatedRunPersister(BasePersister):
                         nrow.append()
                         t.flush()
                 except AttributeError as e:
-                    self.debug(
-                        "error: {} group:{} det:{} iso:{}".format(
-                            e, grpname, k, det.isotope
+                    if det.isotope and grpname and k:
+                        self.debug(
+                            "error: {} group:{} det:{} iso:{}".format(
+                                e, grpname, k, det.isotope
+                            )
                         )
-                    )
 
         return write_data
 
@@ -454,7 +459,7 @@ class AutomatedRunPersister(BasePersister):
 
         dm.close_file()
 
-    def post_measurement_save(self, save_local=True):
+    def post_measurement_save(self, save_local=True, **kw):
         """
         check for runid conflicts. automatically update runid if conflict
 
@@ -610,7 +615,6 @@ class AutomatedRunPersister(BasePersister):
 
     # private
     def _save_detector_ic_csv(self):
-
         from pychron.experiment.utilities.detector_ic import make_items, save_csv
         from pychron.experiment.utilities.identifier import get_analysis_type
 
@@ -993,6 +997,7 @@ class AutomatedRunPersister(BasePersister):
             runid=rid,
             runscript_name=self.per_spec.runscript_name,
             runscript_text=self.per_spec.runscript_blob,
+            modified_baselines=self.per_spec.modified_baselines,
             # signal_fits=sf,
             mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
             # blanks=blanks,

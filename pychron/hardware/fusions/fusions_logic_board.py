@@ -207,8 +207,7 @@ class FusionsLogicBoard(CoreDevice):
         """ """
         interlocks = self.check_interlocks()
         if not interlocks:
-
-            resp = self.repeat_command("ENBL 1", check_val="OK")
+            resp = self.repeat_command("ENBL 1", check_val="OK", ntries=200, delay=3)
             if resp == "OK" or self.simulation:
                 return True
 
@@ -277,7 +276,6 @@ class FusionsLogicBoard(CoreDevice):
     # motor methods
     # ==============================================================================
     def set_motor(self, name, value, block=False, relative=False):
-
         motor = next((m for m in self.motors if m.name == name), None)
         if motor is None:
             return

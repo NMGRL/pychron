@@ -20,7 +20,7 @@ from uncertainties import nominal_value, std_dev, ufloat
 from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.dvc import analysis_path, _analysis_path, dvc_load, dvc_dump
 from pychron.dvc.dvc_orm import AnalysisTbl
-from pychron.dvc.fix import get_dvc
+from pychron.dvc.dvc_helper import get_dvc
 from pychron.paths import paths
 
 dvc = get_dvc()

@@ -41,7 +41,7 @@ from traitsui.api import (
 )
 
 # ============= standard library imports ========================
-from numpy import array, hstack, Inf, savetxt
+from numpy import array, hstack, inf as Inf, savetxt
 import csv
 import os
 from threading import Thread
@@ -323,7 +323,6 @@ class MassCalibratorSweep(MagnetSweep):
             self._redraw()
 
     def _set_x_limits(self):
-
         if self.graph:
             mi = min(self.start_dac, self.stop_dac)
             ma = max(self.start_dac, self.stop_dac)

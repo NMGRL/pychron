@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from difflib import ndiff
 
-from PySide import QtGui, QtCore
+from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import (
     QPlainTextEdit,
     QColor,
@@ -28,12 +28,12 @@ from pyface.qt.QtGui import (
     QTextFormat,
     QPen,
 )
-from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
+from pyface.ui.qt.code_editor.gutters import LineNumberWidget
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 class DiffGutter(LineNumberWidget):
@@ -264,7 +264,6 @@ class _PatchEditor(Editor):
         cursor.endEditBlock()
 
     def _highlight(self, lineno, kind):
-
         if kind == "addition":
             color = QColor(225, 254, 229)  # light green
         elif kind == "deletion":

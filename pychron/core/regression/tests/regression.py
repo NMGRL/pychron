@@ -174,8 +174,8 @@ class PearsonRegressionTest(RegressionTestCase):
     def setUp(self):
         xs, ys, wxs, wys = pearson()
 
-        exs = wxs ** -0.5
-        eys = wys ** -0.5
+        exs = wxs**-0.5
+        eys = wys**-0.5
 
         self.reg.trait_set(xs=xs, ys=ys, xserr=exs, yserr=eys, error_calc_type="SE")
         self.reg.calculate()

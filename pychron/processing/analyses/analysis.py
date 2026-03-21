@@ -19,8 +19,8 @@ from collections import namedtuple
 from math import ceil
 from operator import attrgetter
 
-import six
-from numpy import Inf, polyfit, polyval, arange, argmin
+from chaco.array_data_source import ArrayDataSource
+from numpy import inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 from traits.api import Event, Dict, List, Str
@@ -35,6 +35,9 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.envisage.view_util import open_view
 from pychron.experiment.utilities.runid import make_runid, make_aliquot_step
+from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.graph.regression_graph import RegressionGraph
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
@@ -71,6 +74,7 @@ class CloseHandler(Handler):
         global WINDOW_CNT
         WINDOW_CNT += 1
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        return True
 
 
 def show_inspection_factory(record_id, isotopes):
@@ -119,6 +123,79 @@ def show_inspection_factory(record_id, isotopes):
 
     g.set_y_limits(min_=0, plotid=0)
     g.window_title = "{} Inspection".format(make_title(record_id, isotopes))
+    return g
+
+
+def show_equilibration_inspector(record_id, ar_ar_age):
+    g = StackedRegressionGraph()
+    g.plotcontainer.spacing = 10
+    g.window_title = "{} Equilibration Inspector".format(record_id)
+    at = ar_ar_age.analysis_type
+    if at == "air" or at.startswith("blank"):
+        if at == "air":
+            args = (("Ar40", "Ar38"), ("Ar40", "Ar36"))
+        else:
+            args = (
+                ("Ar40", "Ar39"),
+                ("Ar40", "Ar38"),
+                ("Ar40", "Ar37"),
+                ("Ar40", "Ar36"),
+            )
+
+        for i, (num, den) in enumerate(args):
+            g.new_plot(padding_right=75, padding_left=100)
+            g.set_y_title("{}/{}".format(num, den))
+
+            counts, ratios = ar_ar_age.equilibration_ratios(num, den)
+            ratios = [nominal_value(a) for a in ratios]
+            # errors = [std_dev(a) for a in ages]
+            plot, scatter, line = g.new_series(counts, ratios, fit="average")
+
+            g.add_axis_tool(plot, plot.y_axis)
+            g.add_axis_tool(plot, plot.x_axis)
+            g.add_limit_tool(plot, "x")
+            g.add_limit_tool(plot, "y")
+            g.set_y_limits(pad="0.1", plotid=i)
+            g.set_x_limits(pad="0.05", plotid=i)
+
+    else:
+        for i, (num, den) in enumerate(
+            (("age", "age"), ("Ar40", "Ar39"), ("Ar37", "Ar39"), ("Ar40", "Ar36"))
+        ):
+            g.new_plot(padding_right=75, padding_left=100)
+
+            kw = {"fit": "average"}
+            if num == "age":
+                counts, ratios = ar_ar_age.equilibration_ages()
+                g.set_y_title("Age")
+                errors = [std_dev(r) for r in ratios]
+                kw = {"fit": "weighted mean", "yerror": errors}
+            else:
+                counts, ratios = ar_ar_age.equilibration_ratios(num, den)
+                g.set_y_title("{}/{}".format(num, den))
+
+            ratios = [nominal_value(a) for a in ratios]
+            plot, scatter, line = g.new_series(counts, ratios, **kw)
+
+            if num == "age":
+                ebo = ErrorBarOverlay(
+                    component=scatter,
+                    orientation="y",
+                )
+                scatter.underlays.append(ebo)
+                setattr(scatter, "yerror", ArrayDataSource(errors))
+
+            g.add_axis_tool(plot, plot.y_axis)
+            g.add_axis_tool(plot, plot.x_axis)
+            g.add_limit_tool(plot, "x")
+            g.add_limit_tool(plot, "y")
+
+            g.set_y_limits(pad="0.1", plotid=i)
+            g.set_x_limits(pad="0.05", plotid=i)
+
+    g.set_x_title("N counts")
+    g.refresh()
+
     return g
 
 
@@ -258,13 +335,13 @@ def make_graph(
     g.clear()
 
     if not show_evo:
-        xmi = Inf
-        xma = -Inf
+        xmi = inf
+        xma = -inf
     else:
-        xmi, xma = 0, -Inf
+        xmi, xma = 0, -inf
 
     for i, iso in enumerate(isotopes):
-        ymi, yma = Inf, -Inf
+        ymi, yma = inf, -inf
 
         p = g.new_plot(padding=[80, 10, 10, 40], resizable=resizable)
         g.add_limit_tool(p, "x")
@@ -379,6 +456,18 @@ class IdeogramPlotable(HasTraits):
         if make_arar_constants:
             self.arar_constants = ArArConstants()
 
+    def trigger_invalid(self):
+        raise NotImplementedError
+
+    def trigger_omit(self):
+        raise NotImplementedError
+
+    def trigger_recall(self):
+        raise NotImplementedError
+
+    def trigger_tag(self):
+        raise NotImplementedError
+
     def baseline_corrected_intercepts_to_dict(self):
         pass
 
@@ -416,7 +505,6 @@ class IdeogramPlotable(HasTraits):
         return self.tag in tags
 
     def set_temp_status(self, tag):
-
         tag = tag.lower()
         if tag != "ok":
             self.otemp_status = tag
@@ -438,7 +526,7 @@ class IdeogramPlotable(HasTraits):
     def value_string(self, t):
         a, e = self._value_string(t)
         pe = format_percent_error(a, e)
-        return u"{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+        return "{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     @property
     def display_uuid(self):
@@ -658,7 +746,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def get_isotope_evolutions(self, isotopes=None, load_data=True, **kw):
         if isotopes:
-            if isinstance(isotopes[0], (str, six.text_type)):
+            if isinstance(isotopes[0], str):
                 nisotopes = []
                 for i in isotopes:
                     try:
@@ -686,6 +774,9 @@ class Analysis(ArArAge, IdeogramPlotable):
             return show_inspection_factory(self.record_id, isotopes)
         elif kw.get("show_residuals"):
             return show_residuals_factory(self.record_id, isotopes)
+        elif kw.get("show_equilibration_inspector"):
+            self.load_raw_data()
+            return show_equilibration_inspector(self.record_id, self)
         else:
             return show_evolutions_factory(self.record_id, isotopes, **kw)
 
@@ -780,7 +871,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         e = self.age_err
         pe = format_percent_error(a, e)
 
-        return u"{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+        return "{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     def _value_string(self, t):
         if t == "uF":

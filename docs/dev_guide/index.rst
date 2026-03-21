@@ -17,6 +17,8 @@ Pychron Develop Guide
   :maxdepth: 1
 
   running_pychron
+  git_workflow
+  repository_settings
   hardware
   database
   dvc/index

@@ -84,7 +84,6 @@ class InitializationEditView(HasTraits):
     help_str = "Enable/Disable the active plugins.\nDouble-click to toggle or Right-click for menu options"
 
     def load_defaults(self):
-
         nominal_defaults = NOMINAL_DEFAULTS[:]
         p = os.path.join(paths.hidden_dir, "initialization_defaults")
         if os.path.isfile(p):

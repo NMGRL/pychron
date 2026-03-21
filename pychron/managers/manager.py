@@ -47,7 +47,7 @@ class ManagerHandler(ViewableHandler):
 
     def init(self, info):
         info.object.initialized = True
-        super(ManagerHandler, self).init(info)
+        return super(ManagerHandler, self).init(info)
 
     #    def closed(self, info, is_ok):
     #        '''
@@ -116,6 +116,12 @@ class Manager(Viewable, ConfigLoadable):
 
     error_code = None
 
+    def activate(self):
+        pass
+
+    def prepare_destroy(self):
+        pass
+
     def finish_loading(self):
         """ """
         pass
@@ -145,7 +151,6 @@ class Manager(Viewable, ConfigLoadable):
         self.add_window(ui)
 
     def add_window(self, ui):
-
         try:
             if self.application is not None:
                 self.application.uis.append(ui)
@@ -182,7 +187,6 @@ class Manager(Viewable, ConfigLoadable):
             return str(e)
 
     def get_managers(self):
-
         return [
             (ma, getattr(self, ma))
             for ma in self.traits()
@@ -199,7 +203,6 @@ class Manager(Viewable, ConfigLoadable):
         elif hasattr(self.parent, device_name):
             dev = getattr(self.parent, device_name)
         else:
-
             for man in self.get_managers():
                 if hasattr(man, device_name):
                     dev = getattr(man, device_name)

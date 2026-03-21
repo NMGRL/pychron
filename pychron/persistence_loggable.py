@@ -127,7 +127,6 @@ class PersistenceMixin(object):
 
         p = self.get_persistence_path()
         if p:
-
             if verbose:
                 self.debug("***************** dumping")
                 d = {}

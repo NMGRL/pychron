@@ -133,6 +133,9 @@ class Switch(BaseSwitch):
         if self.state_device is not None:
             dev = self.state_device
             address = self.state_address
+        elif self.state_address:
+            address = self.state_address
+            dev = self.actuator
             # result = self.state_device.get_indicator_state(self, 'closed', **kw)
         elif self.actuator is not None:
             dev = self.actuator

@@ -22,6 +22,7 @@ from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.graph.plot_record import PlotRecord
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware import get_float
+from pychron.hardware.base_cryo_controller import BaseCryoController
 from pychron.hardware.core.core_device import CoreDevice
 import re
 import time
@@ -46,9 +47,70 @@ class RangeTest:
             return self._r
 
 
-class BaseLakeShoreController(CoreDevice):
+class Protocol:
+    def __init__(self, controller):
+        self._controller = controller
+
+    def test_connection(self):
+        pass
+
+    def read_setpoint(self, *args, **kw):
+        pass
+
+    def set_setpoint(self, *args, **kw):
+        pass
+
+    def set_range(self, *args, **kw):
+        pass
+
+    def read_input(self, *args, **kw):
+        pass
+
+    def tell(self, *args, **kw):
+        self._controller.tell(*args, **kw)
+
+    def ask(self, *args, **kw):
+        return self._controller.ask(*args, **kw)
+
+
+class GPIBProtocol(Protocol):
+    def test_connection(self):
+        self.tell("*CLS")
+        return self.ask("*IDN?")
+
+    def read_setpoint(self, output, verbose=True):
+        return self.ask(f"SETP? {output}", verbose=verbose)
+
+    def set_setpoint(self, output, v, verbose=True):
+        self.tell(f"SETP {output},{v}", verbose=verbose)
+
+    def set_range(self, output, ra):
+        self.tell(f"RANGE {output},{ra}")
+
+    def read_input(self, tag, mode, verbose):
+        return self.ask(f"{mode}RDG? {tag}", verbose=verbose)
+
+
+class SCPIProtocol(Protocol):
+    def test_connection(self):
+        return self.ask("*IDN?")
+
+    def read_setpoint(self, output, verbose=True):
+        return self.ask(f"SOURCE:TEMPERATURE:SETPOINT? {output}", verbose=verbose)
+
+    def set_setpoint(self, output, v):
+        return self.ask(f"SOURCE:TEMPERATURE:SETPOINT {v},{output}")
+
+    def read_input(self, tag, mode, verbose):
+        return self.ask(f"FETCH:TEMPERATURE? {tag}", verbose=verbose)
+
+
+class BaseLakeShoreController(BaseCryoController):
     units = Enum("C", "K")
     scan_func = "update"
+
+    input_a_enabled = Bool
+    input_b_enabled = Bool
 
     input_a = Float
     input_b = Float
@@ -66,8 +128,31 @@ class BaseLakeShoreController(CoreDevice):
 
     verify_setpoint = Bool
 
+    protocol_kind = Enum("GPIB", "SCPI")
+    protocol = None
+
     def load_additional_args(self, config):
         self.set_attribute(config, "units", "General", "units", default="K")
+        self.set_attribute(
+            config,
+            "input_a_enabled",
+            "General",
+            "input_a_enabled",
+            default=True,
+            cast="boolean",
+        )
+        self.set_attribute(
+            config,
+            "input_b_enabled",
+            "General",
+            "input_b_enabled",
+            default=True,
+            cast="boolean",
+        )
+
+        self.set_attribute(
+            config, "protocol_kind", "Communications", "protocol", default="GPIB"
+        )
         self.set_attribute(
             config,
             "verify_setpoint",
@@ -114,11 +199,14 @@ class BaseLakeShoreController(CoreDevice):
 
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = chr(10)  # line feed \n
+
+        klass = GPIBProtocol if self.protocol_kind == "GPIB" else SCPIProtocol
+        self.protocol = klass(self)
+
         return super(BaseLakeShoreController, self).initialize(*args, **kw)
 
     def test_connection(self):
-        self.tell("*CLS")
-        resp = self.ask("*IDN?")
+        resp = self.protocol.test_connection()
         return bool(IDN_RE.match(resp))
 
     def update(self, **kw):
@@ -136,6 +224,8 @@ class BaseLakeShoreController(CoreDevice):
         for i, (setpoint, tag, key) in enumerate(
             zip(setpoints, self.iomap, string.ascii_lowercase)
         ):
+            if setpoint is None:
+                continue
 
             idx = i + 1
             v = self._read_input(key, self.units)
@@ -151,47 +241,42 @@ class BaseLakeShoreController(CoreDevice):
                     pass
         return True
 
-    @get_float(default=0)
-    def read_setpoint(self, output, verbose=False):
+    def _read_setpoint(self, output, verbose=False):
         if output is not None:
             if isinstance(output, str):
                 output = re.sub("[^0-9]", "", output)
-            return self.ask("SETP? {}".format(output), verbose=verbose)
+
+            return self.protocol.read_setpoint(output, verbose)
 
     def set_setpoints(self, *setpoints, block=False, delay=1):
         for i, v in enumerate(setpoints):
             if v is not None:
                 idx = i + 1
                 setattr(self, "setpoint{}".format(idx), v)
+        self._block(setpoints, delay, block)
 
-        if block:
-            delay = max(0.5, delay)
-            tol = 1
-            if isinstance(block, (int, float)):
-                tol = block
-
-            while 1:
-                if self.setpoints_achieved(setpoints, tol):
-                    break
-                time.sleep(delay)
+    def _write_setpoint(self, v, output, **kw):
+        self.protocol.set_setpoint(output, v, **kw)
 
     def set_setpoint(self, v, output=1, retries=3):
-
         self.set_range(v, output)
-        for i in range(retries):
-            self.tell("SETP {},{}".format(output, v))
-            if not self.verify_setpoint:
-                break
-
-            time.sleep(2)
-            sp = self.read_setpoint(output, verbose=True)
-            self.debug("setpoint set to={} target={}".format(sp, v))
-            if sp == v:
-                break
-            time.sleep(1)
-
-        else:
-            self.warning_dialog("Failed setting setpoint to {}. Got={}".format(v, sp))
+        super().set_setpoint(v, output, retries)
+        # for i in range(retries):
+        #     self.protocol.set_setpoint(output, v)
+        #     # self.tell("SETP {},{}".format(output, v))
+        #
+        #     if not self.verify_setpoint:
+        #         break
+        #
+        #     time.sleep(2)
+        #     sp = self.read_setpoint(output, verbose=True)
+        #     self.debug("setpoint set to={} target={}".format(sp, v))
+        #     if sp == v:
+        #         break
+        #     time.sleep(1)
+        #
+        # else:
+        #     self.warning_dialog("Failed setting setpoint to {}. Got={}".format(v, sp))
 
     def set_range(self, v, output):
         # if v <= 10:
@@ -204,25 +289,23 @@ class BaseLakeShoreController(CoreDevice):
         for r in self.range_tests:
             ra = r.test(v)
             if ra:
-                self.tell("RANGE {},{}".format(output, ra))
+                self.protocol.set_range(output, ra)
                 break
 
         time.sleep(1)
 
-    def read_input(self, v, **kw):
-        if isinstance(v, int):
-            v = string.ascii_lowercase[v - 1]
-        return self._read_input(v, self.units, **kw)
-
     def read_input_a(self, **kw):
-        return self._read_input("a", self.units, **kw)
+        return self._read_input("a", **kw)
 
     def read_input_b(self, **kw):
-        return self._read_input("b", self.units, **kw)
+        return self._read_input("b", **kw)
 
     @get_float(default=0)
-    def _read_input(self, tag, mode="C", verbose=False):
-        return self.ask("{}RDG? {}".format(mode, tag), verbose=verbose)
+    def _read_input(self, tag, mode=None, verbose=False):
+        if mode is None:
+            mode = self.units
+
+        return self.protocol.read_input(tag, mode, verbose)
 
     def _setpoint1_changed(self):
         self.set_setpoint(self.setpoint1, 1)
@@ -250,6 +333,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
+                defined_when="input_a_enabled",
             ),
             HGroup(
                 Item(
@@ -264,6 +348,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
+                defined_when="input_b_enabled",
             ),
             label=self.name,
         )

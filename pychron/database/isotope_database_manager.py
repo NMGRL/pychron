@@ -186,7 +186,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 dbflux.history = dbhist
                 dbln.selected_flux_history = dbhist
                 self.information_dialog(
-                    u"Flux for {} {} \u00b1{} saved to database".format(labnumber, v, e)
+                    "Flux for {} {} \u00b1{} saved to database".format(labnumber, v, e)
                 )
 
     def filter_analysis_tag(self, ans, exclude):
@@ -458,7 +458,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         use_progress,
         **kw
     ):
-
         uuids = [ri.uuid for ri in no_db_ans]
         # for ui in uuids:
         #     self.debug('loading uuid={}'.format(ui))
@@ -630,7 +629,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def _get_levels(self):
         r = []
         if self.db and self.db.connected:
-
             with self.db.session_ctx():
                 irrad = self.db.get_irradiation(self.irradiation)
                 if irrad:

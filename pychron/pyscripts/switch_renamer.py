@@ -158,7 +158,6 @@ class SwitchRenamer(Loggable):
         if not parser.load(self.valves_path):
             self.warning_dialog('"{}" not a valid file'.format(self.valves_path))
         else:
-
             for v in parser.get_all_switches():
                 d = v.find("description")
                 if d is not None:

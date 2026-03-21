@@ -55,7 +55,6 @@ class KerrManager(Loggable):
             ],
             cb,
         ):
-
             if not int(controlbit):
                 continue
             l *= 2

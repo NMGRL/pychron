@@ -21,8 +21,10 @@ from __future__ import absolute_import
 from threading import Lock
 
 from pyface.qt.QtGui import QColor
+from pyface.ui_traits import PyfaceColor
 from six.moves.queue import Queue
-from traits.api import HasTraits, Int, Color, Str, Event, Bool
+from traits.api import HasTraits, Int, Str, Event, Bool
+from pyface.color import Color
 from traitsui.api import View, UItem, Controller
 
 # ============= local library imports  ==========================
@@ -60,9 +62,9 @@ class DisplayController(Controller):
     height = Int(500)
     title = Str
 
-    default_color = Color("black")
+    default_color = PyfaceColor
     # default_size = Int
-    bgcolor = Color
+    bgcolor = PyfaceColor
     font_name = Str
     font_size = Int(12)
     max_blocks = Int(0)
@@ -83,7 +85,7 @@ class DisplayController(Controller):
 
     def init(self, info):
         self.opened = True
-        super(DisplayController, self).init(info)
+        return super(DisplayController, self).init(info)
 
     #        print 'rrrrr', info
     #        info.object.ui = info.ui

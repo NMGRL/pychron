@@ -16,8 +16,8 @@
 import smopy
 from PIL import Image
 from pyface.qt.QtGui import QPainter, QFrame, QPixmap, QImage
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.basic_editor_factory import BasicEditorFactory
+from traitsui.qt.editor import Editor
 
 
 class QMapWidget(QFrame):

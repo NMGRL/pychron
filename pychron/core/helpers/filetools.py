@@ -147,11 +147,15 @@ def list_subdirectories(root):
     ]
 
 
-def glob_list_directory(root, extension=None, filtername=None, remove_extension=False):
+def glob_list_directory(
+    root, extension=None, filtername=None, remove_extension=False, use_sort=True
+):
     if os.path.isdir(root):
         ret = list(ilist_directory(root, extension, filtername, remove_extension))
     else:
         ret = []
+    if use_sort:
+        ret = sorted(ret)
     return ret
 
 
@@ -166,7 +170,9 @@ def list_gits(root):
     return list(ilist_gits(root))
 
 
-def list_directory(p, extension=None, filtername=None, remove_extension=False):
+def list_directory(
+    p, extension=None, filtername=None, remove_extension=False, use_sort=True
+):
     ds = []
 
     if os.path.isdir(p):
@@ -186,6 +192,9 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
 
     if remove_extension:
         ds = [os.path.splitext(pi)[0] for pi in ds]
+
+    if use_sort:
+        ds = sorted(ds)
     return ds
 
 
@@ -249,7 +258,9 @@ def unique_path2(root, base, delimiter="-", extension=".txt", width=3):
     if not extension.startswith("."):
         extension = ".{}".format(extension)
 
-    cnt = max_path_cnt(root, base, delimiter=delimiter, extension=extension)
+    cnt = max_path_cnt(
+        root, base, delimiter=delimiter, extension=extension, ndigits=width
+    )
     p = os.path.join(
         root, "{{}}-{{:0{}d}}{{}}".format(width).format(base, cnt, extension)
     )
@@ -326,6 +337,8 @@ def unique_path_from_manifest(root, base, extension=".txt"):
                 cnt = v + 1
                 p = os.path.join(root, "{}-{:03d}{}".format(base, cnt, extension))
                 yd[base] = cnt
+        else:
+            yd = {}
 
     if not p:
         p, cnt = unique_path2(root, base, extension=extension)
