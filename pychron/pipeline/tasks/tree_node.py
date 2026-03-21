@@ -69,7 +69,6 @@ class PipelineTreeNode(TreeNode):
     def get_icon(self, obj, is_expanded):
         name = self.icon_name
         if not isinstance(obj, Pipeline):
-
             if not obj.enabled:
                 name = "cancel"
 

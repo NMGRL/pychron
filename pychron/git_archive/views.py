@@ -228,7 +228,6 @@ class Commit(object):
             self.parse(log_entry)
 
     def parse(self, log_entry, sep=logsep):
-
         (
             oid,
             authdate,

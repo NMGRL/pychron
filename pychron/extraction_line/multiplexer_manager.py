@@ -75,7 +75,7 @@ class MultiplexerManager(Manager):
                 #                      Item('haddress', show_label=False, style='readonly', width=75),
                 HeaderLabel("hvalue", width=100),
                 #                      Item('hvalue', show_label=False, style='readonly', width=100),
-                HeaderLabel("hprocessvalue", width=100)
+                HeaderLabel("hprocessvalue", width=100),
                 #                      Item('hprocessvalue', show_label=False, style='readonly', width=100)
             ),
             Item("controller", style="custom", show_label=False),

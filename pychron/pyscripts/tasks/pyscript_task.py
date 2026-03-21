@@ -26,6 +26,7 @@ from traits.api import String, List, Instance, Any, on_trait_change, Bool
 from traitsui.api import UItem, EnumEditor
 
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.importtools import import_klass
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -65,6 +66,14 @@ class ScriptExecutorMixin(ExecuteMixin):
 
     def execute_script(self, *args, **kw):
         return self._do_execute(*args, **kw)
+
+    def get_script_status(self):
+        status = {
+            "completed": self._current_script.is_completed(),
+            "canceled": self._current_script.is_canceled(),
+            "aborted": self._current_script.is_aborted(),
+        }
+        return status
 
     # def _start_execute(self):
     #     self.debug('start execute')
@@ -110,14 +119,17 @@ class ScriptExecutorMixin(ExecuteMixin):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         klass = ExtractionPyScript
-        if kind == "Laser":
-            from pychron.pyscripts.laser_pyscript import LaserPyScript
+        if kind != "Extraction":
+            path = f"pychron.pyscripts.{kind.lower()}_pyscript import {kind}PyScript"
+            klass = import_klass(path)
 
-            klass = LaserPyScript
-        elif kind == "Spectrometer":
-            from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
-
-            klass = SpectrometerPyScript
+        # if kind == "Laser":
+        #     from pychron.pyscripts.laser_pyscript import LaserPyScript
+        #     klass = LaserPyScript
+        # elif kind == "Spectrometer":
+        #     from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
+        #     klass = SpectrometerPyScript
+        # elif kind == "Aqua":
 
         runner = self.application.get_service(IPyScriptRunner)
         script = klass(
@@ -257,7 +269,6 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
             self.active_editor.control.enable_replace()
 
     def new(self):
-
         # todo ask for script type
         info = self.edit_traits(view="kind_select_view")
         if info.result:
@@ -532,7 +543,6 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
 
     @on_trait_change("active_editor:gosub_event")
     def _handle_selected_gosub(self, new):
-
         self.debug("selected gosub {}".format(new))
         if new:
             root = os.path.dirname(self.active_editor.path)

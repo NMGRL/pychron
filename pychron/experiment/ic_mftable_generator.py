@@ -25,9 +25,7 @@ ARGON_IC_MFTABLE = True
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(
-        self, arun, detectors, refiso, peak_center_config="ic_peakhop", n=1
-    ):
+    def make_mftable(self, arun, pairs, peak_center_config="ic_peakhop", n=1):
         """
             peak center `refiso` for each detector in detectors
         :return:
@@ -51,14 +49,14 @@ class ICMFTableGenerator(Loggable):
                 with listen():
                     self.info("Making IC MFTable")
                     results = []
-                    for di in detectors:
+                    for di, ri in pairs:
                         if not arun.is_alive():
                             return False
 
-                        self.info("Peak centering {}@{}".format(di, refiso))
+                        self.info("Peak centering {}@{}".format(di, ri))
                         ion.setup_peak_center(
                             detector=[di],
-                            isotope=refiso,
+                            isotope=ri,
                             config_name=peak_center_config,
                             plot_panel=plot_panel,
                             show_label=True,
@@ -69,16 +67,14 @@ class ICMFTableGenerator(Loggable):
                         ion.do_peak_center(new_thread=False, save=False, warn=False)
                         apc = ion.adjusted_peak_center_result
                         if apc:
-                            self.info(
-                                "Peak Center {}@{}={:0.6f}".format(di, refiso, apc)
-                            )
-                            results.append((di, apc))
+                            self.info("Peak Center {}@{}={:0.6f}".format(di, ri, apc))
+                            results.append((di, ri, apc))
                             time.sleep(0.25)
                         else:
                             return False
 
                 magnet = arun.ion_optics_manager.spectrometer.magnet
-                for det, apc in results:
+                for det, ref, apc in results:
                     if det in cumulative:
                         centers = cumulative[det]
                     else:
@@ -87,7 +83,7 @@ class ICMFTableGenerator(Loggable):
                     centers.append(apc)
                     cumulative[det] = centers
                     magnet.update_field_table(
-                        det, refiso, apc, "ic_generator", update_others=False
+                        det, ref, apc, "ic_generator", update_others=False
                     )
 
         self.debug("=============== IC Peak Hop Center Deviations ===============")

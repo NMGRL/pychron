@@ -273,7 +273,16 @@ class DVCAnalysis(Analysis):
         jd = dvc_load(path)
         return jd
 
-    def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
+    def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True, force=False):
+        self.debug(
+            "loading raw data, keys={}, n_only={}, use_name_pairs={}, force={}".format(
+                keys, n_only, use_name_pairs, force
+            )
+        )
+        if self.has_raw_data and not force:
+            self.debug("already has raw data {}, {}".format(self.has_raw_data, force))
+            return
+
         path = self._analysis_path(modifier=".data")
 
         jd = dvc_load(path)
@@ -344,6 +353,9 @@ class DVCAnalysis(Analysis):
                 if iso.detector == det:
                     iso.sniff.unpack_data(data, n_only)
 
+        if not n_only and not keys:
+            self.has_raw_data = True
+
     def set_production(self, prod, r):
         self.production_obj = r
         self.production_name = prod
@@ -394,6 +406,9 @@ class DVCAnalysis(Analysis):
 
             iso.set_fit(fi)
 
+    def get_json(self, modifier):
+        return self._get_json(modifier)
+
     def get_meta(self):
         return dvc_load(self.meta_path)
 
@@ -409,7 +424,7 @@ class DVCAnalysis(Analysis):
         nsignals = []
         nsniffs = []
 
-        for (new, existing) in ((nsignals, "signals"), (nsniffs, "sniffs")):
+        for new, existing in ((nsignals, "signals"), (nsniffs, "sniffs")):
             for sig in jd[existing]:
                 key = sig["isotope"]
                 if key in keys:
@@ -444,7 +459,6 @@ class DVCAnalysis(Analysis):
         return path
 
     def dump_fits(self, keys, reviewed=False):
-
         sisos = self.isotopes
         isoks, dks = list(map(tuple, partition(keys, lambda x: x in sisos)))
 
@@ -465,39 +479,45 @@ class DVCAnalysis(Analysis):
 
         # save intercepts
         if isoks:
-            isos, path = self._get_json("intercepts")
-            for k in isoks:
-                try:
-                    iso = isos[k]
-                except KeyError:
-                    iso = {}
-                    isos[k] = iso
+            isos, path = self._get_json(INTERCEPTS)
+            if isos:
+                for k in isoks:
+                    try:
+                        iso = isos[k]
+                    except KeyError:
+                        iso = {}
+                        isos[k] = iso
 
-                siso = sisos[k]
-                if siso:
-                    update(iso, siso)
+                    siso = sisos[k]
+                    if siso:
+                        update(iso, siso)
 
-            self._dump(isos, path)
+                self._dump(isos, path)
+            else:
+                self.debug("failed locating intercepts for {}".format(self))
 
         # save baselines
         if dks:
-            baselines, path = self._get_json("baselines")
-            for di in dks:
-                try:
-                    det = baselines[di]
-                except KeyError:
-                    det = {}
-                    baselines[di] = det
+            baselines, path = self._get_json(BASELINES)
+            if baselines:
+                for di in dks:
+                    try:
+                        det = baselines[di]
+                    except KeyError:
+                        det = {}
+                        baselines[di] = det
 
-                # bs = next((iso.baseline for iso in six.itervalues(sisos) if iso.detector == di), None)
-                bs = self.get_isotope(detector=di, kind="baseline")
-                if bs:
-                    update(det, bs)
+                    # bs = next((iso.baseline for iso in six.itervalues(sisos) if iso.detector == di), None)
+                    bs = self.get_isotope(detector=di, kind="baseline")
+                    if bs:
+                        update(det, bs)
 
-            self._dump(baselines, path)
+                self._dump(baselines, path)
+            else:
+                self.debug("failed locating baselines for {}".format(self))
 
     def dump_blanks(self, keys, refs=None, reviewed=False):
-        isos, path = self._get_json("blanks")
+        isos, path = self._get_json(BLANKS)
         sisos = self.isotopes
 
         for k in keys:
@@ -523,7 +543,7 @@ class DVCAnalysis(Analysis):
         self._dump(isos, path)
 
     def delete_icfactors(self, dkeys):
-        jd, path = self._get_json("icfactors")
+        jd, path = self._get_json(ICFACTORS)
 
         remove = []
         for k in jd:
@@ -536,12 +556,19 @@ class DVCAnalysis(Analysis):
         self._dump(jd, path)
 
     def dump_icfactors(
-        self, dkeys, fits, refs=None, reviewed=False, standard_ratios=None
+        self,
+        dkeys,
+        fits,
+        refs=None,
+        reviewed=False,
+        standard_ratios=None,
+        reference_data=None,
     ):
-        jd, path = self._get_json("icfactors")
+        jd, path = self._get_json(ICFACTORS)
 
         for i, (dk, fi) in enumerate(zip(dkeys, fits)):
-            v = self.temporary_ic_factors.get(dk)
+            ticf = self.temporary_ic_factors.get(dk)
+            v = ticf["value"]
             if v is None:
                 v, e = 1, 0
             else:
@@ -557,20 +584,48 @@ class DVCAnalysis(Analysis):
                     standard_ratio = standard_ratios[i]
                 except IndexError:
                     standard_ratio = None
+            rd = None
+            if reference_data:
+                rd = reference_data[dk]
 
-            jd[dk] = {
+            jd[dk] = {}
+            jd[dk].update(**ticf)
+
+            jd[dk].update(
+                **{
+                    "value": float(v),
+                    "error": float(e),
+                    "reviewed": reviewed,
+                    "fit": fi,
+                    # "reference_detector": ticf["reference_detector"],
+                    "standard_ratio": standard_ratio,
+                    "references": make_ref_list(refs),
+                    "reference_data": rd,
+                }
+            )
+
+        self._dump(jd, path)
+
+    def dump_disc_icfactors(self, refs=None, standard_ratio=None):
+        jd, path = self._get_json(ICFACTORS)
+        for det, ticf in self.temporary_ic_factors.items():
+            value = ticf["value"]
+            v, e = nominal_value(value), std_dev(value)
+            jd[det] = {
                 "value": float(v),
                 "error": float(e),
-                "reviewed": reviewed,
-                "fit": fi,
+                "reviewed": True,
+                "fit": "discrimination power law",
                 "standard_ratio": standard_ratio,
+                "discrimination": True,
                 "references": make_ref_list(refs),
             }
         self._dump(jd, path)
 
     def dump_source_correction_icfactors(self, refs=None, standard_ratio=None):
         jd, path = self._get_json(ICFACTORS)
-        for det, value in self.temporary_ic_factors.items():
+        for det, ticf in self.temporary_ic_factors.items():
+            value = ticf["value"]
             v, e = nominal_value(value), std_dev(value)
             jd[det] = {
                 "value": float(v),
@@ -597,7 +652,6 @@ class DVCAnalysis(Analysis):
         self.arar_constants.cosmo_from_dict(jd)
 
     def _load_peakcenter(self, jd):
-
         refdet = jd.get("reference_detector")
         if refdet is None:
             pd = jd
@@ -687,6 +741,9 @@ class DVCAnalysis(Analysis):
                 if iso.detector == det:
                     self._load_value_error(iso.baseline, v)
 
+                    if "modifier_error" in v:
+                        iso.baseline.error = v["modifier_error"]
+
                     iso.baseline.set_fit(v["fit"], notify=False)
                     fod = v.get("filter_outliers_dict")
                     if fod:
@@ -700,6 +757,7 @@ class DVCAnalysis(Analysis):
                 for iso in self.get_isotopes_for_detector(key):
                     iso.ic_factor = ufloat(vv, ee, tag="{} IC".format(iso.name))
                     iso.ic_factor_reviewed = r
+                    iso.ic_factor_fit = v.get("fit")
 
     def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)
@@ -751,8 +809,15 @@ class DVCAnalysis(Analysis):
     def _analysis_path(self, repository_identifier=None, **kw):
         if repository_identifier is None:
             repository_identifier = self.repository_identifier
-
-        return analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
+        ret = analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
+        if ret is None:
+            if kw.get("modifier") in ("intercepts", "baselines", "blanks", "icfactors"):
+                self.warning(
+                    "Failed locating analysis path for uuid={}, record_id={} in {} {}".format(
+                        self.uuid, self.record_id, repository_identifier, kw
+                    )
+                )
+        return ret
 
     @property
     def intercepts_path(self):

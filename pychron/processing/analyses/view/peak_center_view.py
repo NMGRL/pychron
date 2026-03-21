@@ -52,7 +52,6 @@ class PeakCenterView(HasTraits):
     name = "PeakCenter"
 
     def load(self, an):
-
         if an.peak_center_data:
             g = self.graph
             g.plotcontainer.spacing = 10

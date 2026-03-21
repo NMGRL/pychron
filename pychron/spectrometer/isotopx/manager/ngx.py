@@ -21,5 +21,8 @@ from pychron.spectrometer.isotopx.spectrometer.ngx import NGXSpectrometer
 class NGXSpectrometerManager(BaseSpectrometerManager):
     spectrometer_klass = NGXSpectrometer
 
+    def protect_detector(self, det, protect):
+        self.spectrometer.protect_detector(det, protect)
+
 
 # ============= EOF =============================================

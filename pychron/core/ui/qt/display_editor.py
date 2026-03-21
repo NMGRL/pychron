@@ -19,10 +19,12 @@
 # ============= standard library imports ========================
 from queue import Empty
 
+from pyface.color import Color
 from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
-from traits.api import Color, Str, Event, Int
+from pyface.ui_traits import PyfaceColor
+from traits.api import Str, Event, Int
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 # ============= local library imports  ==========================
@@ -33,7 +35,7 @@ class _DisplayEditor(Editor):
     refresh = Event
     control_klass = QPlainTextEdit
     font_size = Int
-    bgcolor = Color
+    bgcolor = PyfaceColor
     text_width = Int
     _nominal_character_width = None
 
@@ -62,7 +64,7 @@ class _DisplayEditor(Editor):
 
     def _bgcolor_changed(self):
         p = QPalette()
-        p.setColor(QPalette.Base, self.bgcolor)
+        p.setColor(QPalette.Base, self.bgcolor.to_toolkit())
         self.control.setPalette(p)
 
     # def _font_size_changed(self):
@@ -103,8 +105,12 @@ class _DisplayEditor(Editor):
                     v, c, force, is_marker = self.value.get(timeout=0.01)
                 except Empty:
                     return
+
                 fmt = ctrl.currentCharFormat()
-                fmt.setForeground(QColor(c))
+                if isinstance(c, Color):
+                    c = c.to_toolkit()
+
+                fmt.setForeground(c)
                 fmt.setFontPointSize(self.font_size)
                 ctrl.setCurrentCharFormat(fmt)
 

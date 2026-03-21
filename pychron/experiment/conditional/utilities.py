@@ -38,6 +38,7 @@ from pychron.experiment.conditional.regexes import (
     BETWEEN_REGEX,
     PRESSURE_REGEX,
     DEVICE_REGEX,
+    INSTANT_AGE_REGEX,
 )
 
 
@@ -60,8 +61,8 @@ def get_teststr_attr_func(token):
         (MIN_REGEX, "aa.get_values(attr, window or -1).min()"),
         (RATIO_REGEX, "aa.get_value(attr)", wrapper, ratio_teststr),
         (BETWEEN_REGEX, "aa.get_value(attr)", between_wrapper, between_teststr),
+        (INSTANT_AGE_REGEX, "aa.instant_age(window or -1)"),
     ):
-
         wfunc = wrapper
         if len(args) == 2:
             reg, fstr = args
@@ -259,8 +260,12 @@ def remove_comp(s):
 
 def extract_attr(key):
     """ """
-    if key.startswith("L2(CDD)"):
-        return "L2(CDD)"
+    ukey = key.upper()
+
+    for uikey in ("AX", "H1", "H2", "L1", "L2"):
+        uikey = f"{uikey}(CDD)"
+        if ukey.startswith(uikey):
+            return uikey
 
     try:
         aa = ARGS_REGEX.search(key).group(0)[1:-1].split(",")

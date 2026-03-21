@@ -58,7 +58,6 @@ class Datahub(Loggable):
     _new_aliquot = 0
 
     def bind_preferences(self):
-
         # massspec
         prefid = "pychron.massspec.database"
         bind_preference(self, "massspec_enabled", "{}.enabled".format(prefid))
@@ -124,7 +123,6 @@ class Datahub(Loggable):
             pass
 
     def store_connect(self, key):
-
         enabled = getattr(self, "{}_enabled".format(key))
         self.debug("{} enabled {}".format(key, enabled))
         if enabled:
@@ -248,16 +246,17 @@ class Datahub(Loggable):
                 (main.get_greatest_aliquot(identifier),),
             )
         else:
-
             return list(
                 zip(
                     *[
                         (
                             store.precedence,
                             store.db.name,
-                            store.get_greatest_aliquot(identifier) or 0
-                            if store.is_connected()
-                            else 0,
+                            (
+                                store.get_greatest_aliquot(identifier) or 0
+                                if store.is_connected()
+                                else 0
+                            ),
                         )
                         for store in self.sorted_stores
                     ]
@@ -272,9 +271,11 @@ class Datahub(Loggable):
                     (
                         store.precedence,
                         store.db.name,
-                        f(store.get_greatest_step(identifier, aliquot))
-                        if store.is_connected()
-                        else -1,
+                        (
+                            f(store.get_greatest_step(identifier, aliquot))
+                            if store.is_connected()
+                            else -1
+                        ),
                     )
                     for store in self.sorted_stores
                 ]

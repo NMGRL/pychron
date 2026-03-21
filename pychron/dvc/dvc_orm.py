@@ -293,10 +293,13 @@ class AnalysisTbl(Base, IDMixin):
         self.load_name = self.get_load_name()
         self.load_holder = self.get_load_holder()
 
-        # force binding of irradiation_position
+        # force binding of irradiation_position, sample, material, project, pi
         self.irradiation_position
         self.irradiation_level
         self.irradiation
+        self.material
+        self.project
+        self.principal_investigator
 
 
 # class AnalysisIntensitiesTbl(Base, IDMixin):
@@ -342,6 +345,10 @@ class ProjectTbl(Base, NameMixin):
             if self.principal_investigator
             else self.name
         )
+
+    @property
+    def unique_id(self):
+        return self.id
 
 
 class MaterialTbl(Base, NameMixin):
@@ -428,7 +435,7 @@ class IrradiationPositionTbl(Base, IDMixin):
     j_err = Column(Float)
     packet = stringcolumn(40)
 
-    # analyses = relationship('AnalysisTbl', backref='irradiation_position')
+    analyses = relationship("AnalysisTbl")
 
     @property
     def analysis_count(self):
@@ -636,7 +643,7 @@ class CurrentTbl(Base, IDMixin):
     analysisID = Column(Integer, ForeignKey("AnalysisTbl.id"))
 
     parameter = relationship("ParameterTbl", uselist=False)
-    analysis = relationship("AnalysisTbl", uselist=False)
+    analysis = relationship("AnalysisTbl", uselist=False, backref="current")
     units = relationship("UnitsTbl", uselist=False)
 
 

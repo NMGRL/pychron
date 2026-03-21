@@ -16,6 +16,8 @@
 from operator import itemgetter
 from pprint import pprint
 
+from chaco.examples.demo.basic.scatter import bgcolor
+from chaco.plot_containers import VPlotContainer
 from numpy import (
     linspace,
     meshgrid,
@@ -56,6 +58,7 @@ from pychron.core.regression.flux_regressor import (
     RBFRegressor,
     GridDataRegressor,
     IDWRegressor,
+    HighOrderPolynominalFluxRegressor,
 )
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
@@ -87,6 +90,8 @@ from pychron.pychron_constants import (
     RBF,
     GRIDDATA,
     IDW,
+    HIGH_ORDER_POLY,
+    BRACKETING_1D
 )
 
 HEADER_KEYS = [
@@ -103,6 +108,7 @@ HEADER_KEYS = [
     "min_j",
     "max_j",
     "variation_percent_j",
+    "residual",
 ]
 
 
@@ -164,6 +170,17 @@ def add_axes_tools(g, p):
     g.add_axis_tool(p, p.y_axis)
 
 
+def get_geom_radius(g):
+    xs = [x for x, y, r, _ in g]
+    xg = (max(xs) - min(xs)) / 2
+    return xg
+
+
+def get_geom_radiusxy(x, y):
+    r = max((x**2 + y**2) ** 0.5)
+    return r
+
+
 class BaseFluxVisualizationEditor(BaseTraitsEditor):
     graph = Instance("pychron.graph.graph.Graph")
     levels = Int(10)
@@ -223,10 +240,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             WEIGHTED_MEAN,
             MATCHING,
             BRACKETING,
+            WEIGHTED_MEAN_1D,
+            LEAST_SQUARES_1D,
+            BRACKETING_1D,
         ):
             # n = z.shape[0] * 10
-            r = max((max(abs(x)), max(abs(y))))
-            # r *= 1.25
+            # r = max((max(abs(x)), max(abs(y))))
+            r = get_geom_radiusxy(x, y)
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
@@ -271,7 +291,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                     p.jerr = je
                     p.position_jerr = pe
                     p.dev = (oj - j) / j * 100
-        elif options.model_kind in (BSPLINE, RBF, GRIDDATA, IDW):
+        elif options.model_kind in (BSPLINE, RBF, GRIDDATA, IDW, HIGH_ORDER_POLY):
             pass
         else:
             js = reg.predict(pts)
@@ -282,14 +302,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                 p.jerr = float(je)
 
                 p.dev = (p.saved_j - j) / j * 100
-                p.mean_dev = (p.mean_j - j) / j * 100
 
         if options.plot_kind == "2D":
             self._graph_contour(x, y, z, r, reg, refresh)
         elif options.plot_kind == "Grid":
             self._graph_grid(x, y, z, ze, r, reg, refresh)
         else:
-            if options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D):
+            if options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, BRACKETING_1D):
                 self._graph_linear_j(x, y, r, reg, refresh)
             else:
                 self._graph_hole_vs_j(x, y, r, reg, refresh)
@@ -316,6 +335,11 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         elif model_kind in (WEIGHTED_MEAN, WEIGHTED_MEAN_1D):
             xs = x if po.one_d_axis == "X" else y
             klass = WeightedMeanRegressor
+        elif model_kind == BRACKETING_1D:
+            xs = x if po.one_d_axis == "X" else y
+            klass = IDWRegressor
+            #kw["n"] = 2
+            #kw["interpolation_style"] = po.interpolation_style
         else:
             if model_kind == BOWL:
                 klass = BowlFluxRegressor
@@ -324,9 +348,10 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             elif model_kind == MATCHING:
                 klass = NearestNeighborFluxRegressor
                 kw["n"] = 1
-            elif model_kind == BRACKETING:
+            elif model_kind in (BRACKETING, BRACKETING_1D):
                 klass = NearestNeighborFluxRegressor
                 kw["n"] = 2
+                kw["interpolation_style"] = po.interpolation_style
             elif model_kind == NN:
                 klass = NearestNeighborFluxRegressor
                 kw["n"] = po.n_neighbors
@@ -340,6 +365,9 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                 kw["method"] = po.griddata_method
             elif model_kind == IDW:
                 klass = IDWRegressor
+            elif model_kind == HIGH_ORDER_POLY:
+                kw["degree"] = po.degree
+                klass = HighOrderPolynominalFluxRegressor
 
             xs = vstack((x, y)).T
 
@@ -350,6 +378,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             xs=xs, ys=z, yserr=ze, error_calc_type=ec, use_weighted_fit=wf, **kw
         )
         reg.calculate()
+        if isinstance(reg, NearestNeighborFluxRegressor):
+            reg.set_neighbors(self.unknown_positions, self.monitor_positions)
         return reg
 
     def _model_flux(self, reg, r, total=True, n=None, origin=None):
@@ -386,7 +416,16 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         cg = self.graph
         if not isinstance(cg, FluxVisualizationGraph):
             cg = FluxVisualizationGraph(
-                container_dict={"kind": "h", "bgcolor": self.plotter_options.bgcolor}
+                container_dict={
+                    "kind": "h",
+                    "padding_left": 60,
+                    "padding_right": 0,
+                    "padding_top": 60,
+                    "padding_bottom": 60,
+                    # "bgcolor": 'yellow',
+                    # "fill_padding": True,
+                    "bgcolor": self.plotter_options.bgcolor,
+                }
             )
             self.graph = cg
         else:
@@ -396,11 +435,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             xtitle="X",
             ytitle="Y",
             add=False,
-            padding=0,
-            width=550,
-            height=550,
-            resizable="",
-            aspect_ratio=1,
+            padding=20,
+            # width=550,
+            # height=550,
+            resizable="hv",
+            # aspect_ratio=1,
+            # bgcolor='red',
+            # fill_padding=True,
         )
 
         ito = IrradiationTrayOverlay(
@@ -409,6 +450,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         self.irradiation_tray_overlay = ito
         center_plot.underlays.append(ito)
 
+        r *= 1.125
         gx, gy, m, me = self._model_flux(reg, r)
         # self._visualization_update(gx, gy, m, me, reg.xs, reg.ys)
 
@@ -445,14 +487,23 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         # add 1D slices
         bottom_plot = cg.new_plot(
-            add=False, height=175, resizable="h", padding=0, xtitle="mm", ytitle="J"
+            add=False,
+            height=175,
+            # width=550,
+            resizable="h",
+            padding=20,
+            xtitle="mm",
+            ytitle="J",
         )
 
         right_plot = cg.new_plot(
             add=False,
             width=175,
+            # height=600,
             resizable="v",
-            padding=0,
+            padding_bottom=235,
+            orientation="v",
+            padding=20,
             # xtitle='J',
             ytitle="mm",
         )
@@ -483,10 +534,10 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         center_plot.x_axis.orientation = "top"
 
-        right_plot.orientation = "v"
-        right_plot.x_axis.orientation = "top"
-        right_plot.x_axis.tick_label_rotate_angle = 45
-        right_plot.y_axis.orientation = "right"
+        # right_plot.orientation = "v"
+        # right_plot.x_axis.orientation = "top"
+        # right_plot.x_axis.tick_label_rotate_angle = 45
+        # right_plot.y_axis.orientation = "right"
         right_plot.x_axis.axis_line_visible = False
         right_plot.y_axis.axis_line_visible = False
 
@@ -504,7 +555,9 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         )[0]
         ss.orientation = "v"
 
-        ebo = ErrorBarOverlay(component=ss, orientation="x", use_component=False)
+        ebo = ErrorBarOverlay(
+            component=ss, orientation="x", data_orientation="y", use_component=False
+        )
         ss.underlays.append(ebo)
         # x, y = reg.xs.T
         ebo.index, ebo.value, ebo.error = y, reg.ys, reg.yserr
@@ -512,26 +565,21 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         center.index.on_trait_change(cg.metadata_changed, "metadata_changed")
 
-        gridcontainer = container_factory(
-            kind="g",
-            # fill_padding=True,
-            # bgcolor='red',
-            padding_left=100,
-            padding_right=20,
-            padding_top=100,
-            padding_bottom=40,
-            shape=(2, 2),
-            spacing=(5, 5),
-        )
+        # gridcontainer = container_factory(
+        #     kind="g",
+        #     # fill_padding=True,
+        #     # bgcolor='red',
+        #     padding_left=100,
+        #     padding_right=20,
+        #     padding_top=100,
+        #     padding_bottom=40,
+        #     shape=(2, 2),
+        #     spacing=(5, 5),
+        # )
 
-        gridcontainer.add(center_plot)
-        gridcontainer.add(right_plot)
-        gridcontainer.add(bottom_plot)
-
-        # cb = cg.make_colorbar(center)
-        # cb.width = 50
-        # cb.padding_left = 50
-        # cg.plotcontainer.add(cb)
+        # gridcontainer.add(center_plot)
+        # gridcontainer.add(right_plot)
+        # gridcontainer.add(bottom_plot)
 
         # plot means
         s = cg.new_series(
@@ -549,10 +597,28 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         cg.x = reg.xs
         cg.y = reg.ys
 
-        cg.plotcontainer.add(gridcontainer)
+        # cg.plotcontainer = gridcontainer
+        # cg.plotcontainer.add(gridcontainer)
+        # cg.plotcontainer.add(center_plot)
+
+        inner_container = VPlotContainer(padding=0)
+
+        inner_container.add(bottom_plot)
+        inner_container.add(center_plot)
+        cg.plotcontainer.add(inner_container)
+        cg.plotcontainer.add(right_plot)
+
+    @property
+    def cleaned_analyses(self):
+        enabled_positions = [p.hole_id for p in self.monitor_positions if p.use]
+        vs = [
+            a
+            for a in zip(*self._analyses)
+            if a[0].irradiation_position in enabled_positions
+        ]
+        return vs
 
     def _graph_linear_j(self, x, y, r, reg, refresh):
-
         g = self.graph
         if not isinstance(g, RegressionGraph):
             g = RegressionGraph(
@@ -566,9 +632,11 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         plot = g.new_plot(padding=po.get_paddings())
         if po.model_kind == WEIGHTED_MEAN_1D:
             fit = "weighted mean"
+        elif po.model_kind == BRACKETING_1D:
+            fit = None
         else:
             fit = po.least_squares_fit
-
+        print("fit", fit)
         _, scatter, line = g.new_series(x=reg.xs, y=reg.ys, yerror=reg.yserr, fit=fit)
         ebo = ErrorBarOverlay(component=scatter, orientation="y")
         scatter.underlays.append(ebo)
@@ -589,7 +657,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         if self._individual_analyses_enabled:
             sel = [
                 i
-                for i, (a, x, y, e) in enumerate(zip(*self._analyses))
+                for i, (a, x, y, e) in enumerate(self.cleaned_analyses)
                 if a.is_omitted()
             ]
 
@@ -613,11 +681,10 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         self.min_j = fys.min()
 
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
-
         if self._individual_analyses_enabled:
             sel = [
                 i
-                for i, (a, x, y, e) in enumerate(zip(*self._analyses))
+                for i, (a, x, y, e) in enumerate(self.cleaned_analyses)
                 if a.is_omitted()
             ]
 
@@ -626,16 +693,26 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             g = Graph(container_dict={"bgcolor": self.plotter_options.bgcolor})
             self.graph = g
 
-        po = self.plotter_options
-
         ys = reg.ys
-        xs = arctan2(x, y)
-
         yserr = reg.yserr
-        lyy = ys - yserr
-        uyy = ys + yserr
-        a = max((abs(min(xs)), abs(max(xs))))
-        fxs = linspace(-a, a, 200)
+        lyy = None
+        po = self.plotter_options
+        render_style = "connectedhold"
+        kind = "line"
+        if po.model_kind in (BRACKETING, NN):
+            kind = "scatter"
+            xx, yy = zip(*[(p.x, p.y) for p in self.unknown_positions])
+            fxs = sorted(arctan2(xx, yy))
+            a, b = zip(*reg.xs)
+            xs = arctan2(a, b)
+        else:
+            xs = arctan2(x, y)
+
+            lyy = ys - yserr
+            uyy = ys + yserr
+            # a = max((abs(min(xs)), abs(max(xs)))) * 1.1
+            a = max(abs(xs)) * 1.1
+            fxs = linspace(-a, a, 100)
 
         a = r * sin(fxs)
         b = r * cos(fxs)
@@ -671,7 +748,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             # plot0 == line
 
             if po.model_kind in (MATCHING, BRACKETING, NN):
-                g.new_series(fxs, fys, render_style="connectedhold")
+                yerror = reg.predict_error(pts)
+                p, _ = g.new_series(
+                    fxs, fys, yerror=yerror, render_style=render_style, type=kind
+                )
+                ebo = ErrorBarOverlay(component=p, orientation="y")
+                p.underlays.append(ebo)
+                p.error_bars = ebo
             else:
                 line, _p = g.new_series(fxs, fys)
                 if use_ee:
@@ -700,9 +783,12 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             scatter.error_bars = ebo
 
             add_inspector(scatter, self._additional_info)
+            if lyy is not None:
+                ymi = min(lyy.min(), miy)
+                yma = max(uyy.max(), may)
+            else:
+                ymi, yma = miy, may
 
-            ymi = min(lyy.min(), miy)
-            yma = max(uyy.max(), may)
             g.set_x_limits(-3.5, 3.5)
             g.set_y_limits(ymi, yma, pad="0.1")
 
@@ -745,7 +831,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         self.min_j = fys.min()
 
     def _additional_info(self, ind):
-        fm = self.monitor_positions[ind]
+        fm = [mi for mi in self.monitor_positions if mi.use][ind]
         # 'MSWD={}'.format(format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd)),
         return [
             format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd, include_tag=True),
@@ -796,7 +882,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         opt = self.plotter_options
         monage = opt.monitor_age * 1e6
         lk = nominal_value(opt.lambda_k)
-        ans = self._analyses[0]
+        ans = self.cleaned_analyses
         scale = opt.flux_scalar
         for r in range(nrows):
             for c in range(ncols):
@@ -842,7 +928,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                         continue
 
                     # get ip via x,y
-                    ais = [a for a in ans if a.irradiation_position == ip.hole_id]
+                    ais = [a[0] for a in ans if a[0].irradiation_position == ip.hole_id]
                     n = len(ais)
 
                     # plot mean value
@@ -907,7 +993,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
     def _graph_individual_analyses(self, *args, **kw):
         g = self.graph
 
-        ans, ixs, iys, ies = self._analyses
+        ans, ixs, iys, ies = zip(*self.cleaned_analyses)
 
         s, _p = g.new_series(
             ixs, iys, yerror=ies, type="scatter", marker="circle", marker_size=1.5, **kw
@@ -917,13 +1003,13 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         s.underlays.append(ebo)
         s.error_bars = ebo
 
-        add_analysis_inspector(s, ans)
+        add_analysis_inspector(s, list(ans))
 
         s.index.on_trait_change(self._update_graph_metadata, "metadata_changed")
         return s, iys
 
     def _sort_individuals(self, p, m, k, slope, padding):
-        if self.plotter_options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D):
+        if self.plotter_options.model_kind in (LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, BRACKETING_1D):
             pp = p.x if self.plotter_options.one_d_axis == "X" else p.y
         else:
             pp = arctan2(p.x, p.y)
@@ -964,6 +1050,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
     ring_graph = Instance(StackedGraph)
     deviation_graph = Instance(StackedGraph)
     spoke_graph = Instance(StackedGraph)
+    cross_validation_graph = Instance(Graph)
     export_table_button = Button
     _individual_analyses_enabled = False
 
@@ -1037,6 +1124,11 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
             ys = (unkj - my) / unkj * 100
             s = g.new_series(mx, ys)[0]
 
+    def _update_cross_validation(self):
+        self.cross_validation_graph = g = Graph()
+        reg = self._regressor
+        # print(reg._result.params)
+
     def _update_ring_graph(self):
         self.ring_graph = g = StackedGraph()
         g.plotcontainer.spacing = 10
@@ -1100,7 +1192,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
         for spoke, poss in self._group_spokes():
             print(spoke)
             x, y, z, ze, j, je, sj, sje = self._extract_position_arrays(poss)
-            x = (x ** 2 + y ** 2) ** 0.5
+            x = (x**2 + y**2) ** 0.5
             plot = sg.new_plot(
                 padding_left=100, padding_top=20, padding_right=10, padding_bottom=30
             )
@@ -1134,7 +1226,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
         return [s for s in spokes if len(s[1]) > 1]
 
     def _group_rings(self):
-        rs = array([p.x ** 2 + p.y ** 2 for p in self.monitor_positions])
+        rs = array([p.x**2 + p.y**2 for p in self.monitor_positions])
         split_idx = abs(diff(rs)) > 1e-2
 
         pidx = 0
@@ -1153,6 +1245,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
 
         # calculate gradients
         self.calculate_gradients()
+        self._update_cross_validation()
         # self._update_ring_graph()
         # self._update_half_ring_graph()
 
@@ -1232,8 +1325,8 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
             ObjectColumn(name="mean_j", format="%0.5e"),
             ObjectColumn(name="mean_jerr", format="%0.5e"),
             ObjectColumn(name="mean_j_mswd", format="%0.5e"),
-            ObjectColumn(name="j", label="Pred. J", format="%0.5e"),
-            ObjectColumn(name="mean_dev", label="Mean Dev.", format="%0.2f"),
+            ObjectColumn(name="saved_j", label="Saved J", format="%0.5e"),
+            ObjectColumn(name="residual", label="Residual %", format="%0.5f"),
             ObjectColumn(name="variation_percent_j", label="J Var. %", format="%0.3f"),
             ObjectColumn(name="min_j", label="J Min", format="%0.5e"),
             ObjectColumn(name="max_j", label="J Max", format="%0.5e"),
@@ -1256,6 +1349,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
 
         rings = VGroup(
             HGroup(
+                UItem("cross_validation_graph", style="custom"),
                 UItem("ring_graph", style="custom"),
                 UItem("deviation_graph", style="custom"),
                 UItem("spoke_graph", style="custom"),

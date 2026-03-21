@@ -28,7 +28,13 @@ from pychron.canvas.canvas2D.overlays.extraction_line_overlay import (
     ExtractionLineInfoOverlay,
 )
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
-from pychron.canvas.canvas2D.scene.primitives.connections import Elbow, Connection
+from pychron.canvas.canvas2D.scene.primitives.connections import (
+    Elbow,
+    Connection,
+    Fork,
+    Cross,
+    Tee,
+)
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.canvas2D.scene.primitives.valves import (
@@ -60,6 +66,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
     scene_klass = ExtractionLineScene
 
     use_backbuffer = True
+    backbuffer_padding = False
     border_visible = False
     active_item = Any
 
@@ -68,10 +75,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
     show_grids = False
     use_zoom = False
     use_pan = False
-    padding_left = 0
-    padding_right = 0
-    padding_bottom = 0
-    padding_top = 0
 
     manager = Any
 
@@ -160,7 +163,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _over_item(self, event):
         x, y = event.x, event.y
-        return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow, Connection])
+        return self.scene.get_is_in(
+            x, y, exclude=[BorderLine, Elbow, Connection, Fork, Cross, Tee]
+        )
 
     def normal_left_down(self, event):
         event.handled = True
@@ -206,6 +211,27 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def select_left_down(self, event):
         """ """
+
+        def set_state(state):
+            ok, change = True, True
+            if self.manager is not None:
+                mode = "normal"
+                if event.shift_down:
+                    mode = "shift_select"
+
+                if state:
+                    # ok, change = self.manager.open_valve(item.name, mode=mode)
+                    func = self.manager.open_valve
+                else:
+                    # ok, change = self.manager.close_valve(item.name, mode=mode)
+                    func = self.manager.close_valve
+
+                args = func(item.name, mode=mode)
+                if args:
+                    ok, change = args
+
+            return ok, change
+
         event.handled = True
 
         item = self.active_item
@@ -221,17 +247,18 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._toggle_laser_state(item)
             return
 
+        state = item.state
+        nstate = not state
         if isinstance(item, Switch):
-            state = item.state
-            state = not state
-            mode = "normal"
-            # try:
-            if state:
-                ok, change = self.manager.open_valve(item.name, mode=mode)
-            else:
-                ok, change = self.manager.close_valve(item.name, mode=mode)
-                # except TypeError, e:
-                # ok, change = True, True
+            # mode = "normal"
+            # # try:
+            # if state:
+            #     ok, change = self.manager.open_valve(item.name, mode=mode)
+            # else:
+            #     ok, change = self.manager.close_valve(item.name, mode=mode)
+            #     # except TypeError, e:
+            #     # ok, change = True, True
+            set_state(nstate)
 
         else:
             if not isinstance(item, BaseValve):
@@ -240,7 +267,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if item.soft_lock:
                 return
 
-            state = item.state
             if self.confirm_open:
                 from pychron.core.ui.dialogs import myConfirmationDialog
                 from pyface.api import NO
@@ -260,22 +286,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     if retval == NO:
                         return
 
-            state = not state
-
-            change = False
-            ok = True
-            if self.manager is not None:
-                mode = "normal"
-                if event.shift_down:
-                    mode = "shift_select"
-
-                if state:
-                    ok, change = self.manager.open_valve(item.name, mode=mode)
-                else:
-                    ok, change = self.manager.close_valve(item.name, mode=mode)
+            ok, change = set_state(nstate)
 
         if ok:
-            item.state = state
+            item.state = nstate
 
         if change and ok:
             self._select_hook(item)

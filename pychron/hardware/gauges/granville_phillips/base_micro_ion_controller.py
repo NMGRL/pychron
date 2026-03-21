@@ -118,7 +118,6 @@ class BaseMicroIonController(BaseGaugeController):
         return r
 
     def _build_command(self, key, value=None):
-
         # prepend key with our address
         # example of new string formating
         # see http://docs.python.org/library/string.html#formatspec

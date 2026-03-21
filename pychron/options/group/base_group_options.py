@@ -16,9 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Int, Bool, Color, Button, Range
-
-
+from traits.api import HasTraits, Int, Bool, Button, Range
+from traitsui.api import Color
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

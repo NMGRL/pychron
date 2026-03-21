@@ -71,6 +71,7 @@ class BaseFindFluxNode(FindNode):
     monitor_sample_name = Str(DEFAULT_MONITOR_NAME)
     dirty = Event
     exclude = "%_MST"
+    include_all_positions = Bool
 
     def load(self, nodedict):
         self.irradiation = nodedict.get("irradiation", "")
@@ -117,18 +118,18 @@ class BaseFindFluxNode(FindNode):
     def _fp_factory(
         self, geom, irradiation, level, identifier, sample, hole_id, fluxes
     ):
+        pp = next((p for p in fluxes if p["identifier"] == identifier), {})
 
-        pp = next((p for p in fluxes if p["identifier"] == identifier))
-        j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ""
-        if pp:
-            j = pp.get("j", 0)
-            j_err = pp.get("j_err", 0)
-            mean_j = pp.get("mean_j", 0)
-            mean_j_err = pp.get("mean_j_err", 0)
-            mean_j_mswd = pp.get("mean_j_mswd", 0)
-            options = pp.get("options")
-            if options:
-                model_kind = options.get("model_kind", "")
+        # j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ""
+        model_kind = ""
+        j = pp.get("j", 0)
+        j_err = pp.get("j_err", 0)
+        mean_j = pp.get("mean_j", 0)
+        mean_j_err = pp.get("mean_j_err", 0)
+        mean_j_mswd = pp.get("mean_j_mswd", 0)
+        options = pp.get("options")
+        if options:
+            model_kind = options.get("model_kind", "")
 
         x, y, r, idx = geom[hole_id - 1]
         fp = FluxPosition(
@@ -240,7 +241,6 @@ class TransferFluxMonitorMeansNode(FindIrradiationNode):
 class FindFluxMonitorMeansNode(BaseFindFluxNode):
     name = "Find Flux Monitor Means"
     exclude = None
-    include_all_positions = Bool
 
     def _load_hook(self, nodedict):
         self.irradiation = nodedict.get("irradiation", "")
@@ -371,6 +371,10 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 is_append, monitors = self.get_browser_analyses(
                     irradiation=self.irradiation, level=self.level
                 )
+            elif self.include_all_positions:
+                monitors = self.dvc.find_flux_monitors(
+                    self.irradiation, self.level, None
+                )
             else:
                 monitors = self.dvc.find_flux_monitors(
                     self.irradiation, self.level, self.monitor_sample_name
@@ -394,9 +398,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
         sgrp = BorderVGroup(
             Item("irradiation", editor=EnumEditor(name="irradiations")),
             Item("level", editor=EnumEditor(name="levels")),
-            Item("monitor_sample_name", editor=EnumEditor(name="samples")),
-            label="Auto Select",
-            enabled_when="not use_browser",
+            label="Irradiation/Level",
         )
 
         bgrp = BorderHGroup(
@@ -405,11 +407,17 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 label="Use Browser",
                 tooltip="Use Browser to select monitor analyses manually",
             ),
-            label="Manual Select",
+            Item("include_all_positions", label="Include All Positions"),
+            Item(
+                "monitor_sample_name",
+                enabled_when="not use_browser",
+                editor=EnumEditor(name="samples"),
+            ),
+            label="Monitors",
         )
 
         v = self._view_factory(
-            VGroup(bgrp, sgrp), width=300, title="Select Irradiation and Level"
+            VGroup(sgrp, bgrp), width=300, title="Select Irradiation and Level"
         )
         return v
 
@@ -519,9 +527,9 @@ class FindReferencesNode(FindNode):
         atypes = [ai.lower().replace(" ", "_") for ai in self.analysis_types]
         kw = dict(
             extract_devices=self.extract_device if self.use_extract_device else "",
-            mass_spectrometers=self.mass_spectrometer
-            if self.use_mass_spectrometer
-            else "",
+            mass_spectrometers=(
+                self.mass_spectrometer if self.use_mass_spectrometer else ""
+            ),
             make_records=False,
         )
 
@@ -590,7 +598,6 @@ class FindReferencesNode(FindNode):
                 return True
 
     def traits_view(self):
-
         load_grp = BorderHGroup(
             UItem("load_name", editor=EnumEditor(name="display_loads")),
             Item(

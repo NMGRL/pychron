@@ -18,7 +18,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.api import (
-    Color,
     Float,
     Any,
     Bool,
@@ -29,6 +28,7 @@ from traits.api import (
     File,
     Int,
 )
+from pyface.ui_traits import PyfaceColor
 
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
@@ -143,27 +143,28 @@ class LaserTrayCanvas(StageCanvas):
 
     beam_radius = Float(0)
     crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
-    crosshairs_offset_color = Color("blue")
+    crosshairs_offset_color = PyfaceColor("blue")
 
     crosshairs_radius = Range(0.0, 10.0, 1.0)
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
 
+    aux_crosshairs_enabled = Bool(True)
     aux_show_laser_position = Bool(True)
     aux_show_desired_position = False
     aux_desired_position = None
     aux_desired_position_color = None
 
-    aux_crosshairs_color = Color("red")
+    aux_crosshairs_color = PyfaceColor("red")
     aux_crosshairs_kind = Enum("UserRadius")
-    aux_crosshairs_offset_color = Color("red")
+    aux_crosshairs_offset_color = PyfaceColor("red")
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float
     aux_crosshairs_offsety = Float
     aux_crosshairs_line_width = Float(1.0)
 
     show_hole_label = Bool(True)
-    hole_label_color = Color
+    hole_label_color = PyfaceColor
     hole_label_size = Int
     hole_label_font = Font("Consolas")
 
@@ -228,7 +229,9 @@ class LaserTrayCanvas(StageCanvas):
             radius = self.beam_radius
 
         if screen:
-            radius = self.get_wh(radius, 0)[0]
+            w, h = self.get_wh(radius, radius)
+            radius = (w + h) / 2.0
+
         return radius
 
     def add_image_underlay(self, p, alpha=1.0):
@@ -361,7 +364,6 @@ class LaserTrayCanvas(StageCanvas):
         self.scene.pop_item(idx, klass=LaserPoint)
 
     def new_point(self, xy=None, redraw=True, **kw):
-
         if xy is None:
             xy = self._stage_position
 
@@ -474,7 +476,6 @@ class LaserTrayCanvas(StageCanvas):
             return
 
         if delta is None:
-
             vrange = getattr(self, "{}_mapper".format(mapper)).range
 
             vmi = vrange.low
@@ -555,7 +556,13 @@ class LaserTrayCanvas(StageCanvas):
             self.overlays.append(BoundsOverlay(component=self))
 
     def _add_aux_crosshairs(self):
-        ch = CrosshairsOverlay(component=self, circle_only=True, tag="aux")
+        ch = CrosshairsOverlay(
+            component=self,
+            circle_only=True,
+            show_hole_label=False,
+            tag="aux",
+            visible=self.aux_crosshairs_enabled,
+        )
         self.aux_crosshairs = ch
         self.overlays.append(ch)
 
@@ -570,12 +577,21 @@ class LaserTrayCanvas(StageCanvas):
     def change_indicator_visibility(self, name, new):
         self.request_redraw()
 
+    def _aux_crosshairs_enabled_changed(self):
+        self.aux_crosshairs.visible = self.aux_crosshairs_enabled
+        self.request_redraw()
+
     def _show_bounds_rect_changed(self):
-        bo = next((o for o in self.overlays if isinstance(o, BoundsOverlay)), None)
-        if bo is None:
+        if self.show_bounds_rect:
             self._add_bounds_rect()
-        elif not self.show_bounds_rect:
-            self.overlays.remove(bo)
+        else:
+            bo = next((o for o in self.overlays if isinstance(o, BoundsOverlay)), None)
+            if bo is not None:
+                self.overlays.remove(bo)
+        # if bo is None:
+        #     self._add_bounds_rect()
+        # elif not self.show_bounds_rect:
+        #     self.overlays.remove(bo)
 
         self.request_redraw()
 

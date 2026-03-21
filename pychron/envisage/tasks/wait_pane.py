@@ -37,6 +37,9 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 class WaitPane(TraitsDockPane):
     id = "pychron.wait"
     name = "Wait"
+    movable = False
+    closable = False
+    floatable = False
 
     def traits_view(self):
         cview = View(
@@ -56,7 +59,8 @@ class WaitPane(TraitsDockPane):
                     ),
                     UItem("continue_button"),
                 ),
-            )
+                show_border=True,
+            ),
         )
 
         # HGroup(Spring(width=-5, springy=False),

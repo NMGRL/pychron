@@ -43,7 +43,6 @@ class LabelTabularAdapter(TabularAdapter):
         return c
 
     def get_text_color(self, obj, trait, row, column=0):
-
         item = getattr(obj, trait)[row]
 
         if item.active:

@@ -20,7 +20,7 @@ from pyface.qt import QtCore, QtGui
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.qt4.table_editor import TableDelegate
+from traitsui.qt.table_editor import TableDelegate
 from traitsui.table_column import ObjectColumn
 
 
@@ -68,7 +68,7 @@ class MagnitudeRenderer(TableDelegate):
         rect = option.rect
         w = rect.width()
 
-        rect.setWidth(w * min(1.0, v))
+        rect.setWidth(int(w * min(1.0, v)))
         painter.fillRect(rect, brush)
         painter.restore()
 

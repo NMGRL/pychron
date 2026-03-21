@@ -491,7 +491,6 @@ class CoolingHistory(HasTraits):
         self.steps = s
 
     def traits_view(self):
-
         cgrp = VGroup(
             HGroup(
                 Item("start_age", label="Start"),

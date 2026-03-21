@@ -29,7 +29,7 @@ from pyface.qt.QtGui import (
 )
 from traits.api import HasTraits, Int, Callable, Str, List
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
 
@@ -58,7 +58,14 @@ class ButtonLED(LED):
 
 
 def change_intensity(color, fac):
-    rgb = [color.red(), color.green(), color.blue()]
+    def _component(value):
+        return value() if callable(value) else value
+
+    rgb = [
+        _component(getattr(color, "red", 0)),
+        _component(getattr(color, "green", 0)),
+        _component(getattr(color, "blue", 0)),
+    ]
     rgb = [min(int(round(c * fac, 0)), 255) for c in rgb]
     return QColor(*rgb)
 
@@ -98,7 +105,6 @@ class _LEDEditor(Editor):
             rad = 20
 
         if self.control is None:
-
             scene = QGraphicsScene()
 
             # system background color

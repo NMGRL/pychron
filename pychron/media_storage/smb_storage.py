@@ -53,7 +53,6 @@ class SMBStorage(RemoteStorage):
             conn.close()
 
     def get(self, src, dest, use_cache=True):
-
         src = ":".join(src.split(":")[2:])
 
         if isinstance(dest, str):
@@ -121,9 +120,11 @@ class SMBStorage(RemoteStorage):
     def _get_connection(self):
         localname = socket.gethostname()
         remotename = "agustin"
-        conn = SMBConnection(self.username, self.password, localname, remotename)
+        conn = SMBConnection(
+            self.username, self.password, localname, remotename, is_direct_tcp=True
+        )
         self.debug("get connection {}".format(self.host))
-        if conn.connect(self.host):
+        if conn.connect(self.host, 445):
             return conn
         else:
             print("failed to connect")

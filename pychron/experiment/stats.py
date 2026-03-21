@@ -62,7 +62,6 @@ class ExperimentStats(Loggable):
 
     # private
     def _calculate_duration(self, runs):
-
         dur = 0
         if runs:
             script_ctx = dict()
@@ -111,6 +110,7 @@ class StatsGroup(Loggable):
     nruns_finished = Int
     run_duration = String
     current_run_duration = String
+    current_run_duration_f = Float
 
     _timer = Any
 
@@ -198,6 +198,7 @@ class StatsGroup(Loggable):
         self.current_run_duration = self.active_queue.stats.get_run_duration(
             run.spec, as_str=True
         )
+        self.current_run_duration_f = self.active_queue.stats.get_run_duration(run.spec)
 
     def finish_run(self):
         self._run_start = 0
@@ -280,7 +281,6 @@ class StatsGroup(Loggable):
         for ei in self.experiment_queues:
             stats = ei.stats
             if sel in ei.cleaned_automated_runs:
-
                 si = ei.cleaned_automated_runs.index(sel)
 
                 st += (

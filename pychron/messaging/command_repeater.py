@@ -39,6 +39,7 @@ class CRHandler(Handler):
     def init(self, info):
         """ """
         info.object.test_connection()
+        return True
 
 
 class CommandRepeater(ConfigLoadable):
@@ -64,7 +65,6 @@ class CommandRepeater(ConfigLoadable):
             return True
 
     def open(self, *args, **kw):
-
         kind = socket.SOCK_STREAM
         if globalv.ipc_dgram:
             kind = socket.SOCK_DGRAM

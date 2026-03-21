@@ -46,8 +46,8 @@ def error_ellipse(sx, sy, pxy, kind, aspectratio=1):
     w, v = eig(covmat)
 
     mi_w, ma_w = min(w), max(w)
-    a = mi_w ** 0.5
-    b = ma_w ** 0.5
+    a = mi_w**0.5
+    b = ma_w**0.5
     if sx > sy:
         b, a = a, b
     # else:
@@ -56,7 +56,7 @@ def error_ellipse(sx, sy, pxy, kind, aspectratio=1):
     sf = ELLIPSE_KIND_SCALE_FACTORS.get(kind, 1)
     a, b = a * sf, b * sf
     #        print aspectratio, dx, dy, width, height
-    rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
+    rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx**2 - sy**2))
 
     return a, b, rotation
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     width = 1
     aspectratio = (dy / height) / (dx / width)
     rotation = math.degrees(
-        0.5 * math.atan(1 / aspectratio * (2 * covar) / (ox ** 2 - oy ** 2))
+        0.5 * math.atan(1 / aspectratio * (2 * covar) / (ox**2 - oy**2))
     )
 
 #

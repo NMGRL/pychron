@@ -111,7 +111,6 @@ class MotionControllerManager(Manager):
         path = self.open_file_dialog(default_directory=paths.device_dir)
         # path = os.path.join(root_dir, 'zobs', 'NewStage-Axis-1.txt')
         if path is not None:
-
             # sniff the file to get the axis
             lines = parse_file(path)
 

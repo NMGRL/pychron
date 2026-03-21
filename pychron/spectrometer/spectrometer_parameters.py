@@ -19,7 +19,6 @@ from traits.etsconfig.etsconfig import ETSConfig
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
-ETSConfig.toolkit = "qt4"
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Instance, Str, Float, Any
@@ -55,7 +54,6 @@ Do you want to send these parameters to the spectrometer?
             p
         )
         if self.confirmation_dialog(msg):
-
             if self.spectrometer:
                 self.spectrometer.send_configuration()
 

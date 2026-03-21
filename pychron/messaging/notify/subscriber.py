@@ -69,7 +69,6 @@ class Subscriber(Loggable):
     def _check_server_availability(self, url, timeout=3, context=None, verbose=True):
         ret = True
         if timeout:
-
             resp = self.request("ping", timeout, context)
 
             if resp is None or resp != "echo":

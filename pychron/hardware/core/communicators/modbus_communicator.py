@@ -115,7 +115,6 @@ class ModbusCommunicator(SerialCommunicator):
         """ """
         # self.debug('asdf {} {}'.format(cmd, resp))
         if resp is not None and resp is not "simulation":
-
             args = self._parse_hexstr(resp)
             if args:
                 # self.debug('args={}'.format(args))

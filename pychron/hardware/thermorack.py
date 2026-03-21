@@ -48,7 +48,13 @@ FAULTS_TABLE = [
 
 @provides(IChiller)
 class ThermoRack(CoreDevice):
-    """ """
+    """
+
+    :::
+    website: https://www.sscooling.com/product-category/air-cooled-rackmount-chillers/
+    description: Thermorack
+
+    """
 
     convert_to_C = True
 

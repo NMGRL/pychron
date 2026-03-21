@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
+from pyface.qt import QtGui
+from traitsui.api import Color
 from traits.api import (
     Int,
     Bool,
@@ -27,7 +29,6 @@ from traits.api import (
     Dict,
     Button,
     Str,
-    Color,
 )
 
 from pychron.options.aux_plot import AuxPlot
@@ -52,7 +53,33 @@ from pychron.pychron_constants import (
     SCHAEN2020_3,
     DEINO,
     SCHAEN2020_3youngest,
+    GUIDES,
 )
+
+
+def _as_qcolor(color):
+    if color is None:
+        return None
+    if hasattr(color, "toRgb"):
+        return color
+    if hasattr(color, "to_toolkit"):
+        try:
+            return color.to_toolkit()
+        except Exception:
+            pass
+    if hasattr(color, "rgba"):
+        rgba = color.rgba() if callable(color.rgba) else color.rgba
+        comps = list(rgba)
+        if comps and max(comps) <= 1:
+            comps = [int(round(c * 255)) for c in comps]
+        if len(comps) >= 4:
+            return QtGui.QColor(comps[0], comps[1], comps[2], comps[3])
+        if len(comps) == 3:
+            return QtGui.QColor(comps[0], comps[1], comps[2])
+    try:
+        return QtGui.QColor(color)
+    except Exception:
+        return None
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -199,6 +226,7 @@ class IdeogramOptions(AgeOptions):
             "Calculations",
             DISPLAY,
             GROUPS,
+            GUIDES,
         ]
 
     def to_dict(self):
@@ -228,7 +256,6 @@ class IdeogramOptions(AgeOptions):
         return [fg.color for fg in self.groups]
 
     def get_plot_dict(self, group_id, subgroup_id):
-
         n = len(self.groups)
         gid = group_id % n
         fg = self.groups[gid]
@@ -249,10 +276,13 @@ class IdeogramOptions(AgeOptions):
         }
 
         if fg.use_fill:
-            color = fg.color.toRgb()
-            color.setAlphaF(fg.alpha * 0.01)
-            d["fill_color"] = color
-            d["type"] = "filled_line"
+            qcolor = _as_qcolor(fg.color)
+            if qcolor is not None:
+                if hasattr(qcolor, "toRgb"):
+                    qcolor = qcolor.toRgb()
+                qcolor.setAlphaF(fg.alpha * 0.01)
+                d["fill_color"] = qcolor
+                d["type"] = "filled_line"
 
         if fg.marker_non_default():
             d["marker"] = fg.marker
@@ -340,6 +370,7 @@ class IdeogramOptions(AgeOptions):
             "Ar37": "11:Ar37",
             "Ar36": "12:Ar36",
             "j": "13:J",
+            "equilibration_age": "14:Equilibration Age",
         }
 
 

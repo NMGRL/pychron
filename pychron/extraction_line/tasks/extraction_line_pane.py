@@ -43,7 +43,11 @@ class CanvasPane(TraitsTaskPane):
             UItem(
                 "canvases",
                 defined_when="plugin_canvases",
-                editor=ListEditor(page_name=".display_name", use_notebook=True),
+                editor=ListEditor(
+                    page_name=".display_name",
+                    use_notebook=True,
+                    editor=InstanceEditor(),
+                ),
                 style="custom",
             ),
         )
@@ -56,7 +60,13 @@ class CanvasDockPane(TraitsDockPane):
     canvas = Any
 
     def traits_view(self):
-        v = View(UItem("canvas", editor=InstanceEditor(), style="custom", width=500))
+        v = View(
+            UItem(
+                "canvas",
+                editor=InstanceEditor(),
+                style="custom",
+            ),
+        )
         return v
 
 

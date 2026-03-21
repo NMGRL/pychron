@@ -53,7 +53,6 @@ class RelativeDetectorPositions(SpectrometerTask):
 
         axial_dac = ion.peak_center_result
         if axial_dac is not None:
-
             rps = []
             # peak center on all detectors
             for d in self.spectrometer.detectors:

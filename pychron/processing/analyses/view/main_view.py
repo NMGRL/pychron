@@ -115,7 +115,6 @@ class MainView(HasTraits):
         # return ufloat(an.j, an.j_err)
 
     def load_measurement(self, an, ar):
-
         # j = self._get_j(an)
         j = ar.j
         jf = "NaN"
@@ -124,7 +123,7 @@ class MainView(HasTraits):
             pe = format_percent_error(
                 nominal_value(j), std_dev(j), include_percent_sign=True
             )
-            jf = u"{} \u00b1{:0.2e}({})".format(jj, std_dev(j), pe)
+            jf = "{} \u00b1{:0.2e}({})".format(jj, std_dev(j), pe)
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
@@ -164,7 +163,6 @@ class MainView(HasTraits):
         self.measurement_values = ms
 
     def load_extraction(self, an):
-
         ev = [
             ExtractionValue(name="Extract Script", value=an.extraction_script_name),
             ExtractionValue(name="Meas. Script", value=an.measurement_script_name),
@@ -336,7 +334,6 @@ class MainView(HasTraits):
         invoke_in_main_thread(self.trait_set, summary_str=s)
 
     def _update_ratios(self):
-
         for ci in self.computed_values:
             if not isinstance(ci, DetectorRatio):
                 continue
@@ -383,7 +380,7 @@ class MainView(HasTraits):
                 ci = self.computed_values[0]
                 v = ci.value
                 e = ci.error
-                ss = u"Ar40/Ar36={} {}{}({}%) IC={:0.5f}".format(
+                ss = "Ar40/Ar36={} {}{}({}%) IC={:0.5f}".format(
                     floatfmt(v),
                     PLUSMINUS,
                     floatfmt(e),
@@ -530,7 +527,7 @@ class MainView(HasTraits):
             age = an.uage
             nage, sage = nominal_value(age), std_dev(age)
             try:
-                ss = u"Age={} {}{}({}%) {}".format(
+                ss = "Age={} {}{}({}%) {}".format(
                     floatfmt(nage),
                     PLUSMINUS,
                     floatfmt(sage),
@@ -570,7 +567,6 @@ class MainView(HasTraits):
         return adapter()
 
     def _get_editors(self):
-
         ceditor = myTabularEditor(
             adapter=self.computed_adapter, editable=False, refresh="refresh_needed"
         )

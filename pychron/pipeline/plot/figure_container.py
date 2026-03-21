@@ -44,7 +44,7 @@ class FigureContainer(HasTraits):
                 except StopIteration:
                     break
 
-                comp.add(p.make_graph())
+                comp.add(p.make_graph((i, self.rows), (j, self.cols)))
                 if clear and hasattr(p.plot_options, "aux_plots"):
                     for ap in p.plot_options.aux_plots:
                         ap.clear_ylimits()
@@ -74,7 +74,6 @@ class FigureContainer(HasTraits):
         self.model_changed(True)
 
     def _component_factory(self, r, c):
-
         op = GridPlotContainer(
             shape=(r, c),
             bgcolor="white",

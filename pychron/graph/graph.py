@@ -16,6 +16,7 @@
 
 # =============enthought library imports=======================
 import csv
+import logging
 import math
 import os
 
@@ -25,7 +26,6 @@ from chaco.api import (
     VPlotContainer,
     HPlotContainer,
     GridPlotContainer,
-    BasePlotContainer,
     Plot,
     ArrayPlotData,
 )
@@ -33,7 +33,7 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
 from enable.container import Container
-from numpy import array, hstack, Inf, column_stack
+from numpy import array, hstack, column_stack, inf
 from pyface.timer.api import do_after as do_after_timer
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
@@ -46,7 +46,7 @@ from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.graph.tools.axis_tool import AxisTool
 from .tools.contextual_menu_tool import ContextualMenuTool
 
-VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
+# VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
 # 'Helvetica',
 # 'Times New Roman'
 
@@ -58,6 +58,7 @@ CONTAINERS = {
 }
 IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".tiff", ".tif", ".gif"]
 DEFAULT_IMAGE_EXT = IMAGE_EXTENSIONS[0]
+logger = logging.getLogger(__name__)
 
 
 def name_generator(base):
@@ -237,8 +238,8 @@ class Graph(ContextMenuMixin):
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
-        else:
-            print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
+        # else:
+        #     print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
 
     def get_plot_ytitles(self):
         return [po.y_axis.title for po in self.plots]
@@ -288,6 +289,7 @@ class Graph(ContextMenuMixin):
     def rescale_x_axis(self):
         # l, h = self.selected_plot.default_index.get_bounds()
         # self.set_x_limits(l, h, plotid=self.selected_plotid)
+        logger.debug("rescale x axis plot=%s", self.selected_plot)
         r = self.selected_plot.index_range
         r.reset()
 
@@ -353,7 +355,7 @@ class Graph(ContextMenuMixin):
                     try:
                         pi.remove(renderer)
                     except RuntimeError:
-                        print("failed removing {}".format(renderer))
+                        logger.debug("failed removing renderer=%s", renderer)
 
                 pi.plots.pop(k)
 
@@ -491,10 +493,10 @@ class Graph(ContextMenuMixin):
         try:
             plots = self.plots[plotid].plots[series]
         except KeyError:
-            print(
-                "set series label plotid={} {}".format(
-                    plotid, list(self.plots[plotid].plots.keys())
-                )
+            logger.warning(
+                "set series label failed plotid=%s keys=%s",
+                plotid,
+                list(self.plots[plotid].plots.keys()),
             )
             raise
 
@@ -518,7 +520,7 @@ class Graph(ContextMenuMixin):
             p.showplot(series) if v else p.hideplot(series)
             self.plotcontainer.invalidate_and_redraw()
         except KeyError as e:
-            print("set series visibility", e, p.series)
+            logger.warning("set series visibility failed error=%s series=%s", e, p.series)
 
     def get_x_limits(self, plotid=0):
         """ """
@@ -579,8 +581,8 @@ class Graph(ContextMenuMixin):
         if pc.overlays:
             pc.overlays.pop()
 
-        if font not in VALID_FONTS:
-            font = "modern"
+        # if font not in VALID_FONTS:
+        #     font = "modern"
 
         if size is None:
             size = 12
@@ -588,7 +590,7 @@ class Graph(ContextMenuMixin):
         # self._title_size = size
         font = "{} {}".format(font, size)
 
-        from chaco.plot_label import PlotLabel
+        from chaco.api import PlotLabel
 
         pl = PlotLabel(t, component=pc, font=font)
         pc.overlays.append(pl)
@@ -642,7 +644,7 @@ class Graph(ContextMenuMixin):
 
     def add_data_label(self, x, y, plotid=0):
         """ """
-        from chaco.data_label import DataLabel
+        from chaco.api import DataLabel
 
         plot = self.plots[plotid]
 
@@ -735,7 +737,7 @@ class Graph(ContextMenuMixin):
         colors=None,
         color_map_name="hot",
         marker_size=2,
-        **kw
+        **kw,
     ):
         """ """
 
@@ -764,6 +766,11 @@ class Graph(ContextMenuMixin):
                     rd["outline_color"] = rd["color"]
                 if "selection_outline_color" not in rd:
                     rd["selection_outline_color"] = rd["color"]
+
+                for k in ("color", "marker", "marker_size"):
+                    sk = f"selection_{k}"
+                    if sk not in rd and k in rd:
+                        rd[sk] = rd[k]
 
             if ptype == "cmap_scatter":
                 from chaco.default_colormaps import color_map_name_dict
@@ -836,7 +843,13 @@ class Graph(ContextMenuMixin):
         try:
             names = self.series[plotid][series]
         except IndexError:
-            print("adding data", plotid, series, self.series[plotid])
+            logger.warning(
+                "add data missing series plotid=%s series=%s available=%s",
+                plotid,
+                series,
+                self.series[plotid],
+            )
+            return
 
         plot = self.plots[plotid]
         data = plot.data
@@ -869,13 +882,17 @@ class Graph(ContextMenuMixin):
         update_y_limits=False,
         ypadding=10,
         ymin_anchor=None,
-        **kw
+        **kw,
     ):
-
         try:
             names = self.series[plotid][series]
         except (IndexError, TypeError):
-            print("adding datum", plotid, series, self.series[plotid])
+            logger.warning(
+                "add datum missing series plotid=%s series=%s available=%s",
+                plotid,
+                series,
+                self.series[plotid],
+            )
             return
 
         plot = self.plots[plotid]
@@ -884,7 +901,7 @@ class Graph(ContextMenuMixin):
             datum = (datum,)
 
         data = plot.data
-        mi, ma = -Inf, Inf
+        mi, ma = -inf, inf
         for i, (name, di) in enumerate(zip(names, datum)):
             d = data.get_data(name)
             nd = hstack((d, di))
@@ -916,13 +933,22 @@ class Graph(ContextMenuMixin):
 
         plot.overlays.append(RangeSelectionOverlay(component=plot))
 
-    def add_guide(self, value, orientation="h", plotid=0, color=(0, 0, 0)):
+    def add_range_guide(self, minvalue, maxvalue, plotid=0, **kw):
+        plot = self.plots[plotid]
+        from pychron.graph.guide_overlay import RangeGuideOverlay
+
+        guide_overlay = RangeGuideOverlay(
+            component=plot, minvalue=minvalue, maxvalue=maxvalue, **kw
+        )
+        plot.overlays.append(guide_overlay)
+
+    def add_guide(self, value, plotid=0, **kw):
         """ """
         plot = self.plots[plotid]
 
         from pychron.graph.guide_overlay import GuideOverlay
 
-        guide_overlay = GuideOverlay(component=plot, value=value, color=color)
+        guide_overlay = GuideOverlay(component=plot, value=value, **kw)
         plot.overlays.append(guide_overlay)
 
     def add_vertical_rule(self, v, **kw):
@@ -1072,7 +1098,6 @@ class Graph(ContextMenuMixin):
             if "xname" in kw:
                 xname = kw["xname"]
             else:
-
                 xname = next(self.xdataname_generators[plotid])
             if "yname" in kw:
                 yname = kw["yname"]
@@ -1228,8 +1253,8 @@ class Graph(ContextMenuMixin):
         axis = getattr(self.plots[plotid], axistag)
         params = dict(title=title)
 
-        if font not in VALID_FONTS:
-            font = "arial"
+        # if font not in VALID_FONTS:
+        #     font = "arial"
 
         if font is not None or size is not None:
             if size is None:
@@ -1266,12 +1291,11 @@ class Graph(ContextMenuMixin):
             ra = getattr(plot, "%s_range" % axis)
             return ra.low, ra.high
         except AttributeError as e:
-            print("get_limits", e)
+            logger.debug("get_limits failed error=%s", e)
 
     def _set_limits(
         self, mi, ma, axis, plotid, pad, pad_style="symmetric", force=False
     ):
-
         if not plotid < len(self.plots):
             return
 
@@ -1287,9 +1311,9 @@ class Graph(ContextMenuMixin):
             if mi is None:
                 mi = ra.low
 
-            if mi == -Inf:
+            if mi == -inf:
                 mi = 0
-            if ma == Inf:
+            if ma == inf:
                 ma = 100
 
             if ma is not None and mi is not None:
@@ -1330,7 +1354,7 @@ class Graph(ContextMenuMixin):
         if scale == "log":
             try:
                 if mi <= 0:
-                    mi = Inf
+                    mi = inf
                     data = plot.data
                     for di in data.list_data():
                         if "y" in di:
@@ -1363,7 +1387,7 @@ class Graph(ContextMenuMixin):
             if mi is not None:
                 change = ra.low != mi
                 if isinstance(mi, (int, float)):
-                    if mi < ra.high:
+                    if mi < ra.high or (ma is not None and mi < ma):
                         ra.low = mi
                 else:
                     ra.low = mi
@@ -1371,7 +1395,7 @@ class Graph(ContextMenuMixin):
             if ma is not None:
                 change = change or ra.high != ma
                 if isinstance(ma, (int, float)):
-                    if ma > ra.low:
+                    if ma > ra.low or (mi is not None and ma > mi):
                         ra.high = ma
                 else:
                     ra.high = ma

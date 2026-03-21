@@ -13,12 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
+import struct
 import time
 from datetime import datetime
+from numpy import append as npappend
 
 from traits.api import List
 
 from pychron.hardware.quadera_spectrometer_controller import QuaderaController
+
+from pychron.processing.isotope import Isotope
+from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import (
     ISOTOPX_DEFAULT_INTEGRATION_TIME,
     ISOTOPX_INTEGRATION_TIMES,
@@ -26,6 +32,7 @@ from pychron.pychron_constants import (
     QUADERA_DEFAULT_INTEGRATION_TIME,
     QUADERA_INTEGRATION_TIMES,
 )
+
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 
 # from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
@@ -54,10 +61,168 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         # service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
         # s = self.application.get_service(service)
 
-        s = QuaderaController(name="spectrometer_microcontroller")
+        s = QuaderaController(name="quad_spectrometer_microcontroller")
         s.bootstrap()
         s.communicator.simulation = True
         return s
+
+    def set_data_pump_mode(self, mode):
+        pass
+
+    def sink_data(self, writer, n, delay, buffer_delay):
+        client = self.microcontroller.communicator
+        handle = client.get_handler()
+        sock = handle.sock
+        # get the data
+        header = None
+        cnt = 1
+        start_time = st = time.time()
+        isotopes = {}
+        nowdate = datetime.now().date()
+        buffer_empty = False
+        while 1:
+            sti = time.time()
+            if cnt > n:
+                break
+
+            # et = time.time() - st
+            # if et < delay:
+            #     time.sleep(delay - et)
+
+            # st = time.time()
+            size = sock.recv(4)
+            size = struct.unpack("i", size)[0]
+            str_data = sock.recv(size)
+
+            # self.debug(str_data)
+            s = str_data.decode("utf-8")
+
+            self.debug(s)
+
+            s = s.replace("False", '"False"')
+            s = s.replace("True", '"True"')
+            obj = json.loads(s)
+
+            # read all the buffered messages
+            if not buffer_empty and "Time" in obj:
+                t = obj["Time"]
+                try:
+                    v = datetime.strptime(t, "%I:%M:%S %p")
+                except ValueError:
+                    self.debug('Invalid "Time" in message. continuing')
+                    self.debug_exception()
+                    continue
+
+                v = datetime.combine(nowdate, v.time())
+
+                dt = abs(v - datetime.now())
+                self.debug(f"reading buffer message.  behind {dt.total_seconds()}")
+                if dt.total_seconds() > buffer_delay:
+                    self.debug(f"skipping {obj}")
+                    continue
+                else:
+                    buffer_empty = True
+
+            # if not i:
+            # construct and write the header
+            if "Py-Data" in obj:
+                obj = obj["Py-Data"]
+            else:
+                continue
+
+            keys = list(obj.keys())
+
+            if "amuNames" not in keys:
+                continue
+
+            if not header:
+                masses = ["mass({})".format(m) for m in obj["amuNames"]]
+                header = (
+                    [
+                        "count",
+                        "time",
+                    ]
+                    + masses
+                    + keys
+                )
+                writer.writerow(header)
+
+            raw = [obj[h] for h in keys]
+
+            intensities = obj["intensity"]
+            ct = time.time()
+
+            for m, si in zip(obj["amuNames"], intensities):
+                if m not in isotopes:
+                    iso = Isotope(m, "Detector")
+                    iso.name = m
+                    isotopes[m] = iso
+                else:
+                    iso = isotopes[m]
+
+                iso.xs = npappend(iso.xs, ct - start_time)
+                iso.ys = npappend(iso.ys, si)
+
+            row = (
+                [
+                    cnt,
+                    ct,
+                ]
+                + intensities
+                + raw
+            )
+            self.debug(f"sinking row {cnt}/{n}: {row}")
+            writer.writerow(row)
+            cnt += 1
+
+            et = time.time() - sti
+            if et < delay:
+                time.sleep(delay - et)
+
+        return IsotopeGroup(isotopes=isotopes)
+
+    # def set_data_pump_mode(self, mode):
+    #     resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))
+    #
+    # def halted(self):
+    #     """
+    #     General.Cycle.Status
+    #     1= halt, 5=run multi
+    #     """
+    #     resp = self.microcontroller.ask('General.Cycle.Status')
+    #     if resp:
+    #         resp = resp.strip()
+    #         return int(resp) == 1
+    #
+    # def sink_data(self):
+    #     packet = self.microcontroller.ask('General.DataPump.Data')
+    #
+    #     def get_bytes(n):
+    #         i = 0
+    #         while 1:
+    #             yield packet[i:i+n]
+    #             i+=n
+    #
+    #     channel = get_bytes(1)
+    #     datatype = get_bytes(1)
+    #     status = get_bytes(1)
+    #     ndata = get_bytes(1)
+    #
+    #     timestamp = get_bytes(8)
+    #     max_data_tuples = get_bytes(2)
+    #     first_mass = get_bytes(2)
+    #     last_mass = get_bytes(2)
+    #     dwell_speed = get_bytes(1)
+    #     measure_unit_mass_resol = get_bytes(1)
+    #     ndata_tuples = int(get_bytes(1), 16)
+    #
+    #     for j in range(ndata_tuples):
+    #         intensity = get_bytes(4)
+    #         mass = get_bytes(2)
+    #         status = get_bytes(1)
+    #         adjust_mode = get_bytes(1)
+    #
+    #     return timestamp, channel, intensity
 
     def make_configuration_dict(self):
         return {}

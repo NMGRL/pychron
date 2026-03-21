@@ -45,6 +45,7 @@ from pychron.experiment.tasks.experiment_panes import (
     LoggerPane,
     ExplanationPane,
     ConditionalsPane,
+    TimeSeriesPane,
 )
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
@@ -218,7 +219,6 @@ class ExperimentEditorTask(EditorTask):
         self._do_callables(self.deactivations)
 
     def create_dock_panes(self):
-
         name = "Isotope Evolutions"
         man = self.application.get_service(SPECTROMETER_PROTOCOL)
         if not man or man.simulation:
@@ -235,6 +235,7 @@ class ExperimentEditorTask(EditorTask):
         explanation_pane = ExplanationPane()
         explanation_pane.set_colors(self._assemble_state_colors())
         self.conditionals_pane = ConditionalsPane(model=ex)
+        timeseries_pane = TimeSeriesPane(model=ex)
 
         panes = [
             StatsPane(model=ex.stats, executor=ex),
@@ -247,6 +248,7 @@ class ExperimentEditorTask(EditorTask):
             self.isotope_evolution_pane,
             explanation_pane,
             wait_pane,
+            timeseries_pane,
         ]
 
         if self.loading_manager:
@@ -551,9 +553,22 @@ class ExperimentEditorTask(EditorTask):
             self.manager.experiment_factory.edit_enabled = True
             self.manager.experiment_queue = self.active_editor.queue
             self.manager.executor.active_editor = self.active_editor
+            # Keep executor state in sync during editing (executor.experiment_queues
+            # is normally populated at execution time).
+            try:
+                self.manager.executor.experiment_queue = self.active_editor.queue
+            except Exception:
+                pass
             self._show_pane(self.experiment_factory_pane)
         else:
             self.manager.experiment_factory.edit_enabled = False
+
+    @on_trait_change("manager:experiment_queue:changed")
+    def _handle_queue_change(self, obj, name, old, new):
+        if self.loading_manager:
+            print("asdf", obj)
+            runs = obj.cleaned_automated_runs
+            self.loading_manager.set_loaded_runs(runs)
 
     @on_trait_change("loading_manager:group_positions")
     def _update_group_positions(self, new):
@@ -643,7 +658,14 @@ class ExperimentEditorTask(EditorTask):
 
     @on_trait_change("editor_area:editors[]")
     def _update_editors(self, new):
-        self.manager.experiment_queues = [ei.queue for ei in new]
+        qs = [ei.queue for ei in new]
+        self.manager.experiment_queues = qs
+        # Mirror open queues onto the executor so panes (e.g. StatsPane) can
+        # recalculate even when the executor is idle.
+        try:
+            self.manager.executor.experiment_queues = qs
+        except Exception:
+            pass
 
     @on_trait_change("manager:executor:measuring_run:plot_panel")
     def _update_plot_panel(self, new):
@@ -838,9 +860,11 @@ class ExperimentEditorTask(EditorTask):
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
-                PaneItem("pychron.wait", height=100),
+                PaneItem("pychron.wait"),
                 Tabbed(
-                    PaneItem("pychron.experiment.factory"),
+                    PaneItem(
+                        "pychron.experiment.factory",
+                    ),
                     PaneItem("pychron.experiment.isotope_evolution"),
                 ),
                 orientation="vertical",
@@ -848,9 +872,11 @@ class ExperimentEditorTask(EditorTask):
             right=Splitter(
                 Tabbed(
                     PaneItem("pychron.experiment.stats"),
-                    PaneItem("pychron.console", height=425),
-                    PaneItem("pychron.experiment.explanation", height=425),
+                    PaneItem("pychron.console"),
+                    PaneItem("pychron.experiment.timeseries"),
+                    PaneItem("pychron.experiment.conditionals"),
                     PaneItem("pychron.experiment.connection_status"),
+                    PaneItem("pychron.experiment.explanation"),
                 ),
                 PaneItem("pychron.extraction_line.canvas_dock"),
                 orientation="vertical",

@@ -43,6 +43,7 @@ from traits.api import (
 
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.regex import IPREGEX
 
@@ -78,14 +79,17 @@ class SessionCTX(object):
         self._psession = None
 
     def __enter__(self):
-        if self._use_parent_session:
-            self._parent.create_session()
-            return self._parent.session
-        else:
-            self._psession = self._parent.session
-            self._session = self._parent.session_factory()
-            self._parent.session = self._session
-            return self._session
+        if self._parent:
+            if self._use_parent_session:
+                self._parent.create_session()
+                return self._parent.session
+            else:
+                self._psession = self._parent.session
+                factory = self._parent.session_factory
+                if factory:
+                    self._session = factory()
+                    self._parent.session = self._session
+                    return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._session:
@@ -224,6 +228,7 @@ class DatabaseAdapter(Loggable):
             else:
                 self.warning("no session factory")
         else:
+            self.critical("using Mock session")
             self.session = MockSession()
 
     def close_session(self):
@@ -301,8 +306,41 @@ class DatabaseAdapter(Loggable):
                     self.info(
                         "{} connecting to database {}".format(id(self), self.public_url)
                     )
+
+                    connect_args = {}
+                    if (
+                        globalv.db_ca_file
+                        and globalv.db_cert_file
+                        and globalv.db_key_file
+                    ):
+                        self.debug(
+                            f"using ssl ca={globalv.db_ca_file}, cert={globalv.db_cert_file}, key={globalv.db_key_file}"
+                        )
+
+                        for f in (
+                            globalv.db_ca_file,
+                            globalv.db_cert_file,
+                            globalv.db_key_file,
+                        ):
+                            if not os.path.isfile(f):
+                                self.warning(f"file does not exist: {f}")
+                                break
+                        else:
+                            connect_args = {
+                                "ssl": {
+                                    "ca": globalv.db_ca_file,
+                                    "cert": globalv.db_cert_file,
+                                    "key": globalv.db_key_file,
+                                    "check_hostname": False,
+                                }
+                            }
+
+                    self.debug(f"using connect_args {connect_args}")
                     engine = create_engine(
-                        url, echo=self.echo, pool_recycle=pool_recycle
+                        url,
+                        echo=self.echo,
+                        pool_recycle=pool_recycle,
+                        connect_args=connect_args,
                     )
 
                     self.session_factory = sessionmaker(
@@ -420,7 +458,6 @@ host= {}\nurl= {}'.format(
                 os.path.basename(self.path),
             )
         else:
-
             url = "{}:{}".format(obscure_host(self.host), self.name)
         return url
 
@@ -509,7 +546,6 @@ host= {}\nurl= {}'.format(
         return driver
 
     def _import_mysql_driver(self):
-
         try:
             """
             pymysql
@@ -538,12 +574,13 @@ host= {}\nurl= {}'.format(
 
         try:
             self.info("testing database connection {}".format(self.test_func))
-            vers = getattr(self, self.test_func)(reraise=True)
+            getattr(self, self.test_func)(reraise=True)
             if version_warn:
                 self._version_warn_hook()
 
             connected = True
         except OperationalError:
+            self.debug_exception()
             self.warning("Operational connection failed to {}".format(self.public_url))
             connected = False
             self._test_connection_enabled = False
@@ -598,7 +635,11 @@ host= {}\nurl= {}'.format(
             self.critical("No session")
 
     def _add_unique(self, item, attr, name):
-        nitem = getattr(self, "get_{}".format(attr))(name)
+        try:
+            nitem = getattr(self, "get_{}".format(attr))(name)
+        except NoResultFound:
+            nitem = None
+
         if nitem is None:
             self.info("adding {}= {}".format(attr, name))
             self._add_item(item)
@@ -641,7 +682,6 @@ host= {}\nurl= {}'.format(
         group_by=None,
         verbose_query=False,
     ):
-
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
             self.debug("USING MOCKSESSION************** {}".format(sess))
@@ -687,7 +727,7 @@ host= {}\nurl= {}'.format(
             q = query_hook(q)
 
         if verbose_query or self.verbose_retrieve_query:
-            # print compile_query(q)
+            # print(compile_query(q))
             self.debug(compile_query(q))
 
         items = self._query(q, func, reraise)
@@ -757,7 +797,6 @@ host= {}\nurl= {}'.format(
                 raise e
 
     def _append_filters(self, f, kw):
-
         filters = kw.get("filters", [])
         if isinstance(f, (tuple, list)):
             filters.extend(f)
@@ -787,7 +826,6 @@ host= {}\nurl= {}'.format(
         verbose=True,
         verbose_query=False,
     ):
-
         if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
 
@@ -882,7 +920,6 @@ host= {}\nurl= {}'.format(
         order=None,
         key=None,
     ):
-
         if isinstance(join_table, str):
             join_table = gtables[join_table]
 

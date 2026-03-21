@@ -70,17 +70,16 @@ class Switch(Connectable, Circle):
             p.x, p.y = self.x, self.y
             p.render(gc)
 
-    def is_in(self, sx, sy):
-
-        x, y = self.get_xy()
-        r = self.map_dimension(self.radius)
-        return ((x + r - sx) ** 2 + (y + r / 2.0 - sy) ** 2) ** 0.5 < r
+    # def is_in(self, sx, sy):
+    #     x, y = self.get_xy()
+    #     r = self.map_dimension(self.radius)
+    #     return ((x + r - sx) ** 2 + (y + r / 2.0 - sy) ** 2) ** 0.5 < r
 
 
 class BaseValve(Connectable):
     soft_lock = False
     owned = False
-    oactive_color = (0, 255, 0)
+    oactive_color = (0, 1, 0)
     description = ""
 
     def toyaml(self):
@@ -277,7 +276,6 @@ class RoughValve(BaseValve, Bordered):
                 gc.draw_path()
 
     def _draw_state_indicator(self, gc, x, y, w, h, cr):
-
         if not self.state:
             with gc:
                 gc.translate_ctm(x, y)

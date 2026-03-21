@@ -20,7 +20,7 @@ import re
 import time
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import array, Inf, arange
+from numpy import array, inf, arange
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
@@ -43,6 +43,7 @@ AGE = "Age"
 EXTRACT_VALUE = "Extract Value"
 EXTRACT_DURATION = "Extract Duration"
 CLEANUP = "Cleanup"
+F = "F"
 
 ATTR_MAPPING = {
     PEAK_CENTER: "peak_center",
@@ -54,6 +55,7 @@ ATTR_MAPPING = {
     EXTRACT_VALUE: "extract_value",
     EXTRACT_DURATION: "extract_duration",
     CLEANUP: "cleanup",
+    F: "uF",
 }
 
 AR4039 = "Ar40/Ar39"
@@ -91,12 +93,12 @@ class BaseSeries(BaseArArFigure):
     def max_x(self, *args):
         if len(self.xs):
             return max(self.xs)
-        return -Inf
+        return -inf
 
     def min_x(self, *args):
         if len(self.xs):
             return min(self.xs)
-        return Inf
+        return inf
 
     def mean_x(self, *args):
         if len(self.xs):
@@ -225,11 +227,16 @@ class BaseSeries(BaseArArFigure):
             if po.y_error and yerr is not None:
                 s = self.options.error_bar_nsigma
                 ec = self.options.end_caps
-                self._add_error_bars(scatter, yerr, "y", s, ec, visible=True)
+                self._add_error_bars(scatter, yerr, "y", s, end_caps=ec, visible=True)
 
             # if set_ylimits and not po.has_ylimits():
             #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
             #     graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
+
+            if self.options.guides:
+                for gi in self.options.guides:
+                    if gi.visible and gi.should_plot(pid):
+                        graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback
@@ -238,7 +245,6 @@ class BaseSeries(BaseArArFigure):
             print("Series", e)
 
     def _get_xs(self, plots, ans, tzero=None):
-
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]
@@ -311,7 +317,7 @@ class BaseSeries(BaseArArFigure):
         if self.group_id == 0:
             if self.options.show_info:
                 ts = [
-                    u"Data {}{}{}".format(
+                    "Data {}{}{}".format(
                         PLUSMINUS, self.options.error_bar_nsigma, SIGMA
                     )
                 ]
@@ -343,7 +349,7 @@ class Series(BaseSeries):
     #             ai = self.sorted_analyses[0]
     #             a = bool(ai.get_value(name))
     #     return a
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 

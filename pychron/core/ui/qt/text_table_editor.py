@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Event, Color, Str, Any, Int
-from traitsui.qt4.editor import Editor
+from traits.api import Event, Str, Any, Int
+from pyface.ui_traits import PyfaceColor
+from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
 from pyface.qt.QtGui import (
@@ -81,7 +82,6 @@ class _TextTableEditor(Editor):
         n = len(tables)
 
         for i, ti in enumerate(tables):
-
             self._add_table(ti, cursor)
             #             timethis(self._add_table, args=(ti, cursor), msg='add_table')
             if i < n - 1:
@@ -91,7 +91,6 @@ class _TextTableEditor(Editor):
         pass
 
     def _add_table(self, tab, cursor):
-
         tab_fmt = QTextTableFormat()
         tab_fmt.setCellSpacing(0)
         tab_fmt.setCellPadding(3)
@@ -211,7 +210,7 @@ class _FastTextTableEditor(_TextTableEditor):
 
                 txt = "".join(
                     [
-                        u"{{:<{}s}}".format(cell.width).format(cell.text)
+                        "{{:<{}s}}".format(cell.width).format(cell.text)
                         for cell in row.cells
                     ]
                 )
@@ -220,7 +219,7 @@ class _FastTextTableEditor(_TextTableEditor):
 
 class TextTableEditor(BasicEditorFactory):
     klass = _TextTableEditor
-    bg_color = Color
+    bg_color = PyfaceColor
     odd_color = Str
     even_color = Str
     header_color = Str

@@ -49,15 +49,21 @@ class ExtractionLineScene(Scene):
     def load(self, pathname, configpath, valvepath, canvas):
         self.overlays = []
         self.reset_layers()
-        origin, color_dict, valve_dimension, images = self._load_config(
-            configpath, canvas
-        )
+        (
+            origin,
+            color_dict,
+            valve_dimension,
+            images,
+            connection_dimension,
+        ) = self._load_config(configpath, canvas)
         if pathname.endswith(".yaml") or pathname.endswith(".yml"):
             klass = YAMLLoader
         else:
             klass = XMLLoader
 
-        loader = klass(pathname, origin, color_dict, valve_dimension)
+        loader = klass(
+            pathname, origin, color_dict, valve_dimension, connection_dimension
+        )
 
         loader.load_switchables(self, valvepath)
         loader.load_rects(self)
@@ -98,6 +104,7 @@ class ExtractionLineScene(Scene):
         color_dict = dict()
         ox, oy = 0, 0
         valve_dimension = 2, 2
+        connection_dimension = 10
         images = []
         if os.path.isfile(p):
             cp = self._get_canvas_parser(p)
@@ -112,6 +119,10 @@ class ExtractionLineScene(Scene):
                 valve_dimension = 2, 2
                 if dim is not None:
                     valve_dimension = floatify(dim)
+
+                dim = tree.find("connection_dimension")
+                if dim is not None:
+                    connection_dimension = float(dim.text)
 
                 # get label font
                 font = tree.find("font")
@@ -138,7 +149,7 @@ class ExtractionLineScene(Scene):
                 if o is not None:
                     ox, oy = floatify(o)
 
-        return (ox, oy), color_dict, valve_dimension, images
+        return (ox, oy), color_dict, valve_dimension, images, connection_dimension
 
 
 # ============= EOF =============================================

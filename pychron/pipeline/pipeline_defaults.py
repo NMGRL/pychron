@@ -348,8 +348,8 @@ FLUX = """
 required:
 nodes:
   - klass: FindFluxMonitorsNode
-    # irradiation: NM-312
-    # level: P
+    irradiation: NM-312
+    level: Q
   - klass: FluxMonitorsNode
   - klass: FitFluxNode
   - klass: ReviewNode
@@ -413,6 +413,13 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: AuditNode
+"""
+
+REVERT_HISTORY = """
+required:
+nodes:
+    - klass: UnknownNode
+    - klass: RevertHistoryNode
 """
 
 MASSSPEC_REDUCED = """

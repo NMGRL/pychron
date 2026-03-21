@@ -29,6 +29,11 @@ from pychron.canvas.canvas2D.scene.primitives.rounded import (
 class Pump(RoundedRectangle):
     use_symbol = False
 
+    def toyaml(self):
+        d = super(Pump, self).toyaml()
+        d["use_symbol"] = self.use_symbol
+        return d
+
     def _render_base_symbol(self, gc, br):
         gc.arc(0, 0, br, 0, 360)
 

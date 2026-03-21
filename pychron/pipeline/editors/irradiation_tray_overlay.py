@@ -36,7 +36,10 @@ class IrradiationTrayOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
             comp = self.component
-            gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
+            gc.clip_to_rect(
+                *(float(p) for p in (comp.x, comp.y, comp.width, comp.height))
+            )
+            # gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
             # gc.set_fill_color((1, 0, 1))
             if self._cached_pts is None:
                 self._cached_pts = self._gather_points()

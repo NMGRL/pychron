@@ -187,7 +187,7 @@ def calc_transform_matrix(refpoints, datapoints):
     a, b, tx, ty = soln[0]
 
     sum_residuals = soln[1]
-    scale = (a ** 2 + b ** 2) ** 0.5
+    scale = (a**2 + b**2) ** 0.5
     err = (sum_residuals / len(datapoints)) ** 0.5 / scale
     return array([[a, -b, tx], [b, a, ty], [0, 0, 1]]), scale, err
 

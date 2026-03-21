@@ -192,7 +192,7 @@ if __name__ == "__main__":
     n = 100
     x = np.arange(n)
     a, b, c = -0.01, 0, 100
-    y = a * x ** 2 + b * x + c + 10 * np.random.random(n)
+    y = a * x**2 + b * x + c + 10 * np.random.random(n)
     g.new_series(x, y)
 
     g.configure_traits()

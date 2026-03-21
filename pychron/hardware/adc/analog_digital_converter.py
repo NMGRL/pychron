@@ -76,8 +76,8 @@ class M1000(AnalogDigitalConverter):
         short *+00072.00
         long *1RD+00072.00A4
         """
-        func = (
-            lambda X: float(X[5:-2]) if form == self.long_form_prompt else float(X[2:])
+        func = lambda X: (
+            float(X[5:-2]) if form == self.long_form_prompt else float(X[2:])
         )
 
         if r:

@@ -16,15 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Str, Color, List, Property, Bool
+from traits.api import HasTraits, Str, List, Property, Bool
 from traitsui.api import View, Item
-
+from pyface.ui_traits import PyfaceColor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class Layer(HasTraits):
     name = Str
-    color = Color
+    color = PyfaceColor
     components = List
     label = Property(depends_on="name")
     visible = Bool(True)

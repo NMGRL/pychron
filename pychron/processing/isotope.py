@@ -24,7 +24,7 @@ from binascii import hexlify
 from math import isnan, isinf
 
 import six
-from numpy import array, Inf, polyfit, gradient, array_split, mean, isfinite
+from numpy import array, inf, polyfit, gradient, array_split, mean, isfinite
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
@@ -192,6 +192,7 @@ class IsotopicMeasurement(BaseMeasurement):
     use_stored_value = False
     reviewed = False
     ic_factor_reviewed = False
+    ic_factor_fit = None
 
     _value = 0
     _error = 0
@@ -305,7 +306,7 @@ class IsotopicMeasurement(BaseMeasurement):
                     s = int(s)
 
                 if e is "":
-                    e = Inf
+                    e = inf
                 else:
                     e = int(e)
 
@@ -339,7 +340,6 @@ class IsotopicMeasurement(BaseMeasurement):
         use_standard_deviation_filtering=False,
         use_iqr_filtering=False,
     ):
-
         self.filter_outliers_dict = {
             "filter_outliers": filter_outliers,
             "iterations": iterations,
@@ -369,7 +369,6 @@ class IsotopicMeasurement(BaseMeasurement):
             elif isinstance(fit, dict):
                 self.attr_set(**fit)
             else:
-
                 fitname = fit.fit
                 if fitname == AUTO_N:
                     fitname = fit.auto_fit(self.n)
@@ -506,7 +505,7 @@ class IsotopicMeasurement(BaseMeasurement):
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
-            fit = reg.determine_fit()
+            fit = reg.determine_fit(lfit)
             self.fit = fit
             reg.calculate()
         except FitError as e:
@@ -639,17 +638,31 @@ class BaseIsotope(IsotopicMeasurement):
         IsotopicMeasurement.__init__(self, name, detector)
         self.baseline = Baseline("{} bs".format(name), detector)
 
-    def get_baseline_corrected_value(self, include_baseline_error=None):
+    def get_baseline_corrected_value(
+        self, include_baseline_error=None, window=None, count=None
+    ):
         if include_baseline_error is None:
             include_baseline_error = self.include_baseline_error
 
         b = self.baseline.uvalue
+        if window:
+            ys = self.sniff.ys[-window:]
+            v = ys.mean()
+            e = ys.std()
+            uv = ufloat(v, e, tag=self.name)
+        elif count:
+            v = self.sniff.ys[count]
+            e = 0
+            uv = ufloat(v, e, tag=self.name)
+        else:
+            uv = self.uvalue
+
         if not include_baseline_error:
             b = nominal_value(b)
-            nv = self.uvalue - b
+            nv = uv - b
             return ufloat(nominal_value(nv), std_dev(nv), tag=self.name)
         else:
-            return self.uvalue - b
+            return uv - b
 
     def _get_baseline_fit_abbreviation(self):
         return self.baseline.fit_abbreviation
@@ -678,6 +691,8 @@ class Isotope(BaseIsotope):
     discrimination = None
     interference_corrected_value = None
     blank_source = ""
+
+    klass = 1
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)
@@ -731,11 +746,11 @@ class Isotope(BaseIsotope):
         else:
             return ufloat(0, 0, tag=self.name)
 
-    def get_intensity(self):
+    def get_intensity(self, **kw):
         """
         return the discrimination and ic_factor corrected value
         """
-        v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
+        v = self.get_disc_corrected_value(**kw) * (self.ic_factor or 1.0)
 
         # this is a temporary hack for handling Minna bluff data
         if self.detector.lower() == "faraday":
@@ -744,12 +759,12 @@ class Isotope(BaseIsotope):
         #     print 'get intensity {}{} regressor={}'.format(self.name, self.detector, id(self._regressor))
         return v
 
-    def get_disc_corrected_value(self):
+    def get_disc_corrected_value(self, **kw):
         disc = self.discrimination
         if disc is None:
             disc = 1
 
-        return self.get_non_detector_corrected_value() * disc
+        return self.get_non_detector_corrected_value(**kw) * disc
 
     def get_ic_corrected_value(self):
         return self.get_non_detector_corrected_value() * (self.ic_factor or 1.0)
@@ -761,8 +776,8 @@ class Isotope(BaseIsotope):
             v = v - self.blank.value
         return v
 
-    def get_non_detector_corrected_value(self):
-        v = self.get_baseline_corrected_value()
+    def get_non_detector_corrected_value(self, **kw):
+        v = self.get_baseline_corrected_value(**kw)
 
         # this is a temporary hack for handling Minna bluff data
         if self.correct_for_blank and self.detector.lower() != "faraday":

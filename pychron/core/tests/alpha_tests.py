@@ -18,7 +18,7 @@ class AlphaTestCase(unittest.TestCase):
         self.assertEqual(alphas(27), "AB")
 
     def test_a_zz(self):
-        ints = range(26 + 26 ** 2)
+        ints = range(26 + 26**2)
         ass = [alphas(i) for i in ints]
 
         seeds = string.ascii_uppercase

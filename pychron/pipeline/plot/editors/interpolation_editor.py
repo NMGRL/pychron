@@ -54,7 +54,6 @@ def bin_analyses(ans):
 def get_bounds(groups):
     bs = []
     for i, gi in enumerate(groups):
-
         try:
             gii = groups[i + 1]
         except IndexError:

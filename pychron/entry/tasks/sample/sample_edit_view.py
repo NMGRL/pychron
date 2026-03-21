@@ -16,7 +16,18 @@
 import re
 
 import pyproj as pyproj
-from traits.api import HasTraits, Instance, List, Str, Long, Float, BaseFloat, Enum, Int
+from traits.api import (
+    HasTraits,
+    Instance,
+    List,
+    Str,
+    Int,
+    Float,
+    BaseFloat,
+    Enum,
+    CStr,
+)
+from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, Item, VGroup, EnumEditor, HGroup
 from traitsui.menu import Action
 
@@ -78,7 +89,7 @@ class SampleEditItem(HasTraits):
     project = Str
     material = Str
     grainsize = Str
-    id = Long
+    id = Int
     note = Str
 
     location_mode = Enum("Lat/Lon", "UTM")
@@ -89,7 +100,7 @@ class SampleEditItem(HasTraits):
     lat = LatFloat
     lon = LonFloat
     igsn = Str
-    lithology = Str
+    lithology = CStr
     location = Str
     storage_location = Str
     approximate_age = Float
@@ -100,14 +111,14 @@ class SampleEditItem(HasTraits):
 
     _project = Str
     _material = Str
-    _grainsize = Str
-    _note = Str
+    _grainsize = CStr
+    _note = CStr
     _lat = LatFloat
     _lon = LonFloat
-    _igsn = Str
-    _lithology = Str
-    _location = Str
-    _storage_location = Str
+    _igsn = CStr
+    _lithology = CStr
+    _location = CStr
+    _storage_location = CStr
     _approximate_age = Float
     _elevation = Float
 
@@ -135,7 +146,8 @@ class SampleEditItem(HasTraits):
                     try:
                         setattr(self, attr, v)
                         setattr(self, "_{}".format(attr), v)
-                    except ValueError:
+                    except (TraitError, ValueError) as e:
+                        print("unable to set attribute", attr, v, e)
                         pass
 
     @property
@@ -165,7 +177,6 @@ class SampleEditItem(HasTraits):
         return proj, pi
 
     def traits_view(self):
-
         ll_grp = HGroup(
             Item("lat", label="Latitude"),
             Item("lon", label="Longitude"),

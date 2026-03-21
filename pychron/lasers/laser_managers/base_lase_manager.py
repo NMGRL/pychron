@@ -45,7 +45,7 @@ class BaseLaserManager(Manager):
     stage_manager = Instance("pychron.lasers.stage_managers.stage_manager.StageManager")
     stage_controller_klass = "Newport"
 
-    requested_power = Any
+    # requested_power = Any
     status_text = Property(depends_on="_requested_power, enabled")
     pulse = Any
     laser_controller = Any
@@ -146,7 +146,8 @@ class BaseLaserManager(Manager):
         ] + patterns
 
     def execute_pattern(
-        self, name=None, duration=None, block=False, lase=False, thread_safe=True
+        self, name=None, duration=None, block=False, lase=False, thread_safe=True,
+            position=None,
     ):
         # if not self.stage_manager.temp_hole:
         #     self.information_dialog('Need to specify a hole')
@@ -154,9 +155,7 @@ class BaseLaserManager(Manager):
 
         pm = self.pattern_executor
         self.debug(
-            "execute pattern {}, duration=duration, block={}, lase={}".format(
-                name, duration, block, lase
-            )
+            f"execute pattern {name}, duration={duration}, block={block}, lase={lase}, position={position}"
         )
         if pm.load_pattern(name):
             pm.set_stage_values(self.stage_manager)
@@ -167,7 +166,7 @@ class BaseLaserManager(Manager):
                     return
                 self.set_laser_power(self.pulse.power, verbose=True)
 
-            pm.execute(block, duration, thread_safe=thread_safe)
+            pm.execute(position, block, duration, thread_safe=thread_safe)
 
     def get_brightness(self, **kw):
         return 0
@@ -257,7 +256,6 @@ class BaseLaserManager(Manager):
         nsuccess=2,
         timeout=50,
     ):
-
         ask = self._ask
 
         cnt = 0

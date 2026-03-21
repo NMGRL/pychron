@@ -29,6 +29,7 @@ from traits.api import (
     HasTraits,
     Str,
     List,
+    on_trait_change,
 )
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil
@@ -43,12 +44,14 @@ class AutoCenterConfig(HasTraits):
     name = "Default"
     use_adaptive_threshold = Bool(False)
     blur = Int
-    stretch_intensity = Bool(False)
+    stretch_intensity = Bool(True)
     search_step = Int
     search_n = Int
     search_width = Int
     blocksize = Int
     blocksize_step = Int
+    inverted = Bool(False)
+    low_rank = Int(0)
 
     def __init__(self, yd=None, *args, **kw):
         if yd is not None:
@@ -58,7 +61,11 @@ class AutoCenterConfig(HasTraits):
 
     @property
     def preprop(self):
-        return {"stretch_intensity": self.stretch_intensity, "blur": self.blur}
+        return {
+            "stretch_intensity": self.stretch_intensity,
+            "blur": self.blur,
+            "low_rank": self.low_rank,
+        }
 
     @property
     def search(self):
@@ -94,17 +101,18 @@ class AutoCenterManager(MachineVisionManager):
     # blocksize = Int
     # blocksize_step = Int
 
-    selected_configuration = Instance(AutoCenterConfig)
+    selected_configuration = Instance(AutoCenterConfig, ())
     configuration_names = List
     configuration_name = Str
 
     display_image = Instance(FrameImage, ())
 
     locator = None
+    x_correction_sign = 1
+    y_correction_sign = 1
 
     def bind_preferences(self, pref_id):
-        pass
-        # bind_preference(self, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        bind_preference(self, "use_autocenter", "{}.use_autocenter".format(pref_id))
         # bind_preference(self, 'blur', '{}.autocenter_blur'.format(pref_id))
         # bind_preference(self, 'stretch_intensity', '{}.autocenter_stretch_intensity'.format(pref_id))
         # bind_preference(self, 'use_adaptive_threshold', '{}.autocenter_use_adaptive_threshold'.format(pref_id))
@@ -119,35 +127,52 @@ class AutoCenterManager(MachineVisionManager):
         if self.locator:
             self.locator.cancel()
 
-    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape="circle"):
+    def calculate_new_center(
+        self, cx, cy, offx, offy, dim=1.0, shape="circle", scale=1, **kw
+    ):
         frame = self.new_image_frame()
         loc = self._get_locator(shape=shape)
         self.locator = loc
 
+        self.debug(
+            "dim={} pxpermm={}, loc.pxpermm={}".format(dim, self.pxpermm, loc.pxpermm)
+        )
         cropdim = ceil(dim * 2.55)
 
+        # if self.offsetx or self.offsety:
+        #     offx,offy = self.offsetx, self.offsety
+        # frame = loc.rescale(frame, 1.5)
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
 
-        im = self.display_image
-        im.source_frame = frame
         dim = self.pxpermm * dim
+
+        im = self.display_image
+        self.display_image.clear()
+        im.source_frame = frame
 
         config = self.selected_configuration
 
         dx, dy = loc.find(
-            im, frame, dim=dim, preprocess=config.preprop, search=config.search
+            im,
+            frame,
+            dim=dim,
+            preprocess=config.preprop,
+            search=config.search,
+            inverted=config.inverted,
+            **kw
         )
 
         if dx is None and dy is None:
             return
         else:
             # pdx, pdy = round(dx), round(dy)
-            mdx = dx / self.pxpermm
-            mdy = dy / self.pxpermm
+            mdx = dx / self.pxpermm * self.x_correction_sign
+            mdy = dy / self.pxpermm * self.y_correction_sign
             self.info(
                 "calculated deviation px={:n},{:n}, "
                 "mm={:0.3f},{:0.3f} ({})".format(dx, dy, mdx, mdy, self.pxpermm)
             )
+
             return cx + mdx, cy + mdy
 
     # private
@@ -227,9 +252,15 @@ class AutoCenterManager(MachineVisionManager):
 class CO2AutocenterManager(AutoCenterManager):
     # private
     def _get_locator(self, *args, **kw):
-        from pychron.mv.co2_locator import CO2Locator
+        if self.locator:
+            loc = self.locator
+        else:
+            from pychron.mv.co2_locator import CO2Locator
 
-        return CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
+            loc = CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
+        loc.pxpermm = self.pxpermm
+        loc.pixel_depth = self.video.pixel_depth
+        return loc
 
 
 class DiodeAutocenterManager(AutoCenterManager):

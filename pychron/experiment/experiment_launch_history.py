@@ -52,7 +52,6 @@ def update_launch_history(path):
         # out.append((time.time(), 1, p))
 
     with open(paths.experiment_launch_history, "w") as wfile:
-
         for o in sorted(out, reverse=True)[:25]:
             wfile.write("{},{},{}\n".format(*o))
 

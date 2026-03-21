@@ -73,7 +73,6 @@ class StageControlPane(TraitsDockPane):
         }
 
     def _get_tabs(self):
-
         cg = VGroup(
             HGroup(
                 Item("canvas.show_laser_position", label="Display Current"),
@@ -161,8 +160,8 @@ class StageControlPane(TraitsDockPane):
                 VGroup(
                     UItem(
                         "stage_manager.autocenter_manager.display_image",
-                        width=240,
-                        height=240,
+                        width=-400,
+                        height=-400,
                         editor=ImageEditor(
                             refresh="stage_manager.autocenter_manager."
                             "display_image.refresh_needed"
@@ -181,6 +180,8 @@ class StageControlPane(TraitsDockPane):
                         tooltip="Take a snapshot",
                     ),
                     Item("stage_manager.snapshot_mode", label="Mode"),
+                ),
+                HGroup(
                     icon_button_editor(
                         "stage_manager.record", "media-record", tooltip="Record video"
                     ),
@@ -209,7 +210,8 @@ class StageControlPane(TraitsDockPane):
             camera_grp = VGroup(
                 HGroup(cfggrp, recgrp), mvgrp, visible_when="use_video", label="Camera"
             )
-            tabs.content.append(camera_grp)
+            # tabs.content.append(camera_grp)
+            tabs.content.insert(0, camera_grp)
             tabs.content.append(degasser_grp)
 
         mode = self.model.mode
@@ -334,6 +336,15 @@ class ControlPane(TraitsDockPane):
     closable = True
     floatable = False
 
+    def _get_request_group(self):
+        request_grp = HGroup(
+            Item("requested_power", style="readonly", format_str="%0.2f", width=100),
+            Spring(springy=False, width=50),
+            UItem("units", style="readonly"),
+            spring,
+        )
+        return request_grp
+
     def traits_view(self):
         led_grp = HGroup(
             UItem(
@@ -357,13 +368,8 @@ class ControlPane(TraitsDockPane):
             ),
             spring,
         )
-        request_grp = HGroup(
-            Item("requested_power", style="readonly", format_str="%0.2f", width=100),
-            Spring(springy=False, width=50),
-            UItem("units", style="readonly"),
-            spring,
-        )
 
+        request_grp = self._get_request_group()
         v = View(
             VGroup(led_grp, spring, status_grp, spring, request_grp, show_border=True)
         )

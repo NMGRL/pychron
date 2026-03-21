@@ -75,7 +75,6 @@ class NotificationManager(object):
             self._reposition()
 
     def _reposition(self):
-
         x, y, w, h = self._rect_tuple
         mo = self.messages[0]
 

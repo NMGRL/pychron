@@ -65,7 +65,6 @@ class LaserManager(BaseLaserManager):
     # public interface
     # ===============================================================================
     def bind_preferences(self, pref_id):
-
         from apptools.preferences.preference_binding import bind_preference
 
         bind_preference(self, "use_video", "{}.use_video".format(pref_id))
@@ -173,7 +172,9 @@ class LaserManager(BaseLaserManager):
 
         self._requested_power = power
         self._calibrated_power = p
-        self._set_laser_power_hook(p, verbose=verbose)
+        self.laser_controller.set_laser_power(p, verbose=verbose)
+        self.set_laser_power_hook(p, verbose=verbose)
+        return True
 
     def close(self, ok):
         self.pulse.dump_pulse()
@@ -303,7 +304,6 @@ class LaserManager(BaseLaserManager):
         if not self.enabled:
             self.enable_laser()
         else:
-
             self.disable_laser()
 
     # ===============================================================================
@@ -335,11 +335,8 @@ class LaserManager(BaseLaserManager):
                 resp = True
             return resp
 
-    # def _set_laser_power_hook(self, *args, **kw):
-    #    pass
-
     def set_laser_power_hook(self, *args, **kw):
-        self._set_laser_power_hook(*args, **kw)
+        pass
 
     # ===============================================================================
     # factories

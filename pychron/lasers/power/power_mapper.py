@@ -156,7 +156,6 @@ class PowerMapper(Loggable, ConsumerMixin):
             self.warning_dialog("No Laser Manager available")
 
     def _add_data(self, data):
-
         #        def _refresh_data(v):
         tab, x, y, col, row, mag, sid = data
 

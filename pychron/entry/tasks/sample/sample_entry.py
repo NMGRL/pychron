@@ -68,7 +68,7 @@ class RString(String):
 
 
 PI_NAMES = ("NMGRL",)
-if os.path.isfile(paths.valid_pi_names):
+if paths.valid_pi_names and os.path.isfile(paths.valid_pi_names):
     PI_NAMES = yload(paths.valid_pi_names)
 
 
@@ -336,8 +336,7 @@ class SampleEntry(DVCAble):
 
     auto_add_project_repository = Bool
 
-    def activated(self):
-
+    def activate(self):
         bind_preference(
             self,
             "auto_add_project_repository",
@@ -360,7 +359,6 @@ class SampleEntry(DVCAble):
         self._make_sample_template()
 
     def import_sample_from_file(self):
-
         from pyface.file_dialog import FileDialog
 
         path = self.open_file_dialog(
@@ -435,11 +433,14 @@ class SampleEntry(DVCAble):
             self.selected_samples = []
 
     def save(self):
+        self.debug("doing save")
         msg = None
         if not self.sample_edit_model.save():
             self._backup()
             if self._save():
                 msg = "Samples added to database"
+            else:
+                msg = "Nothing to Save"
         else:
             # refresh samples in display table
             self._handle_sample_filter()
@@ -545,6 +546,8 @@ class SampleEntry(DVCAble):
     @on_trait_change("sample_filter_attr, sample_filter")
     def _handle_sample_filter(self):
         if self.sample_filter and self.sample_filter_attr:
+            self.dvc.close_session()
+            self.dvc.create_session()
             sams = self.dvc.get_samples_filter(
                 self.sample_filter_attr, self.sample_filter
             )
@@ -602,7 +605,6 @@ class SampleEntry(DVCAble):
 
         for p in self._projects:
             with dvc.session_ctx(use_parent_session=False):
-
                 if p.name.startswith("?"):
                     if dvc.add_project(
                         p.name, p.principal_investigator.name, **p.optionals
@@ -832,7 +834,6 @@ class SampleEntry(DVCAble):
 
     def _add_sample_button_fired(self):
         if self.sample:
-
             material_spec = self._get_material_spec()
             if not material_spec or not material_spec.name:
                 self.information_dialog("Please enter a material for this sample")

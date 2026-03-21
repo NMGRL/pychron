@@ -17,6 +17,7 @@ from __future__ import absolute_import
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
 
+from pychron.classifier.database_adapter import ArgonIntelligenceDatabase
 from pychron.classifier.isotope_classifier import IsotopeClassifier
 from pychron.classifier.tasks.actions import TrainIsotopeClassifierAction
 from pychron.dvc.dvc import DVC
@@ -42,9 +43,13 @@ class ClassifierPlugin(BaseTaskPlugin):
             properties={"dvc": DVC(application=self.application)},
         )
 
-        return [
-            so,
-        ]
+        so1 = self.service_offer_factory(
+            protocol=ArgonIntelligenceDatabase,
+            factory=ArgonIntelligenceDatabase,
+            properties={"application": self.application},
+        )
+
+        return [so, so1]
 
     # def _preferences_default(self):
     #     return self._preferences_factory('dvc')

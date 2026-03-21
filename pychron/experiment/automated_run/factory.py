@@ -18,6 +18,7 @@
 import os
 import pickle
 
+import yaml
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import (
     String,
@@ -48,6 +49,7 @@ from pychron.core.helpers.iterfuncs import partition, groupby_key
 from pychron.core.helpers.strtools import camel_case
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
+from pychron.dvc import prep_repo_name
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
@@ -69,7 +71,7 @@ from pychron.experiment.queue.increment_heat_template import (
     BaseIncrementalHeatTemplate,
 )
 from pychron.experiment.queue.run_block import RunBlock
-from pychron.experiment.script.script import Script, ScriptOptions
+from pychron.experiment.script.script import Script, ScriptOptions, SynExtractionScript
 from pychron.experiment.utilities.comment_template import CommentTemplater
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.experiment.utilities.identifier import (
@@ -79,6 +81,7 @@ from pychron.experiment.utilities.identifier import (
     make_special_identifier,
     make_standard_identifier,
     SPECIAL_KEYS,
+    get_analysis_type_shortname,
 )
 from pychron.experiment.utilities.position_regex import (
     SLICE_REGEX,
@@ -136,6 +139,7 @@ from pychron.pychron_constants import (
     TEMPLATE,
     USERNAME,
     EDITABLE_RUN_CONDITIONALS,
+    DISABLE_BETWEEN_POSITIONS,
 )
 
 
@@ -150,6 +154,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
     post_equilibration_script = Instance(Script)
+    syn_extraction_script = Instance(SynExtractionScript)
 
     script_options = Instance(ScriptOptions, ())
     load_defaults_button = Button("Default")
@@ -177,7 +182,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     display_labnumbers = Property(depends_on="project, selected_level, _identifiers")
     _identifiers = List
 
-    use_project_based_repository_identifier = Bool(True)
+    # use_project_based_repository_identifier = Bool(True)
+    # use_load_based_repository_identifier = Bool(False)
+
+    repository_identifier_model = Enum(("Project", ("None", "Project", "Load")))
     repository_identifier = Str
     repository_identifiers = Property(
         depends_on="repository_identifier_dirty, db_refresh_needed"
@@ -238,6 +246,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     pre_cleanup = EKlass(Float)
     post_cleanup = EKlass(Float)
     cryo_temperature = EKlass(Float)
+    disable_between_positions = EKlass(Bool)
     light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on="_beam_diameter")
     _beam_diameter = String
@@ -333,6 +342,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     extract_device = Str
     username = Str
     laboratory = Str
+    load_name = Str
 
     persistence_name = "run_factory"
     pattributes = (
@@ -357,8 +367,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         TEMPLATE,
         "use_simple_truncation",
         "conditionals_path",
-        "use_project_based_repository_identifier",
+        "repository_identifier_model",
+        # "use_project_based_repository_identifier",
+        # "use_load_based_repository_identifier",
         "delay_after",
+        DISABLE_BETWEEN_POSITIONS,
     )
 
     use_name_prefix = Bool
@@ -552,7 +565,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     arv.trait_set(
                         user_defined_aliquot=aliquot,
-                        **st.make_dict(self.duration, self.cleanup)
+                        **st.make_dict(self.duration, self.cleanup),
                     )
                     new_runs.append((idx, arv))
                     i += 1
@@ -632,7 +645,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.display_irradiation = il
 
     def _new_run(self, excludes=None, **kw):
-
         # need to set the labnumber now because analysis_type depends on it
         arv = self._spec_klass(labnumber=self.labnumber, **kw)
 
@@ -769,7 +781,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append("comment")
 
         for attr in self._get_clonable_attrs():
-
             if attr in excludes:
                 continue
             try:
@@ -828,7 +839,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     arv.trait_set(
                         user_defined_aliquot=al + 1 + offset + c,
-                        **st.make_dict(self.duration, self.cleanup)
+                        **st.make_dict(self.duration, self.cleanup),
                     )
                     arvs.append(arv)
 
@@ -925,7 +936,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _update_run_values(self, attr, v):
         if self.edit_mode and self._selected_runs and not self.suppress_update:
-
             self._auto_save()
 
             self.edit_event = dict(
@@ -1015,7 +1025,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._load_default_scripts(tag, new)
 
     def _load_default_scripts(self, labnumber_tag, labnumber):
-
         # if labnumber is int use key='U'
         try:
             _ = int(labnumber_tag)
@@ -1114,16 +1123,21 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.irrad_hole = d["irradiation_position"]
                 self._no_clear_labnumber = False
 
-            if self.use_project_based_repository_identifier:
-                ipp = self.irradiation_project_prefix
-                project_name = d["project"]
-                if ipp and project_name.startswith(ipp):
-                    repo = project_name
-                    if repo == "REFERENCES":
-                        repo = ""
-                else:
-                    repo = camel_case(project_name)
-                self.repository_identifier = repo
+            if self.repository_identifier_model in ["Load", "Project"]:
+                self.repository_identifier = d["repository_identifier"]
+
+            # if self.use_project_based_repository_identifier:
+            #     ipp = self.irradiation_project_prefix
+            #     project_name = d["project"]
+            #     if ipp and project_name.startswith(ipp):
+            #         repo = project_name
+            #         if repo == "REFERENCES":
+            #             repo = ""
+            #     else:
+            #         repo = camel_case(project_name)
+            #     self.repository_identifier = repo
+            # elif self.use_load_based_repository_identifier:
+            #     self.repository_identifier = d['load_name']
 
             return True
         else:
@@ -1139,10 +1153,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     # set sample and irrad info
                 else:
                     self.warning_dialog(
-                        "{} does not exist.\n\n"
-                        'Add using "Entry>>Labnumber"\n'
-                        'or "Utilities>>Import"\n'
-                        "or manually".format(labnumber)
+                        f"{labnumber} does not exist.\n\n"
+                        'Add using "Entry>>Package"\n'
+                        "or manually"
                     )
                     return
 
@@ -1168,11 +1181,19 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 #     irrad = ip.level.irradiation.name
                 #     self.repository_identifier = '{}{}'.format(ipp, irrad)
                 if project_name != "REFERENCES":
-                    if self.use_project_based_repository_identifier:
+                    repo = None
+                    if self.repository_identifier_model == "Project":
                         if ipp and project_name.startswith(ipp):
                             repo = project_name
                         else:
                             repo = camel_case(project_name)
+
+                    elif self.repository_identifier_model == "Load":
+                        repo = self.load_name
+
+                    if repo:
+                        self.debug("unprepped repo={}".format(repo))
+                        repo = prep_repo_name(repo)
                         self.debug("setting repository to {}".format(repo))
 
                         self.repository_identifier = repo
@@ -1182,7 +1203,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 'Repository Identifier "{}" does not exist. Would you '
                                 "like to add it?".format(repo)
                             ):
-
                                 m = 'Repository "{}({})"'.format(repo, pi_name)
                                 # this will set self.repository_identifier
                                 if self._add_repository(repo, pi_name):
@@ -1194,9 +1214,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                         "Failed to add {}."
                                         "\nResolve issue before proceeding!!".format(m)
                                     )
+                                    return
 
                 d["repository_identifier"] = self.repository_identifier
-
+                d["load_name"] = self.load_name
                 if self.mode != SIMPLE:
                     self._make_irrad_level(ip)
                     d["irradiation"] = self.selected_irradiation
@@ -1525,7 +1546,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             a = RepositoryIdentifierEntry(dvc=self.dvc)
 
             with self.dvc.session_ctx(use_parent_session=False):
-                a.available = self.dvc.get_repository_identifiers()
+                # a.available = self.dvc.get_repository_identifiers()
                 a.principal_investigators = self.dvc.get_principal_investigator_names()
 
             if name:
@@ -1547,7 +1568,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             ct = CommentTemplater()
 
         for idn, runs in groupby_key(self._selected_runs, "identifier"):
-
             with self.dvc.session_ctx():
                 ipos = self.dvc.get_identifier(idn)
 
@@ -1625,18 +1645,42 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     @on_trait_change(
         "[measurement_script, post_measurement_script, "
-        "post_equilibration_script, extraction_script]:edit_event"
+        "post_equilibration_script, extraction_script]:[edit_event, default_event]"
     )
-    def _handle_edit_script(self, new):
+    def _handle_script_events(self, obj, name, old, new):
         self._auto_save()
+        if name == "edit_event":
+            app = self.application
+            task = app.open_task("pychron.pyscript.task")
+            path, kind = new
+            task.kind = kind
+            task.open(path=path)
+            task.set_on_save_as_handler(self._update_script_lists)
+            task.set_on_close_handler(self._update_script_lists)
+        elif name == "default_event":
+            if not self.labnumber:
+                self.information_dialog(
+                    "Please select a labnumber/identifier before trying to set default scripts"
+                )
+                return
 
-        app = self.application
-        task = app.open_task("pychron.pyscript.task")
-        path, kind = new
-        task.kind = kind
-        task.open(path=path)
-        task.set_on_save_as_handler(self._update_script_lists)
-        task.set_on_close_handler(self._update_script_lists)
+            at = get_analysis_type_shortname(self.labnumber)
+            self.debug("{}".format(self.labnumber, at))
+            self._set_default_file(at, new[0], new[1])
+
+    def _set_default_file(self, at, name, scriptlabel):
+        defaults = self._load_default_file()
+        try:
+            for ai in (at, at.capitalize(), at.upper(), at.lower()):
+                atd = defaults[ai]
+        except KeyError:
+            pass
+
+        atd[scriptlabel.lower()] = name
+
+        p = os.path.join(paths.scripts_dir, "defaults.yaml")
+        with open(p, "w") as wfile:
+            yaml.dump(defaults, wfile)
 
     def _load_defaults_button_fired(self):
         if self.labnumber:
@@ -1741,6 +1785,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 SKIP,
                 USE_CDD_WARMING,
                 WEIGHT,
+                DISABLE_BETWEEN_POSITIONS,
             )
         )
     )
@@ -1754,7 +1799,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         """measurement_script:name, 
 extraction_script:name, 
 post_measurement_script:name,
-post_equilibration_script:name"""
+post_equilibration_script:name,
+syn_extraction_script:name"""
     )
     def _edit_script_handler(self, obj, name, new):
         self.debug(
@@ -1825,36 +1871,36 @@ post_equilibration_script:name"""
         self.debug("level changed")
         self._clear_labnumber()
 
-    def _special_labnumber_changed(self):
-        if self._suppress_special_labnumber_change:
-            return
+    # def _special_labnumber_changed(self):
+    #     if self._suppress_special_labnumber_change:
+    #         return
 
-        if self.special_labnumber not in (SPECIAL_IDENTIFIER, LINE_STR, ""):
-            ln = convert_special_name(self.special_labnumber)
-            self.debug("special ln changed {}, {}".format(self.special_labnumber, ln))
-            if ln:
-                if ln not in ("dg", "pa"):
-                    msname = self.mass_spectrometer[0].capitalize()
-                    if ln in SPECIAL_KEYS and not ln.startswith("bu"):
-                        ln = make_standard_identifier(ln, "##", msname)
-                    else:
-                        edname = ""
-                        ed = self.extract_device
-                        if ed not in ("Extract Device", LINE_STR):
-                            edname = "".join([x[0].capitalize() for x in ed.split(" ")])
-                        ln = make_special_identifier(ln, edname, msname)
+    #     if self.special_labnumber not in (SPECIAL_IDENTIFIER, LINE_STR, ""):
+    #         ln = convert_special_name(self.special_labnumber)
+    #         self.debug("special ln changed {}, {}".format(self.special_labnumber, ln))
+    #         if ln:
+    #             if ln not in ("dg", "pa"):
+    #                 msname = self.mass_spectrometer[0].capitalize()
+    #                 if ln in SPECIAL_KEYS and not ln.startswith("bu"):
+    #                     ln = make_standard_identifier(ln, "##", msname)
+    #                 else:
+    #                     edname = ""
+    #                     ed = self.extract_device
+    #                     if ed not in ("Extract Device", LINE_STR):
+    #                         edname = "".join([x[0].capitalize() for x in ed.split(" ")])
+    #                     ln = make_special_identifier(ln, edname, msname)
 
-                self._labnumber_changed(self.labnumber, ln)
-                self.labnumber = ln
+    #             self._labnumber_changed(self.labnumber, ln)
+    #             self.labnumber = ln
 
-            self._frequency_enabled = True
+    #         self._frequency_enabled = True
 
-            if not self._selected_runs:
-                self.edit_mode = True
-        else:
-            self.debug("special labnumber changed else")
-            self.labnumber = ""
-            self._frequency_enabled = False
+    #         if not self._selected_runs:
+    #             self.edit_mode = True
+    #     else:
+    #         self.debug("special labnumber changed else")
+    #         self.labnumber = ""
+    #         self._frequency_enabled = False
 
     def _auto_fill_comment_changed(self):
         if self.auto_fill_comment:
@@ -1911,8 +1957,11 @@ post_equilibration_script:name"""
     # ===============================================================================
     # defaults
     # ================================================================================
-    def _script_factory(self, label, name=NULL_STR, kind="ExtractionLine"):
-        s = Script(
+    def _script_factory(self, label, name=NULL_STR, kind="ExtractionLine", klass=None):
+        if klass is None:
+            klass = Script
+
+        s = klass(
             label=label,
             use_name_prefix=self.use_name_prefix,
             name_prefix=self.name_prefix,
@@ -1933,6 +1982,11 @@ post_equilibration_script:name"""
 
     def _post_equilibration_script_default(self):
         return self._script_factory("Post Equilibration", "post_equilibration")
+
+    def _syn_extraction_script_default(self):
+        return self._script_factory(
+            "Syn Extraction", "syn_extraction", klass=SynExtractionScript
+        )
 
     def _remove_file_extension(self, name):
         if not name:

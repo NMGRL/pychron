@@ -122,13 +122,11 @@ class FluxMonitorEditor(Loggable):
         return fm
 
     def _selected_monitor_name_changed(self, new):
-
         if new:
             m = next((mi for mi in self.monitors if mi.name == new))
             self.trait_set(selected_monitor=m)
 
     def _add_button_fired(self):
-
         fm = FluxMonitor(added=True, name="Untitled")
         self.monitors.append(fm)
 
@@ -145,7 +143,6 @@ class FluxMonitorEditor(Loggable):
         if self.confirmation_dialog(
             'Are you sure you want to delete "{}"'.format(name)
         ):
-
             db = self.db
             dbmon = db.get_flux_monitor(name, key="name")
             db.delete(dbmon)

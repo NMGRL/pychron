@@ -154,7 +154,6 @@ class BaseMKSGauge(BaseGauge):
         if type_ in ["pressure", "setpoint_value"]:
             v = value[si:]
             try:
-
                 return float(v)
             except ValueError as e:
                 self.warning(e)

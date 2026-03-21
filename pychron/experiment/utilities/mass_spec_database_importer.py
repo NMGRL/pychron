@@ -84,7 +84,6 @@ class MassSpecDatabaseImporter(Loggable):
 
     # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
-
         ret = 0
         if self.db:
             with self.db.session_ctx():
@@ -256,7 +255,6 @@ class MassSpecDatabaseImporter(Loggable):
                 self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
-
         gst = time.time()
 
         db = self.db
@@ -498,7 +496,9 @@ class MassSpecDatabaseImporter(Loggable):
 
         bfit = spec.get_baseline_fit(iso)
         self.debug(
-            "baseline {}. v={}, e={}".format(iso, nominal_value(bs), std_dev(bs))
+            "baseline fit= {} {}. v={}, e={}".format(
+                bfit, iso, nominal_value(bs), std_dev(bs)
+            )
         )
         infoblob = self._make_infoblob(nominal_value(bs), std_dev(bs), fncnts, pos)
         db_changeable = db.add_baseline_changeable_item(
@@ -526,6 +526,7 @@ class MassSpecDatabaseImporter(Loggable):
         return blob
 
     def _make_infoblob(self, baseline, baseline_err, n, baseline_position):
+        self.debug(f"making info blob {baseline} {baseline_err}")
         rpts = n
         pos_segments = [baseline_position]
 

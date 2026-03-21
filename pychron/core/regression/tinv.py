@@ -313,7 +313,7 @@ def incompleteBeta(x, p, q):
         return 1.0 - (beta_gam * betaFraction(1.0 - x, q, p) / q)
 
 
-ACCURACY = 10 ** -7
+ACCURACY = 10**-7
 MAX_ITERATIONS = 10000
 
 
@@ -395,7 +395,7 @@ def InverseStudentT(degree_of_freedom, probability):
     def f(x):
         return StudentTCDF(degree_of_freedom, x)
 
-    return findRoot(probability, -(10 ** 4), 10 ** 4, f)
+    return findRoot(probability, -(10**4), 10**4, f)
 
 
 def tinv(p, degree_of_freedom):

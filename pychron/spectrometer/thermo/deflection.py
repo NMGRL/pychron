@@ -58,7 +58,6 @@ class DeflectionCalibraiton(HasTraits):
             self.cup_deflection_calibration(mass)
 
     def cup_deflection_calibration(self, mass):
-
         self.info("{} deflection calibration".format(self.reference_detector))
 
         rgraph = RegressionGraph(window_x=100, window_y=50)

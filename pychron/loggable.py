@@ -139,7 +139,11 @@ class Loggable(BaseFS):
     def critical(self, msg):
         self._log_("critical", msg)
 
-    def debug(self, msg):
+    def debug(self, msg, *args, **kw):
+        try:
+            msg = msg.format(*args, **kw)
+        except BaseException:
+            pass
         self._log_("debug", msg)
 
     def log(self, msg, level=10):
@@ -212,7 +216,6 @@ class Loggable(BaseFS):
         self.logcolor = c
 
     def _log_(self, func, msg):
-
         # def get_thread_name():
         #     name = 'foo'
         #     # ct = current_thread()

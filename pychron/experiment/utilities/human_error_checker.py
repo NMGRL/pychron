@@ -120,7 +120,6 @@ class HumanErrorChecker(Loggable):
     _warned = None
 
     def check_runs(self, runs, test_all=False, inform=True, test_scripts=False):
-
         if not self.runs_enabled:
             self.info("check runs disabled")
             return
@@ -146,7 +145,6 @@ class HumanErrorChecker(Loggable):
         return ret
 
     def report_errors(self, errdict):
-
         msg = "\n".join(["{} {}".format(k, v) for k, v in errdict.items()])
         self.warning_dialog(msg)
 
@@ -187,7 +185,14 @@ class HumanErrorChecker(Loggable):
         ed = run.extract_device
         if self.extraction_script_enabled:
             if run.analysis_type == "unknown" and ed not in NULL_EXTRACT_DEVICES and es:
-                ds = ed.split(" ")[1].lower()
+                if " " in ed:
+                    ds = ed.split(" ")[1].lower()
+                else:
+                    if ed=='ChromiumCO2':
+                        ds='co2'
+                    else:
+                        ds = ed
+
                 if ds not in es:
                     return (
                         'Extraction script "{}" does not match the default "{}". An easy solution is to make sure '
@@ -195,6 +200,9 @@ class HumanErrorChecker(Loggable):
                             es, ds, ds
                         )
                     )
+                if run.extract_value and not run.position:
+                    return "Extract value but no position"
+
             elif run.analysis_type == "cocktail" and es and "cocktail" not in es:
                 return 'Cocktail analysis is not using a "cocktail" extraction script'
             elif run.analysis_type == "air" and es and "air" not in es:
@@ -234,15 +242,13 @@ class HumanErrorChecker(Loggable):
 
         ant = get_analysis_type(run.labnumber)
         if ant == "unknown":
-
             for attr in ("duration", "cleanup"):
                 err = self._check_attr(run, attr, inform)
                 if err is not None:
                     return err
 
-            if run.position:
-                if not run.extract_value:
-                    return "position but no extract value"
+            if run.position and not run.extract_value:
+                return "position but no extract value"
 
             if run.overlap[0]:
                 if not run.post_measurement_script:
@@ -250,6 +256,12 @@ class HumanErrorChecker(Loggable):
         # if ant in ('unknown', 'background') or ant.startswith('blank'):
         # self._mass_spec_required = True
         self._set_extraction_line_required(run)
+
+        # check for syn extraction
+        if run.extraction_script:
+            if "syn" in run.extraction_script:
+                if not run.syn_extraction_script:
+                    return "syn extraction script missing"
 
     def _set_extraction_line_required(self, run):
         if any(

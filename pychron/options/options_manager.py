@@ -24,6 +24,8 @@ from traits.api import Str, List, Button, Instance, Tuple, Property, cached_prop
 from traitsui.api import Controller, Item
 
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
+from pychron.core.helpers.isotope_utils import sort_detectors
+from pychron.core.helpers.strtools import ratio
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.file_defaults import (
     SPECTRUM_PRESENTATION,
@@ -68,6 +70,23 @@ from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
+from pychron.pipeline.plot.plotter.series import (
+    PEAK_CENTER,
+    ANALYSIS_TYPE,
+    LAB_TEMP,
+    LAB_HUM,
+    EXTRACT_DURATION,
+    RADIOGENIC_YIELD,
+    AGE,
+    F,
+)
+from pychron.pychron_constants import (
+    EXTRACT_VALUE,
+    CLEANUP,
+    UNKNOWN,
+    COCKTAIL,
+    DETECTOR_IC,
+)
 
 
 class OptionsUnpickler(pickle.Unpickler):
@@ -209,6 +228,51 @@ class BaseOptionsManager(Loggable):
 
         self._save(name, obj)
         self._load_names()
+
+    def _selected_changed(self, new):
+        self._option_factory(new)
+
+    def _option_factory(self, new):
+        if new:
+            obj = None
+            name = new.lower()
+
+            yp = self._pname(name, ".json")
+            if os.path.isfile(yp):
+                obj = options_load_json(yp)
+                if obj:
+                    obj.manager_id = self.id
+                    p = self._pname(name)
+                    if os.path.isfile(p):
+                        dp = self._pname(name, ".p.bak")
+                        shutil.move(p, dp)
+
+            if obj is None:
+                p = self._pname(name)
+                if os.path.isfile(p):
+                    unp = None
+                    try:
+                        with open(p, "rb") as rfile:
+                            unp = OptionsUnpickler(rfile)
+                            obj = unp.load()
+                    except BaseException as e:
+                        self.debug_exception()
+                    finally:
+                        if unp:
+                            unp.destroy()
+
+            if obj is None:
+                obj = self.options_klass()
+
+            obj.initialize()
+            obj.setup()
+
+            obj.name = new
+            self.selected_options = obj
+        else:
+            self.selected_options = None
+
+        return obj
 
     def _pname(self, name, ext=".p"):
         name = add_extension(name, ext)
@@ -412,53 +476,19 @@ class OptionsManager(BaseOptionsManager):
         #     spickle.dump(obj, wfile)
 
     def _selected_changed(self, new):
-        if new:
-            obj = None
-            name = new.lower()
-
-            yp = self._pname(name, ".json")
-            if os.path.isfile(yp):
-                obj = options_load_json(yp)
-                if obj:
-                    obj.manager_id = self.id
-                    p = self._pname(name)
-                    if os.path.isfile(p):
-                        dp = self._pname(name, ".p.bak")
-                        shutil.move(p, dp)
-
-            if obj is None:
-                p = self._pname(name)
-                if os.path.isfile(p):
-                    unp = None
-                    try:
-                        with open(p, "rb") as rfile:
-                            unp = OptionsUnpickler(rfile)
-                            obj = unp.load()
-                    except BaseException as e:
-                        self.debug_exception()
-                    finally:
-                        if unp:
-                            unp.destroy()
-
-            if obj is None:
-                obj = self.options_klass()
-
-            obj.initialize()
-            obj.setup()
-
-            obj.name = new
+        obj = self._option_factory(new)
+        if obj:
             self.subview_names = obj.subview_names
-            self.selected_options = obj
 
             o = self.selected_subview
-            if not o:
+            if not o and self.subview_names:
                 o = self.subview_names[0]
 
             self.selected_subview = ""
             self.selected_subview = o
 
-        else:
-            self.selected_options = None
+        # else:
+        #     self.selected_options = None
 
     @property
     def persistence_root(self):
@@ -525,6 +555,50 @@ class SeriesOptionsManager(FigureOptionsManager):
     options_klass = SeriesOptions
     _defaults = (("screen", SERIES_SCREEN),)
     _default_options_txt = SERIES_SCREEN
+
+    def set_names_via_keys(
+        self, iso_keys, analysis_type=None, detectors=None, additional_names=None
+    ):
+        names = []
+        if iso_keys:
+            names.extend(iso_keys)
+            names.extend(["{}bs".format(ki) for ki in iso_keys])
+            names.extend(["{}ic".format(ki) for ki in iso_keys])
+
+            names.extend(ratio(iso_keys))
+            names.extend(ratio(iso_keys, invert=True))
+
+            if analysis_type in (UNKNOWN, COCKTAIL):
+                names.append(AGE)
+                names.append(RADIOGENIC_YIELD)
+                names.append(F)
+
+            if analysis_type in (DETECTOR_IC,):
+                for i, di in enumerate(detectors):
+                    for j, dj in enumerate(detectors):
+                        if j < i:
+                            continue
+
+                        if di == dj:
+                            continue
+
+                        names.append("{}/{} DetIC".format(di, dj))
+
+        names.extend(
+            [
+                PEAK_CENTER,
+                ANALYSIS_TYPE,
+                LAB_TEMP,
+                LAB_HUM,
+                EXTRACT_VALUE,
+                EXTRACT_DURATION,
+                CLEANUP,
+            ]
+        )
+        if additional_names:
+            names.extend(additional_names)
+
+        self.set_names(names)
 
 
 class RatioSeriesOptionsManager(FigureOptionsManager):

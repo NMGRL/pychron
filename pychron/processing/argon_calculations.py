@@ -26,6 +26,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 from pychron.core.utils import alpha_to_int
 from pychron.processing.age_converter import converter
 from pychron.processing.arar_constants import ArArConstants
+from pychron.processing.plateau import Plateau
 from pychron.pychron_constants import FLECK
 
 
@@ -100,6 +101,27 @@ def calculate_isochron(
     return age, yint, reg
 
 
+def get_isochron_regressors(a40, a39, a36, kind="NewYork"):
+    xx = a39 / a40
+    yy = a36 / a40
+
+    xs, xerrs = unpack_value_error(xx)
+    ys, yerrs = unpack_value_error(yy)
+
+    xds, xdes = unpack_value_error(a40)
+    yns, ynes = unpack_value_error(a36)
+    xns, xnes = unpack_value_error(a39)
+
+    regx = isochron_regressor(
+        ys, yerrs, xs, xerrs, xds, xdes, yns, ynes, xns, xnes, kind
+    )
+    reg = isochron_regressor(
+        xs, xerrs, ys, yerrs, xds, xdes, xns, xnes, yns, ynes, kind
+    )
+
+    return reg, regx
+
+
 def isochron_regressor(
     xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg="NewYork"
 ):
@@ -133,6 +155,7 @@ def calculate_plateau_age(
     ages,
     errors,
     k39,
+    steps,
     kind="inverse_variance",
     method=FLECK,
     options=None,
@@ -142,6 +165,7 @@ def calculate_plateau_age(
     ages: list of ages
     errors: list of corresponding  1sigma errors
     k39: list of 39ArK signals
+    steps: list of step labels
 
     return age, error
     """
@@ -153,37 +177,43 @@ def calculate_plateau_age(
     k39 = asarray(k39)
 
     fixed_steps = options.get("fixed_steps", False)
+
+    p = Plateau(
+        ages=ages,
+        errors=errors,
+        signals=k39,
+        excludes=excludes,
+        overlap_sigma=options.get("overlap_sigma", 2),
+        nsteps=options.get("nsteps", 3),
+        gas_fraction=options.get("gas_fraction", 50),
+    )
+    pidx = None
     if fixed_steps and (fixed_steps[0] or fixed_steps[1]):
+        steps = [s.upper() for s in steps]
         sstep, estep = fixed_steps
         sstep, estep = sstep.upper(), estep.upper()
         if not sstep:
             sidx = 0
         else:
-            sidx = alpha_to_int(sstep)
+            try:
+                sidx = steps.index(sstep)
+            except ValueError:
+                sidx = None
 
-        n = ages.shape[0] - 1
-        if not estep:
-            eidx = n
-        else:
-            eidx = alpha_to_int(estep)
+        if sidx is not None:
+            n = ages.shape[0] - 1
+            if not estep:
+                eidx = n
+            else:
+                try:
+                    eidx = steps.index(estep)
+                except ValueError:
+                    eidx = None
+            if eidx is not None:
+                sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
+                pidx = (sidx, eidx) if sidx < n else None
 
-        sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
-        pidx = (sidx, eidx) if sidx < n else None
-
-    else:
-
-        from pychron.processing.plateau import Plateau
-
-        p = Plateau(
-            ages=ages,
-            errors=errors,
-            signals=k39,
-            excludes=excludes,
-            overlap_sigma=options.get("overlap_sigma", 2),
-            nsteps=options.get("nsteps", 3),
-            gas_fraction=options.get("gas_fraction", 50),
-        )
-
+    if pidx is None:
         pidx = p.find_plateaus(method)
 
     if pidx:
@@ -345,7 +375,6 @@ def interference_corrections(
 
     pr = production_ratios
     if arar_constants.k3739_mode.lower() == "normal" and not fixed_k3739:
-
         ca3937 = pr.get("Ca3937", 0)
         k3739 = pr.get("K3739", 0)
         k39 = (a39 - ca3937 * a37) / (1 - k3739 * ca3937)
@@ -560,9 +589,8 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=
     if not include_decay_error:
         lambda_k = nominal_value(lambda_k)
     try:
-
         # lambda is defined in years, so age is in years
-        age = lambda_k ** -1 * umath.log(1 + j * f)
+        age = lambda_k**-1 * umath.log(1 + j * f)
 
         return arar_constants.scale_age(age, current="a")
     except (ValueError, TypeError):
@@ -590,15 +618,15 @@ def calculate_error_F(signals, F, k4039, ca3937, ca3637):
     C3 = k4039.nominal_value
     C4 = ca3937.nominal_value
 
-    ssD = D.std_dev ** 2
-    ssB = B.std_dev ** 2
-    ssG = G.std_dev ** 2
+    ssD = D.std_dev**2
+    ssB = B.std_dev**2
+    ssG = G.std_dev**2
     G = G.nominal_value
     B = B.nominal_value
     D = D.nominal_value
 
-    ssF = ssG + C1 ** 2 * ssB + ssD * (C4 * G - C1 * C4 * B + C1 * C2) ** 2
-    return ssF ** 0.5
+    ssF = ssG + C1**2 * ssB + ssD * (C4 * G - C1 * C4 * B + C1 * C2) ** 2
+    return ssF**0.5
 
 
 def calculate_error_t(F, ssF, j, ssJ):
@@ -611,7 +639,7 @@ def calculate_error_t(F, ssF, j, ssJ):
     constants = ArArConstants()
     ll = constants().lambdak.nominal_value ** 2
     sst = (JJ * ssF + FF * ssJ) / (ll * (1 + F * j) ** 2)
-    return sst ** 0.5
+    return sst**0.5
 
 
 def calculate_fractional_loss(t, temp, a, model="plane", material="kfeldspar"):
@@ -639,9 +667,9 @@ def calculate_fractional_loss(t, temp, a, model="plane", material="kfeldspar"):
     d = d_0 * math.exp(-ea / (r * temp))
 
     if model == "plane":
-        f = 2 / math.pi ** 0.5 * (d * t / a ** 2) ** 0.5
+        f = 2 / math.pi**0.5 * (d * t / a**2) ** 0.5
         if 1 >= f >= 0.45:
-            f = 1 - (8 / math.pi ** 2) * math.exp(-math.pi ** 2 * d * t / (4 * a ** 2))
+            f = 1 - (8 / math.pi**2) * math.exp(-math.pi**2 * d * t / (4 * a**2))
 
     return f
 

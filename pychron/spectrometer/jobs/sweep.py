@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from numpy import hstack, array, Inf
+from numpy import hstack, array, inf
 from traits.api import DelegatesTo, List, Bool, Any, Float
 
 # ============= standard library imports ========================
@@ -232,7 +232,7 @@ class BaseSweep(SpectrometerTask):
 
         R = None
         r = None
-        mi, ma = Inf, -Inf
+        mi, ma = inf, -inf
         for i, v in enumerate(intensity):
             oys = None
             k = "odata{}".format(i)

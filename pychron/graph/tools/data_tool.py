@@ -20,7 +20,7 @@ from __future__ import absolute_import
 # ============= standard library imports ========================
 from datetime import datetime
 
-from chaco.text_box_overlay import TextBoxOverlay
+from chaco.api import TextBoxOverlay
 from enable.base_tool import BaseTool, KeySpec
 from traits.api import Event, Any, Enum, Tuple, Bool, Int
 
@@ -99,7 +99,7 @@ class DataToolOverlay(TextBoxOverlay):
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
-    font = "arial 12"
+    # font = "modern 12"
     tooltip_mode = Bool(False)
 
     def _tool_changed(self, old, new):

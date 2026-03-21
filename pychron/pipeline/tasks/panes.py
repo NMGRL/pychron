@@ -485,6 +485,8 @@ class UnknownsAdapter(BaseAnalysesAdapter):
         ("RepositoryID", "repository_identifier"),
         ("Age", "age"),
         ("Age {}".format(PLUSMINUS_ONE_SIGMA), "age_error"),
+        ("K/Ca", "kca"),
+        ("Radiogenic yield", "radiogenic_yield"),
         ("F", "f"),
         ("F {}".format(PLUSMINUS_ONE_SIGMA), "f_error"),
         ("Saved J", "j"),
@@ -500,6 +502,9 @@ class UnknownsAdapter(BaseAnalysesAdapter):
     age_width = Int(70)
     error_width = Int(60)
     graph_id_width = Int(30)
+
+    kca_text = Property
+    radiogenic_yield_text = Property
 
     age_text = Property
     age_error_text = Property
@@ -535,6 +540,8 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
         return MenuManager(
             Action(name="Recall", action="recall_unknowns"),
+            Action(name="Fix Plateau Selected", action="unknowns_set_fixed_plateau"),
+            Action(name="Tag", action="tag_analyses"),
             Action(
                 name="Graph Group Selected", action="unknowns_graph_group_by_selected"
             ),
@@ -544,6 +551,14 @@ class UnknownsAdapter(BaseAnalysesAdapter):
             Action(name="Play Video...", action="play_analysis_video"),
             grp,
         )
+
+    def _get_radiogenic_yield_text(self):
+        r = floatfmt(nominal_value(self.item.radiogenic_yield), n=4)
+        return r
+
+    def _get_kca_text(self):
+        r = floatfmt(nominal_value(self.item.kca), n=4)
+        return r
 
     def _get_f_text(self):
         r = floatfmt(self.item.f, n=4)
@@ -645,6 +660,10 @@ class AnalysesPaneHandler(Handler):
         obj = info.ui.context["object"]
         obj.unknowns_clear_grouping()
 
+    def unknowns_set_fixed_plateau(self, info, obj):
+        obj = info.ui.context["object"]
+        obj.unknowns_set_fixed_plateau()
+
     def unknowns_clear_all_grouping(self, info, obj):
         obj = info.ui.context["object"]
         obj.unknowns_clear_all_grouping()
@@ -652,6 +671,10 @@ class AnalysesPaneHandler(Handler):
     def unknowns_toggle_status(self, info, obj):
         obj = info.ui.context["object"]
         obj.unknowns_toggle_status()
+
+    def tag_analyses(self, info, obj):
+        obj = info.ui.context["object"]
+        obj.tag_event = obj.selected_unknowns
 
     def save_analysis_group(self, info, obj):
         obj = info.ui.context["object"]

@@ -64,7 +64,6 @@ class RunHistoryModel(HasTraits):
         self.analyses = self.dvc.get_last_n_analyses(self.n, ms)
 
     def _selected_changed(self, new):
-
         if self._cache is None:
             self._cache = {}
         new = new.item

@@ -458,17 +458,14 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # adders
     # ===============================================================================
     def add_project(self, name, **kw):
-
         obj = ProjectTable(Project=name, **kw)
         return self._add_item(obj)
 
     def add_material(self, name):
-
         obj = MaterialTable(Material=name)
         return self._add_item(obj)
 
     def add_sample(self, name):
-
         obj = SampleTable(Sample=name, ProjectID=1)
         return self._add_item(obj)
 
@@ -492,7 +489,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 Level=name,
                 SampleHolder=holder,
                 # ProductionRatiosID=production,
-                **kw
+                **kw,
             )
             i.production = production
 
@@ -568,7 +565,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             self._add_item(i)
 
     def add_sample_loading(self, ms, tray):
-
         if isinstance(ms, str):
             ms = ms.capitalize()
             system = self.get_system(
@@ -643,6 +639,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return analysis
 
     def add_baseline(self, blob, label, cnts, iso, **kw):
+        self.debug(f"adding baseline label={label} cnts={cnts} iso={iso}")
         bs = BaselinesTable(PeakTimeBlob=blob, Label=label, NumCnts=cnts)
         if iso is not None:
             iso.baseline = bs
@@ -653,7 +650,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         fit = self.get_fittype(
             fit,
         )
-
+        self.debug(f"add baseline changeable {fit}")
         bs = BaselinesChangeableItemsTable(
             Fit=fit, DataReductionSessionID=data_reduction_session_id, InfoBlob=infoblob
         )
@@ -684,7 +681,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return d
 
     def add_isotope(self, rid, detector, label, **kw):
-
         analysis = self.get_analysis(
             rid,
         )
@@ -732,7 +728,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             mass spec does not propogate baseline error
         :param is_blank:
         """
-
+        self.debug(f"adding isotope result iso={isotope} int={intercept} bs={baseline}")
         isotope = self.get_isotope(
             isotope,
         )
@@ -794,7 +790,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return drs
 
     def add_login_session(self, ms, **kw):
-
         if isinstance(ms, str):
             ms = ms.capitalize()
             system = self.get_system(

@@ -40,7 +40,6 @@ class FurnaceCanvas(StageCanvas):
     aspect_ratio = 3.0
 
     def __init__(self, *args, **kw):
-
         self.border_visible = False
         self.show_axes = True
         self.use_zoom = False

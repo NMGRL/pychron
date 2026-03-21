@@ -23,6 +23,14 @@ from skimage.transform import resize, rotate as trotate
 from scipy.ndimage.interpolation import rotate as srotate
 
 
+def fswap_rb(frame):
+    red = frame[:, :, 2].copy()
+    blue = frame[:, :, 0].copy()
+
+    frame[:, :, 0] = red
+    frame[:, :, 2] = blue
+
+
 class Image(HasTraits):
     """ """
 
@@ -59,6 +67,8 @@ class Image(HasTraits):
         from cv2 import imread
 
         img = imread(img)
+        if swap_rb:
+            fswap_rb(img)
         self.source_frame = img
 
     def update_bounds(self, obj, name, old, new):
@@ -97,8 +107,8 @@ class Image(HasTraits):
 
         return frame
 
-    def get_cached_frame(self):
-        if self._cached_frame is None:
+    def get_cached_frame(self, force=False):
+        if self._cached_frame is None or force:
             self.get_frame()
 
         return self._cached_frame
@@ -169,8 +179,13 @@ class Image(HasTraits):
 
         x = int((w - cw) / 2.0 + ox)
         y = int((h - ch) / 2.0 + oy)
-
-        return src[y : y + ch, x : x + cw]
+        try:
+            return src[y : int(y + ch), x : int(x + cw)]
+        except TypeError as e:
+            print("crop", e)
+            print("src", src)
+            print("p", x, y, w, h, cw, ch)
+            return
 
     def render(self):
         return self.frames[0]

@@ -105,14 +105,14 @@ def tj(ages, pj, to, ps, ts):
     n = len(ages)
 
     pj = 1 / n * sum([pj * fij(ai, ei, to) / si(ai, ei, ps, ts) for ai, ei in ages])
-    a = [pj * ai * fij(ai, ei, to) / (ei ** 2 * si(ai, ei, ps, ts)) for ai, ei in ages]
-    b = [pj * fij(ai, ei, to) / (ei ** 2 * si(ai, ei, ps, ts)) for ai, ei in ages]
+    a = [pj * ai * fij(ai, ei, to) / (ei**2 * si(ai, ei, ps, ts)) for ai, ei in ages]
+    b = [pj * fij(ai, ei, to) / (ei**2 * si(ai, ei, ps, ts)) for ai, ei in ages]
 
     return pj, sum(a) / sum(b)
 
 
 def fij(ai, ei, tj):
-    return 1 / (ei * sqrt(2 * pi)) * exp(-((ai - tj) ** 2) / (2 * ei ** 2))
+    return 1 / (ei * sqrt(2 * pi)) * exp(-((ai - tj) ** 2) / (2 * ei**2))
 
 
 if __name__ == "__main__":

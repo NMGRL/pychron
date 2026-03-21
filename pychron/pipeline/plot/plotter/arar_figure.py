@@ -21,7 +21,7 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
-from numpy import Inf, vstack, zeros_like, ma
+from numpy import inf, vstack, zeros_like, ma
 from traits.api import (
     HasTraits,
     Any,
@@ -79,6 +79,7 @@ class SelectionFigure(HasTraits):
 
 
 class BaseArArFigure(SelectionFigure):
+    use_fixed_height = False
     analyses = Any
     sorted_analyses = Property(depends_on="analyses")
 
@@ -86,6 +87,7 @@ class BaseArArFigure(SelectionFigure):
     _analysis_group = Instance(AnalysisGroup)
     _analysis_group_klass = AnalysisGroup
 
+    graph_id = Int
     group_id = Int
     subgroup_id = Int
     ytitle = Str
@@ -113,19 +115,25 @@ class BaseArArFigure(SelectionFigure):
     _has_formatting_hash = None
     _reverse_sorted_analyses = False
 
+    def finalize_group_overlays(self, figs):
+        pass
+
     def get_update_dict(self):
         return {}
 
-    def build(self, plots, plot_dict=None):
+    def build(self, plots, plot_dict=None, row=(0, 0), col=(0, 0)):
         """
         make plots
         """
 
         graph = self.graph
 
-        vertical_resize = not all([p.height for p in plots])
+        if len(plots) > 1 and not self.equi_stack:
+            vertical_resize = not all([p.height for p in plots[:-1]])
+            graph.vertical_resize = vertical_resize
+        else:
+            graph.vertical_resize = not plots[0].height
 
-        graph.vertical_resize = vertical_resize
         graph.clear_has_title()
 
         title = self.title
@@ -133,13 +141,52 @@ class BaseArArFigure(SelectionFigure):
             title = self.options.title
 
         nplots = len(plots)
+
+        layout = self.options.layout
+        fw = layout.fixed_width
+        fh = layout.fixed_height
+
+        # stretch_vertical = layout.stretch_vertical
+
+        if fw and col[1] > 0:
+            fw = int(fw / col[1])
+
+        oheights = sum([po.height for po in plots[1:]])
+
         for i, po in enumerate(plots):
             kw = {"ytitle": po.name}
             if plot_dict:
                 kw.update(plot_dict)
 
-            if po.height:
+            if fw:
+                r = ""
+                if fh:
+                    if i == 0 and not po.height or self.use_fixed_height:
+                        height = fh - oheights
+                    else:
+                        height = po.height
+
+                    if self.use_fixed_height:
+                        height = fh - oheights
+                else:
+                    height = po.height
+                    # if i == 0 and stretch_vertical:
+                    #     r = 'v'
+                kw["bounds"] = [fw, height]
+                kw["resizable"] = r
+            elif fh:
+                kw["resizable"] = "h"
+                if i == 0 and not po.height or self.use_fixed_height:
+                    height = fh - oheights
+                else:
+                    height = po.height
+
+                kw["bounds"] = [50, height]
+            elif po.height:
                 kw["bounds"] = [50, po.height]
+                kw["resizable"] = "h"
+            else:
+                kw["resizable"] = "hv"
 
             # if self.options.layout.fixed_width:
             #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
@@ -158,6 +205,8 @@ class BaseArArFigure(SelectionFigure):
                 kw["xtitle"] = self.xtitle
 
             kw["padding"] = self.options.get_paddings()
+
+            print(kw, plot_dict)
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font
@@ -168,10 +217,17 @@ class BaseArArFigure(SelectionFigure):
     def post_make(self):
         self._fix_log_axes()
 
-    def post_plot(self, plots):
+    def post_plot(self, plots, row, col):
         graph = self.graph
-        for (plotobj, po) in zip(graph.plots, plots):
-            self._apply_aux_plot_options(plotobj, po)
+        n = len(plots)
+        for idx, (plotobj, po) in enumerate(zip(graph.plots, plots)):
+            self._apply_aux_plot_options(bool(idx), plotobj, po, row, col)
+            # if this not the only plot and not the upper left turn off error info overlay
+            if row[1] > 1 or col[1] > 1:
+                if col[0] or row[0]:
+                    for ov in plotobj.overlays:
+                        if isinstance(ov, FlowPlotLabel):
+                            ov.visible = False
 
     def plot(self, *args, **kw):
         pass
@@ -181,10 +237,10 @@ class BaseArArFigure(SelectionFigure):
             self.plot(self.options.get_plotable_aux_plots())
 
     def max_x(self, *args):
-        return -Inf
+        return -inf
 
     def min_x(self, *args):
-        return Inf
+        return inf
 
     def mean_x(self, *args):
         return 0
@@ -196,13 +252,17 @@ class BaseArArFigure(SelectionFigure):
                 if p.value_mapper.range.low < 0:
                     ys = self.graph.get_data(plotid=i, axis=1)
                     ys = ys[ys > 0]
-                    m = 10 ** math.floor(math.log10(min(ys)))
-                    p.value_mapper.range.low = m
+                    try:
+                        m = 10 ** math.floor(math.log10(min(ys)))
+                        p.value_mapper.range.low = m
+                    except ValueError:
+                        continue
+
+                if hasattr(p, "alt_axis"):
+                    p.alt_axis.mapper = p.value_mapper
 
     def _setup_plot(self, i, pp, po):
-
         # add limit tools
-
         self.graph.add_limit_tool(pp, "x", self._handle_xlimits)
         self.graph.add_limit_tool(pp, "y", self._handle_ylimits)
 
@@ -213,24 +273,39 @@ class BaseArArFigure(SelectionFigure):
         pp.index_range.on_trait_change(lambda: self.update_options_limits(i), "updated")
         pp.value_range.tight_bounds = False
 
-        self._apply_aux_plot_options(pp, po)
+        # this needs to happen post_plot
+        # self._apply_aux_plot_options(pp, po)
 
-    def _apply_aux_plot_options(self, pp, po):
+    def _apply_aux_plot_options(self, is_bottom_plot, pp, po, row, col):
         options = self.options
 
-        # pp.x_axis.title_font = options.xtitle_font
-        # pp.x_axis.tick_label_font = options.xtick_font
-        # pp.x_axis.tick_in = options.xtick_in
-        # pp.x_axis.tick_out = options.xtick_out
-        #
-        # pp.y_axis.title_font = options.ytitle_font
-        # pp.y_axis.tick_label_font = options.ytick_font
-        # pp.y_axis.tick_in = options.ytick_in
-        # pp.y_axis.tick_out = options.ytick_out
+        # print('aaa', pp.padding_left, pp.width, pp.outer_width)
+        if col[0] > 0:
+            pp.padding_left = max(20, int(pp.padding_left * 0.5))
+
+        # print('bbb', pp.padding_left, pp.width, pp.outer_width)
 
         pp.bgcolor = options.plot_bgcolor
         pp.x_grid.visible = options.use_xgrid
         pp.y_grid.visible = options.use_ygrid
+
+        for k, axis in (("x", pp.x_axis), ("y", pp.y_axis)):
+            for attr in ("title_font", "tick_in", "tick_out", "tick_label_formatter"):
+                value = getattr(options, "{}{}".format(k, attr))
+                try:
+                    setattr(axis, attr, value)
+                except TraitError as e:
+                    print(
+                        "error setting attr={},value={} error={}".format(attr, value, e)
+                    )
+
+            axis.tick_label_font = getattr(options, "{}tick_font".format(k))
+
+        if row[0] < (row[1] - 1) and not is_bottom_plot:
+            pp.x_axis.title = ""
+            pp.x_axis.tick_visible = False
+            pp.x_axis.tick_label_formatter = lambda x: ""
+            pp.padding_bottom = 10
 
         if po:
             alt_axis = None
@@ -245,50 +320,45 @@ class BaseArArFigure(SelectionFigure):
                     )
                     alt_axis.tick_label_formatter = lambda x: ""
                     alt_axis.axis_line_visible = False
-                    alt_axis.tick_in = options.ytick_in - 1
+                    alt_axis.tick_in = options.ytick_in
                     alt_axis.tick_out = options.ytick_out
-
                     pp.underlays.append(alt_axis)
-                    pp.add(alt_axis)
+                    pp.alt_axis = alt_axis
+
+            if not po.ytitle_visible or col[0] > 0:
+                pp.y_axis.title = ""
 
             if not po.ytick_visible:
                 pp.y_axis.tick_visible = False
                 pp.y_axis.tick_label_formatter = lambda x: ""
-                if alt_axis:
+                if alt_axis and not po.ytitle_visible:
                     alt_axis.tick_visible = False
-
-            pp.value_scale = po.scale
-            if po.scale == "log":
-                if po.use_sparse_yticks:
-                    st = SparseLogTicks(step=po.sparse_yticks_step)
-                    pp.value_axis.tick_generator = st
-                    pp.value_grid.tick_generator = st
             else:
-                st = None
-                pp.value_axis.tick_interval = po.ytick_interval
-                if po.use_sparse_yticks:
-                    if po.use_integer_ticks:
-                        st = IntSparseTicks(step=po.sparse_yticks_step)
-                    else:
-                        st = SparseTicks(step=po.sparse_yticks_step)
-                elif po.use_integer_ticks:
-                    st = IntTickGenerator()
+                if po.has_fixed_ylimits() and col[0] > 0:
+                    pp.y_axis.tick_label_formatter = lambda x: ""
 
-                if st is not None:
-                    pp.value_axis.tick_generator = st
-                    pp.value_grid.tick_generator = st
-                    if alt_axis:
-                        alt_axis.tick_generator = st
+                pp.value_scale = po.scale
+                if po.scale == "log":
+                    if po.use_sparse_yticks:
+                        st = SparseLogTicks(step=po.sparse_yticks_step)
+                        pp.value_axis.tick_generator = st
+                        pp.value_grid.tick_generator = st
+                else:
+                    st = None
+                    pp.value_axis.tick_interval = po.ytick_interval
+                    if po.use_sparse_yticks:
+                        if po.use_integer_ticks:
+                            st = IntSparseTicks(step=po.sparse_yticks_step)
+                        else:
+                            st = SparseTicks(step=po.sparse_yticks_step)
+                    elif po.use_integer_ticks:
+                        st = IntTickGenerator()
 
-        for k, axis in (("x", pp.x_axis), ("y", pp.y_axis)):
-            for attr in ("title_font", "tick_in", "tick_out", "tick_label_formatter"):
-                value = getattr(options, "{}{}".format(k, attr))
-                try:
-                    setattr(axis, attr, value)
-                except TraitError:
-                    pass
-
-            axis.tick_label_font = getattr(options, "{}tick_font".format(k))
+                    if st is not None:
+                        pp.value_axis.tick_generator = st
+                        pp.value_grid.tick_generator = st
+                        if alt_axis:
+                            alt_axis.tick_generator = st
 
     def _set_options_format(self, pp):
         # print 'using options format'
@@ -323,7 +393,6 @@ class BaseArArFigure(SelectionFigure):
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None, pid=0, pad=None):
-
         mi, ma = self.graph.get_y_limits(plotid=pid)
 
         mi = min_ if min_ is not None else min(mi, a)
@@ -459,8 +528,7 @@ class BaseArArFigure(SelectionFigure):
         return self._plot_aux("Ar36", po, pid)
 
     def _plot_extract_value(self, po, pobj, pid):
-        k = "extract_value"
-        return self._plot_aux("Extract Value", k, po, pid)
+        return self._plot_aux("extract_value", po, pid)
 
     def _get_aux_plot_data(self, k, scalar=1):
         vs = list(self._unpack_attr(k, scalar=scalar))
@@ -608,8 +676,11 @@ class BaseArArFigure(SelectionFigure):
         ov = FlowPlotLabel(
             text="\n".join(text_lines),
             overlay_position="inside top",
+            padx=3,
+            pady=-3,
             hjustify="left",
             bgcolor=plot.bgcolor,
+            border_visible=False,
             font=font,
             component=plot,
         )
@@ -655,6 +726,13 @@ class BaseArArFigure(SelectionFigure):
         label.on_trait_change(self._handle_overlay_move, "label_position")
         return label
 
+    def _build_n_label_text(self, n):
+        total_n = self.analysis_group.total_n
+        n = "n = {}".format(n)
+        if total_n and n != total_n:
+            n = "{}/{}".format(n, total_n)
+        return n
+
     def _build_label_text(
         self,
         x,
@@ -668,14 +746,10 @@ class BaseArArFigure(SelectionFigure):
         sig_figs=3,
         mswd_sig_figs=3,
     ):
-
         display_mswd = n >= 2 and display_mswd
 
         if display_n:
-            total_n = self.analysis_group.total_n
-            n = "n= {}".format(n)
-            if total_n:
-                n = "{}/{}".format(n, total_n)
+            n = self._build_n_label_text(n)
         else:
             n = ""
 
@@ -683,7 +757,7 @@ class BaseArArFigure(SelectionFigure):
             mswd, valid_mswd, _, pvalue = mswd_args
             mswd = format_mswd(mswd, valid_mswd, n=mswd_sig_figs, include_tag=True)
             if display_mswd_pvalue:
-                mswd = "{} pvalue={:0.2f}".format(mswd, pvalue)
+                mswd = "{} pvalue = {:0.2f}".format(mswd, pvalue)
         else:
             mswd = ""
 
@@ -694,7 +768,7 @@ class BaseArArFigure(SelectionFigure):
             swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ("uF", "Ar40/Ar36"):
-            me = u"{} {} {}".format(sx, PLUSMINUS, swe)
+            me = "{} {} {}".format(sx, PLUSMINUS, swe)
         else:
             age_units = self._get_age_units()
             pe = ""
@@ -703,9 +777,9 @@ class BaseArArFigure(SelectionFigure):
                     format_percent_error(x, we, include_percent_sign=True)
                 )
 
-            me = u"{} {} {}{} {}".format(sx, PLUSMINUS, swe, pe, age_units)
+            me = "{} {} {}{} {}".format(sx, PLUSMINUS, swe, pe, age_units)
 
-        return u"{} {} {}".format(me, mswd, n)
+        return "{} {} {}".format(me, mswd, n)
 
     def _get_age_units(self):
         a = "Ma"

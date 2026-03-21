@@ -21,7 +21,7 @@ from pyface.qt.QtCore import Qt, QThread
 from pyface.qt.QtGui import QColor, QWidget, QPainter, QPainterPath
 from traits.api import Str, Event
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from six.moves import range
 from six.moves import zip
 
@@ -49,7 +49,6 @@ class PieClock(QWidget):
         qp.end()
 
     def _draw_indicator(self, event, qp):
-
         cx, cy, w, r = self._get_geometry(event)
 
         pen = qp.pen()
@@ -99,7 +98,6 @@ class PieClock(QWidget):
         qp.drawEllipse(cx - r, cy - r, w, w)
 
     def _draw_slices(self, event, qp):
-
         # qp.setPen(QColor(168, 34, 3))
         self._set_pen(qp)
 

@@ -19,8 +19,6 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui import set_qt
 from pychron.core.yaml import yload
 
-set_qt()
-
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Any, List
 from traitsui.api import UItem, HGroup

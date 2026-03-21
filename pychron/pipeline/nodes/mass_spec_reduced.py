@@ -101,7 +101,6 @@ class MassSpecReducedNode(BaseMassSpecNode):
     def run(self, state):
         if self.recaller:
             if self.recaller.connect():
-
                 self.dvc.create_session()
                 for repo, unks in groupby_repo(state.unknowns):
                     self.dvc.pull_repository(repo)
@@ -194,7 +193,7 @@ class MassSpecReducedNode(BaseMassSpecNode):
                     k, miso.blank.value, miso.blank.error, "mass_spec_reduced"
                 )
 
-                unk.set_temporary_uic_factor(det, miso.ic_factor)
+                unk.set_temporary_uic_factor(det, "H1", miso.ic_factor)
                 detkeys.append(det)
                 keys.append(k)
 
