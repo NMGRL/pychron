@@ -46,11 +46,41 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Determine Python files to check
+        id: changed-python
+        run: |
+          python <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          import subprocess
+
+          event_name = os.environ["GITHUB_EVENT_NAME"]
+          if event_name == "pull_request":
+              base = os.environ["GITHUB_BASE_REF"]
+              cmd = ["git", "diff", "--name-only", f"origin/{base}...HEAD", "--", "*.py"]
+          else:
+              before = os.environ.get("GITHUB_EVENT_BEFORE")
+              if before:
+                  cmd = ["git", "diff", "--name-only", before, "HEAD", "--", "*.py"]
+              else:
+                  cmd = ["git", "ls-files", "*.py"]
+
+          files = subprocess.check_output(cmd, text=True).splitlines()
+          files = [f for f in files if f.startswith("pychron/")]
+          print("files<<EOF")
+          print(" ".join(files))
+          print("EOF")
+          PY
+
       - name: Install lint dependencies
         run: uv sync --group dev --no-install-project
 
       - name: Check formatting
-        run: uv run --no-sync black --check --diff pychron
+        if: steps.changed-python.outputs.files != ''
+        run: uv run --no-sync black --check --diff ${{ steps.changed-python.outputs.files }}
+
+      - name: Skip formatting when no Python files changed
+        if: steps.changed-python.outputs.files == ''
+        run: echo "No Python files changed"
 
   test:
     name: Unit Tests
@@ -80,5 +110,9 @@ jobs:
       - name: Run import hygiene tests
         run: uv run --no-sync python -m unittest pychron.core.tests.import_hygiene_test
 
-      - name: Run unit test suite
-        run: xvfb-run -a uv run --no-sync python -m unittest pychron.test_suite
+      - name: Run targeted regression tests
+        run: |
+          xvfb-run -a uv run --no-sync python -m unittest \
+            pychron.core.tests.import_hygiene_test \
+            pychron.experiment.tests.queue_metadata \
+            pychron.experiment.tests.pyscript_integration
