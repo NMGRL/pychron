@@ -20,7 +20,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from PySide import QtCore, QtGui
+from pyface.qt import QtCore, QtGui
 from traits.api import Bool, Int, Dict
 from pyface.ui_traits import PyfaceColor
 
@@ -83,8 +83,7 @@ class _KeywordEditor(SimpleEditor):
     #     self.update_object()
 
     def update_cursor_position(self):
-        user_object = self.context_object
-        print("uasdf", user_object)
+        pass
 
 
 class KeywordEditor(BasicEditorFactory):

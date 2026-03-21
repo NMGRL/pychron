@@ -16,6 +16,7 @@
 
 # =============enthought library imports=======================
 import csv
+import logging
 import math
 import os
 
@@ -57,6 +58,7 @@ CONTAINERS = {
 }
 IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".tiff", ".tif", ".gif"]
 DEFAULT_IMAGE_EXT = IMAGE_EXTENSIONS[0]
+logger = logging.getLogger(__name__)
 
 
 def name_generator(base):
@@ -287,7 +289,7 @@ class Graph(ContextMenuMixin):
     def rescale_x_axis(self):
         # l, h = self.selected_plot.default_index.get_bounds()
         # self.set_x_limits(l, h, plotid=self.selected_plotid)
-        print("asdf", self.selected_plot)
+        logger.debug("rescale x axis plot=%s", self.selected_plot)
         r = self.selected_plot.index_range
         r.reset()
 
@@ -353,7 +355,7 @@ class Graph(ContextMenuMixin):
                     try:
                         pi.remove(renderer)
                     except RuntimeError:
-                        print("failed removing {}".format(renderer))
+                        logger.debug("failed removing renderer=%s", renderer)
 
                 pi.plots.pop(k)
 
@@ -491,10 +493,10 @@ class Graph(ContextMenuMixin):
         try:
             plots = self.plots[plotid].plots[series]
         except KeyError:
-            print(
-                "set series label plotid={} {}".format(
-                    plotid, list(self.plots[plotid].plots.keys())
-                )
+            logger.warning(
+                "set series label failed plotid=%s keys=%s",
+                plotid,
+                list(self.plots[plotid].plots.keys()),
             )
             raise
 
@@ -518,7 +520,7 @@ class Graph(ContextMenuMixin):
             p.showplot(series) if v else p.hideplot(series)
             self.plotcontainer.invalidate_and_redraw()
         except KeyError as e:
-            print("set series visibility", e, p.series)
+            logger.warning("set series visibility failed error=%s series=%s", e, p.series)
 
     def get_x_limits(self, plotid=0):
         """ """
@@ -841,7 +843,13 @@ class Graph(ContextMenuMixin):
         try:
             names = self.series[plotid][series]
         except IndexError:
-            print("adding data", plotid, series, self.series[plotid])
+            logger.warning(
+                "add data missing series plotid=%s series=%s available=%s",
+                plotid,
+                series,
+                self.series[plotid],
+            )
+            return
 
         plot = self.plots[plotid]
         data = plot.data
@@ -879,7 +887,12 @@ class Graph(ContextMenuMixin):
         try:
             names = self.series[plotid][series]
         except (IndexError, TypeError):
-            print("adding datum", plotid, series, self.series[plotid])
+            logger.warning(
+                "add datum missing series plotid=%s series=%s available=%s",
+                plotid,
+                series,
+                self.series[plotid],
+            )
             return
 
         plot = self.plots[plotid]
@@ -1278,7 +1291,7 @@ class Graph(ContextMenuMixin):
             ra = getattr(plot, "%s_range" % axis)
             return ra.low, ra.high
         except AttributeError as e:
-            print("get_limits", e)
+            logger.debug("get_limits failed error=%s", e)
 
     def _set_limits(
         self, mi, ma, axis, plotid, pad, pad_style="symmetric", force=False

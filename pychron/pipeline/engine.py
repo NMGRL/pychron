@@ -770,7 +770,7 @@ class PipelineEngine(Loggable):
     def refresh_figure_editors(self):
         for ed in self.state.editors:
             if isinstance(ed, FigureEditor):
-                print("refresh figure editors")
+                self.debug("refresh figure editors")
                 ed.refresh_needed = True
 
     def rerun_with(self, unks, post_run=True):
@@ -1277,7 +1277,7 @@ class PipelineEngine(Loggable):
 
     def _handle_figure_event(self, evt):
         kind = evt[0]
-        print("fiafsfdasfsa", evt, kind)
+        self.debug("handle figure event evt={} kind={}".format(evt, kind))
         if kind == "alternate_figure":
             self._make_alternate_figure(evt)
         elif kind == "tag":

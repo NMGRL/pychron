@@ -209,8 +209,7 @@ class BaseExperimentQueue(RunBlock):
 
     def set_extract_device(self, v):
         self.extract_device = v
-        for a in self.automated_runs:
-            a.extract_device = v
+        self.sync_queue_meta(attrs=("extract_device",), force=True)
 
     def is_updateable(self):
         return not self._no_update
@@ -225,6 +224,7 @@ class BaseExperimentQueue(RunBlock):
             self._frequency_group_counter -= 1
 
     def extend_runs(self, runs):
+        self.sync_queue_meta(runs=runs)
         self.automated_runs.extend(runs)
         self.refresh_table_needed = True
 
@@ -319,17 +319,40 @@ class BaseExperimentQueue(RunBlock):
 
     def _add_runs(self, runspecs):
         aruns = self.automated_runs
+        self.sync_queue_meta(runs=runspecs)
 
         if self.selected and self.selected[-1] in aruns:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
-                if not ri.repository_identifier:
-                    ri.repository_identifier = self.repository_identifier
-
                 aruns.insert(idx + 1, ri)
         else:
             aruns.extend(runspecs)
         return runspecs
+
+    def sync_queue_meta(self, runs=None, attrs=None, force=False):
+        if runs is None:
+            runs = self.automated_runs
+
+        if attrs is None:
+            for run in runs:
+                run.apply_queue_metadata(self, force=force)
+            return
+
+        trait_pairs = []
+        for attr in attrs:
+            if attr == "tray":
+                value = self.tray
+                trait_pairs.append(("tray", value))
+                trait_pairs.append(("load_holder", self.load_holder))
+            else:
+                trait_pairs.append((attr, getattr(self, attr)))
+
+        for run in runs:
+            for attr, value in trait_pairs:
+                if value in (None, ""):
+                    continue
+                if force or not getattr(run, attr):
+                    setattr(run, attr, value)
 
     def _add_queue_meta(self, params):
         for attr in (

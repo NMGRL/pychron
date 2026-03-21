@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from difflib import ndiff
 
-from PySide import QtGui, QtCore
+from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import (
     QPlainTextEdit,
     QColor,
@@ -28,7 +28,7 @@ from pyface.qt.QtGui import (
     QTextFormat,
     QPen,
 )
-from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
+from pyface.ui.qt.code_editor.gutters import LineNumberWidget
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

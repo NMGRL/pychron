@@ -117,6 +117,7 @@ class RunBlock(Loggable):
                 # self.debug(f'next_params {next_params}')
                 arun = klass()
                 arun.load(script_info, params, next_params)
+                arun.apply_queue_metadata(self)
 
                 yield arun
 

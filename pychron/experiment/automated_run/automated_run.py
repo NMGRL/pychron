@@ -76,7 +76,7 @@ from pychron.experiment.utilities.conditionals import (
 )
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
-from pychron.experiment.utilities.script import assemble_script_blob
+from pychron.experiment.utilities.script import assemble_script_blob, resolve_script_name
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -1626,7 +1626,9 @@ class AutomatedRun(Loggable):
             if self.use_syn_extraction and self.spec.syn_extraction_script:
 
                 pp = self._make_script_name(
-                    self.spec.syn_extraction_script, extension=".yaml"
+                    self.spec.syn_extraction_script,
+                    root=os.path.join(paths.scripts_dir, "syn_extraction"),
+                    extension=".yaml",
                 )
                 p = os.path.join(paths.scripts_dir, "syn_extraction", pp)
                 self.debug(f"using syn_extracion file: {p}")
@@ -3131,7 +3133,6 @@ anaylsis_type={}
         script = None
         sname = getattr(self.script_info, "{}_script_name".format(name))
         if sname and sname != NULL_STR:
-            sname = self._make_script_name(sname)
             script = self._bootstrap_script(sname, name)
 
         return script
@@ -3231,7 +3232,7 @@ anaylsis_type={}
 
             klass = ExtractionPyScript
 
-        file_name = self._make_script_name(file_name)
+        file_name = self._make_script_name(file_name, root=root)
         if os.path.isfile(os.path.join(root, file_name)):
             obj = klass(
                 root=root, automated_run=self, name=file_name, runner=self.runner
@@ -3239,9 +3240,15 @@ anaylsis_type={}
 
             return obj
 
-    def _make_script_name(self, name, extension=".py"):
-        name = "{}_{}".format(self.spec.mass_spectrometer.lower(), name)
-        return add_extension(name, extension)
+    def _make_script_name(self, name, root=None, extension=".py"):
+        if root is None:
+            root = paths.scripts_dir
+        return resolve_script_name(
+            root,
+            name,
+            mass_spectrometer=self.spec.mass_spectrometer,
+            extension=extension,
+        )
 
     def _setup_context(self, script):
         """

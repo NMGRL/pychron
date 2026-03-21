@@ -897,6 +897,9 @@ class PyScript(Loggable):
 
         return d
 
+    def _interpolation_path_changed(self):
+        self._interpolation_context = None
+
     def _tracer(self, frame, event, arg):
         if event == "line":
             print(frame.f_code.co_filename, frame.f_lineno)

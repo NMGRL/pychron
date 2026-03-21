@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from PySide import QtGui, QtCore
+from pyface.qt import QtCore, QtGui
 from traits.trait_types import Event
 from traitsui.api import View, UItem
 from traitsui.basic_editor_factory import BasicEditorFactory

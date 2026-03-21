@@ -25,20 +25,6 @@ from scipy.stats import norm
 # ============= local library imports  ==========================
 import matplotlib.pyplot as plt
 
-n = 500
-xs = linspace(0, 10, n)
-ys = 2 * norm.pdf(xs, 5, 0.5)  # +0.01*random(n)
-ys2 = norm.pdf(xs, 6.1, 0.5)  # +0.01*random(n)
-ys3 = norm.pdf(xs, 4.5, 0.5)  # +0.01*random(n)
-
-sys3 = ys + ys2 + ys3
-
-# sys3 = smooth(ys3)
-plt.plot(xs, ys)
-plt.plot(xs, ys2)
-plt.plot(xs, ys3)
-plt.plot(xs, sys3)
-
 
 # def res(p, y, x):
 #     h1, h2, m1, m2, sd1, sd2 = p
@@ -67,69 +53,31 @@ def res(p, y, x):
     return err
 
 
-mm = sys3.argmax()
-mm = xs[mm]
-p = [(1, mm, 1), (1, mm, 1), (1, mm, 1)]
-plsq = leastsq(res, p, args=(sys3, xs))
-print(plsq)
-plt.vlines(plsq[0][1], 0, 1.8)
-plt.vlines(plsq[0][4], 0, 1.8)
-plt.vlines(plsq[0][7], 0, 1.8)
-# ye1=norm.pdf(xs, plsq[0][0], plsq[0][2])
-# ye2=norm.pdf(xs, plsq[0][0] + plsq[0][1], plsq[0][3])
-# plt.plot(xs, ye1)
-# plt.plot(xs, ye2)
+def demo():
+    n = 500
+    xs = linspace(0, 10, n)
+    ys = 2 * norm.pdf(xs, 5, 0.5)  # +0.01*random(n)
+    ys2 = norm.pdf(xs, 6.1, 0.5)  # +0.01*random(n)
+    ys3 = norm.pdf(xs, 4.5, 0.5)  # +0.01*random(n)
 
-# data = []
-# for xi, yi in zip(xs, ys3*100):
-#     for i in xrange(int(yi)):
-#         data.append(xi)
-#
-# yourdata = column_stack((array(data),))
-# # print ys3
-# # from sklearn import mixture
-# # import matplotlib.pyplot as plt
-# import matplotlib.mlab
-# import numpy as np
-# #
-# # yourdata = X = column_stack((xs,))
-# clf = mixture.GMM(n_components=2, covariance_type='full')
-# clf.fit(yourdata)
-# m1, m2 = clf.means_
-# w1, w2 = clf.weights_
-# c1, c2 = clf.covars_
-# print m1, m2
-# histdist = plt.hist(yourdata, n*10, normed=True)
-# plt.vlines(m1, 0, 1.6)
-# plt.vlines(m2, 0, 1.6)
-# # # print histdist[1]
-# # # print m1, m2
-# plotgauss1 = lambda x: plt.plot(x,w1*matplotlib.mlab.normpdf(x,m1,np.sqrt(c1))[0], linewidth=3)
-# plotgauss2 = lambda x: plt.plot(x,w2*matplotlib.mlab.normpdf(x,m2,np.sqrt(c2))[0], linewidth=3)
-# plotgauss1(histdist[1])
-# plotgauss2(histdist[1])
-# plt.show()x
+    sys3 = ys + ys2 + ys3
 
-# unmix
-# clf = mixture.GMM(n_components=2, covariance_type='full')
-# X = column_stack((ys3,))
-# # print X
-# # print X[:,1]
-# # clf.fit(X, xs)
-# clf.fit(X)
-# print clf.means_
-# # print clf
-# # m1, m2 = clf.means_
-# # print m1, m2
-#
-# #
-# max_peaks, min_peaks = find_peaks(ys3, xs, lookahead=1)
-# #
-# for peak in max_peaks:
-#     plt.vlines(peak[0], 0, peak[1])
-# #
-# for peak in min_peaks:
-#     plt.vlines(peak[0], 0, peak[1])
-# #
-plt.show()
+    plt.plot(xs, ys)
+    plt.plot(xs, ys2)
+    plt.plot(xs, ys3)
+    plt.plot(xs, sys3)
+
+    mm = sys3.argmax()
+    mm = xs[mm]
+    p = [(1, mm, 1), (1, mm, 1), (1, mm, 1)]
+    plsq = leastsq(res, p, args=(sys3, xs))
+    print(plsq)
+    plt.vlines(plsq[0][1], 0, 1.8)
+    plt.vlines(plsq[0][4], 0, 1.8)
+    plt.vlines(plsq[0][7], 0, 1.8)
+    plt.show()
+
+
+if __name__ == "__main__":
+    demo()
 # ============= EOF =============================================

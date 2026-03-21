@@ -19,8 +19,8 @@ from __future__ import absolute_import
 from traits.api import Float, Str
 
 # ============= standard library imports ========================
+from pyface.qt import QtCore
 from pyface.qt.QtGui import QDoubleSpinBox
-from PySide import QtCore
 from traitsui.qt.range_editor import SimpleSpinEditor
 from traitsui.basic_editor_factory import BasicEditorFactory
 

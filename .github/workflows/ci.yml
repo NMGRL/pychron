@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "dev/**"
+      - "hot/**"
+  push:
+    branches:
+      - main
+      - develop
+      - "dev/**"
+      - "hot/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  QT_API: pyqt5
+  ETS_TOOLKIT: qt
+  QT_QPA_PLATFORM: offscreen
+
+jobs:
+  lint:
+    name: Black
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install lint dependencies
+        run: uv sync --group dev --no-install-project
+
+      - name: Check formatting
+        run: uv run --no-sync black --check --diff pychron
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install OS packages for headless Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 xvfb
+
+      - name: Install test dependencies
+        run: uv sync --group dev --no-install-project
+
+      - name: Run import hygiene tests
+        run: uv run --no-sync python -m unittest pychron.core.tests.import_hygiene_test
+
+      - name: Run unit test suite
+        run: xvfb-run -a uv run --no-sync python -m unittest pychron.test_suite
