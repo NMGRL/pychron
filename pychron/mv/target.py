@@ -35,12 +35,22 @@ class Target:
     pconvex_hull = 0
     mask = None
 
+    # _dev_centroid = None
+    arc_centroid = None
+
     @property
     def dev_centroid(self):
+        # if self._dev_centroid:
+        #     return self._dev_centroid
+
         return (
             (self.origin[0] - self.centroid[0]),
             (self.origin[1] - self.centroid[1]),
         )
+
+    # @dev_centroid.setter
+    # def dev_centroid(self, v):
+    #     self._dev_centroid = (self.origin[0]-v[0], self.origin[1]-v[1])
 
     @property
     def aspect_ratio(self):

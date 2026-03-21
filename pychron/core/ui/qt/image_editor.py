@@ -24,7 +24,7 @@ from pyface.qt.QtGui import QLabel, QImage, QPixmap, QScrollArea
 from qimage2ndarray import array2qimage
 from traits.api import Any, Bool, Event, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
 
 # =============local library imports  ==========================

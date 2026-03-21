@@ -351,6 +351,7 @@ class IdeogramAppearance(AppearanceSubOptions):
             subgroup,
             self._get_nominal_group(),
             self._get_layout_group(),
+            self._get_margin_group(),
             self._get_padding_group(),
             fgrp,
         )
@@ -385,7 +386,7 @@ Additional examples
         )
 
         v = View(
-            BorderVGroup(
+            VGroup(
                 self._get_name_grp(),
                 self._get_yticks_grp(),
                 self._get_ylimits_group(),

@@ -38,6 +38,9 @@ class ExtractionLineInfoTool(InfoInspector):
     def assemble_lines(self):
         return [self.name, "volume= {}".format(self.volume)]
 
+    def normal_left_dclick(self, event):
+        pass
+
     def normal_mouse_move(self, event):
         if self.active:
             x, y = event.x, event.y

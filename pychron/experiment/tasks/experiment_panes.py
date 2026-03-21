@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
+from traits.api import Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import (
     View,
     Item,
@@ -31,6 +31,7 @@ from traitsui.api import (
     UReadonly,
     ListEditor,
     Readonly,
+    Color
 )
 from traitsui.editors.api import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
@@ -216,6 +217,9 @@ class ExperimentFactoryPane(TraitsDockPane):
             queue_factory_item("delay_between_analyses", label="Between Analyses (s)"),
             queue_factory_item("delay_after_blank", label="After Blank (s)"),
             queue_factory_item("delay_after_air", label="After Air (s)"),
+            queue_factory_item(
+                "delay_after_conditional", label="Conditional Delay (s)"
+            ),
             label="Delays",
         )
 
@@ -289,18 +293,18 @@ class ExperimentFactoryPane(TraitsDockPane):
                 tooltip="Enter a Identifier, aka L#",
                 width=-200,
                 label="Identifier",
-                enabled_when='{} == "{}"'.format(
-                    run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
-                ),
+                # enabled_when='{} == "{}"'.format(
+                #     run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
+                # ),
                 editor=myEnumEditor(name=run_factory_name("display_labnumbers")),
             ),
         )
         grp = BorderVGroup(
             a,
             HGroup(
-                run_factory_uitem(
-                    "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
-                ),
+                # run_factory_uitem(
+                #     "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
+                # ),
                 run_factory_uitem(
                     "run_block",
                     editor=myEnumEditor(name=run_factory_name("run_blocks")),
@@ -342,9 +346,14 @@ class ExperimentFactoryPane(TraitsDockPane):
                     run_factory_name("clear_repository_identifier_button"), "clear"
                 ),
                 UItem(
-                    run_factory_name("use_project_based_repository_identifier"),
-                    tooltip="Use repository identifier based on project name",
+                    run_factory_name("repository_identifier_model"),
+                    tooltip='None: You must specify repository\nLoad: repository based on "load" name\nProject: '
+                    'repository based on "project" name',
                 ),
+                # UItem(
+                #     run_factory_name("use_project_based_repository_identifier"),
+                #     tooltip="Use repository identifier based on project name",
+                # )
             ),
             HGroup(
                 run_factory_item(
@@ -445,6 +454,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             run_factory_uitem("measurement_script", style="custom"),
             run_factory_uitem("post_equilibration_script", style="custom"),
             run_factory_uitem("post_measurement_script", style="custom"),
+            run_factory_uitem("syn_extraction_script", style="custom"),
             run_factory_uitem("script_options", style="custom"),
             HGroup(
                 spring,
@@ -521,7 +531,21 @@ class StatsPane(TraitsDockPane):
     executor = Any
 
     def _recalculate_button_fired(self):
-        self.model.experiment_queues = self.executor.experiment_queues
+        queues = list(getattr(self.executor, "experiment_queues", []) or [])
+
+        active_queue = None
+        active_editor = getattr(self.executor, "active_editor", None)
+        if active_editor is not None:
+            active_queue = getattr(active_editor, "queue", None)
+
+        if active_queue is None:
+            active_queue = getattr(self.executor, "experiment_queue", None)
+
+        if active_queue is not None and active_queue not in queues:
+            queues.insert(0, active_queue)
+
+        self.model.experiment_queues = queues
+        self.model.active_queue = active_queue
         self.model.reset()
 
     def traits_view(self):

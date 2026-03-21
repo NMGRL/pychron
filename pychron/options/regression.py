@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum, Str, Color, Int
-
+from traits.api import Enum, Str, Int
+from traitsui.api import Color
 from pychron.options.options import FigureOptions
 from pychron.options.views.regression_views import VIEWS
 from pychron.pychron_constants import MAIN, APPEARANCE

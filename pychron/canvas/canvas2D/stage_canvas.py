@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Instance, Tuple, Color, Bool, Any, Float, Property
-
+from traits.api import Instance, Tuple, Bool, Any, Float, Property
+from pyface.ui_traits import PyfaceColor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.crosshairs_overlay import (
@@ -31,7 +31,7 @@ DIRECTIONS = {"Left": ("x", -1), "Right": ("x", 1), "Down": ("y", -1), "Up": ("y
 
 class StageCanvas(MapCanvas):
     crosshairs_overlay = Instance(SimpleCrosshairsOverlay)
-    crosshairs_color = Color("black")
+    crosshairs_color = PyfaceColor("black")
     crosshairs_line_width = Float(1.0)
 
     stage_position = Property(depends_on="_stage_position")
@@ -44,7 +44,7 @@ class StageCanvas(MapCanvas):
     current_position = Property(depends_on="cur_pos")
     cur_pos = Tuple(Float(0), Float(0))
     show_desired_position = Bool(True)
-    desired_position_color = Color("green")
+    desired_position_color = PyfaceColor("green")
 
     def get_stage_screen_position(self):
         return self.map_screen([self._stage_position])[0]

@@ -33,7 +33,9 @@
 # ============= enthought library imports =======================
 from enable.abstract_overlay import AbstractOverlay
 from kiva import Font
-from traits.api import Any
+from kiva.fonttools import str_to_font
+from traits.api import Any, Event, Enum
+import time
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -59,6 +61,39 @@ def group_position(pos, func=None):
     if stack:
         ss.append(func(stack) if func else stack)
     return ss
+
+
+class ModeOverlay(AbstractOverlay):
+    mode = Enum("Entry", "Goto", "GotoEntry", "FootPedal")
+
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        with gc:
+            # x = self.x
+            # y = self.y
+            y2 = other_component.y2
+            x = other_component.x
+            w = other_component.width
+            states = ("Entry", "Goto", "GotoEntry", "FootPedal")
+            n = len(states)
+            ww = n * 100 + 5 * n / 2
+            gc.translate_ctm((w - ww) / 2 + x, y2 - 20)
+            for i, state in enumerate(states):
+                with gc:
+                    self._render_state(gc, i, state)
+
+    def _render_state(self, gc, idx, state):
+        gc.set_stroke_color((0, 0, 0))
+        w = 100
+        x = idx * w
+        gc.set_font(str_to_font("arial 12"))
+        gc.set_text_position(x + 2, 2)
+        gc.show_text(state)
+        gc.rect(x, 0, w - 5, 20)
+        if self.mode == state:
+            gc.set_fill_color((0, 0.5, 0, 0.1))
+            gc.draw_path()
+        else:
+            gc.stroke_path()
 
 
 class LoadingOverlay(AbstractOverlay):
@@ -101,6 +136,7 @@ class LoadingCanvas(SceneCanvas):
     use_pan = False
     use_zoom = False
     selected = Any
+    increment_event = Event
     # fill_padding = True
     # bgcolor = 'red'
     show_axes = False
@@ -119,6 +155,10 @@ class LoadingCanvas(SceneCanvas):
     popup = None
 
     _last_position = 1
+    _foot_pedal_mode = False
+
+    mode_overlay_enabled = True
+    mode_overlay = None
 
     def load_scene(self, t, **kw):
         self.overlays = []
@@ -131,7 +171,13 @@ class LoadingCanvas(SceneCanvas):
         self.popup = LoadingOverlay()
         self.popup.visible = False
 
+        if self.mode_overlay_enabled:
+            self.mode_overlay = ModeOverlay()
+            self.overlays.append(self.mode_overlay)
         self.overlays.append(self.popup)
+
+    def set_foot_pedal_mode(self, v):
+        self._foot_pedal_mode = v
 
     def get_selection(self):
         return [item for item in self.scene.get_items(LoadIndicator) if item.state]
@@ -147,7 +193,6 @@ class LoadingCanvas(SceneCanvas):
     #         # self.selected = self.hittest(event)
     #         # self.selected.state = not self.selected.state
     #         self.request_redraw()
-
     def normal_left_down(self, event):
         sel = self.hittest(event)
         if sel:
@@ -183,7 +228,21 @@ class LoadingCanvas(SceneCanvas):
     def set_last_position(self, pos):
         self._last_position = pos
 
+    _last_key_press = 0
+
+    def normal_key_released(self, event):
+        if not self._last_key_press or time.time() - self._last_key_press > 1:
+            self._last_key_press = time.time()
+            if event.character == "b" and self._foot_pedal_mode:
+                self.increment_event = True
+                return
+        else:
+            self._last_key_press = time.time()
+
     def normal_key_pressed(self, event):
+        if self._foot_pedal_mode:
+            return
+
         if event.character == "Enter":
             self.selected = self.scene.get_item(
                 str(self._last_position), klass=LoadIndicator

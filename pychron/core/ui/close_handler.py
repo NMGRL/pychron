@@ -38,6 +38,7 @@ class CloseHandler(Handler):
         # print WINDOW_CNT
         if self.always_on_top:
             info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        return True
 
     def object_disposed_changed(self, info):
         if info.initialized:

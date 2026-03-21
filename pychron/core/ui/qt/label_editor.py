@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from PySide import QtCore
+from pyface.qt import QtCore
 from pyface.qt.QtGui import QLabel, QPainter, QColor, QWidget, QHBoxLayout
 from traits.api import Str
 from traits.trait_types import Event
@@ -24,7 +24,7 @@ from traits.trait_types import Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 class mLabel(QLabel):

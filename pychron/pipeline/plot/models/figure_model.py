@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, Instance
+from traits.api import HasTraits, List, Property, Any
 
 # from pychron.pipeline.plot.layout import FigureLayout
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -27,8 +27,16 @@ class FigureModel(HasTraits):
     analyses = List
     references = List
     plot_options = Any
-    _panel_klass = Instance("pychron.pipeline.plotters.figure_panel.FigurePanel")
+    # A class (callable) used to construct panels. This is intentionally not an
+    # Instance trait; subclasses override it with a *class* (e.g. SeriesPanel).
+    _panel_klass = Any
     titles = List
+
+    def _panel_klass_default(self):
+        # Lazy import to avoid import cycles.
+        from pychron.pipeline.plot.panels.figure_panel import FigurePanel
+
+        return FigurePanel
 
     # layout = Instance(FigureLayout, ())
     analysis_groups = List

@@ -24,7 +24,7 @@ from threading import Thread
 
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
-from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
+from pyface.ui.qt.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
 
 # ============= local library imports  ==========================
@@ -292,7 +292,7 @@ class SpectrometerTask(EditorTask):
             ),
             right=VSplitter(
                 PaneItem("pychron.spectrometer.intensities"),
-                PaneItem("pychron.spectrometer.readout"),
+                # PaneItem("pychron.spectrometer.readout"),
             ),
         )
 
@@ -330,11 +330,11 @@ class SpectrometerTask(EditorTask):
         self.scan_manager.activate()
 
         self._scan_factory()
-        ee = [
-            e
-            for e in self.editor_area.control.children()
-            if isinstance(e, EditorWidget)
-        ][0]
+        # ee = [
+        #     e
+        #     for e in self.editor_area.control.children()
+        #     if isinstance(e, EditorWidget)
+        # ][0]
         # print int(ee.features())
         # ee.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         # print int(ee.features())

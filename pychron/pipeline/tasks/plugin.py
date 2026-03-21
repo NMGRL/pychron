@@ -50,6 +50,14 @@ from pychron.pipeline.tasks.actions import (
     InterpretedAgeRecallAction,
     IdentifyPeaksDemoAction,
     ImportOptionsActions,
+    DVCRecallAction,
+    SignalEstimatorAction,
+    DataReductionLogAction,
+    IsochronSandboxAction,
+    RunAction,
+    RunFromAction,
+    ClearAction,
+    ResetAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
@@ -147,6 +155,9 @@ class PipelinePlugin(BaseTaskPlugin):
         def recall_group():
             return SGroup(id="recall.group")
 
+        def run_group():
+            return SGroup(id="run.group")
+
         exts = self._get_extensions()
         extensions = [
             TaskExtension(actions=actions, task_id=eid) for eid, actions in exts
@@ -166,6 +177,7 @@ class PipelinePlugin(BaseTaskPlugin):
             ("plot", plot_group, "MenuBar/data.menu"),
             ("fit", reduction_group, "MenuBar/data.menu"),
             ("recall", recall_group, "MenuBar/data.menu"),
+            ("run", run_group, "MenuBar/data.menu"),
         ):
             for eid, actions in exts:
                 for ai in actions:
@@ -178,6 +190,7 @@ class PipelinePlugin(BaseTaskPlugin):
         debug_additions = [
             SchemaAddition(factory=IdentifyPeaksDemoAction, path="MenuBar/tools.menu"),
             SchemaAddition(factory=ImportOptionsActions, path="MenuBar/tools.menu"),
+            SchemaAddition(factory=SignalEstimatorAction, path="MenuBar/tools.menu"),
         ]
         extensions.append(
             TaskExtension(actions=debug_additions, task_id="pychron.pipeline.task")
@@ -192,6 +205,7 @@ class PipelinePlugin(BaseTaskPlugin):
         rg = "MenuBar/data.menu/reduction.group"
         ig = "MenuBar/data.menu/plot.group/ideogram.menu"
         reg = "MenuBar/data.menu/recall.group"
+        rung = "MenuBar/data.menu/run.group"
 
         fit_actions = []
         for f, t in (
@@ -202,6 +216,7 @@ class PipelinePlugin(BaseTaskPlugin):
             (AnalysisTableAction, "table"),
             (FreezeProductionRatios, "freeze_production"),
             (MassSpecReducedAction, "mass_spec_reduced"),
+            (DataReductionLogAction, "data_reduction_log"),
         ):
             fit_actions.append(
                 SchemaAddition(
@@ -226,6 +241,7 @@ class PipelinePlugin(BaseTaskPlugin):
             (InverseIsochronAction, "inverse_isochron"),
             (SeriesAction, "series"),
             (ExtractionAction, "extraction"),
+            (IsochronSandboxAction, "isochron_sandbox"),
         ):
             plot_actions.append(
                 SchemaAddition(
@@ -244,6 +260,7 @@ class PipelinePlugin(BaseTaskPlugin):
         for f, t in (
             (RecallAction, "recall"),
             (InterpretedAgeRecallAction, "interpreted_age_recall"),
+            (DVCRecallAction, "dvc_recall"),
         ):
             recall_actions.append(
                 SchemaAddition(

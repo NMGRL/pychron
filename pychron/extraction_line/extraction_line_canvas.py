@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Any
-from traitsui.api import View, Item
+from traitsui.api import View, UItem
 
 
 # ============= standard library imports ========================
@@ -90,12 +90,9 @@ class ExtractionLineCanvas(HasTraits):
     def _canvas2D_group(self):
         """ """
 
-        g = Item(
+        g = UItem(
             "canvas2D",
-            style="custom",
-            show_label=False,
             editor=ComponentEditor(),
-            label="2D",
         )
         return g
 

@@ -25,9 +25,8 @@ from traits.api import (
     List,
     Enum,
     Range,
-    Color,
 )
-from traitsui.api import Item
+from traitsui.api import Item, Color
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.options.aux_plot import AuxPlot

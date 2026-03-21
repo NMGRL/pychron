@@ -37,11 +37,12 @@ def get_ports():
         furpi = glob.glob("/dev/furpi.*")
         pychron = glob.glob("/dev/pychron.*")
         slab = glob.glob("/dev/tty.SLAB*")
+        acm = glob.glob("/dev/ttyACM*")
         if sys.platform == "darwin":
             keyspan = glob.glob("/dev/tty.U*")
         else:
             keyspan = glob.glob("/dev/ttyU*")
-        ports = keyspan + usb + furpi + pychron + slab
+        ports = keyspan + usb + furpi + pychron + slab + acm
 
     return ports
 
@@ -513,14 +514,19 @@ class SerialCommunicator(Communicator):
                 r += self.handle.read(inw)
                 if r and r.strip():
                     for ti in terminator:
+                        if isinstance(ti, str):
+                            ti = ti.encode()
+
                         if terminator_position:
-                            terminated = r[terminator_position] == ti
+                            if not len(r) >= abs(terminator_position):
+                                continue
+                            terminated = chr(r[terminator_position]).encode() == ti
                         else:
-                            if isinstance(ti, str):
-                                ti = ti.encode()
+
                             terminated = r.endswith(ti)
                         if terminated:
                             break
+
             except BaseException as e:
                 self.warning(e)
             return r, terminated

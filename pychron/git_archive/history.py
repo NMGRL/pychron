@@ -178,7 +178,7 @@ class GitArchiveHistory(BaseGitHistory):
 
 
 class GitArchiveHistoryView(Controller):
-    model = GitArchiveHistory
+    model = Instance(GitArchiveHistory)
     title = Str
 
     def closed(self, info, is_ok):

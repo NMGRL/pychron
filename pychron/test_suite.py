@@ -20,6 +20,9 @@ from pychron.core.regression.tests.regression import (
     FilterOLSRegressionTest,
     OLSRegressionTest2,
     TruncateRegressionTest,
+    NewYorkRegressionTest,
+    # ReedRegressionTest,
+    PearsonRegressionTest,
 )
 from pychron.core.tests.alpha_tests import AlphaTestCase
 from pychron.experiment.tests.backup import BackupTestCase
@@ -37,6 +40,8 @@ from pychron.experiment.tests.identifier import IdentifierTestCase
 from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase1, PeakHopTxtCase
 from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase2
 from pychron.experiment.tests.position_regex_test import XYTestCase
+from pychron.experiment.tests.pyscript_integration import PyScriptIntegrationTestCase
+from pychron.experiment.tests.queue_metadata import QueueMetadataPropagationTestCase
 from pychron.experiment.tests.renumber_aliquot_test import RenumberAliquotTestCase
 from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
 from pychron.processing.tests.age_converter import AgeConverterTestCase
@@ -92,6 +97,9 @@ def suite():
         OLSRegressionTest2,
         TruncateRegressionTest,
         MSWDTestCase,
+        # ReedRegressionTest,
+        PearsonRegressionTest,
+        NewYorkRegressionTest,
         # old
         # ExpoRegressionTest,
         # ExpoRegressionTest2,
@@ -108,6 +116,8 @@ def suite():
         FrequencyTestCase,
         FrequencyTemplateTestCase,
         XYTestCase,
+        PyScriptIntegrationTestCase,
+        QueueMetadataPropagationTestCase,
         RenumberAliquotTestCase,
         ConditionalsTestCase,
         ParseConditionalsTestCase,

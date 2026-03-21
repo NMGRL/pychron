@@ -16,14 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from PySide import QtGui, QtCore
+from pyface.qt import QtCore, QtGui
 from traits.trait_types import Event
 from traitsui.api import View, UItem
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.editors.api import TableEditor
 from traitsui.handler import Controller
-from traitsui.qt4.editor import Editor
-from traitsui.qt4.key_event_to_name import key_event_to_name
+from traitsui.qt.editor import Editor
+from traitsui.qt.key_event_to_name import key_event_to_name
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================

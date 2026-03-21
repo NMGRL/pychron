@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Int, Bool, Password, Color, Property, Float, Enum
-from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
+from traits.api import Str, Int, Bool, Password, Property, Float, Enum
+from traitsui.api import View, Item, Group, VGroup, HGroup, UItem, Color
 
 from pychron.core.pychron_traits import PositiveInteger, PositiveFloat
 from pychron.core.ui.custom_label_editor import CustomLabel

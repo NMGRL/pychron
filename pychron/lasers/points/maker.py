@@ -25,13 +25,13 @@ from traits.api import (
     Enum,
     Float,
     Int,
-    Color,
     Bool,
     Range,
     Instance,
     on_trait_change,
     List,
 )
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 
 from pychron.loggable import Loggable
@@ -54,10 +54,10 @@ class BaseMaker(Loggable):
     clear_mode = Enum("all", "current point")
     accept_point = Button
 
-    point_color = Color("blue")
+    point_color = PyfaceColor("blue")
 
     use_simple_render = Bool(False)
-    spot_color = Color("yellow")
+    spot_color = PyfaceColor("yellow")
     spot_size = Int(8)
 
     def initialize(self):
@@ -474,7 +474,9 @@ class GridOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
             comp = self.component
-            gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
+            gc.clip_to_rect(
+                *(float(p) for p in (comp.x, comp.y, comp.width, comp.height))
+            )
             pos = comp.get_offset_stage_screen_position()
 
             gc.translate_ctm(*pos)

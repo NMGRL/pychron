@@ -18,7 +18,7 @@
 # ============= EOF =============================================
 import os
 
-from numpy import Inf
+from numpy import inf
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.canvas.canvas2D.scene.base_scene_loader import (
@@ -179,7 +179,7 @@ class XMLLoader(BaseLoader):
         if dim is not None:
             height = float(dim.text.strip())
         # klass = BorderLine
-        tt = klass(0, 0, default_color=(204, 204, 204), name=key, height=height)
+        tt = klass(0, 0, default_color=(0.8, 0.8, 0.8), name=key, height=height)
 
         lf = scene.get_item(left.text.strip())
         rt = scene.get_item(right.text.strip())
@@ -251,7 +251,13 @@ class XMLLoader(BaseLoader):
         elif orient == "horizontal":
             y1 = y
 
-        connection = klass((x, y), (x1, y1), default_color=(204, 204, 204), name=key)
+        connection = klass(
+            (x, y),
+            (x1, y1),
+            default_color=(0.8, 0.8, 0.8),
+            name=key,
+            orientation=orient,
+        )
 
         if sanchor:
             sanchor.connections.append(("start", connection))
@@ -442,7 +448,7 @@ class XMLLoader(BaseLoader):
             if "label" in color_dict:
                 c = color_dict["label"]
             else:
-                c = (204, 204, 204)
+                c = (0.8, 0.8, 0.8)
             name = "{:03}".format(i)
             self._new_label(scene, l, name, c)
 
@@ -485,7 +491,7 @@ class XMLLoader(BaseLoader):
         if origin:
             ox, oy = origin
 
-        c = color_dict.get("pipette", (204, 204, 204))
+        c = color_dict.get("pipette", (0.8, 0.8, 0.8))
 
         for p in cp.get_elements("pipette"):
             rect = self._new_rectangle(
@@ -510,12 +516,12 @@ class XMLLoader(BaseLoader):
         cp = self._cp
         root = cp.get_root()
         legend = root.find("legend")
-        c = (204, 204, 204)
+        c =(0.8, 0.8, 0.8)
 
-        maxx = -Inf
-        minx = Inf
-        maxy = -Inf
-        miny = Inf
+        maxx = -inf
+        minx = inf
+        maxy = -inf
+        miny = inf
 
         if legend is not None:
             lox, loy = self._get_floats(legend, "origin")
@@ -575,7 +581,7 @@ class XMLLoader(BaseLoader):
                 if key in color_dict:
                     c = color_dict[key]
                 else:
-                    c = (204, 204, 204)
+                    c = (0.8, 0.8, 0.8)
                 rect = self._new_rectangle(scene, b, c, bw=5, type_tag=key)
                 self._load_states(rect, b)
 

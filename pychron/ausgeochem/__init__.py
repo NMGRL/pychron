@@ -1,0 +1,1 @@
+"""AusGeochem EarthData integration package."""

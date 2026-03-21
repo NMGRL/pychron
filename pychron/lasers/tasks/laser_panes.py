@@ -336,6 +336,15 @@ class ControlPane(TraitsDockPane):
     closable = True
     floatable = False
 
+    def _get_request_group(self):
+        request_grp = HGroup(
+            Item("requested_power", style="readonly", format_str="%0.2f", width=100),
+            Spring(springy=False, width=50),
+            UItem("units", style="readonly"),
+            spring,
+        )
+        return request_grp
+
     def traits_view(self):
         led_grp = HGroup(
             UItem(
@@ -359,13 +368,8 @@ class ControlPane(TraitsDockPane):
             ),
             spring,
         )
-        request_grp = HGroup(
-            Item("requested_power", style="readonly", format_str="%0.2f", width=100),
-            Spring(springy=False, width=50),
-            UItem("units", style="readonly"),
-            spring,
-        )
 
+        request_grp = self._get_request_group()
         v = View(
             VGroup(led_grp, spring, status_grp, spring, request_grp, show_border=True)
         )

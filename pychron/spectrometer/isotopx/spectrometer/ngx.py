@@ -53,9 +53,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
-    _triggered = False
-    acq_count = None
+    acq_count = 0
     total_acq_count = 10
+    has_atonas = True
+    # triggered_lock_release_required = False
 
     def _microcontroller_default(self):
         service = "pychron.hardware.isotopx_spectrometer_controller.NGXController"
@@ -71,6 +72,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def make_deflection_dict(self):
         return {}
+
+    def protect_detector(self, pdets, protect):
+        self.microcontroller.protect_detector = protect
 
     def convert_to_axial(self, det, v):
         print("asdfsadf", det, det.index, v)
@@ -91,6 +95,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 self.debug("updating mftable name {}".format(mftable_name))
                 self.magnet.field_table.path = mftable_name
                 self.magnet.field_table.load_table(load_items=True)
+
+        self.has_atonas = any([d for d in self.detectors if d.kind in (ATONA, "CDD")])
 
     def _send_configuration(self, **kw):
         pass
@@ -123,7 +129,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         #    time.sleep(0.25)
 
         if not self.microcontroller.triggered:
-            self.ask("StopAcq", verbose=verbose)
+            # self.microcontroller.lock.acquire()
+            # self.triggered_lock_release_required = True
+
+            # self.ask("StopAcq", verbose=verbose)
+            self.microcontroller.stop_acquisition()
             self.microcontroller.triggered = True
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
             self.total_acq_count = int(self.integration_time)
@@ -143,34 +153,47 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug("readline timeout. raw={}".format(ds))
                 return
 
-            if not self._read_enabled or self.microcontroller.canceled:
-                self.microcontroller.canceled = False
+            if not self._read_enabled:
+                # or self.microcontroller.canceled:
+                # self.microcontroller.canceled = False
                 self.debug("readline canceled")
                 return
 
             try:
-                ds += self.read(1)
+                # ds += self.read(1)
+                # print(ds)
+                ds = self.microcontroller.communicator.readline("#\r\n")
+                # ds = self.microcontroller.communicator.select_read(terminator="#\r\n")
+                # return ds
             except BaseException:
                 if not self.microcontroller.canceled:
                     self.debug_exception()
                     self.debug(f"data left: {ds}")
 
-            if "#" in ds:
-                ds = ds.split("#")[0]
-                return ds
+            if ds and ds.endswith("#\r\n"):
+                return ds[:-3]
+
+            # if ds and "#\r\n" in ds:
+            #     ds = ds.split("#\r\n")[0]
+            #     return ds
 
     def cancel(self):
         self.debug("canceling")
         self._read_enabled = False
 
-    def read_intensities(
-        self, timeout=60, trigger=False, target="ACQ.B", verbose=False
-    ):
+    def set_position_hook(self):
+        self.debug("set position hook")
+        self.microcontroller.stop_acquisition()
+
+    def set_source_parameter(self, name, value):
+        self.ask(f"SetSourceOutput {name},{value}")
+
+    def read_intensities(self, timeout=60, trigger=False, target="ACQ.B", verbose=True):
         # self.microcontroller.lock.acquire()
         # verbose=True
         self._read_enabled = True
 
-        verbose = True
+        # verbose = True
 
         if verbose:
             self.debug(
@@ -178,9 +201,18 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     trigger, self.microcontroller.triggered
                 )
             )
+
+        # self.microcontroller.lock.acquire()
         resp = True
-        if trigger:
+        # trigger_release = self.triggered_lock_release_required
+        # self.debug(f'trigger={trigger} triggered={self.microcontroller.triggered} '
+        #            f'triggered_locrelease_required={self.triggered_lock_release_required}')
+        # print('treigger', trigger, self.microcontroller.triggered)
+        if trigger or not self.microcontroller.triggered:
             resp = self.trigger_acq()
+            # trigger_release = self.microcontroller.triggered
+            # self.debug(f'trigger_relase={trigger_release}')
+
             # self.microcontroller.lock.release()
             if resp is not None:
                 # if verbose:
@@ -189,19 +221,22 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 time.sleep(0.95)
                 # if verbose:
                 #     self.debug('trigger wait finished')
+        # else:
+        # self.microcontroller.lock.acquire()
+        # self.triggered_lock_release_required = True
 
         keys = []
         signals = []
         collection_time = None
         inc = False
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        targetb = "EVENT:ACQ.B,{}".format(self.rcs_id)
-        targeta = "EVENT:ACQ,{}".format(self.rcs_id)
+        targetb = "#EVENT:ACQ.B,{}".format(self.rcs_id)
+        targeta = "#EVENT:ACQ,{}".format(self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
             while self._read_enabled:
-                with self.microcontroller.lock:
-                    line = self.readline(verbose=True)
+                # with self.microcontroller.lock:
+                line = self.readline(verbose=verbose)
 
                 if verbose:
                     self.debug("raw: {}".format(line))
@@ -218,19 +253,27 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
                         collection_time = datetime.combine(cd, ct)
                         signals = [float(i.strip()) for i in args[5:]]
-                        print("fad", keys, signals)
                         if line.startswith(targeta):
                             self.acq_count += 1
-                            if self.acq_count == self.total_acq_count:
+                            if (
+                                self.acq_count == self.total_acq_count
+                                and self.has_atonas
+                            ):
                                 # forget this ACQ and immediately get the ACQ.B record.
                                 continue
                             else:
                                 nsignals, keys = [], []
                                 for i, di in enumerate(self.detectors[::-1]):
-                                    if di.kind == "CDD":
+                                    if di.kind in ("CDD", ATONA) or not self.has_atonas:
                                         nsignals.append(signals[i])
                                         keys.append(di.name)
                                 signals = nsignals
+
+                                if not self.has_atonas:
+                                    self.acq_count = 0
+                                    self.microcontroller.triggered = False
+                                    inc = True
+
                                 break
 
                         elif line.startswith(targetb):
@@ -258,6 +301,40 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             self.debug("keys: {}".format(keys))
             self.debug("signals: {}".format(signals))
 
+        # try:
+        #     # the integration cycle is complete. release the lock
+        #     if inc:
+        #         self.microcontroller.lock.release()
+        #         self.debug(f'Released lock. {self.microcontroller.lock}')
+        # except RuntimeError as e:
+        #     self.debug(f'Cannot release lock. "RuntimeError" {e}')
+
+        # if self.triggered_lock_release_required:
+        #     self.triggered_lock_release_required = False
+        #     if trigger_release:
+        # if self.microcontroller.lock.active_count() > 0:
+        #     self.debug(f"trigger release. lock count={self.microcontroller.lock.count}")
+        #     self.microcontroller.lock.release()
+        # self.debug(f'trigger release. {trigger_release}')
+        # if trigger_release:
+        # self.triggered_lock_release_required = False
+
+        # if self.microcontroller.lock.count>0:
+        #     try:
+        #         self.microcontroller.lock.release()
+        #     except RuntimeError as e:
+        #         if verbose:
+        #             self.debug(f'Trigger Release. Cannot release lock. "RuntimeError" {e}')
+        #     self.microcontroller.lock.release()
+        # except RuntimeError as e:
+        #     self.debug(f'Cannot release lock. "RuntimeError" {e}')
+        #
+        # if trigger_release:
+        #     try:
+        #         self.microcontroller.lock.release()
+        #     except RuntimeError as e:
+        #         self.debug(f'Trigger Release. Cannot release lock. "RuntimeError" {e}')
+
         return keys, signals, collection_time, inc
 
     def read_integration_time(self):
@@ -273,10 +350,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self.debug(
             "acquisition period set to 1 second.  integration time set to {}".format(it)
         )
-        self.ask("StopAcq")
+        # self.ask("StopAcq")
+        self.microcontroller.stop_acquisition()
         self.ask("SetAcqPeriod 1000")
         self._read_enabled = False
-        self.microcontroller.triggered = False
+        # self.microcontroller.triggered = False
         self.integration_time = it
 
         # if self.integration_time != it or force:

@@ -22,6 +22,7 @@ from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.graph.plot_record import PlotRecord
 from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware import get_float
+from pychron.hardware.base_cryo_controller import BaseCryoController
 from pychron.hardware.core.core_device import CoreDevice
 import re
 import time
@@ -80,8 +81,8 @@ class GPIBProtocol(Protocol):
     def read_setpoint(self, output, verbose=True):
         return self.ask(f"SETP? {output}", verbose=verbose)
 
-    def set_setpoint(self, output, v):
-        self.tell(f"SETP {output},{v}")
+    def set_setpoint(self, output, v, verbose=True):
+        self.tell(f"SETP {output},{v}", verbose=verbose)
 
     def set_range(self, output, ra):
         self.tell(f"RANGE {output},{ra}")
@@ -104,7 +105,7 @@ class SCPIProtocol(Protocol):
         return self.ask(f"FETCH:TEMPERATURE? {tag}", verbose=verbose)
 
 
-class BaseLakeShoreController(CoreDevice):
+class BaseLakeShoreController(BaseCryoController):
     units = Enum("C", "K")
     scan_func = "update"
 
@@ -240,8 +241,7 @@ class BaseLakeShoreController(CoreDevice):
                     pass
         return True
 
-    @get_float(default=0)
-    def read_setpoint(self, output, verbose=False):
+    def _read_setpoint(self, output, verbose=False):
         if output is not None:
             if isinstance(output, str):
                 output = re.sub("[^0-9]", "", output)
@@ -253,36 +253,30 @@ class BaseLakeShoreController(CoreDevice):
             if v is not None:
                 idx = i + 1
                 setattr(self, "setpoint{}".format(idx), v)
+        self._block(setpoints, delay, block)
 
-        if block:
-            delay = max(0.5, delay)
-            tol = 1
-            if isinstance(block, (int, float)):
-                tol = block
-
-            while 1:
-                if self.setpoints_achieved(setpoints, tol):
-                    break
-                time.sleep(delay)
+    def _write_setpoint(self, v, output, **kw):
+        self.protocol.set_setpoint(output, v, **kw)
 
     def set_setpoint(self, v, output=1, retries=3):
         self.set_range(v, output)
-        for i in range(retries):
-            self.protocol.set_setpoint(output, v)
-            # self.tell("SETP {},{}".format(output, v))
-
-            if not self.verify_setpoint:
-                break
-
-            time.sleep(2)
-            sp = self.read_setpoint(output, verbose=True)
-            self.debug("setpoint set to={} target={}".format(sp, v))
-            if sp == v:
-                break
-            time.sleep(1)
-
-        else:
-            self.warning_dialog("Failed setting setpoint to {}. Got={}".format(v, sp))
+        super().set_setpoint(v, output, retries)
+        # for i in range(retries):
+        #     self.protocol.set_setpoint(output, v)
+        #     # self.tell("SETP {},{}".format(output, v))
+        #
+        #     if not self.verify_setpoint:
+        #         break
+        #
+        #     time.sleep(2)
+        #     sp = self.read_setpoint(output, verbose=True)
+        #     self.debug("setpoint set to={} target={}".format(sp, v))
+        #     if sp == v:
+        #         break
+        #     time.sleep(1)
+        #
+        # else:
+        #     self.warning_dialog("Failed setting setpoint to {}. Got={}".format(v, sp))
 
     def set_range(self, v, output):
         # if v <= 10:
@@ -300,21 +294,18 @@ class BaseLakeShoreController(CoreDevice):
 
         time.sleep(1)
 
-    def read_input(self, v, **kw):
-        if isinstance(v, int):
-            v = string.ascii_lowercase[v - 1]
-        return self._read_input(v, self.units, **kw)
-
     def read_input_a(self, **kw):
-        return self._read_input("a", self.units, **kw)
+        return self._read_input("a", **kw)
 
     def read_input_b(self, **kw):
-        return self._read_input("b", self.units, **kw)
+        return self._read_input("b", **kw)
 
     @get_float(default=0)
-    def _read_input(self, tag, mode="C", verbose=False):
+    def _read_input(self, tag, mode=None, verbose=False):
+        if mode is None:
+            mode = self.units
+
         return self.protocol.read_input(tag, mode, verbose)
-        # return self.ask("{}RDG? {}".format(mode, tag), verbose=verbose)
 
     def _setpoint1_changed(self):
         self.set_setpoint(self.setpoint1, 1)

@@ -21,6 +21,7 @@ from __future__ import print_function
 
 import logging
 import os
+import subprocess
 import sys
 
 # ============= standard library imports ========================
@@ -108,35 +109,59 @@ def create_card(card):
 
 def create_issue(issue):
     org = os.environ.get("GITHUB_ORGANIZATION", "NMGRL")
-    cmd = "{}/repos/{}/pychron/issues".format(GITHUB_API_URL, org)
 
-    data = json.dumps(issue)
-    return git_post(cmd, data=data)
+    try:
+        subprocess.call(
+            [
+                "gh",
+                "issue",
+                "create",
+                "-R",
+                f"{org}/pychron",
+                "-t",
+                issue["title"],
+                "-b",
+                issue["body"],
+                "-l",
+                issue["labels"],
+            ]
+        )
+        return True
+    except BaseException:
+        import traceback
+
+        traceback.print_exc()
+
+        print("gh not installed. Using requests")
+
+        data = json.dumps(issue)
+        cmd = "{}/repos/{}/pychron/issues".format(GITHUB_API_URL, org)
+        return git_post(cmd, data=data)
 
 
 def git_post(cmd, return_json=True, **kw):
     tok = os.environ.get("GITHUB_TOKEN")
 
     if not tok:
-        usr = os.environ.get("GITHUB_USER")
-        pwd = os.environ.get("GITHUB_PASSWORD")
-        if usr and pwd:
-            warning(
-                None,
-                "Password authentication deprecated. Please update to a Github token. Contact Pychron "
-                "Developers.\n"
-                "Pychron will quit when this window is closed".format(usr),
-            )
-        else:
-            warning(
-                None,
-                'No Github token set for "{}". Please set the GITHUB_TOKEN environment variable or Contact '
-                "Pychron Developers\n"
-                "Pychron will quit when this window is closed",
-            )
-        sys.exit()
+        # usr = os.environ.get("GITHUB_USER")
+        # pwd = os.environ.get("GITHUB_PASSWORD")
+        # if usr and pwd:
+        #     warning(
+        #         None,
+        #         "Password authentication deprecated. Please update to a Github token. Contact Pychron "
+        #         "Developers.\n"
+        #         "Pychron will quit when this window is closed".format(usr),
+        #     )
+        # else:
 
-    kw["auth"] = (tok, "")
+        warning(
+            None,
+            'No Github token set for "{}". Please set the GITHUB_TOKEN environment variable, install "gh" or Contact '
+            "Pychron Developers",
+        )
+
+        kw["auth"] = (tok, "")
+
     if globalv.cert_file:
         kw["verify"] = globalv.cert_file
 

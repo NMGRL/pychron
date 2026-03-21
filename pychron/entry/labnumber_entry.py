@@ -132,6 +132,7 @@ class LabnumberEntry(DVCIrradiationable):
     monitor_age = Str
     monitor_decay_constant = Str
     use_consecutive_identifiers = Bool
+    check_monitor_sample_project = Bool(True)
     lab_name = Str
 
     flux_commits = List
@@ -156,6 +157,7 @@ class LabnumberEntry(DVCIrradiationable):
             "monitor_material",
             "j_multiplier",
             "use_consecutive_identifiers",
+            "check_monitor_sample_project",
             "mode",
         ):
             bind_preference(self, key, "pychron.entry.{}".format(key))
@@ -470,9 +472,12 @@ class LabnumberEntry(DVCIrradiationable):
         """
 
         def test_monitor_sample(dbpos):
+            print(monitor_name, monitor_material)
             if dbpos.sample:
+                print(dbpos.sample.name)
                 if dbpos.sample.name == monitor_name:
                     if dbpos.sample.material:
+                        print(dbpos.sample.material.name)
                         return dbpos.sample.material.name == monitor_material
 
         def monitor_exists_test(l):
@@ -506,11 +511,12 @@ class LabnumberEntry(DVCIrradiationable):
             if not monitor_exists_test(dblevel):
                 no_monitors.append(dblevel.name)
 
-            poss = correct_monitor_sample(dblevel)
-            if poss:
-                incorrect_monitor_sample.append(
-                    "Level={}, Positions={}".format(dblevel.name, poss)
-                )
+            if self.check_monitor_sample_project:
+                poss = correct_monitor_sample(dblevel)
+                if poss:
+                    incorrect_monitor_sample.append(
+                        "Level={}, Positions={}".format(dblevel.name, poss)
+                    )
 
         if no_monitors:
             error = "No Monitors: {}\n".format(",".join(no_monitors))
@@ -680,6 +686,9 @@ class LabnumberEntry(DVCIrradiationable):
         db = self.dvc.db
 
         if not self.dvc.meta_repo.smart_pull():
+            self.warning_dialog(
+                "Saving to database aborted. Failed pulling Meta Repo. Please contact an expert"
+            )
             return
 
         n = len(self.irradiated_positions)
@@ -778,7 +787,7 @@ class LabnumberEntry(DVCIrradiationable):
 
         if self.dvc.meta_repo.has_staged():
             self.dvc.meta_commit("Labnumber Entry Save")
-            self.dvc.meta_push()
+            self.dvc.meta_push(inform=True)
 
     def _increment(self, name):
         """

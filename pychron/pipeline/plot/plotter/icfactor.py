@@ -74,7 +74,8 @@ class ICFactor(ReferencesSeries):
         # iso = next((i for i in analysis.isotopes.itervalues() if i.detector == d), None)
         v, e = 0, 0
         if d in analysis.temporary_ic_factors:
-            ic = analysis.temporary_ic_factors[d]
+            ticf = analysis.temporary_ic_factors[d]
+            ic = ticf["value"]
             v, e = nominal_value(ic), std_dev(ic)
 
         return v, e
@@ -86,13 +87,13 @@ class ICFactor(ReferencesSeries):
         for ai in self.references:
             dets = ai.detectors()
 
-            print("dets", dets, len(dets), len(set(dets)))
+            # print("dets", dets, len(dets), len(set(dets)))
             # a detector is used more than once
             if len(dets) > len(set(dets)):
                 is_peak_hop = True
                 break
 
-        print("---------------- ispeakhop", is_peak_hop)
+        # print("---------------- ispeakhop", is_peak_hop)
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 if self.options.use_source_correction:
@@ -103,13 +104,16 @@ class ICFactor(ReferencesSeries):
                     m36 = 35.9675
                     ic = 1 / ufloat(v, e)
                     beta = umath.log(ic) / umath.log(m40 / m36)
-                    ui.set_beta(beta, is_peak_hop)
+                    ui.set_beta(n, beta, is_peak_hop)
+                elif self.options.use_discrimination:
+                    # assumes 40/36 discrimination
+                    ui.set_discrimination(ufloat(v, e))
                 else:
                     if d == "rad40":
                         iso = ui.get_isotope(name="Ar40")
                         d = iso.detector
 
-                    ui.set_temporary_ic_factor(d, v, e)
+                    ui.set_temporary_ic_factor(n, d, v, e)
 
     def _get_current_data(self, po):
         if "/" in po.name:

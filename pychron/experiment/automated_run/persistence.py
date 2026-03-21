@@ -20,7 +20,7 @@ import math
 import os
 import time
 
-from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
+from traits.api import Instance, Bool, Interface, provides, Str, Float, Int
 from xlwt import Workbook, struct
 
 from pychron.core.helpers.datetime_tools import get_datetime
@@ -219,7 +219,7 @@ class AutomatedRunPersister(BasePersister):
 
     """
 
-    dbexperiment_identifier = Long
+    dbexperiment_identifier = Int
     # local_lab_db = Instance(LocalLabAdapter)
     datahub = Instance("pychron.experiment.datahub.Datahub")
 
@@ -997,6 +997,7 @@ class AutomatedRunPersister(BasePersister):
             runid=rid,
             runscript_name=self.per_spec.runscript_name,
             runscript_text=self.per_spec.runscript_blob,
+            modified_baselines=self.per_spec.modified_baselines,
             # signal_fits=sf,
             mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
             # blanks=blanks,

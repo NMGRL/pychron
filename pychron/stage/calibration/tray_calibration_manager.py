@@ -25,7 +25,13 @@ from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
 
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator, AutoCalibrator
+from pychron.stage.calibration.auto_calibrator import (
+    SemiAutoCalibrator,
+    AutoCalibrator,
+    SemiAutoFullTraversalCalibrator,
+    TrayIdentifier,
+    TrayMapper,
+)
 from pychron.stage.calibration.calibrator import (
     TrayCalibrator,
     LinearCalibrator,
@@ -56,6 +62,9 @@ STYLE_DICT = {
     "Linear": LinearCalibrator,
     "SemiAuto": SemiAutoCalibrator,
     "Auto": AutoCalibrator,
+    "SemiAutoFullTraversal": SemiAutoFullTraversalCalibrator,
+    "TrayMapper": TrayMapper,
+    "TrayIdentifier": TrayIdentifier,
 }
 
 
@@ -80,7 +89,17 @@ class TrayCalibrationManager(Loggable):
     calibrate = Event
     calibration_step = String("Calibrate")
     calibration_help = String(TRAY_HELP)
-    style = Enum("Tray", "Free", "Hole", "Irregular", "Linear", "SemiAuto")
+    style = Enum(
+        "Tray",
+        "Free",
+        "Hole",
+        "Irregular",
+        "Linear",
+        "SemiAuto",
+        "SemiAutoFullTraversal",
+        "TrayMapper",
+        "TrayIdentifier",
+    )
     canvas = Any
     calibrator = Instance(BaseCalibrator)
     # calibrator = Property(depends_on='style')
@@ -90,6 +109,8 @@ class TrayCalibrationManager(Loggable):
     reset_holes_button = Button("Reset Holes")
     holes_list = List
     set_center_button = Button("Set Center Guess")
+    clear_corrections_button = Button("Clear Corrections")
+    set_corrections_affine_button = Button("Set Correction Affine")
 
     def isCalibrating(self):
         return self.calibration_step != "Calibrate"
@@ -116,6 +137,9 @@ class TrayCalibrationManager(Loggable):
             self.canvas.calibration_item = calobj
             # force style change update
             self._style_changed()
+
+    def clear_corrections(self):
+        self.parent.stage_map.clear_correction_file()
 
     def save_calibration(self, name=None, clear_corrections=True, reload=True):
         pickle_path = os.path.join(paths.hidden_dir, "{}_stage_calibration")
@@ -147,6 +171,14 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _set_corrections_affine_button_fired(self):
+        center = self.parent.get_current_position()
+        rot = 0
+        self.parent.stage_map.dump_corrections_affine(center, rot)
+
+    def _clear_corrections_button_fired(self):
+        self.clear_corrections()
+
     def _cancel_button_fired(self):
         if self.calibrator:
             self.calibrator.cancel()

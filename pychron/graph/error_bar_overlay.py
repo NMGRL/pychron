@@ -125,14 +125,17 @@ class ErrorBarOverlay(AbstractOverlay):
                     component.x, component.y, component.width, component.height
                 )
                 # draw normal
-                color = component.color
+                color = component.color_
                 if isinstance(color, str):
                     color = color_table[color]
                 elif isinstance(color, QtGui.QColor):
+                    def _component(value):
+                        return value() if callable(value) else value
+
                     color = (
-                        color.red() / 255.0,
-                        color.green() / 255.0,
-                        color.blue() / 255.0,
+                        _component(getattr(color, "red", 0)) / 255.0,
+                        _component(getattr(color, "green", 0)) / 255.0,
+                        _component(getattr(color, "blue", 0)) / 255.0,
                     )
 
                 gc.set_line_width(self.line_width)

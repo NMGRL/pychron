@@ -20,7 +20,7 @@ import re
 import time
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import array, Inf, arange
+from numpy import array, inf, arange
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
@@ -43,6 +43,7 @@ AGE = "Age"
 EXTRACT_VALUE = "Extract Value"
 EXTRACT_DURATION = "Extract Duration"
 CLEANUP = "Cleanup"
+F = "F"
 
 ATTR_MAPPING = {
     PEAK_CENTER: "peak_center",
@@ -54,7 +55,7 @@ ATTR_MAPPING = {
     EXTRACT_VALUE: "extract_value",
     EXTRACT_DURATION: "extract_duration",
     CLEANUP: "cleanup",
-    "F": "uF",
+    F: "uF",
 }
 
 AR4039 = "Ar40/Ar39"
@@ -92,12 +93,12 @@ class BaseSeries(BaseArArFigure):
     def max_x(self, *args):
         if len(self.xs):
             return max(self.xs)
-        return -Inf
+        return -inf
 
     def min_x(self, *args):
         if len(self.xs):
             return min(self.xs)
-        return Inf
+        return inf
 
     def mean_x(self, *args):
         if len(self.xs):
@@ -348,7 +349,7 @@ class Series(BaseSeries):
     #             ai = self.sorted_analyses[0]
     #             a = bool(ai.get_value(name))
     #     return a
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 

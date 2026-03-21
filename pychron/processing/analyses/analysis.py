@@ -19,9 +19,8 @@ from collections import namedtuple
 from math import ceil
 from operator import attrgetter
 
-import six
 from chaco.array_data_source import ArrayDataSource
-from numpy import Inf, polyfit, polyval, arange, argmin
+from numpy import inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 from traits.api import Event, Dict, List, Str
@@ -75,6 +74,7 @@ class CloseHandler(Handler):
         global WINDOW_CNT
         WINDOW_CNT += 1
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        return True
 
 
 def show_inspection_factory(record_id, isotopes):
@@ -160,7 +160,7 @@ def show_equilibration_inspector(record_id, ar_ar_age):
 
     else:
         for i, (num, den) in enumerate(
-            (("age", "age"), ("Ar40", "Ar39"), ("Ar40", "Ar36"))
+            (("age", "age"), ("Ar40", "Ar39"), ("Ar37", "Ar39"), ("Ar40", "Ar36"))
         ):
             g.new_plot(padding_right=75, padding_left=100)
 
@@ -335,13 +335,13 @@ def make_graph(
     g.clear()
 
     if not show_evo:
-        xmi = Inf
-        xma = -Inf
+        xmi = inf
+        xma = -inf
     else:
-        xmi, xma = 0, -Inf
+        xmi, xma = 0, -inf
 
     for i, iso in enumerate(isotopes):
-        ymi, yma = Inf, -Inf
+        ymi, yma = inf, -inf
 
         p = g.new_plot(padding=[80, 10, 10, 40], resizable=resizable)
         g.add_limit_tool(p, "x")
@@ -455,6 +455,18 @@ class IdeogramPlotable(HasTraits):
         super(IdeogramPlotable, self).__init__(*args, **kw)
         if make_arar_constants:
             self.arar_constants = ArArConstants()
+
+    def trigger_invalid(self):
+        raise NotImplementedError
+
+    def trigger_omit(self):
+        raise NotImplementedError
+
+    def trigger_recall(self):
+        raise NotImplementedError
+
+    def trigger_tag(self):
+        raise NotImplementedError
 
     def baseline_corrected_intercepts_to_dict(self):
         pass
@@ -734,7 +746,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def get_isotope_evolutions(self, isotopes=None, load_data=True, **kw):
         if isotopes:
-            if isinstance(isotopes[0], (str, six.text_type)):
+            if isinstance(isotopes[0], str):
                 nisotopes = []
                 for i in isotopes:
                     try:

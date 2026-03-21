@@ -89,6 +89,7 @@ DEFAULT_PLUGINS = (
             "ArArConstants",
             "Loading",
             "Geochron",
+            "AusGeochem",
             "IGSN",
             # 'Processing',
             "Database",

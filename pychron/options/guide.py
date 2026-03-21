@@ -14,14 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 from enable.enable_traits import LineStyle
-from traits.api import HasTraits, Enum, Float, Color, RGBColor, Str, Range, List, Bool
+from traitsui.api import Color
+from traits.api import HasTraits, Enum, Float, Str, Range, List, Bool
 
 
 class Guide(HasTraits):
     orientation = Enum("h", "v")
     value = Float
     alpha = Range(0.0, 1.0, 1.0)
-    color = RGBColor("red")
+    color = Color("red")
     line_style = LineStyle("dash")
     line_width = Float(1)
     label = Str

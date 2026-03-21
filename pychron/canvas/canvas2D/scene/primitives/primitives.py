@@ -22,8 +22,9 @@ from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict
 from kiva.agg.agg import GraphicsContextArray
 from numpy import array
-from traits.api import Float, Any, Bool, Str, Property, List, Int, Color, String, Either
+from traits.api import Float, Any, Bool, Str, Property, List, Int, String, Either
 from traitsui.api import VGroup, Item, Group
+from pyface.ui_traits import PyfaceColor
 
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
 from pychron.canvas.canvas2D.scene.primitives.calibration import calc_rotation
@@ -115,6 +116,7 @@ class Line(QPrimitive):
     data_rotation = Float
     width = 1
     height = Property
+    orientation = None
 
     def __init__(self, p1=None, p2=None, *args, **kw):
         self.set_startpoint(p1, **kw)
@@ -132,6 +134,11 @@ class Line(QPrimitive):
             p1 = Point(*p1, **kw)
         self.end_point = p1
         if p1:
+            if self.orientation == "vertical":
+                self.start_point.x = p1.x
+            elif self.orientation == "horizontal":
+                self.start_point.y = p1.y
+
             if len(self.primitives) == 2:
                 self.primitives[1] = self.end_point
             else:
@@ -144,6 +151,11 @@ class Line(QPrimitive):
         self.start_point = p1
 
         if p1:
+            if self.orientation == "vertical":
+                self.end_point.x = p1.x
+            elif self.orientation == "horizontal":
+                self.end_point.y = p1.y
+
             if len(self.primitives) > 0:
                 self.primitives[0] = self.start_point
             else:
@@ -180,6 +192,11 @@ class Line(QPrimitive):
 
         b = calc_rotation(x1, y1, x2, y2)
         self.screen_rotation = b
+
+    def request_layout(self):
+        self.start_point.request_layout()
+        self.end_point.request_layout()
+        super(Line, self).request_layout()
 
 
 class Triangle(QPrimitive):
@@ -321,13 +338,14 @@ class Span(Line):
 
 
 class LoadIndicator(Circle):
+    corrected_position = None
     degas_indicator = False
     measured_indicator = False
     monitor_indicator = False
-    degas_color = Color("orange")
-    measured_color = Color("purple")
+    degas_color = PyfaceColor("orange")
+    measured_color = PyfaceColor("purple")
     default_color = "black"
-    fill_color = Color("white")
+    fill_color = PyfaceColor("white")
     identifier_label = None
     sample_label = None
     weight_label = None
@@ -399,9 +417,19 @@ class LoadIndicator(Circle):
     def _render(self, gc):
         c = (0, 0, 0)
         color = self.fill_color
-        fc = sum((color.red(), color.green(), color.blue()))
+        # Support PyfaceColor APIs that expose components as attributes vs callables.
+        def _component(value):
+            return value() if callable(value) else value
+
+        fc = sum(
+            (
+                _component(getattr(color, "red", 0)),
+                _component(getattr(color, "green", 0)),
+                _component(getattr(color, "blue", 0)),
+            )
+        )
         if self.fill and self.fill_color and fc < 1.5:
-            c = (255, 255, 255)
+            c = (1.0, 1.0, 1.0)
 
         self.text_color = c
         for p in self.primitives:
@@ -412,9 +440,13 @@ class LoadIndicator(Circle):
         if self.space == "data":
             r = self.map_dimension(r)
 
-        f = 2**0.5 / 2
-        self.name_offsetx = (r * f) + 8
-        self.name_offsety = (r * f) + 8
+        if getattr(self.canvas, "label_offset_mode", "diagonal") == "side":
+            self.name_offsetx = r + 8
+            self.name_offsety = 0
+        else:
+            f = 2**0.5 / 2
+            self.name_offsetx = (r * f) + 8
+            self.name_offsety = (r * f) + 8
 
         if self.state:
             with gc:
@@ -426,6 +458,13 @@ class LoadIndicator(Circle):
         nr = r * 0.25
 
         super(LoadIndicator, self)._render(gc)
+        if self.corrected_position:
+            ox, oy = self.canvas.map_screen([self.corrected_position])[0]
+            with gc:
+                gc.set_stroke_color((0, 0.75, 0))
+                gc.arc(ox, oy, r, 0, 360)
+                gc.stroke_path()
+
         if self.monitor_indicator:
             with gc:
                 gc.set_line_width(1)
@@ -458,7 +497,7 @@ class LoadIndicator(Circle):
 class Label(QPrimitive):
     text = String
     use_border = True
-    bgcolor = Color("white")
+    bgcolor = PyfaceColor("white")
     hjustify = "left"
     vjustify = "bottom"
     soffset_x = Float
@@ -536,7 +575,7 @@ class Indicator(QPrimitive):
     vline_length = 0.1
     use_simple_render = Bool(True)
     spot_size = Int(8)
-    spot_color = Color("yellow")
+    spot_color = PyfaceColor("yellow")
 
     def __init__(self, x, y, *args, **kw):
         super(Indicator, self).__init__(x, y, *args, **kw)
@@ -603,8 +642,7 @@ class PointIndicator(Indicator):
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
-        if ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < self.radius:
-            return True
+        return ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5 < self.radius
 
     def adjust(self, dx, dy):
         super(PointIndicator, self).adjust(dx, dy)
@@ -681,8 +719,35 @@ class PolyLine(QPrimitive):
 class BorderLine(Line, Bordered):
     border_width = 10
 
-    clear_vorientation = False
-    clear_horientation = False
+    # clear_vorientation = False
+    # clear_horientation = False
+
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        p1, p2 = self.start_point, self.end_point
+        p2x, p2y = p2.get_xy()
+        if p1.x == p2.x:
+            yy = y
+            if p1.y >= cy:
+                if p1.y - self.y != 1:
+                    yy = y + height
+
+            p1x, p1y = p1.get_xy()
+            x1 = p1x - cw4
+            x2 = p1x + cw4
+            y1 = y2 = yy
+
+        else:
+            xx = x
+
+            if p1.x >= cx:
+                xx = x + width
+
+            x1 = x2 = xx
+            y1 = p2y - cw4
+            y2 = p2y + cw4
+
+        gc.move_to(x1, y1)
+        gc.line_to(x2, y2)
 
     def _render(self, gc):
         # gc.save_state()

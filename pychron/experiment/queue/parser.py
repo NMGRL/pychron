@@ -107,7 +107,7 @@ class RunParser(Loggable):
             PATTERN,
             POSITION,
             COMMENT,
-            "syn_extraction",
+            ("syn_extraction_script", "syn_extraction"),
             OVERLAP,
             REPOSITORY_IDENTIFIER,
             ("conditionals", "truncate"),

@@ -1398,7 +1398,7 @@ class IsotopeAdapter(DatabaseAdapter):
             l, h = self._get_date_range(q)
 
             q = sess.query(meas_AnalysisTable.analysis_timestamp)
-            q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
+            q = q.join(gen_LabTable).join(gen_SampleTable).join(gen_ProjectTable)
             q = q.filter(gen_ProjectTable.name == pname)
             q = q.filter(
                 and_(
@@ -1415,7 +1415,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_project_date_range(self, projects):
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable.analysis_timestamp)
-            q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
+            q = q.join(gen_LabTable).join(gen_SampleTable).join(gen_ProjectTable)
             q = q.filter(gen_ProjectTable.name.in_(projects))
 
             return self._get_date_range(q)
@@ -1492,7 +1492,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_LabTable.identifier.in_(lns))
 
             elif projects:
-                q = q.join(gen_SampleTable, gen_ProjectTable)
+                q = q.join(gen_SampleTable).join(gen_ProjectTable)
                 q = q.filter(gen_ProjectTable.name.in_(projects))
 
             return self._get_date_range(q, hours=delta)
@@ -1544,7 +1544,7 @@ class IsotopeAdapter(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = self._analysis_query(sess)
             if mass_spectrometers:
-                q = q.join(meas_MeasurementTable, gen_MassSpectrometerTable)
+                q = q.join(meas_MeasurementTable).join(gen_MassSpectrometerTable)
 
             if omit_key:
                 q = q.join(proc_TagTable)
@@ -1657,18 +1657,18 @@ class IsotopeAdapter(DatabaseAdapter):
             if labnumber:
                 q = q.join(gen_LabTable)
                 if projects:
-                    q = q.join(gen_SampleTable, gen_ProjectTable)
+                    q = q.join(gen_SampleTable).join(gen_ProjectTable)
             elif samples:
-                q = q.join(gen_LabTable, gen_SampleTable)
+                q = q.join(gen_LabTable).join(gen_SampleTable)
                 # if irradiations:
                 #     q = q.join(irrad_PositionTable, irrad_LevelTable, irrad_IrradiationTable)
             elif projects:
-                q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
+                q = q.join(gen_LabTable).join(gen_SampleTable).join(gen_ProjectTable)
 
             if mass_spectrometers:
-                q = q.join(meas_MeasurementTable, gen_MassSpectrometerTable)
+                q = q.join(meas_MeasurementTable).join(gen_MassSpectrometerTable)
             if extract_device:
-                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.join(meas_ExtractionTable).join(gen_ExtractionDeviceTable)
             if analysis_type:
                 q = q.join(gen_AnalysisTypeTable)
 
@@ -1948,7 +1948,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 )
                 q = q.join(meas_IsotopeTable)
                 q = q.join(gen_LabTable)
-                q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
+                q = q.join(gen_SampleTable).join(gen_ProjectTable).join(gen_MaterialTable)
 
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
@@ -2019,7 +2019,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def retrieve_blank(self, kind, ms, ed, last):
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
-            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+            q = q.join(meas_MeasurementTable).join(gen_AnalysisTypeTable)
 
             if last:
                 q = q.filter(gen_AnalysisTypeTable.name == "blank_{}".format(kind))
@@ -2030,7 +2030,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_MassSpectrometerTable)
                 q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
             if ed and not ed in ("Extract Device", NULL_STR) and kind == "unknown":
-                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.join(meas_ExtractionTable).join(gen_ExtractionDeviceTable)
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
@@ -2045,7 +2045,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def retrieve_blank(self, kind, ms, ed, last):
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
-            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+            q = q.join(meas_MeasurementTable).join(gen_AnalysisTypeTable)
 
             if last:
                 q = q.filter(gen_AnalysisTypeTable.name == "blank_{}".format(kind))
@@ -2056,7 +2056,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_MassSpectrometerTable)
                 q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
             if ed and not ed in ("Extract Device", NULL_STR) and kind == "unknown":
-                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.join(meas_ExtractionTable).join(gen_ExtractionDeviceTable)
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())

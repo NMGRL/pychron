@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from numpy import linspace, Inf, zeros_like
+from numpy import linspace, inf as Inf, zeros_like
 from scipy.optimize import fsolve
 from traits.api import Array, Property, Float
 
@@ -352,9 +352,7 @@ class NewYorkRegressor(YorkRegressor):
 
             # now finally add to sigasq and sigbsq
             sigbsq += (
-                dthdxi**2.0 * var_xi
-                + dthdyi**2.0 * var_yi
-                + 2 * sxyi * dthdxi * dthdyi
+                dthdxi**2.0 * var_xi + dthdyi**2.0 * var_yi + 2 * sxyi * dthdxi * dthdyi
             )
             sigasq += (
                 dadxi**2.0 * var_xi + dadyi**2.0 * var_yi + 2 * sxyi * dadxi * dadyi

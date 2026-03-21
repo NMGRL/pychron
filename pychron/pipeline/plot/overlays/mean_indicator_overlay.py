@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.plot_label import PlotLabel
-from chaco.scatterplot import render_markers
-from enable.markers import MarkerNameDict
-from traits.api import Color, Instance, Str, Float, Int, Any, Enum, Bool
+from chaco.api import PlotLabel
+from chaco.api import render_markers
+from traitsui.api import Color
+from traits.api import Instance, Str, Float, Int, Any, Enum, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -103,9 +103,9 @@ try:
             marker_size = self.marker_size
             points = [(-10 - self.marker_size / 2, (height + marker_size) / 2)]
             # points = [(0, 100)]
-            color = self.color
+            color = self.color_
             line_width = 1
-            outline_color = self.color
+            outline_color = self.color_
             render_markers(
                 gc, points, marker, marker_size, color, line_width, outline_color
             )
@@ -249,9 +249,17 @@ try:
             color = self.color
             # if isinstance(color, str):
             #    color=color_table[color]
+            def _component(value):
+                return value() if callable(value) else value
+
             self._color = [
                 x / 255.0
-                for x in (color.red(), color.green(), color.blue(), color.alpha())
+                for x in (
+                    _component(getattr(color, "red", 0)),
+                    _component(getattr(color, "green", 0)),
+                    _component(getattr(color, "blue", 0)),
+                    _component(getattr(color, "alpha", 255)),
+                )
             ]
             # self._color=color
 

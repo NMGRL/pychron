@@ -28,8 +28,8 @@ from pyface.qt.QtGui import (
 from traits.api import Str, Bool, Event, List, Enum
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.constants import OKColor, ErrorColor
-from traitsui.qt4.enum_editor import SimpleEditor
+from traitsui.qt.constants import OKColor, ErrorColor
+from traitsui.qt.enum_editor import SimpleEditor
 
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
@@ -84,7 +84,7 @@ class _ComboboxEditor(SimpleEditor):
         # QtCore.QObject.connect(control,
         #                        QtCore.SIGNAL('currentIndexChanged(QString)'),
         #                        self.update_object)
-        control.currentIndexChanged[str].connect(self.update_object)
+        control.currentIndexChanged[int].connect(self.update_object)
 
         if self.factory.evaluate is not None:
             control.setEditable(True)
@@ -98,7 +98,13 @@ class _ComboboxEditor(SimpleEditor):
                 # QtCore.QObject.connect(control.lineEdit(),
                 #                        QtCore.SIGNAL('editingFinished()'),
                 #                        self.update_autoset_text_object)
-            control.setInsertPolicy(QtGui.QComboBox.NoInsert)
+            insert_policy = getattr(QComboBox, "NoInsert", None)
+            if insert_policy is None:
+                insert_policy = getattr(
+                    getattr(QComboBox, "InsertPolicy", None), "NoInsert", None
+                )
+            if insert_policy is not None:
+                control.setInsertPolicy(insert_policy)
 
         # self._no_enum_update = 0
         self.set_tooltip()
@@ -204,8 +210,6 @@ class ComboboxEditor(BasicEditorFactory):
     refresh = Str
     use_filter = Bool(True)
     completion_mode = Enum(("popup", "inline"))
-    use_separator = Bool(False)
-    separator = Str
     use_separator = Bool(False)
     separator = Str("")
 

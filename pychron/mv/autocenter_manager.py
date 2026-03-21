@@ -29,6 +29,7 @@ from traits.api import (
     HasTraits,
     Str,
     List,
+    on_trait_change,
 )
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil
@@ -43,13 +44,14 @@ class AutoCenterConfig(HasTraits):
     name = "Default"
     use_adaptive_threshold = Bool(False)
     blur = Int
-    stretch_intensity = Bool(False)
+    stretch_intensity = Bool(True)
     search_step = Int
     search_n = Int
     search_width = Int
     blocksize = Int
     blocksize_step = Int
-    inverted = Bool(True)
+    inverted = Bool(False)
+    low_rank = Int(0)
 
     def __init__(self, yd=None, *args, **kw):
         if yd is not None:
@@ -59,7 +61,11 @@ class AutoCenterConfig(HasTraits):
 
     @property
     def preprop(self):
-        return {"stretch_intensity": self.stretch_intensity, "blur": self.blur}
+        return {
+            "stretch_intensity": self.stretch_intensity,
+            "blur": self.blur,
+            "low_rank": self.low_rank,
+        }
 
     @property
     def search(self):
@@ -102,6 +108,8 @@ class AutoCenterManager(MachineVisionManager):
     display_image = Instance(FrameImage, ())
 
     locator = None
+    x_correction_sign = 1
+    y_correction_sign = 1
 
     def bind_preferences(self, pref_id):
         bind_preference(self, "use_autocenter", "{}.use_autocenter".format(pref_id))
@@ -119,7 +127,9 @@ class AutoCenterManager(MachineVisionManager):
         if self.locator:
             self.locator.cancel()
 
-    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape="circle"):
+    def calculate_new_center(
+        self, cx, cy, offx, offy, dim=1.0, shape="circle", scale=1, **kw
+    ):
         frame = self.new_image_frame()
         loc = self._get_locator(shape=shape)
         self.locator = loc
@@ -129,12 +139,15 @@ class AutoCenterManager(MachineVisionManager):
         )
         cropdim = ceil(dim * 2.55)
 
+        # if self.offsetx or self.offsety:
+        #     offx,offy = self.offsetx, self.offsety
         # frame = loc.rescale(frame, 1.5)
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
 
         dim = self.pxpermm * dim
 
         im = self.display_image
+        self.display_image.clear()
         im.source_frame = frame
 
         config = self.selected_configuration
@@ -146,18 +159,20 @@ class AutoCenterManager(MachineVisionManager):
             preprocess=config.preprop,
             search=config.search,
             inverted=config.inverted,
+            **kw
         )
 
         if dx is None and dy is None:
             return
         else:
             # pdx, pdy = round(dx), round(dy)
-            mdx = dx / self.pxpermm
-            mdy = dy / self.pxpermm
+            mdx = dx / self.pxpermm * self.x_correction_sign
+            mdy = dy / self.pxpermm * self.y_correction_sign
             self.info(
                 "calculated deviation px={:n},{:n}, "
                 "mm={:0.3f},{:0.3f} ({})".format(dx, dy, mdx, mdy, self.pxpermm)
             )
+
             return cx + mdx, cy + mdy
 
     # private

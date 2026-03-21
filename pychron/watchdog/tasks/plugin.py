@@ -21,6 +21,7 @@ from traits.api import List, Int, HasTraits, Str, Bool, Float, Instance
 import datetime
 import time
 import requests
+import pika
 
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
@@ -43,17 +44,32 @@ def make_exp_key(ctx):
 
 class WatchDogWorker(Loggable):
     host = Str
-    port = Int(5001)
+    # port = Int(5001)
     pad = Float(1.25)
+    _connection = None
 
     def __init__(self, *args, **kw):
         super(WatchDogWorker, self).__init__(*args, **kw)
         self._bind_preferences()
+        self.connect()
+
+    def connect(self):
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host=self.host))
+        self._connection = connection
+
+    def send(self, msg, queue_name='watchdog'):
+        if not self._connection:
+            self.connect()
+
+        channel = self._connection.channel()
+        channel.queue_declare(queue=queue_name)
+        channel.basic_publish(exchange='', routing_key=queue_name, body=msg)
 
     def _bind_preferences(self):
         prefid = "pychron.watchdog"
         bind_preference(self, "host", "{}.host".format(prefid))
-        bind_preference(self, "port", "{}.port".format(prefid))
+        # bind_preference(self, "port", "{}.port".format(prefid))
         bind_preference(self, "pad", "{}.pad".format(prefid))
 
     def test_api(self):
@@ -72,8 +88,10 @@ class WatchDogWorker(Loggable):
 
         exp_id = make_exp_key(ctx)
         expire = self._make_expire(ctx["current_run_duration"])
-        resp = requests.post(url, json={"key": exp_id, "expire": expire})
-        self.debug("run start resp={}".format(resp.json()))
+        self.send()
+
+        # resp = requests.post(url, json={"key": exp_id, "expire": expire})
+        # self.debug("run start resp={}".format(resp.json()))
 
     def end_run_handler(self, ctx):
         self.debug("run end")

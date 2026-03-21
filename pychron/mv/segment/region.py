@@ -38,7 +38,6 @@ class RegionSegmenter(BaseSegmenter):
         nimage[image >= threshold] = 255
         nimage = invert(nimage)
         nimage = binary_fill_holes(nimage).astype("uint8") * 255
-
         return nimage
 
 

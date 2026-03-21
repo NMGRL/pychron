@@ -45,8 +45,8 @@ def get_key_binding(k_id):
 
     try:
         return user_key_map[k_id][0]
-    except KeyError:
-        pass
+    except (KeyError, IndexError, TypeError) as e:
+        print(f'Key binding "{k_id}" not found. {e}')
 
 
 class myTaskAction(TaskAction):
@@ -227,6 +227,16 @@ class IssueAction(WebAction):
         self._open_url(url)
 
 
+class ManageSettingsAction(Action):
+    name = "Install Settings..."
+
+    def perform(self, event):
+        from pychron.envisage.settings_manager import SettingsManager
+
+        man = SettingsManager()
+        man.edit_traits()
+
+
 class SettingsAction(Action):
     def perform(self, event):
         app = event.task.window.application
@@ -259,7 +269,7 @@ class SettingsAction(Action):
 
 
 class ApplySettingsAction(SettingsAction):
-    name = "Apply Settings..."
+    name = "Apply Bulk Settings..."
 
     def _perform(self, repo):
         """

@@ -47,6 +47,7 @@ class RCSHandler(Handler):
         obj = info.object
         if obj._running:
             obj.led.state = 2
+        return True
 
     def object__running_changed(self, info):
         """ """

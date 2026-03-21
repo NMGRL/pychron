@@ -23,6 +23,14 @@ from skimage.transform import resize, rotate as trotate
 from scipy.ndimage.interpolation import rotate as srotate
 
 
+def fswap_rb(frame):
+    red = frame[:, :, 2].copy()
+    blue = frame[:, :, 0].copy()
+
+    frame[:, :, 0] = red
+    frame[:, :, 2] = blue
+
+
 class Image(HasTraits):
     """ """
 
@@ -59,6 +67,8 @@ class Image(HasTraits):
         from cv2 import imread
 
         img = imread(img)
+        if swap_rb:
+            fswap_rb(img)
         self.source_frame = img
 
     def update_bounds(self, obj, name, old, new):

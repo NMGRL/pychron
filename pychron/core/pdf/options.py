@@ -17,8 +17,18 @@
 # ============= enthought library imports =======================
 from reportlab.lib.pagesizes import A4, letter, landscape, A2, A0
 from reportlab.lib.units import inch, cm
-from traits.api import Str, Bool, Enum, Button, Float, Color
-from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
+from traits.api import Str, Bool, Enum, Button, Float
+from traitsui.api import (
+    View,
+    Item,
+    UItem,
+    HGroup,
+    Group,
+    VGroup,
+    spring,
+    Spring,
+    Color,
+)
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import UNITS_MAP

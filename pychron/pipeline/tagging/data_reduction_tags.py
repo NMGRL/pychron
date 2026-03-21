@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from traits.api import Str, Button, HasTraits, List, Long
+from traits.api import Str, Button, HasTraits, List, Int
 from traitsui.api import UItem
 
 # ============= standard library imports ========================
@@ -31,7 +31,7 @@ class DataReductionTag(HasTraits):
     create_date = Str
     comment = Str
     analyses = List
-    id = Long
+    id = Int
 
 
 class SelectDataReductionTagModel(HasTraits):

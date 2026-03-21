@@ -20,13 +20,14 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from PySide import QtCore, QtGui
-from traits.api import Bool, Int, Color, Dict
+from pyface.qt import QtCore, QtGui
+from traits.api import Bool, Int, Dict
+from pyface.ui_traits import PyfaceColor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.text_editor import SimpleEditor
+from traitsui.qt.text_editor import SimpleEditor
 
 
 class _KeywordEditor(SimpleEditor):
@@ -82,14 +83,13 @@ class _KeywordEditor(SimpleEditor):
     #     self.update_object()
 
     def update_cursor_position(self):
-        user_object = self.context_object
-        print("uasdf", user_object)
+        pass
 
 
 class KeywordEditor(BasicEditorFactory):
     klass = _KeywordEditor
     editable = Bool(True)
-    bgcolor = Color
+    bgcolor = PyfaceColor
     fontsize = Int
     mapping = Dict
     evaluate = None

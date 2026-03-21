@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool, Event
+from traits.api import HasTraits, Date, Str, List, Int, Any, Float, Bool, Event
 
 
 # ============= standard library imports ========================
@@ -26,7 +26,7 @@ from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool, Event
 class Change(HasTraits):
     create_date = Date
     summary = Str
-    id = Long
+    id = Int
     active = Bool(False)
 
     def __init__(self, dbrecord=None, *args, **kw):
@@ -40,14 +40,14 @@ class Change(HasTraits):
 class IsotopeBlankRecord(HasTraits):
     isotope = Str
     fit = Str
-    id = Long
+    id = Int
     analyses = List
     value = Float
     error = Float
 
 
 class AnalysisRecord(HasTraits):
-    id = Long
+    id = Int
     record_id = Str
 
 
