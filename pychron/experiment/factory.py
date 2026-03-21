@@ -220,10 +220,17 @@ class ExperimentFactory(DVCAble):
         self.debug("update queue {}={}".format(name, new))
         if self.queue:
             self.queue.trait_set(**{name: new})
+            if name in (
+                "username",
+                "mass_spectrometer",
+                "extract_device",
+                "load_name",
+                "tray",
+                "queue_conditionals_name",
+                "repository_identifier",
+            ):
+                self.queue.sync_queue_meta(attrs=(name,), force=True)
             self.queue.changed = True
-            if name == "repository_identifier":
-                for a in self.queue.automated_runs:
-                    a.repository_identifier = new
 
         if name == "mass_spectrometer":
             self.mass_spectrometer = new

@@ -374,6 +374,15 @@ class AutomatedRunSpec(HasTraits):
                                 "script duration name:{} seconds:{}".format(name, d)
                             )
                             s += d
+                elif name:
+                    logger.warning(
+                        'script "{}" for {} is configured but could not be loaded'.format(
+                            name, si
+                        )
+                    )
+                    ok = False
+                    script_oks.append(ok)
+                    script_context[name] = None, ok
         if arun:
             arun.spec = None
             # set executable. if all scripts have OK syntax executable is True
@@ -445,6 +454,29 @@ class AutomatedRunSpec(HasTraits):
             "Run total estimated duration= {:0.3f}".format(self._estimated_duration)
         )
         return self._estimated_duration
+
+    def apply_queue_metadata(self, queue, force=False):
+        values = {
+            "mass_spectrometer": getattr(queue, "mass_spectrometer", None),
+            "extract_device": getattr(queue, "extract_device", None),
+            "username": getattr(queue, "username", None),
+            "tray": getattr(queue, "tray", None),
+            "load_name": getattr(queue, "load_name", None),
+            "load_holder": getattr(queue, "load_holder", None),
+            "queue_conditionals_name": getattr(queue, "queue_conditionals_name", None),
+        }
+
+        for attr, value in values.items():
+            if value in (None, ""):
+                continue
+
+            if force or not getattr(self, attr):
+                setattr(self, attr, value)
+
+        repository_identifier = getattr(queue, "repository_identifier", None)
+        if repository_identifier not in (None, "", NULL_STR):
+            if force or not self.repository_identifier:
+                self.repository_identifier = repository_identifier
 
     def make_run(self, new_uuid=True, run=None):
         if run is None:
