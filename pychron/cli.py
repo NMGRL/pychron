@@ -9,11 +9,7 @@ from dataclasses import dataclass
 
 import typer
 
-from pychron.cli_profiles import (
-    available_profile_names,
-    merge_profiles,
-    PROFILES,
-)
+from pychron.cli_profiles import PROFILES, available_profile_names, merge_profiles
 from pychron.install_support import (
     build_install_plan,
     export_config_bundle,
@@ -228,7 +224,9 @@ def _apply_source_profiles(
         if setup_root:
             copied.extend(_copy_tree(setup_root, setup_target, overwrite=overwrite))
         if scripts_root:
-            copied.extend(_copy_tree(scripts_root, scripts_target, overwrite=overwrite))
+            copied.extend(
+                _copy_tree(scripts_root, scripts_target, overwrite=overwrite)
+            )
 
     return copied
 
@@ -275,7 +273,11 @@ def _path_checks(root, profiles=None):
             results.append(CheckResult("File {}".format(label), CHECK_MARK, filename))
         else:
             results.append(
-                CheckResult("File {}".format(label), WARN_MARK, "{} (missing)".format(filename))
+                CheckResult(
+                    "File {}".format(label),
+                    WARN_MARK,
+                    "{} (missing)".format(filename),
+                )
             )
 
     if merged.resolved:
@@ -290,7 +292,9 @@ def _path_checks(root, profiles=None):
             else:
                 status = FAIL_MARK
                 detail = "{} (missing for selected profile)".format(full_path)
-            results.append(CheckResult("Profile dir {}".format(directory), status, detail))
+            results.append(
+                CheckResult("Profile dir {}".format(directory), status, detail)
+            )
 
         for file_spec in merged.required_files:
             full_path = os.path.join(paths.root_dir, file_spec.path)
@@ -300,7 +304,11 @@ def _path_checks(root, profiles=None):
             else:
                 status = FAIL_MARK
                 detail = "{} (missing for selected profile)".format(full_path)
-            results.append(CheckResult("Profile file {}".format(file_spec.path), status, detail))
+            results.append(
+                CheckResult(
+                    "Profile file {}".format(file_spec.path), status, detail
+                )
+            )
 
         for file_spec in merged.optional_files:
             full_path = os.path.join(paths.root_dir, file_spec.path)
@@ -310,7 +318,11 @@ def _path_checks(root, profiles=None):
             else:
                 status = WARN_MARK
                 detail = "{} (recommended by selected profile)".format(full_path)
-            results.append(CheckResult("Profile file {}".format(file_spec.path), status, detail))
+            results.append(
+                CheckResult(
+                    "Profile file {}".format(file_spec.path), status, detail
+                )
+            )
 
     if saved_state.get("source_profiles"):
         results.append(
@@ -423,7 +435,9 @@ def install_plan(
     plan = build_install_plan(profiles=profiles, root=root)
     typer.echo("Platform: {}".format(plan.platform_name))
     if plan.requested_profiles:
-        typer.echo("Requested profiles: {}".format(", ".join(plan.requested_profiles)))
+        typer.echo(
+            "Requested profiles: {}".format(", ".join(plan.requested_profiles))
+        )
         typer.echo("Resolved profiles: {}".format(", ".join(plan.resolved_profiles)))
     if plan.extras:
         typer.echo("Recommended extras: {}".format(", ".join(plan.extras)))
@@ -521,7 +535,8 @@ def doctor(
     profiles: list[str] = typer.Option(
         None,
         "--profile",
-        help="Validate one or more composable profiles. If omitted, saved bootstrap profiles are used.",
+        help="Validate one or more composable profiles. If omitted, saved "
+        "bootstrap profiles are used.",
     ),
 ):
     profiles = _normalize_profiles(profiles)

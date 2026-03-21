@@ -22,7 +22,9 @@ class InstallSupportTestCase(unittest.TestCase):
             os.makedirs(os.path.join(src, "setupfiles"), exist_ok=True)
             os.makedirs(os.path.join(src, "scripts", "measurement"), exist_ok=True)
 
-            with open(os.path.join(src, "setupfiles", "initialization.xml"), "w") as wfile:
+            with open(
+                os.path.join(src, "setupfiles", "initialization.xml"), "w"
+            ) as wfile:
                 wfile.write("<root/>")
             with open(
                 os.path.join(src, "scripts", "measurement", "foo.py"), "w"
