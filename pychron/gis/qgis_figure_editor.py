@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import uuid
+from logging import getLogger
 from operator import attrgetter
 
 from PyQt5 import QtWidgets
@@ -51,6 +52,8 @@ from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.processing.analyses.file_analysis import NonDBAnalysis
 
+logger = getLogger(__name__)
+
 
 class MyMenuProvider(QgsLayerTreeViewMenuProvider):
     def __init__(self, canvas, root, view):
@@ -72,7 +75,7 @@ class MyMenuProvider(QgsLayerTreeViewMenuProvider):
     def position_to_extent(self):
         layer = self.view.currentLayer()
         r = layer.extent()
-        print(r)
+        logger.debug("Positioning to extent %s", r)
         r.grow(0.5)
         layer.triggerRepaint()
         self.canvas.setExtent(r)
@@ -207,7 +210,7 @@ class _QGISEditor(Editor):
         if rlayer.isValid():
             qproject.addMapLayer(rlayer)
         else:
-            print("basemap layer invalid", rlayer, self.value.basemap)
+            logger.warning("Basemap layer invalid: %s %s", rlayer, self.value.basemap)
 
         qproject.addMapLayer(layer)
         canvas.setLayers([layer, rlayer])
@@ -289,7 +292,7 @@ class _QGISEditor(Editor):
                 else:
                     mext.combineExtentWith(ext)
             else:
-                print("not valid", layer, loption.uri)
+                logger.warning("Invalid map layer: %s %s", layer, loption.uri)
 
             if loption.visible:
                 layers.insert(0, layer)

@@ -33,13 +33,24 @@ class ExperimentStats(Loggable):
     delay_after_air = Float
 
     duration_tracker = Instance(AutomatedRunDurationTracker, ())
+    _duration_tracker_loaded = False
+    _dirty = True
 
     def update_run_duration(self, run, t):
         a = self.duration_tracker
         a.update(run, t)
+        self._dirty = True
+
+    def invalidate(self):
+        self._dirty = True
+
+    def load_duration_tracker(self):
+        if not self._duration_tracker_loaded:
+            self.duration_tracker.load()
+            self._duration_tracker_loaded = True
 
     def calculate_duration(self, runs=None):
-        self.duration_tracker.load()
+        self.load_duration_tracker()
         dur = self._calculate_duration(runs)
         return dur
 
@@ -127,6 +138,7 @@ class StatsGroup(Loggable):
 
     _post = None
     _run_start = 0
+    _queue_sig = None
 
     # not used
     def continue_run(self):
@@ -210,8 +222,14 @@ class StatsGroup(Loggable):
         calculate the total duration
         calculate the estimated time of finish
         """
-
-        if force or not self._total_time:
+        queue_sig = self._make_queue_sig()
+        should_recalculate = (
+            force
+            or not self._total_time
+            or queue_sig != self._queue_sig
+            or any(ei.stats._dirty for ei in self.experiment_queues)
+        )
+        if should_recalculate:
             self.nruns = sum(
                 [len(ei.cleaned_automated_runs) for ei in self.experiment_queues]
             )
@@ -224,9 +242,13 @@ class StatsGroup(Loggable):
                 ]
             )
 
+            for ei in self.experiment_queues:
+                ei.stats._dirty = False
+
             self.debug("total_time={}".format(tt))
             self._total_time = tt
             self.etf = self.format_duration(tt)
+            self._queue_sig = queue_sig
 
     def recalculate_etf(self):
         tt = sum(
@@ -236,8 +258,16 @@ class StatsGroup(Loggable):
             ]
         )
 
+        for ei in self.experiment_queues:
+            ei.stats._dirty = False
+
         self._total_time = tt + self._elapsed
         self.etf = self.format_duration(tt, post=datetime.now())
+        self._queue_sig = self._make_queue_sig()
+
+    def refresh_on_queue_change(self):
+        if self.experiment_queues:
+            self.calculate(force=True)
 
     def calculate_at(self, sel, at_times=True):
         """
@@ -299,6 +329,32 @@ class StatsGroup(Loggable):
             else:
                 et += stats.calculate_duration()
         return st, et
+
+    def _make_queue_sig(self):
+        sig = []
+        for queue in self.experiment_queues:
+            runs = tuple(
+                (
+                    ri.runid,
+                    ri.state,
+                    ri.skip,
+                    ri.executable,
+                    getattr(ri, "_changed", False),
+                )
+                for ri in queue.automated_runs
+            )
+            sig.append(
+                (
+                    id(queue),
+                    queue.delay_before_analyses,
+                    queue.delay_between_analyses,
+                    queue.delay_after_blank,
+                    queue.delay_after_air,
+                    len(queue.cleaned_automated_runs),
+                    runs,
+                )
+            )
+        return tuple(sig)
 
     def _get_run_elapsed(self):
         return str(timedelta(seconds=self._run_elapsed))

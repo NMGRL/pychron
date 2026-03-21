@@ -33,6 +33,7 @@ from pychron.core.helpers.binpack import encode_blob, pack
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.yaml import yload
 from pychron.dvc import (
+    DATA_COLLECTION_BRANCH,
     dvc_dump,
     analysis_path,
     repository_path,
@@ -341,11 +342,7 @@ class DVCPersister(BasePersister):
         if self.stage_files:
             if commit:
                 if self.use_data_collection_branch:
-                    # branch = (
-                    #     f"data_collection/{self.per_spec.run_spec.mass_spectrometer}"
-                    # )
-
-                    branch = "data_collection"
+                    branch = DATA_COLLECTION_BRANCH
                     ar.create_branch(branch, inform=False, push=True)
                     try:
                         ar.checkout_branch(branch, inform=False, load_history=False)
@@ -353,7 +350,7 @@ class DVCPersister(BasePersister):
                         ar.reset()
                         ar.checkout_branch(branch, inform=False, load_history=False)
 
-                    ar.smart_pull(branch=branch, accept_our=True)
+                    ar.smart_pull(branch=branch)
 
                 paths = [
                     spec_path,
@@ -472,7 +469,8 @@ class DVCPersister(BasePersister):
             npath = self._make_path("logs", ".log")
             shutil.copyfile(path, npath)
             ar = self.active_repository
-            ar.smart_pull(accept_our=True)
+            branch = ar.get_current_branch()
+            ar.smart_pull(branch=branch)
             ar.add(npath, commit=False)
             ar.commit("<COLLECTION> log")
             self.dvc.push_repository(ar)

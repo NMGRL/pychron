@@ -17,6 +17,7 @@
 import os
 import shutil
 import time
+from dataclasses import dataclass, field
 from datetime import datetime
 from itertools import groupby
 from operator import itemgetter
@@ -38,10 +39,15 @@ from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator, open_progress
 from pychron.dvc import (
+    DATA_COLLECTION_BRANCH,
+    REDUCTION_IA,
+    REDUCTION_ROOT,
+    REDUCTION_TAGS,
     dvc_dump,
     dvc_load,
     analysis_path,
     repository_path,
+    reduction_path,
     AnalysisNotAnvailableError,
     PATH_MODIFIERS,
     USE_GIT_TAGGING,
@@ -83,6 +89,19 @@ from pychron.pychron_constants import (
 from pychron.user.user import User
 
 HOST_WARNING_MESSAGE = "GitLab or GitHub or LocalGit plugin is required"
+
+
+@dataclass
+class AnalysisLoadContext:
+    branches: dict = field(default_factory=dict)
+    flux_histories: dict = field(default_factory=dict)
+    fluxes: dict = field(default_factory=dict)
+    productions: dict = field(default_factory=dict)
+    chronos: dict = field(default_factory=dict)
+    sensitivities: dict = field(default_factory=dict)
+    frozen_fluxes: dict = field(default_factory=dict)
+    frozen_productions: dict = field(default_factory=dict)
+    sample_prep: dict = field(default_factory=dict)
 
 
 @provides(IDatastore)
@@ -736,7 +755,7 @@ class DVC(Loggable):
             ):
                 sp = analysis_path(analysis, repo_id, modifier=mod)
                 cs = repo.get_commits_from_log(greps=(g,), path=sp)
-                print(sp, cs)
+                self.debug("rollback candidate path=%s commits=%s", sp, cs)
                 if sp and cs:
                     repo.checkout(cs[-1].hexsha, "--", sp)
 
@@ -798,6 +817,11 @@ class DVC(Loggable):
         if not message:
             message = "No message provided"
         repo = self._get_repository(repo, as_current=False)
+        if repo.get_current_branch() == DATA_COLLECTION_BRANCH:
+            self.warning_dialog(
+                "Bookmarks are reduction-side metadata and cannot be added on the data_collection branch"
+            )
+            return
         repo.add_tag(name, message, hexsha)
 
     def update_analysis_paths(self, items, msg, author=None):
@@ -1093,15 +1117,17 @@ class DVC(Loggable):
                 prog.change_message("Making Interpreted age {}".format(x.name))
 
             obj = dvc_load(x.path)
-            print("asdfasdf", x.path, obj)
+            self.debug("loading interpreted age path=%s", x.path)
             ia = DVCInterpretedAge()
-            ia.repository_identifier = os.path.basename(
-                os.path.dirname(os.path.dirname(os.path.dirname(x.path)))
-            )
+            ia.repository_identifier = os.path.relpath(
+                x.path, paths.repository_dataset_dir
+            ).split(os.sep)[0]
             ia.from_json(obj)
 
             try:
-                ta = analysis_path(ia, ia.repository_identifier, modifier="tags")
+                ta = reduction_path(
+                    ia, ia.repository_identifier, modifier=REDUCTION_TAGS
+                )
                 if ta is not None:
                     ia.load_tag(dvc_load(ta))
             except AnalysisNotAnvailableError:
@@ -1144,150 +1170,35 @@ class DVC(Loggable):
 
         globalv.active_analyses = records
 
-        # load repositories
         st = time.time()
-
-        if self.use_cache and use_cached:
-            cached_records = []
-            nrecords = []
-            cache = self._cache
-
-            # get items from the cache
-            for ri in records:
-                r = cache.get(ri.uuid)
-                if r is not None:
-                    cached_records.append(r)
-                else:
-                    nrecords.append(ri)
-
-            records = nrecords
-
-        def func(xi, prog, i, n):
-            if prog:
-                prog.change_message("Syncing repository= {}".format(xi))
-            try:
-                self.sync_repo(xi, use_progress=False, pull_frequency=pull_frequency)
-            except BaseException as e:
-                print("sync repo", e)
-                pass
-
-        bad_records = [r for r in records if r.repository_identifier is None]
-        if bad_records:
-            if warn:
-                self.warning_dialog(
-                    "Missing Repository Associations. Contact an expert!"
-                    'Cannot load analyses "{}"'.format(
-                        ",".join([r.record_id for r in bad_records])
-                    )
-                )
-            records = [r for r in records if r.repository_identifier is not None]
-
+        records, cached_records = self._partition_cached_records(records, use_cached)
+        records = self._filter_records_with_repository(records, warn=warn)
         if not records:
-            if self.use_cache and use_cached:
-                cache.clean()
-                return cached_records
-            else:
-                return []
+            return self._finalize_loaded_analyses([], cached_records)
 
         exps = {r.repository_identifier for r in records}
+        branches = self._prepare_repository_branches(
+            exps,
+            sync_repo=sync_repo,
+            use_progress=use_progress,
+            pull_frequency=pull_frequency,
+        )
+        if branches is None:
+            return self._finalize_loaded_analyses([], cached_records)
 
-        if sync_repo:
-            if use_progress:
-                progress_iterator(exps, func, threshold=1)
-            else:
-                for ei in exps:
-                    self.sync_repo(ei, use_progress=False)
-        try:
-            branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
-        except NoSuchPathError as e:
-            print("e", e)
-            return []
-
-        flux_histories = {}
-        fluxes = {}
-        productions = {}
-        chronos = {}
-        sens = {}
-        frozen_fluxes = {}
-        frozen_productions = {}
-        sample_prep = {}
-        meta_repo = self.meta_repo
-        use_cocktail_irradiation = self.use_cocktail_irradiation
-        if not quick:
-            for exp in exps:
-                ps = get_frozen_productions(exp)
-                frozen_productions.update(ps)
-
-            for r in records:
-                # get sample notes
-
-                # dbsam = r.irradiation_position.sample
-                # sample_id = dbsam.id
-                # if sample_id not in sample_prep:
-                #     sample_prep[sample_id] = ','.join([p.comment or '' for p in dbsam.preps])
-
-                irrad = r.irradiation
-                if irrad != "NoIrradiation":
-                    if irrad not in frozen_fluxes:
-                        frozen_fluxes[irrad] = get_frozen_flux(
-                            r.repository_identifier, r.irradiation
-                        )
-
-                    level = r.irradiation_level
-                    if irrad in fluxes:
-                        flux_levels = fluxes[irrad]
-                        prod_levels = productions[irrad]
-                    else:
-                        flux_levels = {}
-                        prod_levels = {}
-
-                    if level not in flux_levels:
-                        flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
-                        prod_levels[level] = meta_repo.get_production(irrad, level)
-
-                    if irrad not in chronos:
-                        chronos[irrad] = meta_repo.get_chronology(irrad)
-
-                    if irrad not in fluxes:
-                        fluxes[irrad] = flux_levels
-                        productions[irrad] = prod_levels
-
-                    if use_flux_histories:
-                        key = "{}{}".format(irrad, level)
-                        if key not in flux_histories:
-                            c = meta_repo.get_flux_history(irrad, level, max_count=1)
-                            v = None
-                            if c:
-                                c = c[0]
-                                v = "{} ({})".format(
-                                    c.date.strftime(DATE_FORMAT), c.author
-                                )
-                            flux_histories[key] = v
-
-                if (
-                    use_cocktail_irradiation
-                    and r.analysis_type == "cocktail"
-                    and "cocktail" not in chronos
-                ):
-                    cirr = meta_repo.get_cocktail_irradiation()
-                    chronos["cocktail"] = cirr.get("chronology")
-                    fluxes["cocktail"] = cirr.get("flux")
-
-            sens = meta_repo.get_sensitivities()
+        context = self._build_analysis_load_context(
+            records,
+            exps,
+            branches,
+            quick=quick,
+            use_flux_histories=use_flux_histories,
+        )
 
         def func(*args):
             try:
                 return self._make_record(
-                    branches=branches,
-                    chronos=chronos,
-                    productions=productions,
-                    fluxes=fluxes,
+                    context=context,
                     calculate_f_only=calculate_f_only,
-                    sens=sens,
-                    frozen_fluxes=frozen_fluxes,
-                    frozen_productions=frozen_productions,
-                    flux_histories=flux_histories,
-                    sample_prep=sample_prep,
                     quick=quick,
                     reload=reload,
                     warn=warn,
@@ -1325,11 +1236,7 @@ class DVC(Loggable):
             ):
                 return
 
-        if self.use_cache:
-            cache.clean()
-            ret = cached_records + ret
-
-        return ret
+        return self._finalize_loaded_analyses(ret, cached_records)
 
     # repositories
     def find_changes(self, names, remote, branch):
@@ -1403,6 +1310,18 @@ class DVC(Loggable):
     def repository_commit(self, repository, msg, author=None):
         self.debug("Repository commit: {} msg: {}".format(repository, msg))
         repo = self._get_repository(repository)
+        current_branch = repo.get_current_branch()
+        staged_paths = repo.get_staged_paths()
+        if (
+            current_branch == DATA_COLLECTION_BRANCH
+            and self._has_reduction_artifacts(staged_paths)
+        ):
+            self.warning_dialog(
+                "Reduction artifacts cannot be committed on the data_collection branch. "
+                "Switch to a reduction branch first."
+            )
+            return
+
         author = self.get_author(author)
         return repo.commit(msg, author=author)
 
@@ -1484,7 +1403,7 @@ class DVC(Loggable):
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
 
-            self._merge_data_collection(repo)
+            self.sync_repo_from_data_collection(repo)
 
             return True
         else:
@@ -1503,8 +1422,7 @@ class DVC(Loggable):
                     return True
                 elif service.clone_from(name, root, self.organization):
                     repo = self._get_repository(name)
-                    self._merge_data_collection(repo)
-                    # repo.merge("origin/data_collection", inform=False)
+                    self.sync_repo_from_data_collection(repo)
 
                     return True
                 else:
@@ -1523,32 +1441,205 @@ class DVC(Loggable):
                 #     service.clone_from(name, root, self.organization)
                 #     return True
 
-    def _merge_data_collection(self, repo):
-        # merge any new commits on the data_collection branch to this branch
-        # get all branches like data_collection
-        # branches = repo.active_repo.git.branch('-a').split('\n')
-        # branches = [b.strip() for b in branches]
-        # branches = [b for b in branches if 'data_collection' in b]
-        branches = ["origin/data_collection"]
-        for b in branches:
-            if b.startswith("remotes"):
-                b = b.replace("remotes/", "")
+    def _partition_cached_records(self, records, use_cached):
+        cached_records = []
+        if not (self.use_cache and use_cached):
+            return list(records), cached_records
 
-            try:
-                # repo.active_repo.git.checkout('origin/data_collection', '.')
-                # repo.active_repo.git.add('.')
-                # repo.active_repo.git.commit('-m', 'Merge origin/data_collection branch')
-                # repo.merge("origin/data_collection", inform=False)
-                # if repo.name == 'Henry<GitRepo>' and b == 'origin/data_collection':
-                #     continue
-                repo.merge(b, inform=False)
+        pending = []
+        cache = self._cache
+        for record in records:
+            cached = cache.get(record.uuid)
+            if cached is not None:
+                cached_records.append(cached)
+            else:
+                pending.append(record)
 
-            except BaseException:
-                self.debug_exception()
-                self.debug(
-                    f"merge with {b} failed. This is not an issue if you are only using local "
-                    "repos"
+        return pending, cached_records
+
+    def _filter_records_with_repository(self, records, warn=True):
+        bad_records = [r for r in records if r.repository_identifier is None]
+        if bad_records and warn:
+            self.warning_dialog(
+                "Missing Repository Associations. Contact an expert!"
+                'Cannot load analyses "{}"'.format(
+                    ",".join([r.record_id for r in bad_records])
                 )
+            )
+
+        return [r for r in records if r.repository_identifier is not None]
+
+    def _sync_analysis_repositories(self, exps, use_progress=True, pull_frequency=None):
+        def func(name, prog, i, n):
+            if prog:
+                prog.change_message("Syncing repository= {}".format(name))
+            try:
+                self.sync_repo(
+                    name, use_progress=False, pull_frequency=pull_frequency
+                )
+            except BaseException as e:
+                self.debug("sync repo failed for %s: %s", name, e)
+
+        if use_progress:
+            progress_iterator(exps, func, threshold=1)
+        else:
+            for exp in exps:
+                func(exp, None, 0, 0)
+
+    def _prepare_repository_branches(
+        self, exps, sync_repo=True, use_progress=True, pull_frequency=None
+    ):
+        if sync_repo:
+            self._sync_analysis_repositories(
+                exps, use_progress=use_progress, pull_frequency=pull_frequency
+            )
+
+        try:
+            return {exp: get_repository_branch(repository_path(exp)) for exp in exps}
+        except NoSuchPathError as e:
+            self.warning("Repository path missing while loading analyses: %s", e)
+
+    def _build_analysis_load_context(
+        self, records, exps, branches, quick=False, use_flux_histories=True
+    ):
+        context = AnalysisLoadContext(branches=branches)
+        if quick:
+            return context
+
+        meta_repo = self.meta_repo
+        use_cocktail_irradiation = self.use_cocktail_irradiation
+
+        for exp in exps:
+            context.frozen_productions.update(get_frozen_productions(exp))
+
+        for record in records:
+            irrad = record.irradiation
+            if irrad != "NoIrradiation":
+                if irrad not in context.frozen_fluxes:
+                    context.frozen_fluxes[irrad] = get_frozen_flux(
+                        record.repository_identifier, record.irradiation
+                    )
+
+                flux_levels = context.fluxes.setdefault(irrad, {})
+                prod_levels = context.productions.setdefault(irrad, {})
+                level = record.irradiation_level
+
+                if level not in flux_levels:
+                    flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
+                    prod_levels[level] = meta_repo.get_production(irrad, level)
+
+                if irrad not in context.chronos:
+                    context.chronos[irrad] = meta_repo.get_chronology(irrad)
+
+                if use_flux_histories:
+                    key = "{}{}".format(irrad, level)
+                    if key not in context.flux_histories:
+                        history = meta_repo.get_flux_history(irrad, level, max_count=1)
+                        value = None
+                        if history:
+                            history = history[0]
+                            value = "{} ({})".format(
+                                history.date.strftime(DATE_FORMAT), history.author
+                            )
+                        context.flux_histories[key] = value
+
+            if (
+                use_cocktail_irradiation
+                and record.analysis_type == "cocktail"
+                and "cocktail" not in context.chronos
+            ):
+                cirr = meta_repo.get_cocktail_irradiation()
+                context.chronos["cocktail"] = cirr.get("chronology")
+                context.fluxes["cocktail"] = cirr.get("flux")
+
+        context.sensitivities = meta_repo.get_sensitivities()
+        return context
+
+    def _finalize_loaded_analyses(self, analyses, cached_records):
+        if self.use_cache:
+            self._cache.clean()
+            analyses = cached_records + analyses
+        return analyses
+
+    def _has_reduction_artifacts(self, staged_paths):
+        for path in staged_paths:
+            normalized = path.replace("\\", "/")
+            if "/{}/".format(REDUCTION_ROOT) in normalized:
+                return True
+            if normalized.endswith(".tags.json") or "/ia/" in normalized:
+                return True
+        return False
+
+    def sync_repo_from_data_collection(self, repo_or_name, remote="origin", inform=False):
+        if isinstance(repo_or_name, str):
+            repo = self._get_repository(repo_or_name)
+        else:
+            repo = repo_or_name
+
+        return self._sync_reduction_repo_from_data_collection(
+            repo, remote=remote, inform=inform
+        )
+
+    def _sync_reduction_repo_from_data_collection(
+        self, repo, remote="origin", inform=False
+    ):
+        branch = repo.get_current_branch()
+        if branch == DATA_COLLECTION_BRANCH:
+            self.debug(
+                "skip data_collection sync for %s. current branch is append-only %s",
+                repo.name,
+                DATA_COLLECTION_BRANCH,
+            )
+            return False
+
+        if not repo.has_remote(remote):
+            self.debug(
+                "skip data_collection sync for %s. missing remote %s", repo.name, remote
+            )
+            return False
+
+        if not self._has_remote_data_collection_branch(repo, remote):
+            self.debug(
+                "skip data_collection sync for %s. no %s/%s branch",
+                repo.name,
+                remote,
+                DATA_COLLECTION_BRANCH,
+            )
+            return False
+
+        target = "{}/{}".format(remote, DATA_COLLECTION_BRANCH)
+        self.debug(
+            'sync reduction branch "%s" from "%s" for repository %s',
+            branch,
+            target,
+            repo.name,
+        )
+        try:
+            repo.fetch(remote)
+            repo.merge(target, inform=inform)
+            return True
+        except BaseException:
+            self.debug_exception()
+            self.debug(
+                "sync from %s failed for %s. This can be expected for local-only repos.",
+                target,
+                repo.name,
+            )
+
+    def _has_remote_data_collection_branch(self, repo, remote="origin"):
+        try:
+            branches = repo.cmd("branch", "-r") or ""
+        except BaseException:
+            self.debug_exception()
+            return False
+
+        target = "{}/{}".format(remote, DATA_COLLECTION_BRANCH)
+        for line in branches.splitlines():
+            line = line.strip()
+            if line == target or line.endswith(" -> {}".format(target)):
+                return True
+
+        return False
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -2242,8 +2333,11 @@ class DVC(Loggable):
 
         i = 0
         while 1:
-            p = analysis_path(
-                "{}_{:05d}".format(ia_path_name, i), rid, modifier="ia", mode="w"
+            p = reduction_path(
+                "{}_{:05d}".format(ia_path_name, i),
+                rid,
+                modifier=REDUCTION_IA,
+                mode="w",
             )
             i += 1
             if not os.path.isfile(p):
@@ -2264,20 +2358,15 @@ class DVC(Loggable):
         prog,
         i,
         n,
-        productions=None,
-        chronos=None,
-        branches=None,
-        fluxes=None,
-        sens=None,
-        frozen_fluxes=None,
-        frozen_productions=None,
-        flux_histories=None,
-        sample_prep=None,
+        context=None,
         calculate_f_only=False,
         reload=False,
         quick=False,
         warn=True,
     ):
+        if context is None:
+            context = AnalysisLoadContext()
+
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -2331,8 +2420,8 @@ class DVC(Loggable):
             a.group_id = record.group_id
             a.set_tag(record.tag)
 
-            if sample_prep:
-                a.sample_prep_comment = sample_prep.get(
+            if context.sample_prep:
+                a.sample_prep_comment = context.sample_prep.get(
                     record.irradiation_position.sample.id
                 )
             try:
@@ -2344,22 +2433,27 @@ class DVC(Loggable):
                 a.load_name = record.load_name
                 a.load_holder = record.load_holder
                 # get repository branch
-                a.branch = branches.get(expid, "")
+                a.branch = context.branches.get(expid, "")
 
                 # load sample_prep
 
                 # load irradiation
-                if sens:
-                    sens = sens.get(a.mass_spectrometer.lower(), [])
-                    a.set_sensitivity(sens)
+                if context.sensitivities:
+                    sensitivity = context.sensitivities.get(
+                        a.mass_spectrometer.lower(), []
+                    )
+                    a.set_sensitivity(sensitivity)
 
-                if a.analysis_type == "cocktail" and "cocktail" in chronos:
-                    a.set_chronology(chronos["cocktail"])
-                    a.j = fluxes["cocktail"]
+                if (
+                    a.analysis_type == "cocktail"
+                    and "cocktail" in context.chronos
+                ):
+                    a.set_chronology(context.chronos["cocktail"])
+                    a.j = context.fluxes["cocktail"]
 
                 elif a.irradiation:  # and a.irradiation not in ('NoIrradiation',):
-                    if chronos:
-                        chronology = chronos.get(a.irradiation, None)
+                    if context.chronos:
+                        chronology = context.chronos.get(a.irradiation, None)
                     else:
                         chronology = meta_repo.get_chronology(a.irradiation)
 
@@ -2368,9 +2462,9 @@ class DVC(Loggable):
 
                     pname, prod = None, None
 
-                    if frozen_productions:
+                    if context.frozen_productions:
                         try:
-                            prod = frozen_productions[
+                            prod = context.frozen_productions[
                                 "{}.{}".format(a.irradiation, a.irradiation_level)
                             ]
                             pname = prod.name
@@ -2380,7 +2474,7 @@ class DVC(Loggable):
                     if not prod:
                         if a.irradiation != "NoIrradiation":
                             try:
-                                pname, prod = productions[a.irradiation][
+                                pname, prod = context.productions[a.irradiation][
                                     a.irradiation_level
                                 ]
                             except KeyError:
@@ -2393,23 +2487,25 @@ class DVC(Loggable):
                                         pname,
                                         a.irradiation,
                                         a.irradiation_level,
-                                        productions,
+                                        context.productions,
                                     )
                                 )
                     if prod is not None:
                         a.set_production(pname, prod)
 
                     fd = None
-                    if frozen_fluxes:
+                    if context.frozen_fluxes:
                         try:
-                            fd = frozen_fluxes[a.irradiation][a.identifier]
+                            fd = context.frozen_fluxes[a.irradiation][a.identifier]
                         except KeyError:
                             pass
 
                     if not fd:
-                        if fluxes:
+                        if context.fluxes:
                             try:
-                                level_flux = fluxes[a.irradiation][a.irradiation_level]
+                                level_flux = context.fluxes[a.irradiation][
+                                    a.irradiation_level
+                                ]
                                 fd = meta_repo.get_flux_from_positions(
                                     a.irradiation_position, level_flux
                                 )
@@ -2422,8 +2518,8 @@ class DVC(Loggable):
                                 a.irradiation_position_position,
                             )
 
-                    if flux_histories:
-                        a.flux_history = flux_histories.get(
+                    if context.flux_histories:
+                        a.flux_history = context.flux_histories.get(
                             "{}{}".format(a.irradiation, a.irradiation_level), ""
                         )
 

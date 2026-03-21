@@ -38,7 +38,10 @@ from pychron.graph.tools.regression_inspector import (
     make_statistics,
     make_correlation_statistics,
 )
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.pychron_constants import AUTO_LINEAR_PARABOLIC, EXPONENTIAL
+
+logger = new_logger("RegressionGraph")
 
 
 class StatisticsTextBoxOverlay(TextBoxOverlay):
@@ -378,7 +381,13 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 scatter.fit = fi
 
         else:
-            print("invalid key", fi, plotid, key, plot.plots.keys())
+            logger.warning(
+                "Invalid fit target fit=%s plotid=%s key=%s keys=%s",
+                fi,
+                plotid,
+                key,
+                list(plot.plots.keys()),
+            )
 
     def get_fit(self, plotid=0, series=0):
         try:
@@ -515,7 +524,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line.index.set_data(fx)
                     line.value.set_data(fy)
                 except BaseException as e:
-                    print("Regerssion Exception, {}".format(e))
+                    logger.exception("Regression update failed: %s", e)
                     return
 
                 if hasattr(line, "error_envelope"):

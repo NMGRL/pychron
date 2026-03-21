@@ -9,6 +9,8 @@ from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
 from pychron.core.tests.spell_correct import SpellCorrectTestCase
 from pychron.core.tests.filtering_tests import FilteringTestCase
+from pychron.core.tests.bootstrap_profiles_test import BootstrapProfilesTestCase
+from pychron.core.tests.install_support_test import InstallSupportTestCase
 
 from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
 from pychron.core.helpers.tests.strtools import CamelCaseTestCase
@@ -31,6 +33,12 @@ from pychron.experiment.tests.conditionals import (
     ConditionalsTestCase,
     ParseConditionalsTestCase,
 )
+from pychron.experiment.tests.conditionals_configuration import (
+    ConditionalConfigurationTestCase,
+)
+from pychron.experiment.tests.conditionals_actions import (
+    ConditionalQueueActionTestCase,
+)
 from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
 from pychron.experiment.tests.frequency_test import (
     FrequencyTestCase,
@@ -43,7 +51,10 @@ from pychron.experiment.tests.position_regex_test import XYTestCase
 from pychron.experiment.tests.pyscript_integration import PyScriptIntegrationTestCase
 from pychron.experiment.tests.queue_metadata import QueueMetadataPropagationTestCase
 from pychron.experiment.tests.renumber_aliquot_test import RenumberAliquotTestCase
+from pychron.experiment.tests.stats_responsiveness import StatsResponsivenessTestCase
+from pychron.experiment.tests.state_machine import AutomatedRunStateMachineTestCase
 from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
+from pychron.dvc.tests.test_data_collection_sync import DataCollectionSyncTestCase
 from pychron.processing.tests.age_converter import AgeConverterTestCase
 from pychron.processing.tests.plateau import PlateauTestCase
 from pychron.processing.tests.ratio import RatioTestCase
@@ -85,6 +96,8 @@ def suite():
         AlphaTestCase,
         SpellCorrectTestCase,
         FilteringTestCase,
+        BootstrapProfilesTestCase,
+        InstallSupportTestCase,
         MultiPeakDetectionTestCase,
         FloatfmtTestCase,
         SigFigStdFmtTestCase,
@@ -119,10 +132,15 @@ def suite():
         PyScriptIntegrationTestCase,
         QueueMetadataPropagationTestCase,
         RenumberAliquotTestCase,
+        StatsResponsivenessTestCase,
+        AutomatedRunStateMachineTestCase,
         ConditionalsTestCase,
         ParseConditionalsTestCase,
+        ConditionalConfigurationTestCase,
+        ConditionalQueueActionTestCase,
         IdentifierTestCase,
         CommentTemplaterTestCase,
+        DataCollectionSyncTestCase,
         # ExternalPipette
         ExternalPipetteTestCase,
         # Processing

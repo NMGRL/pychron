@@ -19,11 +19,11 @@ from traits.api import CInt, Str, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.has_communicator import HasCommunicator
 from pychron.loggable import Loggable
 
 
-class RemoteDeviceMixin(Loggable):
-    communicator = None
+class RemoteDeviceMixin(Loggable, HasCommunicator):
     connected = False
 
     kind = Str
@@ -40,8 +40,7 @@ class RemoteDeviceMixin(Loggable):
         pass
 
     def shutdown(self):
-        if self.communicator:
-            self.communicator.close()
+        self.close_communicator()
 
     def setup_communicator(self):
         raise NotImplementedError
@@ -62,15 +61,12 @@ class SerialDeviceMixin(RemoteDeviceMixin):
     read_delay = CInt
 
     def setup_communicator(self):
-        from pychron.hardware.core.communicators.serial_communicator import (
-            SerialCommunicator,
-        )
-
-        self.communicator = ec = SerialCommunicator(
-            port=self.port,
-            baudrate=self.baudrate,
-            read_delay=self.read_delay,
-        )
+        ec = self.build_communicator("serial")
+        if ec is None:
+            return
+        ec.port = self.port
+        ec.baudrate = self.baudrate
+        ec.read_delay = self.read_delay
         ec.set_parity(self.parity)
         ec.set_stopbits(self.stopbits)
         return ec.open(timeout=self.timeout)
@@ -84,10 +80,6 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
     def setup_communicator(
         self, write_terminator=None, read_terminator=None, force=False
     ):
-        from pychron.hardware.core.communicators.ethernet_communicator import (
-            EthernetCommunicator,
-        )
-
         if write_terminator is None:
             write_terminator = self.write_terminator
 
@@ -96,16 +88,17 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
 
         ret = True
         if force or self.communicator is None:
-            self.communicator = ec = EthernetCommunicator(
-                host=self.host,
-                port=self.port,
-                kind=self.kind,
-                use_end=self.use_end,
-                message_frame=self.message_frame,
-                write_terminator=write_terminator,
-                read_terminator=read_terminator,
-                timeout=self.timeout,
-            )
+            ec = self.build_communicator("ethernet")
+            if ec is None:
+                return
+            ec.host = self.host
+            ec.port = self.port
+            ec.kind = self.kind
+            ec.use_end = self.use_end
+            ec.message_frame = self.message_frame
+            ec.write_terminator = write_terminator
+            ec.read_terminator = read_terminator
+            ec.timeout = self.timeout
             ret = ec.open()
             if self.communicator:
                 self.communicator.report()

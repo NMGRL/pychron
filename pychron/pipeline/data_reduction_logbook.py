@@ -295,7 +295,7 @@ class DataReductionLogbookHandler(Handler):
         info.ui.context["object"].closed()
 
     def deselect(self, info, obj):
-        print("deselect", obj)
+        info.ui.context["object"].debug("Deselect project row {}", obj)
         obj.deselect()
 
 
@@ -341,7 +341,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         self.stats = f"{len(loaded_manifest)}/{len(self.loads)}"
 
     def deselect(self):
-        print("deselect")
+        self.debug("Deselect active project filter")
         self.selected_project2 = None
 
     def stop_auto_examine(self):
@@ -399,7 +399,6 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             if drload and drload["reduction_state"] == "complete":
                 continue
 
-            print(f"examine load {li.name}")
             self.debug(f"examing load {li.name}")
 
             # do_later(self.trait_set, selected=li)
@@ -492,16 +491,17 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                         self.selected_sample.name
                         != m.analysis.irradiation_position.sample.name
                     ):
-                        print("skippoing", m.analysis.irradiation_position.sample.name)
+                        self.debug(
+                            "Skipping sample {} for selected sample filter",
+                            m.analysis.irradiation_position.sample.name,
+                        )
                         continue
 
                 anss.append(m.analysis)
 
-            print(anss)
             anns = self.dvc.make_analyses(
                 anss, warn=False, quick=True, use_progress=False
             )
-            print(anns)
             for rname, gs in groupby_key(anns, key=lambda x: x.repository_identifier):
                 repo = self.dvc.get_repository(rname)
                 for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
@@ -604,7 +604,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             # for o in self.oloads:
             #     print(o.name.lower(),o.name.lower().startswith(new), new)
             # self.loads = [l for l in self.oloads if l.name.lower().startswith(new.lower())]
-            print("asdfasdfadsf", len(self.oloads), new)
+            self.debug("Filtering loads count={} query={}", len(self.oloads), new)
             self.loads = fuzzyfinder(new, self.oloads, "name")
 
     def _selected_changed(self, new):
@@ -649,7 +649,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         #     self.dvc.clear_data_reduction_loads_cache()
 
     def _selected_project2_changed(self, new):
-        print("sadfasdf", new)
+        self.debug("Selected project filter changed to {}", new)
         if new:
             self.get_loads(projects=[new.name])
         else:
