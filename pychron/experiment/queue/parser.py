@@ -17,6 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import annotations
+
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
 from pychron.pychron_constants import (
@@ -46,8 +50,10 @@ from pychron.regex import ALIQUOT_REGEX
 
 
 class RunParser(Loggable):
-    def parse(self, header, line, delim="\t"):
-        params = dict()
+    def parse(
+        self, header: List[str], line: Union[str, List[str]], delim: str = "\t"
+    ) -> Tuple[Dict[str, str], Dict[str, Any]]:
+        params: Dict[str, Any] = {}
         if not isinstance(line, list):
             line = line.split(delim)
 
@@ -56,25 +62,20 @@ class RunParser(Loggable):
         ln = args[header.index("labnumber")]
         if ALIQUOT_REGEX.match(ln):
             ln, a = ln.split("-")
-            # params['aliquot'] = int(a)
             params["user_defined_aliquot"] = int(a)
 
         params["labnumber"] = ln
 
-        # load strings
         self._load_strings(header, args, params)
-
-        # load booleans
         self._load_booleans(header, args, params)
-
-        # load numbers
         self._load_numbers(header, args, params)
 
         return script_info, params
 
-    def _load_scripts(self, header, args):
-        script_info = dict()
-        # load scripts
+    def _load_scripts(
+        self, header: List[str], args: List[str]
+    ) -> Dict[str, str]:
+        script_info: Dict[str, str] = {}
         for attr in [
             "measurement",
             "extraction",
@@ -88,21 +89,26 @@ class RunParser(Loggable):
 
         return script_info
 
-    def _get_attr_value(self, header, args, attr, cast=None):
+    def _get_attr_value(
+        self,
+        header: List[str],
+        args: List[str],
+        attr: Union[str, Tuple[str, str]],
+        cast: Optional[Callable[[str], Any]] = None,
+    ) -> Optional[Tuple[str, Any]]:
         for hi, ai in self._get_attr(attr):
             idx = self._get_idx(header, ai)
-            # print header
-            # print hi, ai, idx
             if idx:
                 try:
                     v = args[idx]
                     if v.strip():
                         return hi, cast(v) if cast else v
-                except IndexError as e:
+                except IndexError:
                     pass
-                    # print 'exception', e, attr, idx, args
 
-    def _load_strings(self, header, args, params):
+    def _load_strings(
+        self, header: List[str], args: List[str], params: Dict[str, Any]
+    ) -> None:
         for attr in [
             PATTERN,
             POSITION,
@@ -114,11 +120,12 @@ class RunParser(Loggable):
             (EXTRACT_UNITS, "e_units"),
         ]:
             v = self._get_attr_value(header, args, attr)
-            # print attr, v
             if v is not None:
                 params[v[0]] = v[1]
 
-    def _load_numbers(self, header, args, params):
+    def _load_numbers(
+        self, header: List[str], args: List[str], params: Dict[str, Any]
+    ) -> None:
         for attr in [
             DURATION,
             CLEANUP,
@@ -138,7 +145,9 @@ class RunParser(Loggable):
             if v is not None:
                 params[v[0]] = v[1]
 
-    def _load_booleans(self, header, args, params):
+    def _load_booleans(
+        self, header: List[str], args: List[str], params: Dict[str, Any]
+    ) -> None:
         for attr in [
             AUTOCENTER,
             USE_CDD_WARMING,
@@ -150,35 +159,39 @@ class RunParser(Loggable):
             if v is not None:
                 params[v[0]] = v[1]
 
-    def _get_attr(self, attr):
+    def _get_attr(
+        self, attr: Union[str, Tuple[str, str]]
+    ) -> List[Tuple[str, str]]:
         if isinstance(attr, tuple):
             ref = attr[0]
             return [(ref, hi) for hi in attr]
-        else:
-            return [(attr, attr)]
+        return [(attr, attr)]
 
-    def _get_idx(self, header, attr):
+    def _get_idx(self, header: List[str], attr: str) -> Optional[int]:
         try:
             return header.index(attr)
         except ValueError:
             pass
+        return None
 
 
 class UVRunParser(RunParser):
-    def parse(self, header, line, delim="\t"):
-        script_info, params = super(UVRunParser, self).parse(header, line, delim)
+    def parse(
+        self, header: List[str], line: Union[str, List[str]], delim: str = "\t"
+    ) -> Tuple[Dict[str, str], Dict[str, Any]]:
+        script_info, params = super().parse(header, line, delim)
         if not isinstance(line, list):
             line = line.split(delim)
 
         args = [l.strip() for l in line]
 
-        def _set(attr, cast):
+        def _set(attr: str, cast: Callable[[str], Any]) -> None:
             try:
                 idx = self._get_idx(header, attr)
-                v = args[idx]
-                params[attr] = cast(v)
-            except (IndexError, ValueError, TypeError) as e:
-                # print 'exception', e
+                if idx is not None:
+                    v = args[idx]
+                    params[attr] = cast(v)
+            except (IndexError, ValueError, TypeError):
                 pass
 
         _set("reprate", int)
@@ -188,4 +201,5 @@ class UVRunParser(RunParser):
 
         return script_info, params
 
-        # ============= EOF =============================================
+
+# ============= EOF =============================================
