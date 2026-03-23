@@ -171,7 +171,9 @@ class ExtractionLineManager(Manager, Consoleable):
             try:
                 bind_preference(self, attr, "{}.{}".format(prefid, attr))
             except BaseException as e:
-                print("fffffffff", attr, e)
+                self.warning(
+                    "failed binding extraction line preference {}. {}".format(attr, e)
+                )
 
         bind_preference(
             self.network, "inherit_state", "{}.inherit_state".format(prefid)
@@ -791,13 +793,9 @@ class ExtractionLineManager(Manager, Consoleable):
         vm = self.switch_manager
         if vm is not None:
             oname = name
-            if address:
-                name = vm.get_name_by_address(address)
-
-            if description and description != NULL_STR:
-                name = vm.get_name_by_description(description, name)
-
-            # check if specified valve is in the valves.xml file
+            name = self._resolve_switch_name(
+                name, description=description, address=address
+            )
             if not name:
                 self.warning(
                     "Invalid valve name={}, description={}".format(oname, description)
@@ -805,38 +803,9 @@ class ExtractionLineManager(Manager, Consoleable):
                 return False, False
 
             result = self._change_switch_state(name, mode, action, **kw)
-
             self.debug("open_close_valve, mode={} result={}".format(mode, result))
-            # if mode == 'script':
-            #     invoke_in_main_thread(self.refresh_canvas)
-
             if result:
-                if all(result):
-                    valve = vm.get_switch_by_name(name)
-                    if valve:
-                        description = valve.description
-                        self._log_spec_event(name, action)
-
-                        self.info(
-                            "{:<6s} {} ({})".format(
-                                action.upper(), valve.name, description
-                            ),
-                            color="red" if action == "close" else "green",
-                        )
-
-                        vm.actuate_children(name, action, mode)
-                        ld = self.link_valve_actuation_dict
-                        if ld:
-                            try:
-                                func = ld[name]
-                                func(name, action)
-                            except KeyError:
-                                self.debug(
-                                    'name="{}" not in '
-                                    "link_valve_actuation_dict. keys={}".format(
-                                        name, ",".join(list(ld.keys()))
-                                    )
-                                )
+                self._handle_actuation_result(name, action, mode, result, emit_event=True)
 
             return result
 
@@ -858,6 +827,68 @@ class ExtractionLineManager(Manager, Consoleable):
                             name, True if action == "open" else False
                         )
         return result, change
+
+    def _resolve_switch_name(self, name, description=None, address=None):
+        vm = self.switch_manager
+        if vm is None:
+            return
+
+        resolved = name
+        if address:
+            resolved = vm.get_name_by_address(address)
+
+        if description and description != NULL_STR:
+            resolved = vm.get_name_by_description(description, resolved)
+
+        return resolved
+
+    def _handle_actuation_result(
+        self, name, action, mode, result, include_children=True, emit_event=False
+    ):
+        if not all(result):
+            return
+
+        vm = self.switch_manager
+        valve = vm.get_switch_by_name(name) if vm is not None else None
+        if valve is None:
+            return
+
+        if emit_event:
+            self._log_spec_event(name, action)
+        self.info(
+            "{:<6s} {} ({})".format(action.upper(), valve.name, valve.description),
+            color="red" if action == "close" else "green",
+        )
+        self._notify_linked_valve_actuation(name, action)
+
+        if include_children and vm is not None:
+            for child_name, child_result in vm.actuate_children(name, action, mode):
+                if child_result:
+                    self._handle_actuation_result(
+                        child_name,
+                        action,
+                        mode,
+                        child_result,
+                        include_children=False,
+                        emit_event=False,
+                    )
+
+    def _notify_linked_valve_actuation(self, name, action):
+        ld = self.link_valve_actuation_dict
+        if not ld:
+            return
+
+        try:
+            func = ld[name]
+        except KeyError:
+            self.debug(
+                'name="{}" not in link_valve_actuation_dict. keys={}'.format(
+                    name, ",".join(list(ld.keys()))
+                )
+            )
+            return
+
+        func(name, action)
 
     def _check_ownership(self, name, requestor, force=False):
         """

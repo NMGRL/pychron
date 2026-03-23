@@ -132,12 +132,12 @@ class HumanErrorChecker(Loggable):
         for i, ai in enumerate(runs):
             err = self._check_run(ai, inform, test_scripts)
             if err is not None:
-                ai.state = "invalid"
+                ai.transition("mark_invalid", force=True, source="human_error_checker")
                 ret["{}. {}".format(i + 1, ai.runid)] = err
                 if not test_all:
                     return ret
             else:
-                ai.state = "not run"
+                ai.transition("reset", force=True, source="human_error_checker")
 
         del self._script_context
         del self._warned

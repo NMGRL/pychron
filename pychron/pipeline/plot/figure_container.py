@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 from chaco.plot_containers import GridPlotContainer, VPlotContainer
 from traits.api import HasTraits, Any, Int
+from pychron.graph.theme import themed_container_dict
 
 
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
@@ -76,10 +77,9 @@ class FigureContainer(HasTraits):
     def _component_factory(self, r, c):
         op = GridPlotContainer(
             shape=(r, c),
-            bgcolor="white",
-            fill_padding=True,
             use_backbuffer=True,
             padding_top=0,
+            **themed_container_dict(),
         )
         return op, r, c
 

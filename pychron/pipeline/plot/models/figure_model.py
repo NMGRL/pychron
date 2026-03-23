@@ -42,9 +42,12 @@ class FigureModel(HasTraits):
     analysis_groups = List
     panel_gen = None
     force_refresh_panels = True
+    _panel_signature = None
 
     def refresh(self, force=False):
-        if not self.panels or force:
+        if force:
+            self.refresh_panels(force=True)
+        elif self._panels_need_refresh():
             self.refresh_panels()
 
         for p in self.panels:
@@ -70,10 +73,13 @@ class FigureModel(HasTraits):
     # def _analyses_items_changed(self):
     #     self.refresh_panels()
 
-    def refresh_panels(self):
-        if not self.panels or self.force_refresh_panels:
+    def refresh_panels(self, force=False):
+        if force or not self.panels or self.force_refresh_panels:
             ps = self._make_panels()
             self.panels = ps
+            self._panel_signature = self._make_panel_signature()
+        else:
+            self._sync_panels()
         self.reset_panel_gen()
 
     def reset_panel_gen(self):
@@ -122,6 +128,49 @@ class FigureModel(HasTraits):
                 gi.title = self.plot_options.generate_title(gi.analyses, i)
 
         return gs
+
+    def _make_panel_signature(self):
+        if self.analysis_groups:
+            groups = self.analysis_groups
+        else:
+            groups = [list(ais) for _, ais in groupby_key(self.analyses, "graph_id")]
+
+        titles = tuple(self.titles) if self.titles else ()
+        return tuple(
+            (
+                index,
+                tuple(sorted({getattr(ai, "group_id", 0) for ai in analyses})),
+                len(analyses),
+                titles[index] if index < len(titles) else None,
+            )
+            for index, analyses in enumerate(groups)
+        )
+
+    def _panels_need_refresh(self):
+        return self._panel_signature != self._make_panel_signature()
+
+    def _sync_panels(self):
+        groups = self._make_panel_groups()
+        titles = tuple(self.titles) if self.titles else ()
+
+        for index, (panel, new_panel) in enumerate(zip(self.panels, groups)):
+            panel.analyses = new_panel.analyses
+            panel.references = getattr(new_panel, "references", [])
+            panel.plot_options = self.plot_options
+            panel.graph_id = new_panel.graph_id
+            if panel.figures:
+                grouped = [list(ais) for _, ais in groupby_key(panel.analyses, "group_id")]
+                for figure, analyses in zip(panel.figures, grouped):
+                    figure.analyses = analyses
+                    figure.options = self.plot_options
+                    figure.graph_id = panel.graph_id
+            if titles:
+                if index < len(titles):
+                    panel.title = titles[index]
+            elif self.plot_options.auto_generate_title:
+                panel.title = self.plot_options.generate_title(panel.analyses, index)
+
+        self._panel_signature = self._make_panel_signature()
 
     def _get_npanels(self):
         return len(self.panels)

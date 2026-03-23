@@ -102,6 +102,10 @@ class DataToolOverlay(TextBoxOverlay):
     # font = "modern 12"
     tooltip_mode = Bool(False)
 
+    def _request_component_redraw(self):
+        if self.component is not None:
+            self.component.request_redraw()
+
     def _tool_changed(self, old, new):
         if old:
             old.on_trait_event(self._new_value_updated, "new_value", remove=True)
@@ -112,10 +116,15 @@ class DataToolOverlay(TextBoxOverlay):
             self._tool_visible_changed()
 
     def _new_value_updated(self, event):
+        previous_text = self.text
+        previous_visible = self.visible
+        previous_position = self.alternate_position
         if event is None:
             self.text = ""
             if self.visibility == "auto":
                 self.visible = False
+            if self.text != previous_text or self.visible != previous_visible:
+                self._request_component_redraw()
             return
         elif self.visibility == "auto":
             self.visible = True
@@ -128,10 +137,15 @@ class DataToolOverlay(TextBoxOverlay):
         txt = event.get("text", "")
         if txt is not None:
             self.text = txt
-        self.component.request_redraw()
+        if (
+            self.text != previous_text
+            or self.visible != previous_visible
+            or self.alternate_position != previous_position
+        ):
+            self._request_component_redraw()
 
     def _visible_changed(self):
-        self.component.request_redraw()
+        self._request_component_redraw()
 
     def _tool_visible_changed(self):
         self.visibility = self.tool.visible

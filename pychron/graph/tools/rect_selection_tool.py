@@ -59,6 +59,13 @@ class RectSelectionTool(BaseTool):
     _end_pos = None
     _cached_data = None
 
+    def _request_redraw(self):
+        if self.component is not None:
+            self.component.request_redraw()
+
+    def _invalidate_cached_data(self):
+        self._cached_data = None
+
     def select_key_pressed(self, event):
         if event.character == "Esc":
             self._end_select(event)
@@ -138,6 +145,7 @@ class RectSelectionTool(BaseTool):
                     new.remove(token)
 
                     md[self.selection_metadata_name] = new
+        self._invalidate_cached_data()
 
     def _select_token(self, token, append=True):
         plot = self.component
@@ -154,15 +162,18 @@ class RectSelectionTool(BaseTool):
                     if token not in md[self.selection_metadata_name]:
                         new_list = md[self.selection_metadata_name] + [token]
                         md[self.selection_metadata_name] = new_list
+        self._invalidate_cached_data()
 
     def select_left_up(self, event):
         self._update_selection()
         self._end_select(event)
-        self.component.request_redraw()
+        self._request_redraw()
 
     def select_mouse_move(self, event):
-        self._end_pos = (event.x, event.y)
-        self.component.request_redraw()
+        pos = (event.x, event.y)
+        if pos != self._end_pos:
+            self._end_pos = pos
+            self._request_redraw()
 
     def _update_selection(self):
         comp = self.component
@@ -200,16 +211,21 @@ class RectSelectionTool(BaseTool):
         selection = index.metadata[self.selection_metadata_name]
         nind = list(set(ind) ^ set(selection))
         index.metadata[self.selection_metadata_name] = nind
+        self._invalidate_cached_data()
 
     def _end_select(self, event):
         self.event_state = "normal"
         event.window.set_pointer("arrow")
 
+        changed = self._end_pos is not None
         self._end_pos = None
-        self.component.request_redraw()
+        if changed:
+            self._request_redraw()
 
     def _start_select(self, event):
         self._start_pos = (event.x, event.y)
+        self._end_pos = self._start_pos
+        self._invalidate_cached_data()
         #        self._end_pos = (event.x, event.y)
         self.event_state = "select"
         event.window.set_pointer("cross")

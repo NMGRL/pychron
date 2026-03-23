@@ -19,13 +19,8 @@ from __future__ import absolute_import
 from six.moves import range
 from six.moves import zip
 
-from pychron.core.ui import set_qt
-# =============enthought library imports=======================
-from pyface.timer.api import do_after as do_after_timer
-
-# =============standard library imports ========================
-from numpy import hstack, inf
 import time
+from numpy import inf
 
 # =============local library imports  ==========================
 # from pychron.graph.editors.stream_plot_editor import StreamPlotEditor
@@ -166,50 +161,28 @@ class StreamGraph(Graph):
 
     def record(self, y, x=None, series=0, plotid=0, track_x=True, track_y=True):
         xn, yn = self.series[plotid][series]
-
         plot = self.plots[plotid]
-
-        xd = plot.data.get_data(xn)
-        yd = plot.data.get_data(yn)
+        data = plot.data
         if x is None:
-            try:
-                tg = self.time_generators[plotid]
-            except IndexError:
-                tg = time_generator(0)
-                self.time_generators.append(tg)
-            nx = next(tg)
+            nx = self._next_time_value(plotid)
         else:
             nx = x
 
         dl = self.data_limits[plotid]
+        yd = data.get_data(yn)
 
         if self.force_track_x_flag or (
             track_x and (self.track_x_min or self.track_x_max)
         ):
             self._set_xlimits(nx, plotid)
+        new_xd = self._append_data(data.get_data(xn), nx, limit=dl)
+        new_yd = self._append_data(yd, float(y), limit=dl)
+        data.set_data(xn, new_xd)
+        data.set_data(yn, new_yd)
 
-        if track_y and (self.track_y_min[plotid] or self.track_y_max[plotid]):
-            if not self.track_y_max[plotid]:
-                ma = None
-            else:
-                ma = self.cur_max[plotid]
-
-            if not self.track_y_min[plotid]:
-                mi = None
-            else:
-                mi = self.cur_min[plotid]
-
-            self.set_y_limits(max_=ma, min_=mi, pad="0.1", plotid=plotid)
-        lim = int(-dl)
-
-        new_xd = hstack((xd[lim:], [nx]))
-        new_yd = hstack((yd[lim:], [float(y)]))
-
-        plot.data.set_data(xn, new_xd)
-        plot.data.set_data(yn, new_yd)
-
-        self.cur_max[plotid] = max(self.cur_max[plotid], max(new_yd))
-        self.cur_min[plotid] = min(self.cur_min[plotid], min(new_yd))
+        self._update_stream_extrema(plotid, yd, new_yd, float(y), dl)
+        if track_y:
+            self._apply_y_limits(plotid)
         return nx
 
     def record_multiple(self, ys, plotid=0, series=None, track_y=True):
@@ -224,17 +197,49 @@ class StreamGraph(Graph):
             series = range(len(ys))
 
         for i, yi in zip(series, ys):
-            self.record(yi, x=x, series=i, track_x=False, track_y=track_y)
-
-        ma = max(ys)
-        mi = min(ys)
-        if ma < self.cur_max[plotid]:
-            self.cur_max[plotid] = -inf
-        if mi > self.cur_min[plotid]:
-            self.cur_min[plotid] = inf
+            self.record(yi, x=x, series=i, plotid=plotid, track_x=False, track_y=False)
 
         self._set_xlimits(x, plotid=plotid)
+        if track_y:
+            self._apply_y_limits(plotid)
         return x
+
+    def _apply_y_limits(self, plotid):
+        if not (self.track_y_min[plotid] or self.track_y_max[plotid]):
+            return
+
+        ma = self.cur_max[plotid] if self.track_y_max[plotid] else None
+        mi = self.cur_min[plotid] if self.track_y_min[plotid] else None
+        self.set_y_limits(max_=ma, min_=mi, pad="0.1", plotid=plotid, force=False)
+
+    def _next_time_value(self, plotid):
+        try:
+            tg = self.time_generators[plotid]
+        except IndexError:
+            tg = time_generator(0)
+            self.time_generators.append(tg)
+
+        return next(tg)
+
+    def _update_stream_extrema(self, plotid, previous, current, value, limit):
+        previous_max = self.cur_max[plotid]
+        previous_min = self.cur_min[plotid]
+
+        if previous_max == -inf or previous_min == inf:
+            self.cur_max[plotid] = current.max()
+            self.cur_min[plotid] = current.min()
+            return
+
+        self.cur_max[plotid] = max(previous_max, value)
+        self.cur_min[plotid] = min(previous_min, value)
+
+        if limit and len(previous) >= limit:
+            dropped = previous[: len(previous) - len(current) + 1]
+            if len(dropped):
+                if previous_max <= dropped.max():
+                    self.cur_max[plotid] = current.max()
+                if previous_min >= dropped.min():
+                    self.cur_min[plotid] = current.min()
 
 
 class StreamStackedGraph(StreamGraph, StackedGraph):

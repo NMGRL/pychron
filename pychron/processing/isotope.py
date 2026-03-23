@@ -30,6 +30,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.geometry.geometry import curvature_at
 from pychron.core.helpers.binpack import unpack
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.regression.least_squares_regressor import (
     ExponentialRegressor,
     FitError,
@@ -38,6 +39,8 @@ from pychron.core.regression.least_squares_regressor import (
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.pychron_constants import AUTO_N
+
+logger = new_logger("Isotope")
 
 
 def fit_abbreviation(
@@ -83,10 +86,13 @@ class BaseMeasurement(object):
         self.xs, self.ys = array([]), array([])
         self.mass = 0
         self.time_zero_offset = 0
+        self._regression_state = None
 
     def set_grouping(self, n):
+        if self.group_data == n:
+            return
         self.group_data = n
-        self._regressor = None
+        self._invalidate_regressor()
         # if self._regressor:
         #     self._regressor.dirty = True
 
@@ -142,7 +148,7 @@ class BaseMeasurement(object):
                 return x, y
 
         except struct.error as e:
-            print("unpack_blob", e)
+            logger.warning("Unpack blob failed for %s: %s", self.name, e)
 
     def get_slope(self, n=-1):
         if (
@@ -160,8 +166,8 @@ class BaseMeasurement(object):
             ys = ys[isfinite(ys)]
             try:
                 return polyfit(xs, ys, 1)[0]
-            except BaseException as e:
-                print("get slope exception", e)
+            except Exception as e:
+                logger.debug("Get slope failed for %s: %s", self.name, e)
                 return 0
         else:
             return 0
@@ -276,7 +282,11 @@ class IsotopicMeasurement(BaseMeasurement):
             reg.ouser_excluded = ue
 
     def set_filtering(self, d):
-        self.filter_outliers_dict = d.copy()
+        d = d.copy()
+        if self.filter_outliers_dict == d:
+            return
+
+        self.filter_outliers_dict = d
         if self._regressor:
             self._regressor.dirty = True
 
@@ -300,12 +310,12 @@ class IsotopicMeasurement(BaseMeasurement):
                 a = m.group(0)
                 a = a[1:-1]
                 s, e, f = (ai.strip() for ai in a.split(","))
-                if s is "":
+                if s == "":
                     s = -1
                 else:
                     s = int(s)
 
-                if e is "":
+                if e == "":
                     e = inf
                 else:
                     e = int(e)
@@ -391,7 +401,7 @@ class IsotopicMeasurement(BaseMeasurement):
                 )
                 self.truncate = fit.truncate
 
-            self._regressor = None
+            self._invalidate_regressor()
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -494,25 +504,43 @@ class IsotopicMeasurement(BaseMeasurement):
             reg.set_degree(fit, refresh=False)
 
         xs, ys = self.get_data()
-        reg.trait_set(
+        state_changed = reg.set_regression_state(
             xs=xs,
             ys=ys,
-            error_calc_type=self.error_type or "SEM",
             filter_outliers_dict=self.filter_outliers_dict,
-            tag=self.name,
+            truncate=self.truncate,
         )
+        reg.trait_setq(error_calc_type=self.error_type or "SEM", tag=self.name)
 
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
             fit = reg.determine_fit(lfit)
             self.fit = fit
-            reg.calculate()
-        except FitError as e:
+            if state_changed or reg.is_dirty or getattr(reg, "_result", None) is None:
+                reg.calculate()
+        except FitError:
             reg = self._regressor_factory("average")
 
         self._regressor = reg
+        self._regression_state = self._make_regression_state(xs, ys)
         return reg
+
+    def _invalidate_regressor(self):
+        self._regressor = None
+        self._regression_state = None
+
+    def _make_regression_state(self, xs, ys):
+        return (
+            tuple(xs.tolist()) if hasattr(xs, "tolist") else tuple(xs),
+            tuple(ys.tolist()) if hasattr(ys, "tolist") else tuple(ys),
+            self.fit,
+            self.error_type or "SEM",
+            tuple(sorted(self.filter_outliers_dict.items())),
+            self.truncate,
+            self.group_data,
+            self.time_zero_offset,
+        )
 
     # @cached_property
     @property

@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-import json
 import os
 
 from requests.exceptions import SSLError
@@ -25,7 +22,7 @@ from requests.exceptions import SSLError
 from pychron.git.hosts import IGitHost
 from pychron.git.hosts.github import GitHubService
 from pychron.git.tasks.base_git_plugin import BaseGitPlugin
-from pychron.git.tasks.flow import InstalledAppFlow
+from pychron.git.tasks.github_auth import ensure_access_token, load_token
 from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
 from pychron.paths import paths
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
@@ -90,30 +87,11 @@ class GitHubPlugin(BaseGitPlugin):
         #     service.set_authentication()
 
     def oauth_flow(self):
-        # from google_auth_oauthlib.flow import InstalledAppFlow
-
-        githubapp_config = {
-            "installed": {
-                "client_id": "Iv1.e4ea3100ace7882b",
-                "client_secret": "00118d67ed990c72ac926f57b6c0a04bb2eb0120",
-                "auth_uri": "https://github.com/login/oauth/authorize",
-                "token_uri": "https://github.com/login/oauth/access_token",
-            }
-        }
-        config = {
-            "client_id": "05317d25974cd74eba4e",
-            "client_secret": "be1fec163f573bfba2aea8dbd8b0452dad28bf95",
-            "auth_uri": "https://github.com/login/oauth/authorize",
-            "token_uri": "https://github.com/login/oauth/access_token",
-        }
-
         p = paths.oauth_file
         if not os.path.isfile(p):
-            flow = InstalledAppFlow()
-            token = flow.flow(config, ["repo"])
-            if token:
-                with open(p, "w") as wfile:
-                    json.dump(token, wfile)
+            ensure_access_token(scopes=["repo"])
+        elif not load_token().get("access_token"):
+            ensure_access_token(scopes=["repo"], force=True)
 
     def _preferences_default(self):
         return self._preferences_factory("github")

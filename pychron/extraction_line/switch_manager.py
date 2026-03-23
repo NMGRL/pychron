@@ -112,6 +112,7 @@ class SwitchManager(Manager):
         """
         actuate all switches that have ``name`` defined as their parent
         """
+        results = []
         for v in self.switches.values():
             if v.parent == name:
                 self.debug("actuating child, {}, {}".format(v.display_name, action))
@@ -122,7 +123,10 @@ class SwitchManager(Manager):
                 else:
                     func = self.open_by_name if action == "open" else self.close_by_name
 
-                func(v.display_name, mode)
+                result = func(v.display_name, mode)
+                results.append((v.display_name, result))
+
+        return results
 
     def show_valve_properties(self, name):
         v = self.get_switch_by_name(name)
@@ -1000,7 +1004,6 @@ class SwitchManager(Manager):
                 (DoubleActuationValve, parser.get_double_actuation_valves),
             ):
                 for s in func():
-                    print(s, klass)
                     factory(s, use_explanation=False, klass=klass)
 
             ps = []

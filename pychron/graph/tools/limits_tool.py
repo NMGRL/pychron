@@ -38,6 +38,10 @@ class LimitsTool(BaseTool):
     entered_value = Str
     limits_updated = Event
 
+    def _request_redraw(self):
+        if self.component is not None:
+            self.component.request_redraw()
+
     def _set_entered_value(self, c):
         if c in (".", "-") or c in string.digits:
             self.entered_value += c
@@ -53,7 +57,7 @@ class LimitsTool(BaseTool):
         else:
             self._set_entered_value(c)
             self.event_state = "manual_set" if self.entered_value else "drag"
-        self.component.request_redraw()
+        self._request_redraw()
 
     def manual_set_key_pressed(self, event):
         c = event.character
@@ -68,7 +72,7 @@ class LimitsTool(BaseTool):
         else:
             self._set_entered_value(c)
 
-        self.component.request_redraw()
+        self._request_redraw()
 
     def is_draggable(self, event):
         tol = 5
@@ -104,12 +108,17 @@ class LimitsTool(BaseTool):
 
             self._set_ruler_pos(event)
             event.handled = True
-            self.component.request_redraw()
+            self._request_redraw()
 
     def _set_ruler_pos(self, v):
-        self.ruler_pos = (v.x, v.y)
+        pos = (v.x, v.y)
+        if pos == self.ruler_pos:
+            return False
+
+        self.ruler_pos = pos
         v = getattr(v, self.orientation)
         self.ruler_data_pos = self._map_value(v - 0.25)
+        return True
 
     def drag_left_up(self, event):
         v = event.x if self.orientation == "x" else event.y
@@ -127,7 +136,7 @@ class LimitsTool(BaseTool):
         self.limits_updated = True
 
     def drag_mouse_move(self, event):
-        self._set_ruler_pos(event)
+        changed = self._set_ruler_pos(event)
         if self.orientation == "x":
             a = event.x
             b = self.component.x
@@ -139,7 +148,8 @@ class LimitsTool(BaseTool):
 
         if a < b or a > b2:
             self._set_value(a)
-        self.component.request_redraw()
+        elif changed:
+            self._request_redraw()
         event.handled = True
 
     def _set_value(self, screen_val):
@@ -159,7 +169,7 @@ class LimitsTool(BaseTool):
             if getattr(r, "low") < v:
                 r.trait_set(**{"{}_setting".format(self._dsign): v})
 
-        self.component.request_redraw()
+        self._request_redraw()
 
     def _map_value(self, v):
         if self.orientation == "x":

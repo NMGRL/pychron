@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import math
+import logging
 
 # ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
@@ -57,6 +58,8 @@ from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverl
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS, format_mswd
+
+logger = logging.getLogger(__name__)
 
 
 class SelectionFigure(HasTraits):
@@ -206,7 +209,6 @@ class BaseArArFigure(SelectionFigure):
 
             kw["padding"] = self.options.get_paddings()
 
-            print(kw, plot_dict)
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font
@@ -295,7 +297,7 @@ class BaseArArFigure(SelectionFigure):
                 try:
                     setattr(axis, attr, value)
                 except TraitError as e:
-                    print(
+                    logger.warning(
                         "error setting attr={},value={} error={}".format(attr, value, e)
                     )
 

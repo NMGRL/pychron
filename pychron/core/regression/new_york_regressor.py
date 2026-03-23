@@ -26,6 +26,9 @@ from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats import calculate_mswd2
 from pychron.core.stats.core import validate_mswd
 from pychron.pychron_constants import MSE, SE
+from pychron.core.helpers.logger_setup import new_logger
+
+logger = new_logger("YorkRegressor")
 
 
 def kron(i, j):
@@ -234,7 +237,7 @@ class YorkRegressor(OLSRegressor):
         cnt = 0
         b, a, cnt = self._calculate_slope_intercept(Inf, b, cnt)
         if cnt >= 500:
-            print("regression did not converge")
+            logger.warning("York regression did not converge")
             #             self.warning('regression did not converge')
         #         else:
         #             self.info('regression converged after {} iterations'.format(cnt))

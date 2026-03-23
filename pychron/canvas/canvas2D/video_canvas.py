@@ -82,6 +82,7 @@ class VideoCanvas(SceneCanvas):
     def _video_changed(self):
         if self.video_underlay:
             self.video_underlay.video = self.video
+            self.video_underlay.request_refresh()
 
     @on_trait_change("video:fps")
     def _update_fps(self, new):

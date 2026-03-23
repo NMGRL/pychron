@@ -81,6 +81,9 @@ class BaseValve(Connectable):
     owned = False
     oactive_color = (0, 1, 0)
     description = ""
+    locked_color = (0.15, 0.35, 0.95, 1.0)
+    owned_color = (0.95, 0.6, 0.1, 1.0)
+    disconnected_color = (0.45, 0.45, 0.45, 1.0)
 
     def toyaml(self):
         y = super(BaseValve, self).toyaml()
@@ -92,10 +95,17 @@ class BaseValve(Connectable):
         return y
 
     def get_tooltip_text(self):
-        state = "Open" if self.state else "Closed"
+        if self.state is None:
+            state = "Unknown"
+        else:
+            state = "Open" if self.state else "Closed"
         if self.soft_lock:
-            state = "{}(Locked)".format(state)
-        return "Valve={}\nDesc={}\nState={}".format(self.name, self.description, state)
+            state = "{} (Locked)".format(state)
+
+        owner = "Yes" if self.owned else "No"
+        return "Valve={}\nDesc={}\nState={}\nOwned={}".format(
+            self.name, self.description, state, owner
+        )
 
 
 class ManualSwitch(BaseValve, RoundedRectangle):
@@ -147,7 +157,7 @@ class Valve(BaseValve, RoundedRectangle):
 
     def get_color(self):
         if self.state is None:
-            c = self._convert_color(self.not_connected_color)
+            c = self._convert_color(self.disconnected_color)
         else:
             if self.state:
                 c = self._convert_color(self.active_color)
@@ -170,8 +180,8 @@ class Valve(BaseValve, RoundedRectangle):
         if self.soft_lock:
             with gc:
                 gc.set_fill_color((0, 0, 0, 0))
-                gc.set_stroke_color((0, 0, 1))
-                gc.set_line_width(5)
+                gc.set_stroke_color(self.locked_color)
+                gc.set_line_width(4)
 
                 x, y = self.get_xy()
                 width, height = self.get_wh()
@@ -182,8 +192,8 @@ class Valve(BaseValve, RoundedRectangle):
         if self.owned:
             with gc:
                 gc.set_fill_color((0, 0, 0, 0))
-                gc.set_stroke_color((0, 0, 0))
-                gc.set_line_width(5)
+                gc.set_stroke_color(self.owned_color)
+                gc.set_line_width(2)
 
                 x, y = self.get_xy()
                 width, height = self.get_wh()
@@ -191,7 +201,7 @@ class Valve(BaseValve, RoundedRectangle):
                 rounded_rect(gc, x, y, width, height, corner_radius)
 
     def _draw_state_indicator(self, gc, x, y, w, h):
-        if not self.state:
+        if self.state is False:
             gc.set_stroke_color((0, 0, 0))
             l = 5
             o = 2
@@ -261,8 +271,8 @@ class RoughValve(BaseValve, Bordered):
         if self.owned:
             with gc:
                 gc.set_fill_color((0, 0, 0, 0))
-                gc.set_stroke_color((0, 0, 1))
-                gc.set_line_width(5)
+                gc.set_stroke_color(self.owned_color)
+                gc.set_line_width(2)
                 func()
                 gc.draw_path()
 
@@ -270,13 +280,13 @@ class RoughValve(BaseValve, Bordered):
         if self.soft_lock:
             with gc:
                 gc.set_fill_color((0, 0, 1, 0))
-                gc.set_stroke_color((0, 0, 1))
-                gc.set_line_width(5)
+                gc.set_stroke_color(self.locked_color)
+                gc.set_line_width(4)
                 func()
                 gc.draw_path()
 
     def _draw_state_indicator(self, gc, x, y, w, h, cr):
-        if not self.state:
+        if self.state is False:
             with gc:
                 gc.translate_ctm(x, y)
                 gc.set_line_width(2)

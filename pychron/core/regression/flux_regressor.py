@@ -117,9 +117,7 @@ class GridDataRegressor(InterpolationRegressor):
         pass
 
     def predict_grid(self, x, y):
-        z = griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
-        print("pasdf", z)
-        return z
+        return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
         # return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
 
     def fast_predict2(self, endog, exog):

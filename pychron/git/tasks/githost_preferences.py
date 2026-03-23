@@ -26,6 +26,7 @@ from pychron.envisage.tasks.base_preferences_helper import (
     test_connection_item,
 )
 from pychron.git.hosts import authorization
+from pychron.git.tasks.github_auth import ensure_access_token, load_token
 from pychron.globals import globalv
 
 
@@ -56,12 +57,16 @@ class GitHostPreferences(BasePreferencesHelper):
             if resp.status_code == 200:
                 self._remote_status = "Valid"
                 self._remote_status_color = "green"
-        except BaseException as e:
-            print("exception", e, self._url)
+            else:
+                self._remote_status = "Invalid ({})".format(resp.status_code)
+        except requests.RequestException as e:
+            self._remote_status = "Invalid"
+            self.debug("Git host connection test failed {}: {}".format(self._url, e))
 
 
 class GitHubPreferences(GitHostPreferences):
     preferences_path = "pychron.github"
+    authenticate = Button("Sign In")
 
     _url = "https://api.github.com/user"
 
@@ -69,6 +74,17 @@ class GitHubPreferences(GitHostPreferences):
     def _token(self):
         if self.oauth_token:
             return "token {}".format(self.oauth_token)
+
+        token = load_token().get("access_token")
+        if token:
+            return "token {}".format(token)
+
+    def _authenticate_fired(self):
+        token = ensure_access_token(scopes=["repo"], force=not bool(load_token()))
+        if token:
+            self.oauth_token = token
+            self._remote_status = "Signed In"
+            self._remote_status_color = "green"
 
 
 class GitLabPreferences(GitHostPreferences):
@@ -94,14 +110,14 @@ class GitHostPreferencesPane(PreferencesPane):
             #        show_border=True, label='Basic'),
             Item(
                 "disable_authentication_message",
-                tooltip="This message is displayed to Windows users on start up as a reminder to setup "
-                "authentication",
+                tooltip="This message is displayed to Windows users on start up "
+                "as a reminder to setup authentication",
                 label="Disable Authentication Message",
             ),
             VGroup(
                 Item(
                     "oauth_token",
-                    tooltip="Enter a Personal Access Token",
+                    tooltip="Advanced/manual token entry. Use browser Sign In when available.",
                     resizable=True,
                     label="Token",
                 ),
@@ -129,6 +145,20 @@ class GitHostPreferencesPane(PreferencesPane):
 class GitHubPreferencesPane(GitHostPreferencesPane):
     model_factory = GitHubPreferences
     category = "GitHub"
+
+    def _cred_group(self):
+        g = super(GitHubPreferencesPane, self)._cred_group()
+        g.content.insert(
+            3,
+            HGroup(
+                Item(
+                    "authenticate",
+                    show_label=False,
+                    tooltip="Authenticate with GitHub in your web browser",
+                )
+            ),
+        )
+        return g
 
 
 class GitLabPreferencesPane(GitHostPreferencesPane):

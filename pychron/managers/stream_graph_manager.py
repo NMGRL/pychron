@@ -275,7 +275,7 @@ class StreamGraphManager(Manager):
             try:
                 setattr(self, pi, params[pi])
             except KeyError as e:
-                print("sm load settings", pi, e)
+                self.debug("load settings missing {}: {}".format(pi, e))
 
     # ===============================================================================
     # defaults

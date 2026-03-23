@@ -41,16 +41,15 @@ class Caption(AbstractOverlay):
         self.label.text = text
 
     def _draw_component(self, gc, view_bounds=None, mode="normal"):
-        print("casdcasd")
+        pass
 
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
-        print("asdfasdfasdf")
+        pass
 
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
-        print("unasdf")
+        pass
 
     def draw(self, gc, view_bounds=None, mode="default"):
-        print("dafasfasfd")
         with gc:
             self.label.draw()
 

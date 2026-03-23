@@ -18,7 +18,7 @@ import logging
 import math
 import re
 
-from numpy import where, delete, polyfit, percentile
+from numpy import where, delete, polyfit, percentile, array_equal
 
 # ============= enthought library imports =======================
 from traits.api import (
@@ -94,6 +94,7 @@ class BaseRegressor(HasTraits):
     degrees_of_freedom = Property
     integrity_warning = False
     filter_bound_value = 0
+    _dirty_state = Bool(True)
 
     @property
     def min(self):
@@ -191,6 +192,49 @@ class BaseRegressor(HasTraits):
 
     def get_fit_dict(self):
         return {"fit": self.fit, "error_type": self.error_calc_type}
+
+    @property
+    def is_dirty(self):
+        return self._dirty_state
+
+    def _dirty_fired(self):
+        self._dirty_state = True
+
+    def clear_dirty(self):
+        self._dirty_state = False
+
+    def set_regression_state(
+        self,
+        xs,
+        ys,
+        user_excluded=None,
+        filter_outliers_dict=None,
+        truncate=None,
+        xserr=None,
+        yserr=None,
+    ):
+        updates = {}
+        comparisons = (
+            ("xs", xs),
+            ("ys", ys),
+            ("xserr", xserr),
+            ("yserr", yserr),
+            ("truncate", truncate),
+            ("user_excluded", sorted(user_excluded or [])),
+            ("filter_outliers_dict", (filter_outliers_dict or {}).copy()),
+        )
+
+        for attr, new_value in comparisons:
+            old_value = getattr(self, attr)
+            if not self._values_equal(old_value, new_value):
+                updates[attr] = new_value
+
+        if updates:
+            self.trait_setq(**updates)
+            self.dirty = True
+            return True
+
+        return False
 
     def determine_fit(self, *args, **kw):
         return self.fit
@@ -516,6 +560,18 @@ class BaseRegressor(HasTraits):
             return delete(v, list(exc), 0)
         except IndexError:
             return v
+
+    def _values_equal(self, old, new):
+        if old is None or new is None:
+            return old is new
+
+        if hasattr(old, "shape") or hasattr(new, "shape"):
+            try:
+                return array_equal(old, new)
+            except TypeError:
+                return False
+
+        return old == new
 
     def _check_integrity(self, x, y, verbose=False):
         nx, ny = len(x), len(y)

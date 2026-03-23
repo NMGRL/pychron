@@ -37,8 +37,8 @@ TOOLTIP_MAP = {
     "mean": "Weighted mean if data has errors otherwise average",
     "n": "Number of data points",
     "std": "Standard Deviation",
-    "se": "Standard Error, aka Taylor error.  1/sqrt(sum(weights)). If data has no errors this column "
-    "will be a replica of SD column",
+    "se": "Standard Error, aka Taylor error.  1/sqrt(sum(weights)). "
+    "If data has no errors this column will be a replica of SD column",
     "sem": "Standard Error of the Mean.  SD/sqrt(n)",
     "mswd": "MSWD of the current fit type",
     "mean_mswd": "MSWD of a mean fit to the data",
@@ -184,7 +184,7 @@ class AnalysisGroupedSeriesEditor(BaseTraitsEditor):
 
     def refresh(self):
         for ei in self.editors:
-            ei.refresh_needed = True
+            ei.request_refresh()
 
     # def set_options(self, options):
     #     for ei in self.editors:

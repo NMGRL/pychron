@@ -18,7 +18,7 @@
 from chaco.api import LinePlot
 from chaco.api import TextBoxOverlay
 from enable.component_editor import ComponentEditor
-from numpy import linspace
+from numpy import linspace, array_equal
 from traits.api import List, Any, Event, Callable, Dict, Int, Bool
 from traitsui.api import View, UItem
 
@@ -441,6 +441,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     # private
     def _update_graph(self, *args, **kw):
         regs = []
+        updated = False
         for i, plot in enumerate(self.plots):
             ps = plot.plots
             ks = list(ps.keys())
@@ -452,8 +453,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 fls = [ps["fit{}".format(idx)][0] for idx in idxes]
                 for si, fl in zip(scatters, fls):
                     if not si.no_regression:
-                        r = self._plot_regression(plot, si, fl)
+                        r, changed = self._plot_regression(plot, si, fl)
                         regs.append((plot, r))
+                        updated = updated or changed
 
             except ValueError as e:
                 # add a float instead of regressor to regs
@@ -465,24 +467,21 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         self.regression_results = regs
 
-        # force layout updates. i.e for ErrorBarOverlay
-        for plot in self.plots:
-            for p in plot.plots.values():
-                p[0]._layout_needed = True
-
-        self.redraw(force=False)
+        if updated:
+            self.redraw(force=False)
 
     def _plot_regression(self, plot, scatter, line):
         if not plot.visible:
-            return
+            return None, False
 
         return self._regress(plot, scatter, line)
 
     def _regress(self, plot, scatter, line):
         fit, err = convert_fit(scatter.fit)
         if fit is None:
-            return
+            return None, False
 
+        updated = False
         r = None
         if line and hasattr(line, "regressor"):
             r = line.regressor
@@ -525,7 +524,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line.value.set_data(fy)
                 except BaseException as e:
                     logger.exception("Regression update failed: %s", e)
-                    return
+                    return r, False
 
                 if hasattr(line, "error_envelope"):
                     ci = r.calculate_error_envelope(fx, fy)
@@ -534,9 +533,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     else:
                         ly, uy = fy, fy
 
-                    line.error_envelope.lower = ly
-                    line.error_envelope.upper = uy
-                    line.error_envelope.invalidate()
+                    if self._set_overlay_bounds(line.error_envelope, ly, uy):
+                        updated = True
 
                 if hasattr(line, "filter_bounds"):
                     ci = r.calculate_filter_bounds(fy)
@@ -545,11 +543,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     else:
                         ly, uy = fy, fy
 
-                    line.filter_bounds.lower = ly
-                    line.filter_bounds.upper = uy
-                    line.filter_bounds.invalidate()
+                    if self._set_overlay_bounds(line.filter_bounds, ly, uy):
+                        updated = True
 
-        return r
+                updated = self._set_line_data(line, fx, fy) or updated
+                if updated:
+                    line._layout_needed = True
+
+        return r, updated
 
     def _set_regressor(self, scatter, r):
         selection = scatter.index.metadata["selections"]
@@ -559,17 +560,18 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         x = scatter.index.get_data()
         y = scatter.value.get_data()
         sel = list(selection)
-        if hasattr(scatter, "yerror"):
-            yserr = scatter.yerror.get_data()
-            r.trait_set(yserr=yserr)
+        yserr = scatter.yerror.get_data() if hasattr(scatter, "yerror") else None
+        xserr = scatter.xerror.get_data() if hasattr(scatter, "xerror") else None
 
-        r.trait_set(
+        return r.set_regression_state(
             xs=x,
             ys=y,
+            xserr=xserr,
+            yserr=yserr,
             user_excluded=sel,
             filter_outliers_dict=scatter.filter_outliers_dict,
+            truncate=scatter.truncate,
         )
-        r.dirty = True
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True
@@ -591,7 +593,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             if r is None or not isinstance(r, PolynomialRegressor):
                 r = PolynomialRegressor()
 
-        self._set_regressor(scatter, r)
+        changed = self._set_regressor(scatter, r)
         minpoints = 3
         r.trait_set(degree=fit)
         if isinstance(fit, int):
@@ -602,9 +604,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         r.set_truncate(scatter.truncate)
         r.determine_fit(fit)
-        r.calculate()
-
-        self._set_excluded(scatter, r)
+        if changed or r.is_dirty or r._result is None:
+            r.calculate()
+            self._set_excluded(scatter, r)
         return r
 
     def _exponential_regress(self, scatter, r, fit):
@@ -616,9 +618,10 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if r is None or not isinstance(r, ExponentialRegressor):
             r = ExponentialRegressor()
 
-        self._set_regressor(scatter, r)
+        changed = self._set_regressor(scatter, r)
         try:
-            r.calculate()
+            if changed or r.is_dirty or not r._coefficients:
+                r.calculate()
             self._set_excluded(scatter, r)
         except FitError:
             f, e = convert_fit(scatter.ofit)
@@ -634,15 +637,17 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if r is None or not isinstance(r, LeastSquaresRegressor):
             r = LeastSquaresRegressor()
 
-        self._set_regressor(scatter, r)
+        changed = self._set_regressor(scatter, r)
         if isinstance(fit, tuple):
             func, initial_guess = fit
             r.trait_setq(fitfunc=func, initial_guess=initial_guess)
         else:
             r.construct_fitfunc(fit)
+        r.dirty = True
 
-        r.calculate()
-        self._set_excluded(scatter, r)
+        if changed or r.is_dirty or not r._coefficients:
+            r.calculate()
+            self._set_excluded(scatter, r)
         return r
 
     def _mean_regress(self, scatter, r, fit):
@@ -658,11 +663,11 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             if r is None or not isinstance(r, MeanRegressor):
                 r = MeanRegressor()
 
-        self._set_regressor(scatter, r)
+        changed = self._set_regressor(scatter, r)
         # r.trait_setq(fit=fit)
-        r.calculate()
-
-        self._set_excluded(scatter, r)
+        if changed or r.is_dirty:
+            r.calculate()
+            self._set_excluded(scatter, r)
         return r
 
     def _custom_regress(self, scatter, r, fit):
@@ -678,14 +683,43 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if r is None or not isinstance(r, fit):
             r = fit()
 
-        self._set_regressor(scatter, r)
+        changed = self._set_regressor(scatter, r)
         # r.trait_set(trait_change_notify=False,
         #             **kw)
         r.trait_setq(**kw)
-        r.calculate()
-
-        self._set_excluded(scatter, r)
+        if changed or r.is_dirty:
+            r.calculate()
+            self._set_excluded(scatter, r)
         return r
+
+    def _set_line_data(self, line, fx, fy):
+        current_x = line.index.get_data()
+        current_y = line.value.get_data()
+        if array_equal(current_x, fx) and array_equal(current_y, fy):
+            return False
+
+        line.index.set_data(fx)
+        line.value.set_data(fy)
+        return True
+
+    def _set_overlay_bounds(self, overlay, lower, upper):
+        current_lower = overlay.lower
+        current_upper = overlay.upper
+        if current_lower is not None and current_upper is not None:
+            if array_equal(current_lower, lower) and array_equal(current_upper, upper):
+                return False
+
+        if current_lower is None and current_upper is None:
+            if lower is None and upper is None:
+                return False
+
+        if array_equal(current_lower, lower) and array_equal(current_upper, upper):
+            return False
+
+        overlay.lower = lower
+        overlay.upper = upper
+        overlay.invalidate()
+        return True
 
     def _new_scatter(
         self, kw, marker, marker_size, plotid, x, y, fit, filter_outliers_dict, truncate

@@ -204,6 +204,18 @@ class _TableView(TableView):
         else:
             vheader.ResizeMode(QHeaderView.ResizeToContents)
 
+        # The experiment editor uses a large, fixed-height table; these settings
+        # reduce repaint and layout work while scrolling large queues.
+        self.setWordWrap(False)
+        self.setTextElideMode(QtCore.Qt.ElideMiddle)
+        self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setShowGrid(False)
+        if hasattr(self, "setUniformRowHeights"):
+            self.setUniformRowHeights(True)
+
     def set_bg_color(self, bgcolor):
         # if isinstance(bgcolor, tuple):
         #     if len(bgcolor) == 3:

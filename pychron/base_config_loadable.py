@@ -17,13 +17,56 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
 from __future__ import absolute_import
+
+from dataclasses import dataclass
+
+# ============= local library imports  ==========================
 from pychron.config_mixin import ConfigMixin
+
+
+@dataclass
+class BootstrapResult:
+    name: str
+    loaded: bool = False
+    opened: bool = False
+    initialized: object = False
+    post_initialized: bool = False
+    failed_phase: str = ""
+    error: str = ""
+
+    @property
+    def success(self):
+        return (
+            self.loaded
+            and self.opened
+            and self.initialized is True
+            and self.post_initialized
+        )
+
+    @property
+    def compatible_success(self):
+        return self.loaded and self.initialized is True
+
+    @property
+    def is_partial(self):
+        return self.loaded and not self.success
+
+    def summary(self):
+        state = []
+        for key in ("loaded", "opened", "initialized", "post_initialized"):
+            state.append("{}={}".format(key, getattr(self, key)))
+        if self.failed_phase:
+            state.append("failed_phase={}".format(self.failed_phase))
+        if self.error:
+            state.append("error={}".format(self.error))
+        return ", ".join(state)
 
 
 class BaseConfigLoadable(ConfigMixin):
     """ """
+
+    last_bootstrap_result = None
 
     def update_configuration(self, **kw):
         config = self.get_configuration()
@@ -36,20 +79,67 @@ class BaseConfigLoadable(ConfigMixin):
         self.write_configuration(config)
 
     def bootstrap(self, *args, **kw):
-        """ """
+        return self.bootstrap_result(*args, **kw).compatible_success
 
-        self.info("load")
-        if self.load(*args, **kw):
-            self.info("open")
-            if self.open(*args, **kw):
-                self.info("initialize")
-                self.initialize(*args, **kw)
-                return True
-            else:
-                self.initialize(*args, **kw)
-                self.warning("failed opening")
-        else:
-            self.warning("failed loading")
+    def bootstrap_result(self, *args, **kw):
+        run_post_initialize = kw.pop("run_post_initialize", False)
+        result = BootstrapResult(name=getattr(self, "name", self.__class__.__name__))
+        self.last_bootstrap_result = result
+
+        self._bootstrap_info("load")
+        try:
+            result.loaded = bool(self.load(*args, **kw))
+        except BaseException as e:
+            result.failed_phase = "load"
+            result.error = str(e)
+            self._bootstrap_exception("load", e)
+            return result
+
+        if not result.loaded:
+            result.failed_phase = "load"
+            self._bootstrap_warning("failed loading")
+            return result
+
+        self._bootstrap_info("open")
+        try:
+            result.opened = bool(self.open(*args, **kw))
+        except BaseException as e:
+            result.failed_phase = "open"
+            result.error = str(e)
+            self._bootstrap_exception("open", e)
+            return result
+
+        if not result.opened:
+            self._bootstrap_warning("failed opening")
+
+        self._bootstrap_info("initialize")
+        try:
+            result.initialized = self.initialize(*args, **kw)
+        except BaseException as e:
+            result.failed_phase = "initialize"
+            result.error = str(e)
+            self._bootstrap_exception("initialize", e)
+            return result
+
+        if result.initialized is None:
+            result.failed_phase = "initialize"
+            result.error = "initialize returned None"
+            return result
+
+        if not run_post_initialize:
+            result.post_initialized = True
+            return result
+
+        self._bootstrap_info("post initialize")
+        try:
+            self.post_initialize(*args, **kw)
+            result.post_initialized = True
+        except BaseException as e:
+            result.failed_phase = "post_initialize"
+            result.error = str(e)
+            self._bootstrap_exception("post initialize", e)
+
+        return result
 
     def open(self, *args, **kw):
         """ """
@@ -87,6 +177,19 @@ class BaseConfigLoadable(ConfigMixin):
         else:
             nname = name
         return nname
+
+    def _bootstrap_info(self, msg):
+        if hasattr(self, "info"):
+            self.info(msg)
+
+    def _bootstrap_warning(self, msg):
+        if hasattr(self, "warning"):
+            self.warning(msg)
+
+    def _bootstrap_exception(self, phase, exc):
+        self._bootstrap_warning("{} failed. {}".format(phase, exc))
+        if hasattr(self, "debug_exception"):
+            self.debug_exception()
 
 
 # ============= EOF =============================================

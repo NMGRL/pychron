@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 import os
+import logging
 
 from chaco.api import PlotLabel
 from enable.component_editor import ComponentEditor as EnableComponentEditor
@@ -26,6 +27,8 @@ from traitsui.api import View, UItem
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.pipeline.plot.editors.base_editor import BaseEditor
 from pychron.pipeline.plot.figure_container import FigureContainer
+
+logger = logging.getLogger(__name__)
 
 
 class WarningLabel(PlotLabel):
@@ -87,8 +90,10 @@ class GraphEditor(BaseEditor):
             if compress:
                 self._compress_groups()
             if refresh:
-                print("set items refresh")
-                self.refresh_needed = True
+                self.request_refresh()
+
+    def request_refresh(self):
+        self.refresh_needed = True
 
     def _compress_groups(self):
         ans = self.items
@@ -103,8 +108,8 @@ class GraphEditor(BaseEditor):
         if self.items:
             try:
                 comp = self._component_factory()
-            except BaseException:
-                self.debug_exception()
+            except Exception:
+                logger.exception("Failed building pipeline figure component")
                 self.warning_dialog(
                     "Failed to make figure. Check the log for more information"
                 )

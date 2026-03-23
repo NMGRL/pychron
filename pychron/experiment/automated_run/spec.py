@@ -42,6 +42,11 @@ from pychron.experiment.automated_run.result import (
     UnknownResult,
     BlankResult,
 )
+from pychron.experiment.automated_run.state_machine import (
+    AutomatedRunStateMachine,
+    normalize_state,
+    TERMINAL_STATES,
+)
 from pychron.experiment.utilities.identifier import (
     get_analysis_type,
     is_special,
@@ -97,33 +102,6 @@ from pychron.pychron_constants import (
 )
 
 logger = new_logger("AutomatedRunSpec")
-
-
-STATE_ALIASES = {
-    "success": SUCCESS,
-    "failed": FAILED,
-    "truncated": TRUNCATED,
-    "canceled": CANCELED,
-    "cancelled": CANCELED,
-    "aborted": ABORTED,
-    "invalid": INVALID,
-    "not run": NOT_RUN,
-    "terminated": FAILED,
-}
-
-TERMINAL_STATES = {SUCCESS, FAILED, TRUNCATED, CANCELED, ABORTED, INVALID}
-STATE_TRANSITIONS = {
-    NOT_RUN: {EXTRACTION, MEASUREMENT, CANCELED, FAILED, ABORTED, INVALID},
-    EXTRACTION: {MEASUREMENT, SUCCESS, FAILED, TRUNCATED, CANCELED, ABORTED, INVALID},
-    MEASUREMENT: {SUCCESS, FAILED, TRUNCATED, CANCELED, ABORTED, INVALID},
-    SUCCESS: set(),
-    FAILED: set(),
-    TRUNCATED: {SUCCESS},
-    CANCELED: set(),
-    INVALID: set(),
-    ABORTED: set(),
-    "test": TERMINAL_STATES | {EXTRACTION, MEASUREMENT},
-}
 
 
 class AutomatedRunSpec(HasTraits):
@@ -271,6 +249,10 @@ class AutomatedRunSpec(HasTraits):
 
     _step_heat = False
     _runid = None
+    _state_machine = None
+    state_event = Str
+    state_source = Str
+    state_reason = Str
 
     @property
     def acquisition_software(self):
@@ -670,6 +652,8 @@ position, duration, cleanup, pre_cleanup, post_cleanup"""
             self._changed = True
 
     def _state_changed(self, old, new):
+        if self._state_machine is not None:
+            self._state_machine.current_state = new
         logger.debug("state changed from {} to {}".format(old, new))
 
     def _repository_identifier_changed(self, new):
@@ -678,30 +662,54 @@ position, duration, cleanup, pre_cleanup, post_cleanup"""
             self.repository_identifier = normalized
 
     def normalize_state(self, state):
-        if state is None:
-            return None
-        return STATE_ALIASES.get(state, state)
+        return normalize_state(state)
 
     def is_terminal_state(self, state=None):
         if state is None:
             state = self.state
         return self.normalize_state(state) in TERMINAL_STATES
 
-    def set_state(self, state, force=False):
-        state = self.normalize_state(state)
-        current = self.normalize_state(self.state)
+    @property
+    def state_machine(self):
+        if self._state_machine is None:
+            self._state_machine = AutomatedRunStateMachine(self.state)
+        return self._state_machine
 
-        if state is None or state == current:
+    def transition(self, event, force=False, source=None, reason=None):
+        transition = self.state_machine.transition(
+            event, force=force, source=source, reason=reason
+        )
+        self.state_event = transition.event
+        self.state_source = source or ""
+        self.state_reason = reason or ""
+        if transition.accepted and transition.new_state != self.state:
+            self.state = transition.new_state
+        elif not transition.accepted:
+            logger.warning(
+                "Rejected invalid state transition for {}: {} --{}--> {}".format(
+                    self.runid,
+                    transition.old_state,
+                    transition.event,
+                    transition.new_state,
+                )
+            )
+        return transition.accepted
+
+    def set_state(self, state, force=False, source=None, reason=None):
+        transition = self.state_machine.set_state(
+            state, force=force, source=source, reason=reason
+        )
+        self.state_event = transition.event
+        self.state_source = source or ""
+        self.state_reason = reason or ""
+        if transition.accepted and transition.new_state != self.state:
+            self.state = transition.new_state
             return True
-
-        allowed = STATE_TRANSITIONS.get(current, set())
-        if force or state in allowed:
-            self.state = state
+        if transition.accepted:
             return True
-
         logger.warning(
             "Rejected invalid state transition for {}: {} -> {}".format(
-                self.runid, current, state
+                self.runid, transition.old_state, state
             )
         )
         return False

@@ -19,6 +19,7 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from __future__ import print_function
+import logging
 from numpy import inf as Inf
 
 from pychron.graph.tools.point_inspector import PointInspector, PointInspectorOverlay
@@ -28,6 +29,8 @@ from pychron.graph.tools.regression_inspector import (
 )
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 import six
+
+logger = logging.getLogger(__name__)
 
 
 def min_max(a, b, vs):
@@ -59,7 +62,12 @@ class IsoEvo(BaseArArFigure):
             iso = ai.get_isotope(detector=name)
             # iso = next((iso for iso in six.itervalues(ai.isotopes) if iso.detector == name), None)
             if iso is None:
-                print("iso_evo _plot", ai.record_id, ai.isotopes_keys, name)
+                logger.warning(
+                    "iso_evo plot missing isotope record_id=%s isotope_keys=%s name=%s",
+                    ai.record_id,
+                    ai.isotopes_keys,
+                    name,
+                )
                 return
 
         ymi, yma = Inf, -Inf

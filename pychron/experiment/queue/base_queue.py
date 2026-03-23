@@ -143,6 +143,9 @@ class BaseExperimentQueue(RunBlock):
     _no_update = False
     _frequency_group_counter = 0
     _stats_timer = None
+    _table_refresh_timer = None
+    _info_refresh_timer = None
+    _pending_scroll_to_row = None
 
     @property
     def no_update(self):
@@ -154,10 +157,37 @@ class BaseExperimentQueue(RunBlock):
             self._stats_timer.stop()
         self._stats_timer = Timer(250, self._flush_stats)
 
+    def request_table_refresh(self, delay=75):
+        if self._table_refresh_timer:
+            self._table_refresh_timer.stop()
+        self._table_refresh_timer = Timer(delay, self._flush_table_refresh)
+
+    def request_info_refresh(self, delay=75, scroll_to_row=None):
+        if scroll_to_row is not None:
+            self._pending_scroll_to_row = scroll_to_row
+        if self._info_refresh_timer:
+            self._info_refresh_timer.stop()
+        self._info_refresh_timer = Timer(delay, self._flush_info_refresh)
+
     def _flush_stats(self):
         if self._stats_timer:
             self._stats_timer.stop()
             self._stats_timer = None
+        self.request_info_refresh()
+
+    def _flush_table_refresh(self):
+        if self._table_refresh_timer:
+            self._table_refresh_timer.stop()
+            self._table_refresh_timer = None
+        self.refresh_table_needed = True
+
+    def _flush_info_refresh(self):
+        if self._info_refresh_timer:
+            self._info_refresh_timer.stop()
+            self._info_refresh_timer = None
+        if self._pending_scroll_to_row is not None:
+            self.automated_runs_scroll_to_row = self._pending_scroll_to_row
+            self._pending_scroll_to_row = None
         self.refresh_info_needed = True
 
     # ===============================================================================
@@ -243,7 +273,7 @@ class BaseExperimentQueue(RunBlock):
     def extend_runs(self, runs):
         self.sync_queue_meta(runs=runs)
         self.automated_runs.extend(runs)
-        self.refresh_table_needed = True
+        self.request_table_refresh()
 
     def add_runs(
         self,

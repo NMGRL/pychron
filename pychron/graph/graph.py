@@ -44,6 +44,7 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.graph.context_menu_mixin import ContextMenuMixin
 from pychron.graph.ml_label import MPlotAxis
 from pychron.graph.offset_plot_label import OffsetPlotLabel
+from pychron.graph.theme import themed_container_dict, themed_plot_bgcolor
 from pychron.graph.tools.axis_tool import AxisTool
 from .tools.contextual_menu_tool import ContextualMenuTool
 
@@ -128,6 +129,8 @@ def plot_axis_factory(p, key, normal, **kw):
 
 def plot_factory(legend_kw=None, **kw):
     """ """
+    if "bgcolor" in kw:
+        kw["bgcolor"] = themed_plot_bgcolor(kw["bgcolor"])
     p = Plot(data=ArrayPlotData(), **kw)
 
     vis = kw["show_legend"] if "show_legend" in kw else False
@@ -155,13 +158,8 @@ def container_factory(**kw):
 
     cklass = CONTAINERS.get(kind, VPlotContainer)
 
-    options = dict(bgcolor="white", padding=5, fill_padding=True)
-
-    for k in options:
-        if k not in list(kw.keys()):
-            kw[k] = options[k]
-    if "bgcolor" in kw:
-        kw["bgcolor"] = normalize_color_name(kw["bgcolor"])
+    kw = themed_container_dict(**kw)
+    kw.pop("kind", None)
     container = cklass(**kw)
     return container
 
@@ -206,6 +204,7 @@ class Graph(ContextMenuMixin):
     def __init__(self, *args, **kw):
         """ """
         super(Graph, self).__init__(*args, **kw)
+        self._redraw_pending = False
         self.clear()
 
         pc = self.plotcontainer
@@ -822,12 +821,8 @@ class Graph(ContextMenuMixin):
         plot = self.plots[plotid]
 
         si = plot.plots["aux{:03d}".format(series)][0]
-
-        oi = si.index.get_data()
-        ov = si.value.get_data()
-
-        si.index.set_data(hstack((oi, [datum[0]])))
-        si.value.set_data(hstack((ov, [datum[1]])))
+        si.index.set_data(self._append_data(si.index.get_data(), datum[0]))
+        si.value.set_data(self._append_data(si.value.get_data(), datum[1]))
 
         # if do_after:
         #     do_after_timer(do_after, add)
@@ -859,8 +854,7 @@ class Graph(ContextMenuMixin):
         plot = self.plots[plotid]
         data = plot.data
         for n, ds in ((names[0], xs), (names[1], ys)):
-            xx = data.get_data(n)
-            xx = hstack((xx, ds))
+            xx = self._append_data(data.get_data(n), ds)
             data.set_data(n, xx)
 
         if update_y_limits:
@@ -908,8 +902,7 @@ class Graph(ContextMenuMixin):
         data = plot.data
         mi, ma = -inf, inf
         for i, (name, di) in enumerate(zip(names, datum)):
-            d = data.get_data(name)
-            nd = hstack((d, di))
+            nd = self._append_data(data.get_data(name), di)
             data.set_data(name, nd)
 
             if i == 1:
@@ -1006,6 +999,7 @@ class Graph(ContextMenuMixin):
         pass
 
     def invalidate_and_redraw(self):
+        self._redraw_pending = False
         self.plotcontainer._layout_needed = True
         self.plotcontainer.invalidate_and_redraw()
 
@@ -1013,8 +1007,11 @@ class Graph(ContextMenuMixin):
         """ """
         if force:
             self.invalidate_and_redraw()
-        else:
-            self.plotcontainer.request_redraw()
+            return
+
+        if not self._redraw_pending:
+            self._redraw_pending = True
+            do_after_timer(0, self._execute_pending_redraw)
 
     def get_next_color(self, exclude=None, plotid=0):
         cg = self.color_generators[plotid]
@@ -1408,6 +1405,32 @@ class Graph(ContextMenuMixin):
         if change:
             self.redraw(force=force)
         return change
+
+    def _append_data(self, existing, values, limit=None):
+        if hasattr(values, "__iter__") and not isinstance(values, six.string_types):
+            new_values = array(values)
+        else:
+            new_values = array([values])
+
+        if new_values.ndim == 0:
+            new_values = new_values.reshape((1,))
+
+        if existing is None or len(existing) == 0:
+            result = new_values
+        else:
+            result = hstack((existing, new_values))
+
+        if limit:
+            result = result[-int(limit) :]
+
+        return result
+
+    def _execute_pending_redraw(self):
+        if not self._redraw_pending or self.plotcontainer is None:
+            return
+
+        self._redraw_pending = False
+        self.plotcontainer.request_redraw()
 
     def _get_selected_plotid(self):
         r = 0

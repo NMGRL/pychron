@@ -399,9 +399,38 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.alive = False
             self.info("pre execute check failed")
 
-    def set_queue_modified(self):
+    def set_queue_modified(self, queue=None):
         self.queue_modified = True
         self.stats.refresh_on_queue_change()
+        queue = queue or self.experiment_queue
+        if queue is not None:
+            if hasattr(queue, "request_table_refresh"):
+                queue.request_table_refresh()
+            else:
+                queue.refresh_table_needed = True
+
+            if hasattr(queue, "request_info_refresh"):
+                queue.request_info_refresh()
+            else:
+                queue.refresh_info_needed = True
+
+    def sync_active_context(self, editor=None, queue=None, queues=None):
+        if editor is not None:
+            self.active_editor = editor
+
+        if queue is None and editor is not None:
+            queue = getattr(editor, "queue", None)
+
+        if queue is not None:
+            self.experiment_queue = queue
+            selected = getattr(queue, "selected", None)
+            self.selected_run = selected[0] if selected else None
+        elif editor is None:
+            self.experiment_queue = None
+            self.selected_run = None
+
+        if queues is not None:
+            self.experiment_queues = list(queues)
 
     def is_alive(self):
         try:
@@ -563,7 +592,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.warning_dialog("Saving run failed to complete success fully")
                     self._save_complete_evt.set()
                     # run.cancel_run()
-                    spec.set_state(FAILED, force=True)
+                    spec.transition("fail", force=True, source="wait_for_overlap_save")
                     return
 
             self.debug("waiting complete")
@@ -973,7 +1002,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.stats.start_run(run)
 
         self._do_event(events.START_RUN)
-        run.spec.set_state("not run", force=True)
+        run.spec.transition("reset", force=True, source="execute_run")
 
         q = self.experiment_queue
         # is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
@@ -1006,7 +1035,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if self.monitor and self.monitor.has_fatal_error():
                 run.cancel_run()
-                run.spec.set_state(FAILED, force=True)
+                run.spec.transition("fail", force=True, source="execute_run")
                 break
 
             if not getattr(self, step)(run):
@@ -1014,7 +1043,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if (
                     step != "_post_measurement"
                 ):  # save data even if post measurement fails
-                    run.spec.set_state(FAILED, force=True)
+                    run.spec.transition("fail", force=True, source="execute_run")
                 break
 
         else:
@@ -1022,7 +1051,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 "$$$$$$$$$$$$$$$$$$$$ state at run end {}".format(run.spec.state)
             )
             if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
-                run.spec.set_state(SUCCESS)
+                run.spec.transition("complete", source="execute_run")
 
         self._do_event(events.SAVE_RUN, run=run)
         if self.save_all_runs or run.spec.state in ("success", "truncated"):
@@ -1322,7 +1351,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not run.start():
             self.alive = False
             ret = False
-            run.spec.set_state(FAILED, force=True)
+            run.spec.transition("fail", force=True, source="pre_execute_check")
 
             msg = "Run {} did not start properly".format(run.runid)
             self._err_message = msg

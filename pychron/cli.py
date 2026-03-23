@@ -9,23 +9,20 @@ from dataclasses import dataclass
 import typer
 
 from pychron.cli_profiles import PROFILES, available_profile_names
+from pychron.install_bootstrap import bootstrap_runtime_root, normalize_root
 from pychron.install_support import (
     build_install_plan,
     export_config_bundle,
     import_config_bundle,
 )
-from pychron.install_validation import profile_state_path, validate_runtime_root
-from pychron.paths import paths
-from pychron.starter_bundles import BUNDLES, available_bundle_names, resolve_bundles
+from pychron.install_validation import validate_runtime_root
+from pychron.starter_bundles import BUNDLES, available_bundle_names
 
 DEFAULT_ROOT = "~/Pychron"
 REQUIRED_PYTHON_PREFIX = "3.12"
 CHECK_MARK = "OK"
 WARN_MARK = "WARN"
 FAIL_MARK = "FAIL"
-SKIP_SOURCE_NAMES = {".DS_Store"}
-SKIP_SOURCE_PREFIXES = ("~", "~~")
-SKIP_SOURCE_SUFFIXES = (".bk", ".orig")
 
 app = typer.Typer(
     help="Pychron installation and environment utilities.",
@@ -39,12 +36,6 @@ class CheckResult:
     name: str
     status: str
     detail: str
-
-
-def _normalize_root(root):
-    root = root or DEFAULT_ROOT
-    return os.path.expanduser(root)
-
 
 def _format_result(result):
     return "[{}] {}: {}".format(result.status, result.name, result.detail)
@@ -61,19 +52,6 @@ def _normalize_profiles(profiles):
 
 def _normalize_bundles(bundles):
     return [bundle for bundle in (bundles or []) if bundle]
-
-
-def _save_bootstrap_state(root, merged, bundles=None, source_profiles=None):
-    path = profile_state_path(root)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    payload = {
-        "bundles": list(bundles or ()),
-        "requested": list(merged.requested),
-        "resolved": list(merged.resolved),
-        "source_profiles": list(source_profiles or ()),
-    }
-    with open(path, "w") as wfile:
-        json.dump(payload, wfile, indent=2, sort_keys=True)
 
 
 def _required_module_checks():
@@ -126,101 +104,6 @@ def _git_check():
         return CheckResult("Git", FAIL_MARK, str(exc))
 
 
-def _ensure_directory(path):
-    os.makedirs(path, exist_ok=True)
-
-
-def _write_file_if_missing(path, text):
-    if os.path.isfile(path):
-        return False
-
-    parent = os.path.dirname(path)
-    if parent:
-        _ensure_directory(parent)
-
-    with open(path, "w") as wfile:
-        wfile.write(text or "")
-    return True
-
-
-def _should_skip_source_name(name):
-    if name in SKIP_SOURCE_NAMES:
-        return True
-    if name.startswith(SKIP_SOURCE_PREFIXES):
-        return True
-    if name.endswith(SKIP_SOURCE_SUFFIXES):
-        return True
-    return False
-
-
-def _copy_tree(source, destination, overwrite=False):
-    copied = []
-    if not source or not os.path.isdir(source):
-        return copied
-
-    for root, dirs, files in os.walk(source):
-        dirs[:] = [d for d in dirs if not _should_skip_source_name(d)]
-        rel = os.path.relpath(root, source)
-        target_root = destination if rel == "." else os.path.join(destination, rel)
-        _ensure_directory(target_root)
-
-        for filename in files:
-            if _should_skip_source_name(filename):
-                continue
-            src = os.path.join(root, filename)
-            dst = os.path.join(target_root, filename)
-            if overwrite or not os.path.exists(dst):
-                shutil.copy2(src, dst)
-                copied.append(dst)
-    return copied
-
-
-def _resolve_source_profile_root(base, profile_name, kind):
-    if not base:
-        return None
-
-    base = os.path.expanduser(base)
-    candidates = (
-        os.path.join(base, profile_name, kind),
-        os.path.join(base, profile_name),
-        os.path.join(base, kind),
-        base,
-    )
-    for candidate in candidates:
-        if os.path.isdir(candidate):
-            return candidate
-
-
-def _apply_source_profiles(
-    root,
-    source_profiles=None,
-    setupfiles_source=None,
-    scripts_source=None,
-    overwrite=False,
-):
-    copied = []
-    root = _normalize_root(root)
-    setup_target = os.path.join(root, "setupfiles")
-    scripts_target = os.path.join(root, "scripts")
-
-    for profile_name in source_profiles or ():
-        setup_root = _resolve_source_profile_root(
-            setupfiles_source, profile_name, "setupfiles"
-        )
-        scripts_root = _resolve_source_profile_root(
-            scripts_source, profile_name, "scripts"
-        )
-
-        if setup_root:
-            copied.extend(_copy_tree(setup_root, setup_target, overwrite=overwrite))
-        if scripts_root:
-            copied.extend(
-                _copy_tree(scripts_root, scripts_target, overwrite=overwrite)
-            )
-
-    return copied
-
-
 def _path_checks(root, profiles=None, bundles=None):
     results = []
     for issue in validate_runtime_root(root, profiles=profiles, bundles=bundles):
@@ -236,70 +119,6 @@ def _platform_check():
         platform.system(), platform.release(), platform.machine()
     )
     return CheckResult("Platform", CHECK_MARK, detail)
-
-
-def _bootstrap(
-    root,
-    write_defaults=True,
-    profiles=None,
-    bundles=None,
-    source_profiles=None,
-    setupfiles_source=None,
-    scripts_source=None,
-    overwrite_source_files=False,
-):
-    root = _normalize_root(root)
-    paths.build(root)
-    if write_defaults:
-        paths.write_defaults()
-
-    profile_names = []
-    for bundle in resolve_bundles(bundles or ()):
-        for profile in bundle.profiles:
-            if profile not in profile_names:
-                profile_names.append(profile)
-    for profile in profiles or ():
-        if profile not in profile_names:
-            profile_names.append(profile)
-
-    merged = merge_profiles(profile_names)
-    for directory in merged.directories:
-        _ensure_directory(os.path.join(paths.root_dir, directory))
-
-    for file_spec in merged.required_files + merged.optional_files:
-        if file_spec.default_text is not None:
-            _write_file_if_missing(
-                os.path.join(paths.root_dir, file_spec.path), file_spec.default_text
-            )
-
-    copied = _apply_source_profiles(
-        root,
-        source_profiles=source_profiles,
-        setupfiles_source=setupfiles_source,
-        scripts_source=scripts_source,
-        overwrite=overwrite_source_files,
-    )
-
-    if merged.resolved or bundles or source_profiles:
-        _save_bootstrap_state(
-            root,
-            merged,
-            bundles=bundles,
-            source_profiles=source_profiles,
-        )
-
-    created = [
-        paths.root_dir,
-        paths.setup_dir,
-        paths.scripts_dir,
-        paths.preferences_dir,
-        paths.data_dir,
-        paths.dvc_dir,
-        paths.repository_dataset_dir,
-    ]
-    created.extend(os.path.join(paths.root_dir, d) for d in merged.directories)
-    created.extend(copied)
-    return root, created, merged
 
 
 def _doctor(root, profiles=None, bundles=None):
@@ -369,7 +188,9 @@ def install_plan(
 ):
     bundles = _normalize_bundles(bundles)
     profiles = _normalize_profiles(profiles)
-    plan = build_install_plan(profiles=profiles, bundles=bundles, root=root)
+    plan = build_install_plan(
+        profiles=profiles, bundles=bundles, root=normalize_root(root)
+    )
     typer.echo("Platform: {}".format(plan.platform_name))
     if plan.requested_bundles:
         typer.echo("Starter bundles: {}".format(", ".join(plan.requested_bundles)))
@@ -443,7 +264,7 @@ def bootstrap(
     bundles = _normalize_bundles(bundles)
     profiles = _normalize_profiles(profiles)
     source_profiles = _normalize_profiles(source_profiles)
-    root, created, merged = _bootstrap(
+    root, created, merged = bootstrap_runtime_root(
         root,
         write_defaults=write_defaults,
         profiles=profiles,
@@ -470,7 +291,7 @@ def bootstrap(
     if run_doctor:
         typer.echo("")
         typer.echo("Doctor results")
-        _echo_results(_doctor(root, profiles=profiles, bundles=bundles))
+        _echo_results(_doctor(normalize_root(root), profiles=profiles, bundles=bundles))
 
 
 @app.command("doctor")
@@ -499,7 +320,7 @@ def doctor(
 ):
     bundles = _normalize_bundles(bundles)
     profiles = _normalize_profiles(profiles)
-    results = _doctor(root, profiles=profiles, bundles=bundles)
+    results = _doctor(normalize_root(root), profiles=profiles, bundles=bundles)
     _echo_results(results)
 
     failing = {FAIL_MARK}
@@ -533,7 +354,10 @@ def export_config(
     ),
 ):
     exported = export_config_bundle(
-        root, output, include_appdata=include_appdata, overwrite=overwrite
+        normalize_root(root),
+        output,
+        include_appdata=include_appdata,
+        overwrite=overwrite,
     )
     typer.echo("Exported configuration bundle: {}".format(os.path.expanduser(output)))
     for item in exported:
@@ -558,7 +382,9 @@ def import_config(
         help="Allow imported files to overwrite existing files.",
     ),
 ):
-    extracted, skipped = import_config_bundle(root, archive, overwrite=overwrite)
+    extracted, skipped = import_config_bundle(
+        normalize_root(root), archive, overwrite=overwrite
+    )
     typer.echo("Imported configuration bundle: {}".format(os.path.expanduser(archive)))
     typer.echo("Extracted {} files".format(len(extracted)))
     for item in extracted:

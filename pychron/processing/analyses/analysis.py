@@ -837,17 +837,18 @@ class Analysis(ArArAge, IdeogramPlotable):
         return v
 
     def analysis_view_factory(self, quick=False):
-        mod, klass = self.analysis_view_klass
-        mod = __import__(
-            mod,
-            fromlist=[
-                klass,
-            ],
-        )
-        klass = getattr(mod, klass)
-        # v = self.analysis_view_klass()
-        v = klass()
-        self._analysis_view = v
+        v = self._analysis_view
+        if v is None:
+            mod, klass = self.analysis_view_klass
+            mod = __import__(
+                mod,
+                fromlist=[
+                    klass,
+                ],
+            )
+            klass = getattr(mod, klass)
+            v = klass()
+            self._analysis_view = v
         self._sync_view(v, quick=quick)
         return v
 
@@ -859,11 +860,8 @@ class Analysis(ArArAge, IdeogramPlotable):
             av = self.analysis_view
         try:
             av.load(self, quick=quick)
-        except BaseException as e:
-            import traceback
-
-            traceback.print_exc()
-            print("sync view {}".format(e))
+        except Exception as e:
+            logger.exception("Sync view failed for %s: %s", self.record_id, e)
 
     @property
     def age_string(self):
