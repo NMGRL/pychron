@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
+
+from typing import Any, Dict
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Any, Bool, Instance, Dict
+from traits.api import Any, Bool, Instance
 from traitsui.api import View
 
 from pychron.core.helpers.isotope_utils import sort_detectors
@@ -77,14 +80,13 @@ class FigureNode(SortableNode):
     def bind_preferences(self):
         bind_preference(self, "skip_meaning", "pychron.pipeline.skip_meaning")
 
-    def reset(self):
+    def reset(self) -> None:
         super(FigureNode, self).reset()
-        self.editors = {}
+        self.editors: Dict[str, Any] = {}
         self.editor = None
 
-    def refresh(self):
+    def refresh(self) -> None:
         for e in self.editors.values():
-            print("figure not refresh needed")
             e.refresh_needed = True
 
     def run(self, state):
