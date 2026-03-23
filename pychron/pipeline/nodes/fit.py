@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import annotations
+
+from typing import Any, List, Optional
 
 from numpy import inf, hstack, invert
 from pyface.confirmation_dialog import confirm
@@ -281,18 +284,19 @@ class FitIsotopeEvolutionNode(FitNode):
 
     classifier = Instance("pychron.classifier.isotope_classifier.IsotopeClassifier")
 
-    def _check_refit(self, analysis):
+    def _check_refit(self, analysis: Any) -> Optional[bool]:
         for k in self._keys:
             i = analysis.get_isotope(k)
             if i is None:
                 i = analysis.get_isotope(detector=k)
 
             if i is None:
-                print('invalid isotope "{}"'.format(k), analysis.isotope_keys)
+                self.debug('invalid isotope "{}"'.format(k), analysis.isotope_keys)
                 continue
 
             if not i.reviewed:
                 return True
+        return None
 
     def _options_view_default(self):
         return view("Iso Evo Options")

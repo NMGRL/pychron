@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
 
 # ============= standard library imports ========================
+from typing import Any, List, Tuple, Union
+
 from numpy import inf as Inf
 from uncertainties import nominal_value
 
@@ -67,25 +70,23 @@ class IdeogramPanel(FigurePanel):
 
             open_view(g)
 
-    def _handle_figure_event(self, evt):
+    def _handle_figure_event(self, evt: Tuple[str, Any]) -> None:
         kind, args = evt
         if kind == "correlation":
             self._make_correlation(*args)
         elif kind == "identify_peaks":
-            ps = []
+            ps: List[Any] = []
             for fi in self.figures:
-                print("peaks", fi.peaks)
                 if fi.peaks is not None:
                     ps.extend(fi.peaks)
             self.figure_event = ("identify_peaks", ps)
         elif kind == "plot_on_map":
             self.figure_event = ("plot_on_map", None)
 
-    def _make_graph_hook(self, g):
+    def _make_graph_hook(self, g: Any) -> None:
         g.on_trait_change(self._handle_figure_event, "figure_event")
 
-    def _handle_rescale(self, obj, name, new):
-        print("asd,", obj, name, new)
+    def _handle_rescale(self, obj: Any, name: str, new: str) -> None:
         if new == "y":
             m = -1
             for f in self.figures:

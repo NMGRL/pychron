@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
 
 import os
 import time
 from datetime import datetime, timedelta
+from typing import Any
 
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_after
@@ -661,17 +663,17 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
     run_time = Time
     _ran = False
 
-    def run(self, state):
+    def run(self, state: Any) -> None:
         self._low = datetime.now()
         super(CalendarUnknownNode, self).run(state)
 
-    def _run_time_default(self):
+    def _run_time_default(self) -> datetime:
         return (datetime.now() + timedelta(minutes=2)).time()
 
-    def _post_run_hook(self, engine, state):
+    def _post_run_hook(self, engine: Any, state: Any) -> None:
         self._flash_iter(0)
 
-    def _flash_iter(self, cnt):
+    def _flash_iter(self, cnt: int) -> None:
         if not self._alive:
             return
 
@@ -682,12 +684,12 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
             cnt = 0
         do_after(1000, self._flash_iter, cnt + 1)
 
-    def _iter(self):
+    def _iter(self) -> None:
         if not self._alive:
             return
 
         now = datetime.now()
-        print(
+        self.debug(
             "now={} run_time={}. hourmatch={}, minutematch={} ran={}".format(
                 now,
                 self.run_time,
@@ -703,7 +705,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
                     unks, updated = self._load_analyses()
                     if not self._alive:
                         return
-                    print("updated={} loaded unks={}".format(updated, unks))
+                    self.debug("updated={} loaded unks={}".format(updated, unks))
 
                     if unks:
                         self.engine.rerun_with(unks, post_run=False)

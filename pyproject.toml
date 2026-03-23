@@ -5,6 +5,19 @@ line-length = 100
 verbose = true
 # check = "true"
 
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "docs/",
+    "sandbox/",
+    "test/",
+    "alembic_dvc/",
+    "zobs/",
+]
+
 [tool.uv]
 required-environments = [
     "sys_platform == 'win32' and platform_machine == 'AMD64'",
@@ -83,5 +96,6 @@ valve = [
 
 [dependency-groups]
 dev = [
-    "black"
+    "black",
+    "mypy>=1.15.0,<2",
 ]
