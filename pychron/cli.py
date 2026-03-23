@@ -1,5 +1,4 @@
 import importlib
-import json
 import os
 import platform
 import shutil
@@ -9,23 +8,21 @@ from dataclasses import dataclass
 
 import typer
 
-from pychron.cli_profiles import PROFILES, available_profile_names, merge_profiles
+from pychron.cli_profiles import PROFILES, available_profile_names
+from pychron.install_bootstrap import bootstrap_runtime_root, normalize_root
 from pychron.install_support import (
     build_install_plan,
     export_config_bundle,
     import_config_bundle,
 )
-from pychron.paths import paths
+from pychron.install_validation import validate_runtime_root
+from pychron.starter_bundles import BUNDLES, available_bundle_names
 
 DEFAULT_ROOT = "~/Pychron"
 REQUIRED_PYTHON_PREFIX = "3.12"
 CHECK_MARK = "OK"
 WARN_MARK = "WARN"
 FAIL_MARK = "FAIL"
-PROFILE_STATE = "bootstrap_profiles.json"
-SKIP_SOURCE_NAMES = {".DS_Store"}
-SKIP_SOURCE_PREFIXES = ("~", "~~")
-SKIP_SOURCE_SUFFIXES = (".bk", ".orig")
 
 app = typer.Typer(
     help="Pychron installation and environment utilities.",
@@ -40,12 +37,6 @@ class CheckResult:
     status: str
     detail: str
 
-
-def _normalize_root(root):
-    root = root or DEFAULT_ROOT
-    return os.path.expanduser(root)
-
-
 def _format_result(result):
     return "[{}] {}: {}".format(result.status, result.name, result.detail)
 
@@ -55,35 +46,12 @@ def _echo_results(results):
         typer.echo(_format_result(result))
 
 
-def _profile_state_path():
-    return os.path.join(paths.appdata_dir, PROFILE_STATE)
-
-
 def _normalize_profiles(profiles):
     return [profile for profile in (profiles or []) if profile]
 
 
-def _load_saved_bootstrap_state():
-    path = _profile_state_path()
-    if not os.path.isfile(path):
-        return {}
-
-    try:
-        with open(path, "r") as rfile:
-            return json.load(rfile)
-    except Exception:
-        return {}
-
-
-def _save_bootstrap_state(merged, source_profiles=None):
-    path = _profile_state_path()
-    payload = {
-        "requested": list(merged.requested),
-        "resolved": list(merged.resolved),
-        "source_profiles": list(source_profiles or ()),
-    }
-    with open(path, "w") as wfile:
-        json.dump(payload, wfile, indent=2, sort_keys=True)
+def _normalize_bundles(bundles):
+    return [bundle for bundle in (bundles or []) if bundle]
 
 
 def _required_module_checks():
@@ -136,203 +104,13 @@ def _git_check():
         return CheckResult("Git", FAIL_MARK, str(exc))
 
 
-def _ensure_directory(path):
-    os.makedirs(path, exist_ok=True)
-
-
-def _write_file_if_missing(path, text):
-    if os.path.isfile(path):
-        return False
-
-    parent = os.path.dirname(path)
-    if parent:
-        _ensure_directory(parent)
-
-    with open(path, "w") as wfile:
-        wfile.write(text or "")
-    return True
-
-
-def _should_skip_source_name(name):
-    if name in SKIP_SOURCE_NAMES:
-        return True
-    if name.startswith(SKIP_SOURCE_PREFIXES):
-        return True
-    if name.endswith(SKIP_SOURCE_SUFFIXES):
-        return True
-    return False
-
-
-def _copy_tree(source, destination, overwrite=False):
-    copied = []
-    if not source or not os.path.isdir(source):
-        return copied
-
-    for root, dirs, files in os.walk(source):
-        dirs[:] = [d for d in dirs if not _should_skip_source_name(d)]
-        rel = os.path.relpath(root, source)
-        target_root = destination if rel == "." else os.path.join(destination, rel)
-        _ensure_directory(target_root)
-
-        for filename in files:
-            if _should_skip_source_name(filename):
-                continue
-            src = os.path.join(root, filename)
-            dst = os.path.join(target_root, filename)
-            if overwrite or not os.path.exists(dst):
-                shutil.copy2(src, dst)
-                copied.append(dst)
-    return copied
-
-
-def _resolve_source_profile_root(base, profile_name, kind):
-    if not base:
-        return None
-
-    base = os.path.expanduser(base)
-    candidates = (
-        os.path.join(base, profile_name, kind),
-        os.path.join(base, profile_name),
-        os.path.join(base, kind),
-        base,
-    )
-    for candidate in candidates:
-        if os.path.isdir(candidate):
-            return candidate
-
-
-def _apply_source_profiles(
-    root,
-    source_profiles=None,
-    setupfiles_source=None,
-    scripts_source=None,
-    overwrite=False,
-):
-    copied = []
-    root = _normalize_root(root)
-    setup_target = os.path.join(root, "setupfiles")
-    scripts_target = os.path.join(root, "scripts")
-
-    for profile_name in source_profiles or ():
-        setup_root = _resolve_source_profile_root(
-            setupfiles_source, profile_name, "setupfiles"
-        )
-        scripts_root = _resolve_source_profile_root(
-            scripts_source, profile_name, "scripts"
-        )
-
-        if setup_root:
-            copied.extend(_copy_tree(setup_root, setup_target, overwrite=overwrite))
-        if scripts_root:
-            copied.extend(
-                _copy_tree(scripts_root, scripts_target, overwrite=overwrite)
-            )
-
-    return copied
-
-
-def _path_checks(root, profiles=None):
+def _path_checks(root, profiles=None, bundles=None):
     results = []
-    root = _normalize_root(root)
-    paths.build(root)
-    saved_state = _load_saved_bootstrap_state()
-    merged = merge_profiles(profiles or saved_state.get("requested") or [])
-
-    file_checks = (
-        ("initialization.xml", os.path.join(paths.setup_dir, "initialization.xml")),
-        ("startup_tests.yaml", paths.startup_tests),
-        ("identifiers.yaml", paths.identifiers_file),
-        ("task_extensions.yaml", paths.task_extensions_file),
-    )
-    dir_checks = (
-        ("root", paths.root_dir),
-        ("setupfiles", paths.setup_dir),
-        ("scripts", paths.scripts_dir),
-        ("preferences", paths.preferences_dir),
-        ("data", paths.data_dir),
-        ("DVC root", paths.dvc_dir),
-        ("repositories", paths.repository_dataset_dir),
-    )
-
-    for label, directory in dir_checks:
-        exists = os.path.isdir(directory)
-        writable = os.access(directory, os.W_OK) if exists else False
-        if exists and writable:
-            status = CHECK_MARK
-            detail = directory
-        elif exists:
-            status = WARN_MARK
-            detail = "{} (not writable)".format(directory)
-        else:
-            status = FAIL_MARK
-            detail = "{} (missing)".format(directory)
-        results.append(CheckResult("Path {}".format(label), status, detail))
-
-    for label, filename in file_checks:
-        if os.path.isfile(filename):
-            results.append(CheckResult("File {}".format(label), CHECK_MARK, filename))
-        else:
-            results.append(
-                CheckResult(
-                    "File {}".format(label),
-                    WARN_MARK,
-                    "{} (missing)".format(filename),
-                )
-            )
-
-    if merged.resolved:
-        results.append(
-            CheckResult("Profiles", CHECK_MARK, ", ".join(merged.resolved))
-        )
-        for directory in merged.directories:
-            full_path = os.path.join(paths.root_dir, directory)
-            if os.path.isdir(full_path):
-                status = CHECK_MARK
-                detail = full_path
-            else:
-                status = FAIL_MARK
-                detail = "{} (missing for selected profile)".format(full_path)
-            results.append(
-                CheckResult("Profile dir {}".format(directory), status, detail)
-            )
-
-        for file_spec in merged.required_files:
-            full_path = os.path.join(paths.root_dir, file_spec.path)
-            if os.path.isfile(full_path):
-                status = CHECK_MARK
-                detail = full_path
-            else:
-                status = FAIL_MARK
-                detail = "{} (missing for selected profile)".format(full_path)
-            results.append(
-                CheckResult(
-                    "Profile file {}".format(file_spec.path), status, detail
-                )
-            )
-
-        for file_spec in merged.optional_files:
-            full_path = os.path.join(paths.root_dir, file_spec.path)
-            if os.path.isfile(full_path):
-                status = CHECK_MARK
-                detail = full_path
-            else:
-                status = WARN_MARK
-                detail = "{} (recommended by selected profile)".format(full_path)
-            results.append(
-                CheckResult(
-                    "Profile file {}".format(file_spec.path), status, detail
-                )
-            )
-
-    if saved_state.get("source_profiles"):
-        results.append(
-            CheckResult(
-                "Source profiles",
-                CHECK_MARK,
-                ", ".join(saved_state["source_profiles"]),
-            )
-        )
-
+    for issue in validate_runtime_root(root, profiles=profiles, bundles=bundles):
+        detail = issue.detail
+        if issue.hint:
+            detail = "{} Hint: {}".format(detail, issue.hint)
+        results.append(CheckResult(issue.name, issue.status, detail))
     return results
 
 
@@ -343,60 +121,32 @@ def _platform_check():
     return CheckResult("Platform", CHECK_MARK, detail)
 
 
-def _bootstrap(
-    root,
-    write_defaults=True,
-    profiles=None,
-    source_profiles=None,
-    setupfiles_source=None,
-    scripts_source=None,
-    overwrite_source_files=False,
-):
-    root = _normalize_root(root)
-    paths.build(root)
-    if write_defaults:
-        paths.write_defaults()
-
-    merged = merge_profiles(profiles)
-    for directory in merged.directories:
-        _ensure_directory(os.path.join(paths.root_dir, directory))
-
-    for file_spec in merged.required_files + merged.optional_files:
-        if file_spec.default_text is not None:
-            _write_file_if_missing(
-                os.path.join(paths.root_dir, file_spec.path), file_spec.default_text
-            )
-
-    copied = _apply_source_profiles(
-        root,
-        source_profiles=source_profiles,
-        setupfiles_source=setupfiles_source,
-        scripts_source=scripts_source,
-        overwrite=overwrite_source_files,
-    )
-
-    if merged.resolved or source_profiles:
-        _save_bootstrap_state(merged, source_profiles=source_profiles)
-
-    created = [
-        paths.root_dir,
-        paths.setup_dir,
-        paths.scripts_dir,
-        paths.preferences_dir,
-        paths.data_dir,
-        paths.dvc_dir,
-        paths.repository_dataset_dir,
-    ]
-    created.extend(os.path.join(paths.root_dir, d) for d in merged.directories)
-    created.extend(copied)
-    return root, created, merged
-
-
-def _doctor(root, profiles=None):
+def _doctor(root, profiles=None, bundles=None):
     results = [_platform_check(), _python_check(), _git_check()]
     results.extend(_required_module_checks())
-    results.extend(_path_checks(root, profiles=profiles))
+    results.extend(_path_checks(root, profiles=profiles, bundles=bundles))
     return results
+
+
+@app.command("bundles")
+def bundles(
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        help="Show bundle descriptions, versions, and included profiles.",
+    ),
+):
+    for name in available_bundle_names():
+        bundle = BUNDLES[name]
+        if verbose:
+            details = "{} version={} profiles={}".format(
+                bundle.description, bundle.version, ",".join(bundle.profiles)
+            )
+            typer.echo("{}: {}".format(name, details))
+            for note in bundle.notes:
+                typer.echo("  note: {}".format(note))
+        else:
+            typer.echo(name)
 
 
 @app.command("profiles")
@@ -425,15 +175,25 @@ def install_plan(
         "--root",
         help="Pychron data/config root to initialize.",
     ),
+    bundles: list[str] = typer.Option(
+        None,
+        "--bundle",
+        help="Build an install plan for one or more starter bundles.",
+    ),
     profiles: list[str] = typer.Option(
         None,
         "--profile",
         help="Build an install plan for one or more profiles.",
     ),
 ):
+    bundles = _normalize_bundles(bundles)
     profiles = _normalize_profiles(profiles)
-    plan = build_install_plan(profiles=profiles, root=root)
+    plan = build_install_plan(
+        profiles=profiles, bundles=bundles, root=normalize_root(root)
+    )
     typer.echo("Platform: {}".format(plan.platform_name))
+    if plan.requested_bundles:
+        typer.echo("Starter bundles: {}".format(", ".join(plan.requested_bundles)))
     if plan.requested_profiles:
         typer.echo(
             "Requested profiles: {}".format(", ".join(plan.requested_profiles))
@@ -470,6 +230,11 @@ def bootstrap(
         "--doctor/--no-doctor",
         help="Run environment checks after bootstrapping.",
     ),
+    bundles: list[str] = typer.Option(
+        None,
+        "--bundle",
+        help="Apply one or more versioned starter bundles.",
+    ),
     profiles: list[str] = typer.Option(
         None,
         "--profile",
@@ -496,12 +261,14 @@ def bootstrap(
         help="Allow external source bundles to overwrite existing files in the target root.",
     ),
 ):
+    bundles = _normalize_bundles(bundles)
     profiles = _normalize_profiles(profiles)
     source_profiles = _normalize_profiles(source_profiles)
-    root, created, merged = _bootstrap(
+    root, created, merged = bootstrap_runtime_root(
         root,
         write_defaults=write_defaults,
         profiles=profiles,
+        bundles=bundles,
         source_profiles=source_profiles,
         setupfiles_source=setupfiles_source,
         scripts_source=scripts_source,
@@ -514,6 +281,8 @@ def bootstrap(
     if write_defaults:
         typer.echo("Default configuration files were written where missing.")
 
+    if bundles:
+        typer.echo("Applied bundles: {}".format(", ".join(bundles)))
     if merged.resolved:
         typer.echo("Applied profiles: {}".format(", ".join(merged.resolved)))
     if source_profiles:
@@ -522,7 +291,7 @@ def bootstrap(
     if run_doctor:
         typer.echo("")
         typer.echo("Doctor results")
-        _echo_results(_doctor(root, profiles=profiles))
+        _echo_results(_doctor(normalize_root(root), profiles=profiles, bundles=bundles))
 
 
 @app.command("doctor")
@@ -532,18 +301,32 @@ def doctor(
         "--root",
         help="Pychron data/config root to inspect.",
     ),
+    bundles: list[str] = typer.Option(
+        None,
+        "--bundle",
+        help="Validate one or more starter bundles. If omitted, saved bootstrap bundles are used.",
+    ),
     profiles: list[str] = typer.Option(
         None,
         "--profile",
         help="Validate one or more composable profiles. If omitted, saved "
         "bootstrap profiles are used.",
     ),
+    strict: bool = typer.Option(
+        False,
+        "--strict",
+        help="Treat warnings as failures for CI or startup gating.",
+    ),
 ):
+    bundles = _normalize_bundles(bundles)
     profiles = _normalize_profiles(profiles)
-    results = _doctor(root, profiles=profiles)
+    results = _doctor(normalize_root(root), profiles=profiles, bundles=bundles)
     _echo_results(results)
 
-    if any(result.status == FAIL_MARK for result in results):
+    failing = {FAIL_MARK}
+    if strict:
+        failing.add(WARN_MARK)
+    if any(result.status in failing for result in results):
         raise typer.Exit(code=1)
 
 
@@ -571,7 +354,10 @@ def export_config(
     ),
 ):
     exported = export_config_bundle(
-        root, output, include_appdata=include_appdata, overwrite=overwrite
+        normalize_root(root),
+        output,
+        include_appdata=include_appdata,
+        overwrite=overwrite,
     )
     typer.echo("Exported configuration bundle: {}".format(os.path.expanduser(output)))
     for item in exported:
@@ -596,7 +382,9 @@ def import_config(
         help="Allow imported files to overwrite existing files.",
     ),
 ):
-    extracted, skipped = import_config_bundle(root, archive, overwrite=overwrite)
+    extracted, skipped = import_config_bundle(
+        normalize_root(root), archive, overwrite=overwrite
+    )
     typer.echo("Imported configuration bundle: {}".format(os.path.expanduser(archive)))
     typer.echo("Extracted {} files".format(len(extracted)))
     for item in extracted:

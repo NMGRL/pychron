@@ -26,6 +26,7 @@ from traitsui.api import View, VGroup, UItem, HGroup, Item, Color
 from traitsui.list_str_adapter import ListStrAdapter
 
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.helpers.color_utils import normalize_color_name
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -77,8 +78,11 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
     _remote_status = Str
     _remote_status_color = Color
 
+    def _remote_status_color_default(self):
+        return normalize_color_name("red")
+
     def _test_connection_fired(self):
-        self._remote_status_color = "red"
+        self._remote_status_color = normalize_color_name("red")
         self._remote_status = "Invalid"
 
         if self.remote.strip():
@@ -87,7 +91,7 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
                 r = requests.get(cmd)
                 if r.status_code == 200:
                     self._remote_status = "Valid"
-                    self._remote_status_color = "green"
+                    self._remote_status_color = normalize_color_name("green")
                     self._connection_hook()
             except BaseException as e:
                 print("exception", e, cmd)
@@ -136,8 +140,8 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
 class BaseConsolePreferences(BasePreferencesHelper):
     fontsize = Enum(6, 8, 10, 11, 12, 14, 16, 18, 22, 24, 36)
 
-    textcolor = Color("green")
-    bgcolor = Color("black")
+    textcolor = Color(normalize_color_name("green"))
+    bgcolor = Color(normalize_color_name("black"))
 
     preview = Str("Pychron is python + geochronology")
 

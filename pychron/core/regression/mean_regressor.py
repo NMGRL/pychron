@@ -38,6 +38,7 @@ class MeanRegressor(BaseRegressor):
         if not filtering:
             # prevent infinite recursion
             self.calculate_filtered_data()
+        self.clear_dirty()
 
     def calculate_outliers(self):
         nsigma = self.filter_outliers_dict.get("std_devs", 2)

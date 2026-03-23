@@ -96,6 +96,8 @@ class ScanManager(StreamGraphManager):
     use_log_events = Bool
     log_events_enabled = False
     _valve_event_list = List
+    _detector_series_cache = None
+    _last_graph_limit_update = 0
     # _prev_signals = None
     # _no_intensity_change_cnt = 0
     _suppress_isotope_change = False
@@ -189,6 +191,7 @@ class ScanManager(StreamGraphManager):
         self._graph_scan_width_changed()
 
         self._detector_changed(None, self.detector)
+        self._rebuild_detector_series_cache()
         # self._isotope_changed(None, self.isotope)
 
         # bind
@@ -263,6 +266,7 @@ class ScanManager(StreamGraphManager):
 
     def _toggle_detector(self, obj, name, old, new):
         self.graph.set_series_visibility(new, series=obj.name)
+        self._rebuild_detector_series_cache()
 
     def _update_magnet(self, obj, name, old, new):
         self.debug("update magnet {},{},{}".format(name, old, new))
@@ -341,25 +345,18 @@ class ScanManager(StreamGraphManager):
         keys, signals, _, _ = data
         if keys:
             self._signal_failed_cnt = 0
-            # if self._check_intensity_no_change(signals):
-            #     return
-            series, idxs = list(
-                zip(
-                    *(
-                        (i, keys.index(d.name))
-                        for i, d in enumerate(self.detectors)
-                        if d.name in keys
-                    )
-                )
+            mapping = self._map_scan_signals(keys, signals)
+            if not mapping:
+                return
+
+            series, signals = list(zip(*mapping))
+            x = self.graph.record_multiple(
+                signals, series=series, track_y=False
             )
-            signals = [signals[idx] for idx in idxs]
 
-            x = self.graph.record_multiple(signals, series=series, track_y=False)
-
-            if self.graph_y_auto:
-                mi, ma = self._get_graph_y_min_max()
-                if mi is not None and ma is not None:
-                    self.graph.set_y_limits(min_=mi, max_=ma, pad="0.1")
+            if self.graph_y_auto and self._should_update_graph_limits():
+                self.graph.update_y_limits(plotid=0, pad="0.1")
+                self._last_graph_limit_update = time.time()
 
             if self._recording and self.queue:
                 self.queue.put((x, keys, signals))
@@ -488,6 +485,7 @@ class ScanManager(StreamGraphManager):
 
     def _graph_changed(self):
         self.rise_rate.graph = self.graph
+        self._rebuild_detector_series_cache()
 
         plot = self.graph.plots[0]
         plot.value_range.on_trait_change(
@@ -529,6 +527,7 @@ class ScanManager(StreamGraphManager):
                 plot.line_width = (
                     emphasize_width if name == self.detector.name else nominal_width
                 )
+            self.graph.redraw(force=False)
 
             # mass = self.magnet.mass
             # if abs(mass) > 1e-5:
@@ -645,6 +644,31 @@ class ScanManager(StreamGraphManager):
             # g.data_limits[0] = 1.8 * mins
 
         return g
+
+    def _rebuild_detector_series_cache(self):
+        self._detector_series_cache = [
+            (i, d.name)
+            for i, d in enumerate(self.detectors)
+            if getattr(d, "active", True)
+        ]
+
+    def _map_scan_signals(self, keys, signals):
+        cache = self._detector_series_cache
+        if cache is None:
+            self._rebuild_detector_series_cache()
+            cache = self._detector_series_cache
+
+        key_indexes = {key: i for i, key in enumerate(keys)}
+        mapped = []
+        for series, det_name in cache:
+            idx = key_indexes.get(det_name)
+            if idx is not None:
+                mapped.append((series, signals[idx]))
+
+        return mapped
+
+    def _should_update_graph_limits(self):
+        return time.time() - self._last_graph_limit_update >= 0.5
 
     # ===============================================================================
     # property get/set

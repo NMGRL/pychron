@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
+
 import math
 from operator import itemgetter
+from typing import Any, List, Optional, Tuple, Union
 
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
@@ -24,7 +27,7 @@ from chaco.api import DataLabel
 from chaco.api import render_markers
 from chaco.api import ToolTip
 from enable.colors import ColorTrait
-from numpy import array, arange, inf as Inf, argmax, asarray
+from numpy import array, arange, inf as Inf, argmax, asarray, ndarray
 from pyface.message_dialog import warning
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
@@ -181,13 +184,8 @@ class Ideogram(BaseArArFigure):
             index_attr = "uage"
 
         if index_attr == "equilibration_age":
-            import time
-
-            st = time.time()
-            print("fffff")
             for a in self.analyses:
                 a.load_raw_data()
-            print("sdffasdf", time.time() - st)
 
         graph = self.graph
 
@@ -203,10 +201,7 @@ class Ideogram(BaseArArFigure):
             self.xs = xs
             self.xes = es
         except (ValueError, AttributeError) as e:
-            print("asdfasdf", e, index_attr)
-            import traceback
-
-            traceback.print_exc()
+            self.debug("Failed to get x values: {} index_attr={}".format(e, index_attr))
             return
 
         # if self.options.omit_by_tag:
@@ -267,23 +262,18 @@ class Ideogram(BaseArArFigure):
 
         self._rebuild_ideo(selection)
 
-    def mean_x(self, attr):
-        # todo: handle other attributes
+    def mean_x(self, attr: str) -> float:
         return nominal_value(self.analysis_group.weighted_age)
 
-    def max_x(self, *args, **kw):
-        # try:
-        #     return max([nominal_value(ai) + std_dev(ai) * 2
-        #                 for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
-        # except (AttributeError, ValueError) as e:
-        #     print('max', e, 'attr={}'.format(attr))
-        #     return 0
+    def max_x(self, *args: Any, **kw: Any) -> float:
         return max(self._min_max(*args, **kw))
 
-    def min_x(self, *args, **kw):
+    def min_x(self, *args: Any, **kw: Any) -> float:
         return min(self._min_max(sign=-1, *args, **kw))
 
-    def _min_max(self, attr, sign=1, exclude_omit=False):
+    def _min_max(
+        self, attr: str, sign: int = 1, exclude_omit: bool = False
+    ) -> Union[ndarray, int]:
         try:
             ans = [
                 ai
@@ -295,21 +285,23 @@ class Ideogram(BaseArArFigure):
             xs = self.normalize(xs, es)
             return xs
         except (AttributeError, ValueError) as e:
-            print("min max", e)
+            self.debug("Failed to calculate min_max: {}".format(e))
             return 0
 
-    def get_valid_xbounds(self):
+    def get_valid_xbounds(self) -> Tuple[float, float]:
         l, h = self.min_x(self.options.index_attr, exclude_omit=True), self.max_x(
             self.options.index_attr, exclude_omit=True
         )
         return l, h
 
-    def update_index_mapper(self, obj, name, old, new):
+    def update_index_mapper(
+        self, obj: Any, name: str, old: Any, new: Any
+    ) -> None:
         self._rebuild_ideo()
-        # if new:
-        #     self.update_graph_metadata(None, name, old, new)
 
-    def update_graph_metadata(self, obj, name, old, new):
+    def update_graph_metadata(
+        self, obj: Any, name: str, old: Any, new: Any
+    ) -> None:
         if hasattr(obj, "suppress_update") and obj.suppress_update:
             return
 
@@ -683,12 +675,6 @@ class Ideogram(BaseArArFigure):
             if self.group_id > 0:
                 for ov in plot.overlays:
                     if isinstance(ov, IdeogramPointsInset):
-                        print(
-                            "ideogram point inset",
-                            self.group_id,
-                            startidx,
-                            ov.value.get_bounds()[1] + 1,
-                        )
                         startidx = max(startidx, ov.value.get_bounds()[1] + 1)
             else:
                 startidx = 1

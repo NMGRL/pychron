@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import logging
 
 from chaco.array_data_source import ArrayDataSource
 from numpy import zeros_like, array, asarray, isinf, isnan
@@ -31,15 +32,17 @@ from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.pipeline.plot.plotter.series import BaseSeries
 from pychron.pychron_constants import PLUSMINUS
 
+logger = logging.getLogger(__name__)
+
 
 def calc_limits(ys, ye, n):
     try:
         ymi = (ys - (ye * n)).min()
-    except BaseException:
+    except (AttributeError, TypeError, ValueError):
         ymi = 0
     try:
         yma = (ys + (ye * n)).max()
-    except BaseException:
+    except (AttributeError, TypeError, ValueError):
         yma = 0
 
     return ymi, yma
@@ -51,7 +54,7 @@ def unzip_data(data):
             [std_dev(ri) for ri in data]
         )
     except ValueError as e:
-        print(e)
+        logger.warning("Failed unpacking reference data: %s", e)
 
 
 class ReferencesSeries(BaseSeries):

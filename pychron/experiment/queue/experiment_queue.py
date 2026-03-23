@@ -429,7 +429,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         nans = []
         # for ei in reversed(ens):
         for ei in ens:
-            ei.state = "not run"
+            ei.transition("reset", force=True, source="reset")
             if not ei.is_step_heat():
                 ei.aliquot = 0
             elif finished and ei.user_defined_aliquot:
@@ -473,7 +473,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
     def paste_function(self, obj):
         ci = obj.clone_traits()
-        ci.state = "not run"
+        ci.transition("reset", force=True, source="paste")
         ci.aliquot = 0
         ci.step = -1
         ci.conflicts_checked = False
@@ -587,13 +587,12 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         if new and not self._no_update:
             idx = self.automated_runs.index(new[-1])
             self.debug("SSSSSSSSSSSSSS set AR scroll to {}".format(idx))
-            self.refresh_info_needed = True
-            self.automated_runs_scroll_to_row = idx
+            self.request_info_refresh(scroll_to_row=idx)
             # invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
 
     @on_trait_change("automated_runs:state")
     def _refresh_table1(self):
-        self.refresh_table_needed = True
+        self.request_table_refresh()
 
 
 # ============= EOF =============================================

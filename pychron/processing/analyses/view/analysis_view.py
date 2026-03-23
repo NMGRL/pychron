@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 
-
 from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
 from traitsui.api import (
     View,
@@ -50,6 +49,9 @@ from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, MeasurementView
 from pychron.pychron_constants import DETECTOR_IC, COCKTAIL, UNKNOWN
+from pychron.core.helpers.logger_setup import new_logger
+
+logger = new_logger("AnalysisView")
 
 
 class AnalysisViewHandler(Handler):
@@ -96,6 +98,11 @@ class MetaView(HasTraits):
     spectrometer = Instance(SpectrometerView)
     interference = Instance(InterferencesView)
     sample = Instance(SampleView)
+
+    def load(self, an):
+        self.interference = InterferencesView(an)
+        self.spectrometer = SpectrometerView(an)
+        self.sample = SampleView(an)
 
     def traits_view(self):
         v = View(
@@ -228,6 +235,10 @@ class AnalysisView(HasTraits):
     measurement_view = Instance(MeasurementView)
     extraction_view = Instance(ExtractionView)
     isotope_view = Instance(IsotopeView, ())
+    _evolution_graph = Any
+    _history_view = Instance(HistoryView)
+    _meta_view = Instance(MetaView)
+    _regression_view = Instance(RegressionView)
 
     groups = List
 
@@ -263,7 +274,6 @@ class AnalysisView(HasTraits):
                 v.fontsize = size
 
     def load(self, an, quick=False):
-        self.groups = []
         self.model = an
         analysis_type = an.analysis_type
         self.analysis_id = analysis_id = "{}({})".format(an.record_id, an.sample)
@@ -276,7 +286,8 @@ class AnalysisView(HasTraits):
 
         isos = [an.isotopes[k] for k in an.isotope_keys]
         # iso_view = IsotopeView(isotopes=isos)
-        self.isotope_view.isotopes = isos
+        if self.isotope_view.isotopes != isos:
+            self.isotope_view.isotopes = isos
         # self.groups.append(self.isotope_view)
 
         gs = [self.main_view, self.isotope_view]
@@ -284,17 +295,18 @@ class AnalysisView(HasTraits):
             self._make_subviews(an, gs)
 
         # self.selected_tab = self.main_view
-        self.groups = gs
+        if self.groups != gs:
+            self.groups = gs
         # do_after(50, self.trait_set, selected_tab=self.main_view)
 
     def refresh(self):
         an = self.model
-        self.isotope_view.isotopes = []
         isos = [an.isotopes[k] for k in an.isotope_keys]
-        self.isotope_view.isotopes = isos
+        if self.isotope_view.isotopes != isos:
+            self.isotope_view.isotopes = isos
         self.isotope_view.refresh_needed = True
 
-        self.main_view.load_computed(self.model, new_list=False)
+        self.main_view.load(self.model)
         self.main_view.refresh_needed = True
 
         for g in self.groups:
@@ -304,6 +316,13 @@ class AnalysisView(HasTraits):
     @on_trait_change("isotope_view:updated")
     def show_iso_evo(self, new):
         g = self.show_iso_evolutions(**new)
+        if g is None:
+            return
+
+        if self._evolution_graph is not None and self._evolution_graph is not g:
+            self._evolution_graph.on_trait_change(self.refresh, "grouping", remove=True)
+
+        self._evolution_graph = g
         g.on_trait_change(self.refresh, "grouping")
 
     def _selected_tab_changed(self, new):
@@ -317,25 +336,26 @@ class AnalysisView(HasTraits):
             new.activate()
 
     def _make_subviews(self, an, gs):
-        view = HistoryView()
-        gs.append(view)
+        if self._history_view is None:
+            self._history_view = HistoryView()
+        if self._meta_view is None:
+            self._meta_view = MetaView()
+        if self._regression_view is None:
+            self._regression_view = RegressionView()
 
-        view = MetaView(
-            interference=InterferencesView(an),
-            spectrometer=SpectrometerView(an),
-            sample=SampleView(an),
-        )
-        gs.append(view)
+        self._meta_view.load(an)
 
-        view = RegressionView()
-        gs.append(view)
+        gs.append(self._history_view)
+        gs.append(self._meta_view)
+        gs.append(self._regression_view)
         if an.measured_response_stream:
-            ev = ExtractionView()
+            ev = self.extraction_view or ExtractionView()
             if ev.setup_graph(
                 an.measured_response_stream,
                 an.requested_output_stream,
                 an.setpoint_stream,
             ):
+                self.extraction_view = ev
                 gs.append(ev)
 
         if an.snapshots:

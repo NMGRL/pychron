@@ -17,10 +17,11 @@
 import time
 from datetime import datetime
 from threading import Event
+from math import isfinite
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
+from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance, Float
 
 from pychron.envisage.consoleable import Consoleable
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
@@ -65,12 +66,16 @@ class DataCollector(Consoleable):
     _temp_conds = None
     _result = None
     _queue = None
+    _plot_data_buffers = None
+    _last_plot_panel_update = 0
+    _live_plot_limits = None
 
     err_message = Str
     no_intensity_threshold = 100
     not_intensity_count = 0
     trigger = None
     plot_panel_update_period = Int(1)
+    plot_panel_update_min_period = Float(0.25)
 
     def __init__(self, *args, **kw):
         super(DataCollector, self).__init__(*args, **kw)
@@ -111,6 +116,9 @@ class DataCollector(Consoleable):
         self._truncate_signal = False
         self._warned_no_fit = []
         self._warned_no_det = []
+        self._plot_data_buffers = {}
+        self._live_plot_limits = {}
+        self._last_plot_panel_update = 0
 
         if self.starttime is None:
             self.starttime = time.time()
@@ -185,12 +193,14 @@ class DataCollector(Consoleable):
                 break
 
         evt.set()
+        self._flush_plot_buffers(force=True)
         # self.debug('waiting for write to finish')
         # t.join()
 
         self.debug("measurement finished")
 
     def _post_iter_hook(self, i):
+        self._flush_plot_buffers(cnt=i)
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
             self.isotope_group.calculate_age(force=True)
 
@@ -318,9 +328,6 @@ class DataCollector(Consoleable):
             if det:
                 self._set_plot_data(cnt, det, x, signal)
 
-        if not cnt % self.plot_panel_update_period:
-            self.plot_panel.update()
-
     def _set_plot_data(self, cnt, det, x, signal):
         iso = det.isotope
         detname = det.name
@@ -366,15 +373,143 @@ class DataCollector(Consoleable):
                     )
                 continue
 
-            g.add_datum(
-                (x, signal),
-                series=series,
-                plotid=pid,
-                update_y_limits=True,
-                ypadding=ypadding,
+            self._queue_plot_data(
+                g, pid, series, fit_series, fit, x, signal, ypadding
             )
+
+    def _queue_plot_data(
+        self, graph, plotid, series, fit_series, fit, x, signal, ypadding
+    ):
+        key = (id(graph), plotid, series, fit_series)
+        buf = self._plot_data_buffers.get(key)
+        if buf is None:
+            buf = {
+                "graph": graph,
+                "plotid": plotid,
+                "series": series,
+                "fit_series": fit_series,
+                "fit": fit,
+                "ypadding": ypadding,
+                "xs": [],
+                "ys": [],
+            }
+            self._plot_data_buffers[key] = buf
+
+        buf["xs"].append(x)
+        buf["ys"].append(signal)
+        buf["fit"] = fit
+        buf["ypadding"] = ypadding
+
+    def _flush_plot_buffers(self, cnt=None, force=False):
+        if not self.plot_panel or not self._plot_data_buffers:
+            return
+
+        now = time.time()
+        if not force and not self._should_refresh_plot_panel(cnt, now):
+            return
+
+        for buf in self._plot_data_buffers.values():
+            xs = buf["xs"]
+            ys = buf["ys"]
+            if not xs:
+                continue
+
+            graph = buf["graph"]
+            graph.add_bulk_data(
+                xs,
+                ys,
+                plotid=buf["plotid"],
+                series=buf["series"],
+                ypadding=buf["ypadding"],
+                update_y_limits=False,
+            )
+            self._update_live_plot_limits(
+                graph,
+                plotid=buf["plotid"],
+                series=buf["series"],
+                xs=xs,
+                ys=ys,
+                ypadding=buf["ypadding"],
+            )
+            fit = buf["fit"]
             if fit:
-                g.set_fit(fit, plotid=pid, series=fit_series)
+                graph.set_fit(fit, plotid=buf["plotid"], series=buf["fit_series"])
+
+        self._plot_data_buffers.clear()
+        self.plot_panel.update()
+        self._last_plot_panel_update = now
+
+    def _should_refresh_plot_panel(self, cnt, now):
+        period = max(1, self.plot_panel_update_period)
+        period_ready = cnt is not None and not cnt % period
+        time_ready = (
+            self._last_plot_panel_update == 0
+            or now - self._last_plot_panel_update >= self.plot_panel_update_min_period
+        )
+        return period_ready or time_ready
+
+    def _update_live_plot_limits(self, graph, plotid, series, xs, ys, ypadding):
+        key = (id(graph), plotid, series, self.collection_kind)
+        state = self._live_plot_limits.get(key)
+        if state is None:
+            state = {
+                "min": None,
+                "max": None,
+                "recalc_count": 0,
+            }
+            self._live_plot_limits[key] = state
+
+        batch_min = min(ys)
+        batch_max = max(ys)
+        state["min"] = batch_min if state["min"] is None else min(state["min"], batch_min)
+        state["max"] = batch_max if state["max"] is None else max(state["max"], batch_max)
+
+        all_ys = graph.get_data(plotid=plotid, series=series, axis=1)
+        if len(all_ys):
+            observed_min = all_ys.min()
+            observed_max = all_ys.max()
+            state["recalc_count"] += 1
+
+            # Shrink stale limits only occasionally so the live plot stays stable.
+            if state["recalc_count"] >= 4:
+                state["min"] = observed_min
+                state["max"] = observed_max
+                state["recalc_count"] = 0
+
+        ymin, ymax = state["min"], state["max"]
+        if ymin is None or ymax is None:
+            return
+
+        if isinstance(ypadding, str):
+            ypad = max(0.1, abs(ymax - ymin)) * float(ypadding)
+        else:
+            ypad = ypadding
+
+        if self.collection_kind in (SIGNAL, SNIFF) and ymin >= 0:
+            ymin = 0
+        else:
+            ymin -= ypad
+        ymax += ypad
+
+        if isfinite(ymin) and isfinite(ymax):
+            graph.set_y_limits(min_=ymin, max_=ymax, plotid=plotid, force=False)
+
+        xmax = max(xs)
+        self._update_live_x_limits(graph, plotid, xmax)
+
+    def _update_live_x_limits(self, graph, plotid, xmax):
+        expected = None
+        if self.plot_panel is not None:
+            expected = self.plot_panel._ncounts * self.plot_panel.integration_time
+
+        _, current_max = graph.get_x_limits(plotid)
+        candidates = [xmax * 1.05]
+        if expected:
+            candidates.append(expected)
+        if current_max is not None:
+            candidates.append(current_max)
+
+        graph.set_x_limits(min_=0, max_=max(candidates), plotid=plotid, force=False)
 
     # ===============================================================================
     #
@@ -433,7 +568,7 @@ class DataCollector(Consoleable):
     def _set_truncated(self):
         self.state = "truncated"
         self.automated_run.truncated = True
-        self.automated_run.spec.set_state("truncated")
+        self.automated_run.spec.transition("truncate", source="data_collector")
         return "break"
 
     def _check_iteration(self, i):

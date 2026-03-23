@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
+from __future__ import annotations
 
-# ============= enthought library imports =======================
+import os
+from typing import Any
+
 from pyface.message_dialog import information
-from traits.api import Str, Instance, Any
+from traits.api import Str, Instance
 from traitsui.api import Item, HGroup, EnumEditor, View, VGroup, UItem
 from traitsui.editors.api import DirectoryEditor
 from uncertainties import ufloat, std_dev, nominal_value
@@ -69,10 +71,10 @@ class PDFFigureNode(PDFNode):
         p, _ = unique_path2(self.root, name, extension=self.extension)
         return p
 
-    def run(self, state):
+    def run(self, state: Any) -> None:
         for ei in state.editors:
             if hasattr(ei, "save_file"):
-                print("save file to", self._generate_path(ei))
+                self.debug("save file to {}".format(self._generate_path(ei)))
                 ei.save_file(self._generate_path(ei))
 
 

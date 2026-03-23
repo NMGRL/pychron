@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, UTC
 
 from pychron.cli_profiles import merge_profiles
+from pychron.starter_bundles import bundle_profiles, resolve_bundles
 
 CONFIG_BUNDLE_VERSION = 1
 CONFIG_BUNDLE_DIRS = ("setupfiles", "scripts", "preferences", "queue_conditionals")
@@ -24,6 +25,7 @@ PROFILE_EXTRA_MAP = {
 class InstallPlan:
     platform_name: str
     python_version: str
+    requested_bundles: tuple[str, ...]
     requested_profiles: tuple[str, ...]
     resolved_profiles: tuple[str, ...]
     extras: tuple[str, ...]
@@ -31,8 +33,16 @@ class InstallPlan:
     notes: tuple[str, ...]
 
 
-def build_install_plan(profiles=None, root="~/Pychron", python_version="3.12"):
-    merged = merge_profiles(profiles or ())
+def build_install_plan(
+    profiles=None, bundles=None, root="~/Pychron", python_version="3.12"
+):
+    bundle_specs = resolve_bundles(bundles or ())
+    profile_names = list(bundle_profiles(bundles or ()))
+    for profile in profiles or ():
+        if profile not in profile_names:
+            profile_names.append(profile)
+
+    merged = merge_profiles(profile_names)
     extras = []
     seen = set()
     for profile in merged.resolved:
@@ -50,7 +60,10 @@ def build_install_plan(profiles=None, root="~/Pychron", python_version="3.12"):
     profile_args = " ".join(
         "--profile {}".format(profile) for profile in merged.requested
     )
+    bundle_args = " ".join("--bundle {}".format(bundle.name) for bundle in bundle_specs)
     bootstrap_cmd = "pychron-bootstrap --root {}".format(root)
+    if bundle_args:
+        bootstrap_cmd = "{} {}".format(bootstrap_cmd, bundle_args)
     if profile_args:
         bootstrap_cmd = "{} {}".format(bootstrap_cmd, profile_args)
 
@@ -64,6 +77,7 @@ def build_install_plan(profiles=None, root="~/Pychron", python_version="3.12"):
     system = platform.system()
     notes = [
         "Use Python {} for supported installs.".format(python_version),
+        "Starter bundles provide versioned, workflow-oriented defaults.",
         "Profile selection controls bootstrap layout; extras add optional "
         "comms/runtime dependencies.",
     ]
@@ -84,6 +98,7 @@ def build_install_plan(profiles=None, root="~/Pychron", python_version="3.12"):
     return InstallPlan(
         platform_name=system,
         python_version=python_version,
+        requested_bundles=tuple(bundle.name for bundle in bundle_specs),
         requested_profiles=merged.requested,
         resolved_profiles=merged.resolved,
         extras=tuple(extras),

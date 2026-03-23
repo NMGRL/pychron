@@ -15,25 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import re
+from __future__ import annotations
 
+import re
+from typing import Callable, List, Tuple, Union
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
-def pos_gen(s, e, inc=1):
+def pos_gen(s: int, e: int, inc: int = 1) -> List[int]:
     if s > e:
         inc *= -1
     return list(range(s, e + inc, inc))
 
 
-def increment_list(ps, start=0):
+def increment_list(ps: List[int], start: int = 0) -> List[int]:
     if len(ps) == 1:
         return [ps[0] + 1]
     else:
         s, e, o = ps[0], ps[-1], ps[1] - ps[0]
-        # i=1 if s<e else -1
         if start:
             n = start
         else:
@@ -42,42 +43,42 @@ def increment_list(ps, start=0):
         return [p + n for p in ps]
 
 
-def slice_func(pos):
+def slice_func(pos: str) -> List[int]:
     s, e = pos.split("-")
     return pos_gen(int(s), int(e))
 
 
-def islice_func(pos, start=0):
+def islice_func(pos: str, start: int = 0) -> str:
     ps = slice_func(pos)
     nls = increment_list(ps, start)
     return "{}-{}".format(nls[0], nls[-1])
 
 
-def sslice_func(pos):
+def sslice_func(pos: str) -> List[int]:
     s, e, inc = pos.split(":")
 
     return pos_gen(int(s), int(e), int(inc))
 
 
-def isslice_func(pos):
+def isslice_func(pos: str) -> str:
     ps = sslice_func(pos)
     nls = increment_list(ps)
     step = nls[1] - nls[0]
     return "{}:{}:{}".format(nls[0], nls[-1], step)
 
 
-def pslice_func(pos):
+def pslice_func(pos: str) -> List[int]:
     s, e = pos.split(":")
     return pos_gen(int(s), int(e))
 
 
-def ipslice_func(pos):
+def ipslice_func(pos: str) -> str:
     ps = pslice_func(pos)
     nls = increment_list(ps)
     return "{}:{}".format(nls[0], nls[-1])
 
 
-def cslice_func(pos):
+def cslice_func(pos: str) -> List[int]:
     args = pos.split(";")
     positions = []
     for ai in args:
@@ -88,7 +89,7 @@ def cslice_func(pos):
     return positions
 
 
-def icslice_func(pos):
+def icslice_func(pos: str) -> str:
     args = pos.split(";")
     ns = []
     x = args[-1]
@@ -107,89 +108,62 @@ def icslice_func(pos):
     return ";".join(ns)
 
 
-SLICE_REGEX = (re.compile(r"[\d]+-{1}[\d]+$"), slice_func, islice_func, "Slice")  # 1-4
-SSLICE_REGEX = (
+SLICE_REGEX: Tuple[re.Pattern, Callable[[str], List[int]], Callable[[str, int], str], str] = (
+    re.compile(r"[\d]+-{1}[\d]+$"),
+    slice_func,
+    islice_func,
+    "Slice",
+)
+SSLICE_REGEX: Tuple[re.Pattern, Callable[[str], List[int]], Callable[[str], str], str] = (
     re.compile(r"\d+:{1}\d+:{1}\d+$"),
     sslice_func,
     isslice_func,
     "SSlice",
-)  # 1:4:2
-PSLICE_REGEX = (re.compile(r"\d+:{1}\d+$"), pslice_func, ipslice_func, "PSlice")  # 1:4
+)
+PSLICE_REGEX: Tuple[re.Pattern, Callable[[str], List[int]], Callable[[str], str], str] = (
+    re.compile(r"\d+:{1}\d+$"),
+    pslice_func,
+    ipslice_func,
+    "PSlice",
+)
 
-# 1-4;6;9;11-15
-# 1-4;6;9
-# 1-4;6
-# 6;9;11-15
-# 1-4;6;9;11-15;50-42
-
-CSLICE_REGEX = (
+CSLICE_REGEX: Tuple[re.Pattern, Callable[[str], List[int]], Callable[[str], str], str] = (
     re.compile(r"((\d+-\d+)|\d+)(;+\d+)+((-\d+)|(;+\d+))*"),
     cslice_func,
     icslice_func,
     "CSlice",
 )
 
-"""
-    use regex to match valid tansect entry
-    e.g t2-3   point 3 of transect 2
 
-    this re says
-    match any string where
-    1. [tT]     the first character is t or T
-    2. [\d\W]+  followed by at least one digit character and no word characters
-    3. -         followed by -
-    4. [\d\W]+  followed by at least one digit character and no word characters
-    5  $         end of string
-"""
-
-
-def transect_func(pos):
+def transect_func(pos: str) -> List[str]:
     return [pos]
 
 
-def transect_ifunc(pos):
+def transect_ifunc(pos: str) -> str:
     t, p = pos.split("-")
     return "{}-{}".format(t, int(p) + 1)
 
 
-TRANSECT_REGEX = (
-    re.compile("[tT]+[\d\W]+-+[\d\W]+$"),
+TRANSECT_REGEX: Tuple[re.Pattern, Callable[[str], List[str]], Callable[[str], str], str] = (
+    re.compile(r"[tT]+[\d\W]+-+[\d\W]+$"),
     transect_func,
     transect_ifunc,
     "Transect",
 )
 
-"""
-    use regex to match valid position
-    e.g. p1, 1
-
-    this re says
-    match any string where
-    1. [pPlLrRdD\d]     the first character is p,P,l,L,r,R,d,D or any digit
-    2. [\d\W]$  followed by at least one digit character and no word characters
-    3. | or
-    4. [\d\W]$  at least one digit character and no word characters
-
-"""
-# POSITION_REGEX = re.compile('[pPlLrRdD\d]+[\d\W]$|[\d\W]$')
-POSITION_REGEX = (re.compile("[pPlLrRdD\d]?[\d]$|[\d]$"), None, None, "Position")
-
-"""
-    e.g. 1.00,3.01
-         1.0,2.0,3.0
-         1.0,2.0;3.0,4.0
-"""
+POSITION_REGEX: Tuple[re.Pattern, None, None, str] = (
+    re.compile(r"[pPlLrRdD\d]?[\d]$|[\d]$"),
+    None,
+    None,
+    "Position",
+)
 
 
-def xy_func(p):
+def xy_func(p: str) -> List[str]:
     return p.split(";")
-    # cant get non match with trailing ; to work so manual trim if present
-    # return [p for p in map(str.strip,p.split(';')) if p]
 
 
-# XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
-# XY_REGEX = (re.compile('([-\d+]+.\d+(,[-\d+]+.\d+){1,3})(;([-\d+]+.\d+(,[-\d+]+.\d+){1,3}))*$'), xy_func, None, 'XY')
-XY_REGEX = (
+XY_REGEX: Tuple[re.Pattern, Callable[[str], List[str]], None, str] = (
     re.compile(
         r"([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$"
     ),
@@ -201,7 +175,12 @@ XY_REGEX = (
 DRILL_REGEX = re.compile(r"^(?P<id>[dD]\d+)$")
 POINT_REGEX = re.compile(r"^(?P<id>[pP]\d+)$")
 
-SCAN_REGEX = (re.compile(r"^(?P<id>[sS]\d+)$"), None, None, "Scan")
+SCAN_REGEX: Tuple[re.Pattern, None, None, str] = (
+    re.compile(r"^(?P<id>[sS]\d+)$"),
+    None,
+    None,
+    "Scan",
+)
 
 if __name__ == "__main__":
     for pos in ("-1.0,2.0;", "1.0;", "1.0;2.0", "1.0,2.0;3.0,4.0"):

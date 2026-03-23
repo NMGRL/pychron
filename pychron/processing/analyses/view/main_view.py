@@ -86,6 +86,10 @@ class MainView(HasTraits):
     show_iso_evo_needed = Event
     recall_options = None
     experiment_type = AR_AR
+    _measurement_names = List
+    _extraction_names = List
+    _computed_names = List
+    _corrected_names = List
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
@@ -160,7 +164,9 @@ class MainView(HasTraits):
             ),
         ]
 
-        self.measurement_values = ms
+        self.measurement_values = self._sync_values(
+            self.measurement_values, ms, "_measurement_names"
+        )
 
     def load_extraction(self, an):
         ev = [
@@ -215,7 +221,9 @@ class MainView(HasTraits):
 
         ev = [ei for ei in ev if not (ei.conditional_visible and not ei.value)]
 
-        self.extraction_values = ev
+        self.extraction_values = self._sync_values(
+            self.extraction_values, ev, "_extraction_names"
+        )
 
     def load_computed(self, an, new_list=True):
         if self.analysis_type == UNKNOWN:
@@ -368,7 +376,9 @@ class MainView(HasTraits):
                     ("40Ar/38Ar", "Ar40/Ar38", nominal_value(c.atm4038)),
                 ]
                 cv = self._make_ratios(ratios)
-                self.computed_values = cv
+                self.computed_values = self._sync_values(
+                    self.computed_values, cv, "_computed_names"
+                )
 
             self._update_ratios()
 
@@ -389,8 +399,8 @@ class MainView(HasTraits):
                 )
 
                 self._set_summary_str(ss)
-            except BaseException as exc:
-                print("load air computed", exc)
+            except Exception:
+                pass
         else:
             # todo add ratios for other isotopes. e.g Ne
             pass
@@ -423,7 +433,9 @@ class MainView(HasTraits):
                 self._computed_value_factory(name="Age", tag="uage", uvalue=an.uage)
             )
 
-            self.computed_values = cv
+            self.computed_values = self._sync_values(
+                self.computed_values, cv, "_computed_names"
+            )
             self._update_ratios()
         else:
             self._update_ratios()
@@ -467,7 +479,9 @@ class MainView(HasTraits):
 
             cv = [comp_factory(*args) for args in attrs]
 
-            self.corrected_values = cv
+            self.corrected_values = self._sync_values(
+                self.corrected_values, cv, "_corrected_names"
+            )
         else:
             for ci in self.corrected_values:
                 attr = ci.tag
@@ -521,7 +535,9 @@ class MainView(HasTraits):
 
             cv = [comp_factory(*args) for args in attrs]
 
-            self.computed_values = cv
+            self.computed_values = self._sync_values(
+                self.computed_values, cv, "_computed_names"
+            )
         else:
             an.calculate_age(force=True)
             age = an.uage
@@ -580,6 +596,23 @@ class MainView(HasTraits):
         )
 
         return ceditor, eeditor, meditor
+
+    def _sync_values(self, existing, new_values, attr):
+        names = [ni.name for ni in new_values]
+        if getattr(self, attr) != names or len(existing) != len(new_values):
+            setattr(self, attr, names)
+            return new_values
+
+        for current, new_value in zip(existing, new_values):
+            current.copy_traits(
+                new_value,
+                traits=[
+                    name
+                    for name in new_value.editable_traits()
+                    if not name.startswith("_")
+                ],
+            )
+        return existing
 
     def traits_view(self):
         ceditor, eeditor, meditor = self._get_editors()

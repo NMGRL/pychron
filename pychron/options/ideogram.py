@@ -31,6 +31,7 @@ from traits.api import (
     Str,
 )
 
+from pychron.core.helpers.color_utils import coerce_qcolor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
@@ -58,28 +59,7 @@ from pychron.pychron_constants import (
 
 
 def _as_qcolor(color):
-    if color is None:
-        return None
-    if hasattr(color, "toRgb"):
-        return color
-    if hasattr(color, "to_toolkit"):
-        try:
-            return color.to_toolkit()
-        except Exception:
-            pass
-    if hasattr(color, "rgba"):
-        rgba = color.rgba() if callable(color.rgba) else color.rgba
-        comps = list(rgba)
-        if comps and max(comps) <= 1:
-            comps = [int(round(c * 255)) for c in comps]
-        if len(comps) >= 4:
-            return QtGui.QColor(comps[0], comps[1], comps[2], comps[3])
-        if len(comps) == 3:
-            return QtGui.QColor(comps[0], comps[1], comps[2])
-    try:
-        return QtGui.QColor(color)
-    except Exception:
-        return None
+    return coerce_qcolor(color, qcolor_class=QtGui.QColor)
 
 
 class IdeogramAuxPlot(AuxPlot):

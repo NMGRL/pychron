@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
 
 import re
 import time
+from typing import Any, List, Optional
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import array, inf, arange
+from numpy import array, inf, arange, ndarray
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
@@ -239,12 +241,11 @@ class BaseSeries(BaseArArFigure):
                         graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError) as e:
-            import traceback
+            self.debug("Series plot error: {}".format(e))
 
-            traceback.print_exc()
-            print("Series", e)
-
-    def _get_xs(self, plots, ans, tzero=None):
+    def _get_xs(
+        self, plots: List[Any], ans: List[Any], tzero: Optional[float] = None
+    ) -> ndarray:
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]

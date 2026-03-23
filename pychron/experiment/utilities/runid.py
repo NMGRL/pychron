@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import annotations
+
+from typing import Union
+
 from pychron.core.utils import alphas, alpha_to_int
 
 
-def make_rid(ln, a, step=""):
-    """
-    if ln can be converted to integer return runid
-    else return ln-a
-    """
+def make_rid(ln: str, a: Union[str, int], step: str = "") -> str:
     try:
         _ = int(ln)
         return make_runid(ln, a, step)
@@ -30,28 +30,28 @@ def make_rid(ln, a, step=""):
         return "{}-{}".format(ln, a)
 
 
-def make_runid(ln, a, s=""):
+def make_runid(ln: str, a: Union[str, int], s: str = "") -> str:
     _as = make_aliquot_step(a, s)
     return "{}-{}".format(ln, _as)
 
 
-def make_step(s):
-    if isinstance(s, (float, int, int)):
+def make_step(s: Union[str, int, float]) -> str:
+    if isinstance(s, (float, int)):
         s = alphas(s)
-    return s or ""
+    return str(s) if s else ""
 
 
-def make_increment(s):
+def make_increment(s: str) -> int:
     return alpha_to_int(s)
 
 
-def make_aliquot(a):
+def make_aliquot(a: Union[str, int]) -> str:
     if not isinstance(a, str):
         a = "{:02d}".format(int(a))
     return a
 
 
-def make_aliquot_step(a, s):
+def make_aliquot_step(a: Union[str, int], s: Union[str, int, float]) -> str:
     a = make_aliquot(a)
     s = make_step(s)
     return "{}{}".format(a, s)

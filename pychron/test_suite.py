@@ -10,7 +10,14 @@ from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestC
 from pychron.core.tests.spell_correct import SpellCorrectTestCase
 from pychron.core.tests.filtering_tests import FilteringTestCase
 from pychron.core.tests.bootstrap_profiles_test import BootstrapProfilesTestCase
+from pychron.core.tests.color_utils_test import ColorUtilsTestCase
+from pychron.core.tests.device_bootstrap_test import DeviceBootstrapTestCase
+from pychron.core.tests.github_auth_test import GitHubAuthTestCase
+from pychron.core.tests.install_bootstrap_test import InstallBootstrapTestCase
+from pychron.core.tests.install_validation_test import InstallValidationTestCase
 from pychron.core.tests.install_support_test import InstallSupportTestCase
+from pychron.core.tests.plot_theme_test import PlotThemeTestCase
+from pychron.core.tests.starter_bundles_test import StarterBundlesTestCase
 
 from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
 from pychron.core.helpers.tests.strtools import CamelCaseTestCase
@@ -21,6 +28,7 @@ from pychron.core.regression.tests.regression import (
     MeanRegressionTest,
     FilterOLSRegressionTest,
     OLSRegressionTest2,
+    RegressorStateTrackingTest,
     TruncateRegressionTest,
     NewYorkRegressionTest,
     # ReedRegressionTest,
@@ -40,6 +48,8 @@ from pychron.experiment.tests.conditionals_actions import (
     ConditionalQueueActionTestCase,
 )
 from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
+from pychron.experiment.tests.editor_performance import ExperimentEditorPerformanceTestCase
+from pychron.experiment.tests.editor_executor_sync import ExperimentExecutorSyncTestCase
 from pychron.experiment.tests.frequency_test import (
     FrequencyTestCase,
     FrequencyTemplateTestCase,
@@ -50,14 +60,22 @@ from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase2
 from pychron.experiment.tests.position_regex_test import XYTestCase
 from pychron.experiment.tests.pyscript_integration import PyScriptIntegrationTestCase
 from pychron.experiment.tests.queue_metadata import QueueMetadataPropagationTestCase
+from pychron.experiment.tests.repository_identifier import ExperimentIdentifierTestCase
 from pychron.experiment.tests.renumber_aliquot_test import RenumberAliquotTestCase
 from pychron.experiment.tests.stats_responsiveness import StatsResponsivenessTestCase
 from pychron.experiment.tests.state_machine import AutomatedRunStateMachineTestCase
 from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
 from pychron.dvc.tests.test_data_collection_sync import DataCollectionSyncTestCase
 from pychron.processing.tests.age_converter import AgeConverterTestCase
+from pychron.processing.tests.analysis_view_test import (
+    MainViewValueReuseTestCase,
+    IsotopeInvalidationTestCase,
+)
 from pychron.processing.tests.plateau import PlateauTestCase
 from pychron.processing.tests.ratio import RatioTestCase
+from pychron.pipeline.tests.figure_panel_limits_test import FigurePanelLimitTestCase
+from pychron.pipeline.tests.figure_model_test import FigureModelRefreshTestCase
+from pychron.pyscripts.tests.pyscript_runtime import PyScriptRuntimeTestCase
 
 #
 # os.environ['MassSpecDBVersion'] = '16'
@@ -71,6 +89,7 @@ from pychron.processing.tests.ratio import RatioTestCase
 #
 from pychron.spectrometer.tests.integration_time import IntegrationTimeTestCase
 from pychron.spectrometer.tests.mftable import DiscreteMFTableTestCase
+from pychron.spectrometer.tests.ngx_acquisition_test import NGXAcquisitionTestCase
 from pychron.stage.tests.stage_map import StageMapTestCase, TransformTestCase
 
 
@@ -97,17 +116,27 @@ def suite():
         SpellCorrectTestCase,
         FilteringTestCase,
         BootstrapProfilesTestCase,
+        ColorUtilsTestCase,
+        DeviceBootstrapTestCase,
+        GitHubAuthTestCase,
+        InstallBootstrapTestCase,
+        StarterBundlesTestCase,
+        InstallValidationTestCase,
         InstallSupportTestCase,
+        PlotThemeTestCase,
         MultiPeakDetectionTestCase,
         FloatfmtTestCase,
         SigFigStdFmtTestCase,
         CamelCaseTestCase,
         RatioTestCase,
+        FigurePanelLimitTestCase,
+        FigureModelRefreshTestCase,
         XMLParserTestCase,
         OLSRegressionTest,
         MeanRegressionTest,
         FilterOLSRegressionTest,
         OLSRegressionTest2,
+        RegressorStateTrackingTest,
         TruncateRegressionTest,
         MSWDTestCase,
         # ReedRegressionTest,
@@ -126,11 +155,14 @@ def suite():
         BackupTestCase,
         PeakHopTxtCase,
         DurationTrackerTestCase,
+        ExperimentEditorPerformanceTestCase,
+        ExperimentExecutorSyncTestCase,
         FrequencyTestCase,
         FrequencyTemplateTestCase,
         XYTestCase,
         PyScriptIntegrationTestCase,
         QueueMetadataPropagationTestCase,
+        ExperimentIdentifierTestCase,
         RenumberAliquotTestCase,
         StatsResponsivenessTestCase,
         AutomatedRunStateMachineTestCase,
@@ -144,9 +176,12 @@ def suite():
         # ExternalPipette
         ExternalPipetteTestCase,
         # Processing
+        MainViewValueReuseTestCase,
+        IsotopeInvalidationTestCase,
         PlateauTestCase,
         RatioTestCase,
         AgeConverterTestCase,
+        PyScriptRuntimeTestCase,
         # Pyscripts
         # WaitForTestCase,
         # InterpolationTestCase,
@@ -155,6 +190,7 @@ def suite():
         # MFTableTestCase,
         DiscreteMFTableTestCase,
         IntegrationTimeTestCase,
+        NGXAcquisitionTestCase,
         # Stage
         StageMapTestCase,
         TransformTestCase,

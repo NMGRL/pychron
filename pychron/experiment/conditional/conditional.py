@@ -674,7 +674,7 @@ def _normalize_action_name(action):
 
 def _mark_queue_modified(executor, queue):
     if hasattr(executor, "set_queue_modified"):
-        executor.set_queue_modified()
+        executor.set_queue_modified(queue)
     else:
         executor.queue_modified = True
 

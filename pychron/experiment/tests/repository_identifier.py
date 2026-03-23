@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
+from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.utilities.identifier import is_special
 from pychron.experiment.utilities.repository_identifier import (
+    is_valid_repository_identifier,
+    normalize_repository_identifier,
     retroactive_repository_identifiers,
 )
 
@@ -37,6 +40,20 @@ class DummyExecutor(object):
 
 
 class ExperimentIdentifierTestCase(unittest.TestCase):
+    def test_normalize_repository_identifier(self):
+        self.assertEqual(normalize_repository_identifier("Marti,J"), "MartiJ")
+        self.assertTrue(is_valid_repository_identifier("MartiJ"))
+        self.assertFalse(is_valid_repository_identifier("Marti,J"))
+
+    def test_spec_normalizes_invalid_repository_identifier(self):
+        spec = AutomatedRunSpec(repository_identifier="Marti,J")
+        self.assertEqual(spec.repository_identifier, "MartiJ")
+
+    def test_queue_normalizes_invalid_repository_identifier(self):
+        queue = BaseExperimentQueue()
+        queue.repository_identifier = "Marti,J"
+        self.assertEqual(queue.repository_identifier, "MartiJ")
+
     # def test_single_blank(self):
     #     d = DummyExecutor()
     #     aspec = AutomatedRunSpec(identifer='bu-FD-j', experiment_id='foo')

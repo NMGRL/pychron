@@ -552,16 +552,17 @@ class ExperimentEditorTask(EditorTask):
         if self.active_editor:
             self.manager.experiment_factory.edit_enabled = True
             self.manager.experiment_queue = self.active_editor.queue
-            self.manager.executor.active_editor = self.active_editor
-            # Keep executor state in sync during editing (executor.experiment_queues
-            # is normally populated at execution time).
-            try:
-                self.manager.executor.experiment_queue = self.active_editor.queue
-            except Exception:
-                pass
+            self.manager.executor.sync_active_context(
+                editor=self.active_editor,
+                queue=self.active_editor.queue,
+                queues=[ei.queue for ei in self.editor_area.editors],
+            )
             self._show_pane(self.experiment_factory_pane)
         else:
             self.manager.experiment_factory.edit_enabled = False
+            self.manager.executor.sync_active_context(
+                editor=None, queue=None, queues=[ei.queue for ei in self.editor_area.editors]
+            )
 
     @on_trait_change("manager:experiment_queue:changed")
     def _handle_queue_change(self, obj, name, old, new):
@@ -725,6 +726,12 @@ class ExperimentEditorTask(EditorTask):
 
             if self.active_editor:
                 qs.insert(0, self.active_editor.queue)
+
+            self.manager.executor.sync_active_context(
+                editor=self.active_editor,
+                queue=self.active_editor.queue if self.active_editor else None,
+                queues=qs,
+            )
 
             if self.manager.execute_queues(qs):
                 # self._show_pane(self.wait_pane)

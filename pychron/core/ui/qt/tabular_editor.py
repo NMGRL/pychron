@@ -47,6 +47,7 @@ from traitsui.qt.tabular_editor import (
 )
 from traitsui.qt.tabular_model import TabularModel, tabular_mime_type
 
+from pychron.core.helpers.color_utils import coerce_qcolor
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
@@ -203,6 +204,18 @@ class _TableView(TableView):
         else:
             vheader.ResizeMode(QHeaderView.ResizeToContents)
 
+        # The experiment editor uses a large, fixed-height table; these settings
+        # reduce repaint and layout work while scrolling large queues.
+        self.setWordWrap(False)
+        self.setTextElideMode(QtCore.Qt.ElideMiddle)
+        self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setShowGrid(False)
+        if hasattr(self, "setUniformRowHeights"):
+            self.setUniformRowHeights(True)
+
     def set_bg_color(self, bgcolor):
         # if isinstance(bgcolor, tuple):
         #     if len(bgcolor) == 3:
@@ -210,34 +223,18 @@ class _TableView(TableView):
         #     elif len(bgcolor) == 4:
         #         bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
         # elif isinstance(bgcolor, QColor):
-        #     bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
+        #     bgcolor = 'rgba({},{},{},{})'.format(
+        #         bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha()
+        #     )
         # self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
         p = self.palette()
         p.setColor(QtGui.QPalette.Base, self._coerce_qcolor(bgcolor))
         self.setPalette(p)
 
     def _coerce_qcolor(self, color):
-        if isinstance(color, QtGui.QColor):
-            return color
-        if hasattr(color, "rgba"):
-            rgba = color.rgba
-            if len(rgba) == 4:
-                return QtGui.QColor.fromRgbF(*rgba)
-        if isinstance(color, (tuple, list)):
-            if len(color) == 3:
-                r, g, b = color
-                a = 1.0
-            elif len(color) == 4:
-                r, g, b, a = color
-            else:
-                return QtGui.QColor(color)
-            if all(isinstance(v, float) for v in (r, g, b, a)) and max(
-                r, g, b, a
-            ) <= 1.0:
-                return QtGui.QColor.fromRgbF(r, g, b, a)
-            if a <= 1.0:
-                a = int(round(a * 255))
-            return QtGui.QColor(int(r), int(g), int(b), int(a))
+        qcolor = coerce_qcolor(color, qcolor_class=QtGui.QColor)
+        if qcolor is not None:
+            return qcolor
         return QtGui.QColor(color)
 
     def set_vertical_header_font(self, fnt):

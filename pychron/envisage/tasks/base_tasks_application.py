@@ -31,9 +31,11 @@ from traits.api import List, Instance, Any
 
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.yaml import yload
+from pychron.envisage.tasks.first_run_wizard import FirstRunWizard
 from pychron.envisage.view_util import open_view, close_views, report_view_stats
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
+from pychron.install_validation import validate_runtime_root
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.startup_test.results_view import ResultsView
@@ -50,10 +52,84 @@ class BaseTasksApplication(TasksApplication, Loggable):
         super().__init__(*args, **kw)
         self.init_logger()
         self._task_window_layouts = self._load_task_window_layouts()
+        self._first_run_prompted = False
 
     def _application_initialized_fired(self):
+        self._report_startup_validation()
+        self._maybe_open_first_run_wizard()
         if globalv.use_startup_tests:
             self.do_startup_tests()
+
+    def _report_startup_validation(self):
+        issues = [
+            issue
+            for issue in validate_runtime_root(paths.root_dir)
+            if issue.status in ("FAIL", "WARN")
+        ]
+        if not issues:
+            return
+
+        for issue in issues:
+            message = "{}: {}".format(issue.name, issue.detail)
+            if issue.hint:
+                message = "{} {}".format(message, issue.hint)
+            if issue.status == "FAIL":
+                self.warning(message)
+            else:
+                self.debug(message)
+
+        failures = [issue for issue in issues if issue.status == "FAIL"]
+        if failures:
+            lines = [
+                "Pychron startup validation found {} blocking issue(s).".format(
+                    len(failures)
+                )
+            ]
+            for issue in failures[:5]:
+                lines.append("- {}: {}".format(issue.name, issue.detail))
+            lines.append(
+                "Run `pychron-doctor --root {}` for a full report.".format(
+                    paths.root_dir
+                )
+            )
+            self.warning_dialog("\n".join(lines))
+
+    def _maybe_open_first_run_wizard(self):
+        if self._first_run_prompted:
+            return
+
+        issues = validate_runtime_root(paths.root_dir)
+        failures = [issue for issue in issues if issue.status == "FAIL"]
+        if not failures:
+            return
+
+        self._first_run_prompted = True
+        wizard = FirstRunWizard(root=paths.root_dir)
+        info = wizard.edit_traits(kind="livemodal")
+        if not info.result:
+            return
+
+        try:
+            root, merged, issues = wizard.run_bootstrap()
+        except Exception:
+            logger.exception("First-run bootstrap failed")
+            self.warning_dialog(
+                "Failed to initialize the Pychron runtime layout. Check the log for details."
+            )
+            return
+
+        remaining_failures = [issue for issue in issues if issue.status == "FAIL"]
+        if remaining_failures:
+            lines = ["Pychron setup is still incomplete after bootstrap."]
+            for issue in remaining_failures[:5]:
+                lines.append("- {}: {}".format(issue.name, issue.detail))
+            self.warning_dialog("\n".join(lines))
+        else:
+            self.information_dialog(
+                "Initialized Pychron at {} with profiles: {}".format(
+                    root, ", ".join(merged.resolved) or "default"
+                )
+            )
 
     def do_startup_tests(self, force_show_results=False, **kw):
         st = StartupTester()

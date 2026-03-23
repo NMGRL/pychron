@@ -27,24 +27,27 @@ from pychron.paths import paths
 
 def load_persistence_dict(p):
     if os.path.isfile(p):
-        with open(p, "r") as rfile:
+        with open(p, "rb") as rfile:
             try:
                 return pickle.load(rfile)
-            except (pickle.PickleError, EOFError):
-                pass
+            except (pickle.PickleError, EOFError, OSError, ValueError):
+                return
 
 
 def dump_persistence_dict(p, d):
-    with open(p, "w") as wfile:
+    with open(p, "wb") as wfile:
         pickle.dump(d, wfile)
 
 
 def load_persistence_values(obj, p, attrs):
     d = load_persistence_dict(p)
+    if not d:
+        return
+
     for ai in attrs:
         try:
             setattr(obj, ai, d[ai])
-        except BaseException:
+        except (KeyError, AttributeError, TypeError):
             pass
 
 
@@ -70,8 +73,7 @@ class PersistenceMixin(object):
             else:
                 attrs = dattrs
         except AttributeError as e:
-            print("ddddd", e)
-            pass
+            self.debug("No dump traits available: {}".format(e))
 
         return attrs
 
@@ -86,7 +88,7 @@ class PersistenceMixin(object):
         try:
             return self._make_persistence_path(self.persistence_path)
         except (AttributeError, NotImplementedError) as e:
-            print(e)
+            self.debug("Persistence path unavailable: {}".format(e))
             self.warning("persistence path not implemented")
 
     def load(self, verbose=True):
@@ -105,7 +107,7 @@ class PersistenceMixin(object):
             with open(p, "rb") as rfile:
                 try:
                     d = pickle.load(rfile)
-                except (pickle.PickleError, EOFError, BaseException):
+                except (pickle.PickleError, EOFError, OSError, ValueError):
                     self.warning("Invalid pickle file {}".format(p))
             if d:
                 if verbose:

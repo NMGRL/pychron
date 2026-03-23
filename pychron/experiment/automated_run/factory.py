@@ -83,6 +83,10 @@ from pychron.experiment.utilities.identifier import (
     SPECIAL_KEYS,
     get_analysis_type_shortname,
 )
+from pychron.experiment.utilities.repository_identifier import (
+    is_valid_repository_identifier,
+    normalize_repository_identifier,
+)
 from pychron.experiment.utilities.position_regex import (
     SLICE_REGEX,
     PSLICE_REGEX,
@@ -1550,7 +1554,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 a.principal_investigators = self.dvc.get_principal_investigator_names()
 
             if name:
-                a.value = name
+                a.value = normalize_repository_identifier(name)
             if pi_name:
                 a.principal_investigator = pi_name
 
@@ -1602,14 +1606,58 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.repository_identifier_dirty = True
 
     def _set_repository_identifier_button_fired(self):
-        self.debug("set repository identifier={}".format(self.repository_identifier))
+        repository_identifier = self._validate_repository_identifier(
+            self.repository_identifier, inform=True, require_existing=True
+        )
+        if repository_identifier is None:
+            return
+
+        self.debug("set repository identifier={}".format(repository_identifier))
         if self._selected_runs:
             for si in self._selected_runs:
-                si.repository_identifier = self.repository_identifier
+                si.repository_identifier = repository_identifier
             self.refresh_table_needed = True
 
     def _add_repository_identifier_fired(self):
         self._add_repository()
+
+    def _repository_identifier_changed(self, new):
+        normalized = normalize_repository_identifier(new)
+        if normalized != new:
+            self.repository_identifier = normalized
+
+    def _validate_repository_identifier(
+        self, repository_identifier, inform=False, require_existing=False
+    ):
+        normalized = normalize_repository_identifier(repository_identifier)
+        if normalized != repository_identifier and inform:
+            self.warning_dialog(
+                'Repository Identifier "{}" contained invalid characters and was '
+                'normalized to "{}"'.format(repository_identifier, normalized)
+            )
+
+        self.repository_identifier = normalized
+
+        if normalized and not is_valid_repository_identifier(normalized):
+            if inform:
+                self.warning_dialog(
+                    'Repository Identifier "{}" is invalid'.format(normalized)
+                )
+            return None
+
+        if (
+            require_existing
+            and normalized
+            and normalized not in self.repository_identifiers
+        ):
+            if inform:
+                self.warning_dialog(
+                    'Repository Identifier "{}" does not exist. Use Add to create it '
+                    "or choose an existing repository.".format(normalized)
+                )
+            return None
+
+        return normalized
 
     @on_trait_change("use_name_prefix, name_prefix")
     def _handle_prefix(self, name, new):

@@ -11,6 +11,12 @@ from pychron.install_support import (
 
 
 class InstallSupportTestCase(unittest.TestCase):
+    def test_build_install_plan_includes_bundle_profiles(self):
+        plan = build_install_plan(["data-reduction"], bundles=["ngx"])
+        self.assertIn("ngx-collection", plan.requested_bundles)
+        self.assertIn("experiment", plan.resolved_profiles)
+        self.assertIn("spectrometer-ngx", plan.extras)
+
     def test_build_install_plan_includes_expected_extras(self):
         plan = build_install_plan(["ngx", "chromiumco2"], root="~/Pychron")
         self.assertIn("hardware", plan.extras)

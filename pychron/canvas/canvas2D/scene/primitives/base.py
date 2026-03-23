@@ -272,7 +272,7 @@ class Primitive(HasTraits):
     def _render_text(self, gc, t, x, y):
         with gc:
             gc.translate_ctm(x, y)
-            gc.set_fill_color((0, 0, 0))
+            gc.set_fill_color(self._convert_color(self.text_color))
             gc.set_text_position(0, 0)
             gc.show_text(t)
 
@@ -283,7 +283,9 @@ class Primitive(HasTraits):
         return c
 
     # handlers
-    @on_trait_change("default_color, active_color, x, y")
+    @on_trait_change(
+        "default_color, active_color, name_color, text_color, x, y, width, height, state, visible"
+    )
     def _refresh_canvas(self):
         self.request_redraw()
 

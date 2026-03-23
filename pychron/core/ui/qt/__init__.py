@@ -24,7 +24,6 @@ def _patch_traitsui_tabular_colors():
     try:
         from pyface.qt import QtCore, QtGui
         from traitsui.qt import tabular_model as tm
-        from traitsui.ui_traits import SequenceTypes
     except Exception:
         return
 
@@ -32,44 +31,10 @@ def _patch_traitsui_tabular_colors():
         return
 
     orig_data = tm.TabularModel.data
+    from pychron.core.helpers.color_utils import coerce_qcolor
 
     def _to_qcolor(color):
-        if color is None:
-            return None
-
-        if isinstance(color, SequenceTypes):
-            comps = list(color)
-        elif hasattr(color, "rgba"):
-            rgba = color.rgba() if callable(color.rgba) else color.rgba
-            if isinstance(rgba, int):
-                return QtGui.QColor(rgba)
-            comps = list(rgba)
-        elif all(hasattr(color, attr) for attr in ("red", "green", "blue")):
-            def _component(value):
-                return value() if callable(value) else value
-
-            comps = [
-                _component(getattr(color, "red")),
-                _component(getattr(color, "green")),
-                _component(getattr(color, "blue")),
-            ]
-            alpha = getattr(color, "alpha", None)
-            if alpha is not None:
-                comps.append(_component(alpha))
-        else:
-            try:
-                return QtGui.QColor(color)
-            except Exception:
-                return None
-
-        if comps and max(comps) <= 1:
-            comps = [int(round(c * 255)) for c in comps]
-
-        if len(comps) >= 4:
-            return QtGui.QColor(comps[0], comps[1], comps[2], comps[3])
-        if len(comps) == 3:
-            return QtGui.QColor(comps[0], comps[1], comps[2])
-        return None
+        return coerce_qcolor(color, qcolor_class=QtGui.QColor)
 
     def _data(self, mi, role):
         if role in (

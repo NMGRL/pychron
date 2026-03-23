@@ -124,6 +124,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
         """ """
         switch = self._get_switch_by_name(name)
         if switch is not None:
+            if switch.state == nstate:
+                return
             switch.state = nstate
             if refresh:
                 self.invalidate_and_redraw()
@@ -131,13 +133,16 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
         if switch is not None:
+            if switch.owned == owned:
+                return
             switch.owned = owned
-
             self.invalidate_and_redraw()
 
     def update_switch_lock_state(self, name, lockstate):
         switch = self._get_switch_by_name(name)
         if switch is not None:
+            if switch.soft_lock == lockstate:
+                return
             switch.soft_lock = lockstate
             self.invalidate_and_redraw()
 

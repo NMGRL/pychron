@@ -73,8 +73,6 @@ class ExtractionLineCanvas(HasTraits):
         c = self.canvas2D
         if c:
             getattr(c, func)(*args, **kw)
-        else:
-            print("canvas2D not available")
 
     def _canvas_factory(self):
         from pychron.canvas.canvas2D.extraction_line_canvas2D import (

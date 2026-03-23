@@ -124,6 +124,7 @@ class OLSRegressor(BaseRegressor):
                 # cys.append(cys[0])
             else:
                 self._result = None
+                self.clear_dirty()
                 logger.debug("A integrity check failed")
                 # import traceback
                 # traceback.print_stack()
@@ -143,14 +144,20 @@ class OLSRegressor(BaseRegressor):
         if X is not None:
             if integrity_check and not self._check_integrity(X, fy):
                 self._result = None
+                self.clear_dirty()
                 logger.debug("B integrity check failed")
                 # self.debug('B integrity check failed')
                 return
 
             # try:
             ols = self._engine_factory(fy, X, check_integrity=integrity_check)
+            if ols is None:
+                self._result = None
+                self.clear_dirty()
+                return
             self._ols = ols
             self._result = ols.fit()
+            self.clear_dirty()
             # except Exception as e:
             #     import traceback
             #

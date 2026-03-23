@@ -168,6 +168,40 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
         self.assertAlmostEqual(e, self.solution["pred_error"], 3)
 
 
+class RegressorStateTrackingTest(TestCase):
+    def setUp(self):
+        xs, ys, _ = ols_data()
+        self.reg = OLSRegressor(xs=xs, ys=ys, fit="linear")
+        self.reg.calculate()
+        self.xs = xs
+        self.ys = ys
+
+    def test_calculate_clears_dirty(self):
+        self.assertFalse(self.reg.is_dirty)
+
+    def test_same_regression_state_is_noop(self):
+        changed = self.reg.set_regression_state(
+            xs=self.xs,
+            ys=self.ys,
+            user_excluded=[],
+            filter_outliers_dict={},
+            truncate="",
+        )
+        self.assertFalse(changed)
+        self.assertFalse(self.reg.is_dirty)
+
+    def test_changed_regression_state_marks_dirty(self):
+        changed = self.reg.set_regression_state(
+            xs=self.xs,
+            ys=self.ys,
+            user_excluded=[0],
+            filter_outliers_dict={},
+            truncate="",
+        )
+        self.assertTrue(changed)
+        self.assertTrue(self.reg.is_dirty)
+
+
 class PearsonRegressionTest(RegressionTestCase):
     kind = ""
 

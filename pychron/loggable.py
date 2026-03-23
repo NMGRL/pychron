@@ -25,6 +25,7 @@ from traits.api import Any, String
 from pychron.base_fs import BaseFS
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.color_generators import colorname_generator
+from pychron.core.helpers.color_utils import contrast_color, normalize_color_name
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.globals import globalv
 
@@ -210,9 +211,9 @@ class Loggable(BaseFS):
             self.logger = new_logger(name)
             __gloggers__[name] = self.logger
 
-        c = next(color_name_gen)
-        if c in ["gray", "silver", "greenyellow"]:
-            c = next(color_name_gen)
+        c = normalize_color_name(next(color_name_gen))
+        while contrast_color(c, dark="black", light="white") != "white":
+            c = normalize_color_name(next(color_name_gen))
         self.logcolor = c
 
     def _log_(self, func, msg):

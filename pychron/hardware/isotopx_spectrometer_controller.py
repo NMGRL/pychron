@@ -79,6 +79,10 @@ class NGXController(CoreDevice):
         self.debug(f"set acquisition buffer {flag}")
         self.ask(f"SAB {flag}")
 
+    def begin_acquisition(self):
+        self.canceled = False
+        self.triggered = True
+
     def stop_acquisition(self):
         self.triggered = False
         self.debug("stop acquisition")
@@ -86,6 +90,9 @@ class NGXController(CoreDevice):
         self.canceled = True
         time.sleep(0.25)
         # self.debug(self.communicator.readline())
+
+    def clear_canceled(self):
+        self.canceled = False
 
     def set(self, *args, **kw):
         return HasTraits.set(self, *args, **kw)

@@ -113,6 +113,8 @@ class PyScript(Loggable):
     interpolation_path = Str
 
     _interpolation_context = None
+    _cached_script_context = None
+    _cached_command_names = None
 
     def is_aborted(self):
         return self._aborted
@@ -213,8 +215,7 @@ class PyScript(Loggable):
             if r is not None:
                 self.console_info("invalid syntax")
                 ee = PyscriptError(self.filename, r)
-                print("invalid pyscript", self.text)
-                print("error", r)
+                self.warning("invalid pyscript {}. {}".format(self.name, r))
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -322,10 +323,14 @@ class PyScript(Loggable):
         # for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
         self._setup_docstr_context()
+        self._invalidate_script_context_cache()
 
     def get_context(self):
+        if self._cached_script_context is not None:
+            return dict(self._cached_script_context)
+
         ctx = dict()
-        for k in self.get_commands():
+        for k in self._get_command_names():
             try:
                 if isinstance(k, tuple):
                     ka, kb = k
@@ -355,7 +360,8 @@ class PyScript(Loggable):
         # cmd.update(ctx)
         # ctx['cmd']=cmd
 
-        return ctx
+        self._cached_script_context = dict(ctx)
+        return dict(ctx)
 
     def get_variables(self):
         return []
@@ -525,8 +531,10 @@ class PyScript(Loggable):
             if not self._cancel:
                 self.console_info("doing GOSUB")
                 self._gosub_script = s
-                s.execute(argv=argv)
-                self._gosub_script = None
+                try:
+                    s.execute(argv=argv)
+                finally:
+                    self._gosub_script = None
                 if not self._cancel:
                     self.console_info("gosub finished")
                 return s
@@ -647,7 +655,6 @@ class PyScript(Loggable):
                 if self.info_color:
                     self.manager.info(message, color=self.info_color, log=False)
                 else:
-                    print(self.manager)
                     self.manager.info(message, log=False)
 
         except AttributeError as e:
@@ -899,12 +906,21 @@ class PyScript(Loggable):
 
     def _interpolation_path_changed(self):
         self._interpolation_context = None
+        self._invalidate_script_context_cache()
 
     def _tracer(self, frame, event, arg):
         if event == "line":
-            print(frame.f_code.co_filename, frame.f_lineno)
+            self.debug("{}:{}".format(frame.f_code.co_filename, frame.f_lineno))
 
         return self._tracer
+
+    def _invalidate_script_context_cache(self):
+        self._cached_script_context = None
+
+    def _get_command_names(self):
+        if self._cached_command_names is None:
+            self._cached_command_names = list(self.get_commands())
+        return self._cached_command_names
 
     def _generate_ctx_hash(self, ctx):
         """

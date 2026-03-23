@@ -207,7 +207,7 @@ class ExperimentFactory(DVCAble):
             with rf.update_selected_ctx():
                 q.select_run_idx(idx)
 
-            q.changed = True
+            self._mark_queue_changed(q)
 
     def _update_end_after(self, new):
         if new:
@@ -230,7 +230,7 @@ class ExperimentFactory(DVCAble):
                 "repository_identifier",
             ):
                 self.queue.sync_queue_meta(attrs=(name,), force=True)
-            self.queue.changed = True
+            self._mark_queue_changed(self.queue, auto_save=False)
 
         if name == "mass_spectrometer":
             self.mass_spectrometer = new
@@ -247,6 +247,20 @@ class ExperimentFactory(DVCAble):
 
     def _auto_save(self):
         self.queue.auto_save()
+
+    def _mark_queue_changed(self, queue, auto_save=True):
+        queue.changed = True
+        if hasattr(queue, "request_table_refresh"):
+            queue.request_table_refresh()
+        else:
+            queue.refresh_table_needed = True
+
+        if hasattr(queue, "request_info_refresh"):
+            queue.request_info_refresh()
+        else:
+            queue.refresh_info_needed = True
+        if auto_save:
+            self._auto_save()
 
     def _set_extract_device(self, ed):
         self.debug(
@@ -296,7 +310,7 @@ class ExperimentFactory(DVCAble):
                 if positions:
                     runs = [self.run_factory.new_run_simple(*p) for p in positions]
                     self.queue.extend_runs(runs)
-                    self.queue.changed = True
+                    self._mark_queue_changed(self.queue)
 
             else:
                 self.warning_dialog("Please set a load")

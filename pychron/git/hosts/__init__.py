@@ -283,8 +283,12 @@ class GitHostService(BaseGitHostService):
         # r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
         r = self._request_wrapper("post", cmd, payload)
         if not r.status_code == 201:
-            print(json.dumps(payload))
-            print(r.status_code, r.reason)
+            self.warning(
+                "POST request failed status={} reason={} url={}".format(
+                    r.status_code, r.reason, cmd
+                )
+            )
+            self.debug("POST payload={}".format(json.dumps(payload, sort_keys=True)))
         return r
 
     def _put(self, cmd, **payload):

@@ -24,9 +24,9 @@ class AutomatedRunStateMachineTestCase(unittest.TestCase):
     def test_nominal_transition_path(self):
         spec = AutomatedRunSpec(labnumber="10000")
 
-        self.assertTrue(spec.set_state(EXTRACTION))
-        self.assertTrue(spec.set_state(MEASUREMENT))
-        self.assertTrue(spec.set_state(SUCCESS))
+        self.assertTrue(spec.transition("start_extraction"))
+        self.assertTrue(spec.transition("start_measurement"))
+        self.assertTrue(spec.transition("complete"))
         self.assertEqual(spec.state, SUCCESS)
 
     def test_terminal_state_rejects_non_forced_transition(self):
@@ -38,11 +38,11 @@ class AutomatedRunStateMachineTestCase(unittest.TestCase):
 
     def test_truncated_can_complete_successfully(self):
         spec = AutomatedRunSpec(labnumber="10000")
-        spec.set_state(EXTRACTION)
-        spec.set_state(MEASUREMENT)
-        spec.set_state(TRUNCATED, force=True)
+        spec.transition("start_extraction")
+        spec.transition("start_measurement")
+        spec.transition("truncate", force=True)
 
-        self.assertTrue(spec.set_state(SUCCESS))
+        self.assertTrue(spec.transition("complete"))
         self.assertEqual(spec.state, SUCCESS)
 
     def test_terminated_alias_maps_to_failed(self):
@@ -63,9 +63,18 @@ class AutomatedRunStateMachineTestCase(unittest.TestCase):
     def test_abort_is_terminal(self):
         spec = AutomatedRunSpec(labnumber="10000")
 
-        spec.set_state(ABORTED, force=True)
+        spec.transition("abort", force=True)
         self.assertTrue(spec.is_terminal_state())
         self.assertFalse(spec.set_state(CANCELED))
+
+    def test_records_last_transition_metadata(self):
+        spec = AutomatedRunSpec(labnumber="10000")
+
+        spec.transition("start_extraction", source="testcase", reason="nominal")
+
+        self.assertEqual(spec.state_event, "start_extraction")
+        self.assertEqual(spec.state_source, "testcase")
+        self.assertEqual(spec.state_reason, "nominal")
 
 
 if __name__ == "__main__":

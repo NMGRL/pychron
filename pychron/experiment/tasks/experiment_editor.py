@@ -17,7 +17,7 @@
 import os
 
 from pyface.ui_traits import PyfaceColor
-from traits.api import Instance, Unicode, Property, DelegatesTo, Bool
+from traits.api import Instance, Unicode, Property, DelegatesTo, Bool, Int
 from traitsui.api import View, UItem
 
 from pychron.core.helpers.filetools import add_extension
@@ -140,6 +140,7 @@ class ExperimentEditor(BaseTraitsEditor):
 
     automated_runs_editable = Bool
     table_configurer = Instance(ExperimentTableConfigurer)
+    large_table_row_threshold = Int(250)
 
     bulk_run_fixer = Instance(BulkRunFixer, ())
 
@@ -148,7 +149,10 @@ class ExperimentEditor(BaseTraitsEditor):
         t.edit_traits()
 
     def refresh(self):
-        self.queue.refresh_table_needed = True
+        if hasattr(self.queue, "request_table_refresh"):
+            self.queue.request_table_refresh()
+        else:
+            self.queue.refresh_table_needed = True
 
     def setup_tabular_adapters(self, c, ec, colors, use_atype_colors, atype_colors):
         if c is None:
@@ -215,7 +219,7 @@ class ExperimentEditor(BaseTraitsEditor):
                 operations=operations,
                 editable=True,
                 mime_type="pychron.automated_run_spec",
-                show_row_titles=True,
+                show_row_titles=self._use_row_titles(),
                 bgcolor=self.bgcolor,
                 dclicked="dclicked",
                 selected="selected",
@@ -337,7 +341,10 @@ class ExperimentEditor(BaseTraitsEditor):
         hec = qi.human_error_checker
 
         hec.check_runs_repairable(runs)
-        qi.refresh_table_needed = True
+        if hasattr(qi, "request_table_refresh"):
+            qi.request_table_refresh()
+        else:
+            qi.refresh_table_needed = True
 
         info = hec.check_runs_non_fatal(runs)
         if info:
@@ -378,6 +385,12 @@ class ExperimentEditor(BaseTraitsEditor):
     # ===============================================================================
     # property get/set
     # ===============================================================================
+    def _use_row_titles(self):
+        queue = self.queue
+        if queue is None:
+            return True
+
+        return len(queue.automated_runs) < self.large_table_row_threshold
     def _get_tooltip(self):
         return self.path
 
