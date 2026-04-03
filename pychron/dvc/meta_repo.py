@@ -722,7 +722,8 @@ class MetaRepo(GitRepoManager):
         if self.add_paths(ps):
             self.commit("Updated sensitivity")
 
-    def get_sensitivities(self):
+    @cached("clear_cache")
+    def get_sensitivities(self) -> dict:
         specs = {}
         root = os.path.join(paths.meta_root, "spectrometers")
         for p in list_directory(root):

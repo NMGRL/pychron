@@ -20,6 +20,7 @@ import datetime
 import os
 import time
 from operator import itemgetter
+from typing import Any, Iterable, Optional
 
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -92,7 +93,15 @@ class DVCAnalysis(Analysis):
     chronology_obj = None
     use_repository_suffix = False
 
-    def __init__(self, uuid, record_id, repository_identifier, *args, **kw):
+    def __init__(
+        self,
+        uuid: str,
+        record_id: str,
+        repository_identifier: str,
+        load_modifiers: Optional[Iterable[str]] = None,
+        *args: Any,
+        **kw: Any
+    ) -> None:
         super(DVCAnalysis, self).__init__(*args, **kw)
         self.record_id = record_id
         path = analysis_path((uuid, record_id), repository_identifier)
@@ -130,7 +139,7 @@ class DVCAnalysis(Analysis):
                 'Invalid analysis. RunID="{}". No meta file {}'.format(record_id, path)
             )
 
-        self.load_paths()
+        self.load_paths(modifiers=load_modifiers)
 
     @property
     def irradiation_position_position(self):

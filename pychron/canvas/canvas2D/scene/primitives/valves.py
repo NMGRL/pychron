@@ -43,8 +43,13 @@ class Switch(Connectable, Circle):
     cannot_actuate_reason = ""
     connected_volume = 0
     description = ""
+    network_region_id = ""
+    network_dominant_source = ""
+    network_dominant_source_node = ""
+    network_blocked_boundaries = None
+    network_side_volumes = None
 
-    def apply_visual_state(self, state):
+    def apply_visual_state(self, state) -> None:
         self.state = state.is_open
         self.owned = state.is_owned
         self.soft_lock = state.is_locked
@@ -55,8 +60,13 @@ class Switch(Connectable, Circle):
         self.cannot_actuate_reason = state.cannot_actuate_reason
         self.connected_volume = state.connected_volume
         self.description = state.description or self.description
+        self.network_region_id = state.network_region_id
+        self.network_dominant_source = state.network_dominant_source
+        self.network_dominant_source_node = state.network_dominant_source_node
+        self.network_blocked_boundaries = list(state.network_blocked_boundaries or [])
+        self.network_side_volumes = list(state.network_side_volumes or [])
 
-    def get_tooltip_text(self):
+    def get_tooltip_text(self) -> str:
         pieces = ["Switch={}".format(self.name)]
         if self.description:
             pieces.append("Desc={}".format(self.description))
@@ -68,6 +78,22 @@ class Switch(Connectable, Circle):
             pieces.append("Stale=Yes")
         if self.connected_volume:
             pieces.append("Volume={:0.2f}".format(self.connected_volume))
+        if self.network_region_id:
+            pieces.append("Region={}".format(self.network_region_id))
+        if self.network_dominant_source:
+            pieces.append("Source={}".format(self.network_dominant_source))
+        if self.network_dominant_source_node:
+            pieces.append("SourceNode={}".format(self.network_dominant_source_node))
+        if self.network_blocked_boundaries:
+            pieces.append(
+                "Boundaries={}".format(",".join(self.network_blocked_boundaries))
+            )
+        if self.network_side_volumes:
+            pieces.append(
+                "SideVolumes={}".format(
+                    ",".join("{:0.2f}".format(v) for v in self.network_side_volumes)
+                )
+            )
         if self.cannot_actuate_reason:
             pieces.append("Blocked={}".format(self.cannot_actuate_reason))
         return "\n".join(pieces)
@@ -136,6 +162,11 @@ class BaseValve(Connectable):
     state_source = "unknown"
     connected_volume = 0
     simulation_mode = False
+    network_region_id = ""
+    network_dominant_source = ""
+    network_dominant_source_node = ""
+    network_blocked_boundaries = None
+    network_side_volumes = None
 
     def toyaml(self):
         y = super(BaseValve, self).toyaml()
@@ -146,7 +177,7 @@ class BaseValve(Connectable):
 
         return y
 
-    def get_tooltip_text(self):
+    def get_tooltip_text(self) -> str:
         if self.state is None:
             state = "Unknown"
         else:
@@ -167,11 +198,25 @@ class BaseValve(Connectable):
             lines.append("Stale=Yes")
         if self.connected_volume:
             lines.append("Volume={:0.2f}".format(self.connected_volume))
+        if self.network_region_id:
+            lines.append("Region={}".format(self.network_region_id))
+        if self.network_dominant_source:
+            lines.append("Source={}".format(self.network_dominant_source))
+        if self.network_dominant_source_node:
+            lines.append("SourceNode={}".format(self.network_dominant_source_node))
+        if self.network_blocked_boundaries:
+            lines.append("Boundaries={}".format(",".join(self.network_blocked_boundaries)))
+        if self.network_side_volumes:
+            lines.append(
+                "SideVolumes={}".format(
+                    ",".join("{:0.2f}".format(v) for v in self.network_side_volumes)
+                )
+            )
         if self.cannot_actuate_reason:
             lines.append("Blocked={}".format(self.cannot_actuate_reason))
         return "\n".join(lines)
 
-    def apply_visual_state(self, state):
+    def apply_visual_state(self, state) -> None:
         self.state = state.is_open
         self.soft_lock = state.is_locked
         self.owned = state.is_owned
@@ -185,6 +230,11 @@ class BaseValve(Connectable):
         self.state_source = state.state_source
         self.connected_volume = state.connected_volume
         self.description = state.description or self.description
+        self.network_region_id = state.network_region_id
+        self.network_dominant_source = state.network_dominant_source
+        self.network_dominant_source_node = state.network_dominant_source_node
+        self.network_blocked_boundaries = list(state.network_blocked_boundaries or [])
+        self.network_side_volumes = list(state.network_side_volumes or [])
 
     def _draw_visual_state_badges(self, gc, x, y, w, h):
         if self.soft_lock:

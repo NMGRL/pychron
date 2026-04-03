@@ -19,6 +19,7 @@ import os
 import time
 from socket import gethostbyname, gethostname, gaierror
 from threading import Thread
+from typing import Optional
 
 # =============enthought library imports=======================
 from apptools.preferences.preference_binding import bind_preference
@@ -44,7 +45,11 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line import LOG_LEVEL_NAMES, LOG_LEVELS
-from pychron.extraction_line.canvas.state import CanvasSystemState, ValveVisualState
+from pychron.extraction_line.canvas.state import (
+    CanvasSystemState,
+    NetworkSnapshot,
+    ValveVisualState,
+)
 from pychron.extraction_line.canvas.view_model import ExtractionLineCanvasViewModel
 from pychron.extraction_line.explanation.extraction_line_explanation import (
     ExtractionLineExplanation,
@@ -132,6 +137,7 @@ class ExtractionLineManager(Manager, Consoleable):
     canvas_editor = Instance(CanvasEditor, ())
     logging_level = Enum(LOG_LEVEL_NAMES)
     canvas_state = Instance(CanvasSystemState, ())
+    network_snapshot = Instance(NetworkSnapshot, ())
 
     def set_extract_state(self, *args, **kw):
         pass
@@ -274,10 +280,20 @@ class ExtractionLineManager(Manager, Consoleable):
                 )
                 sc.finish_chamber_change()
 
-    def get_volume(self, node_name):
+    def get_volume(self, node_name: str) -> float:
         v = 0
         if self.use_network:
-            v = self.network.calculate_volumes(node_name)[0][1]
+            snapshot = self.network_snapshot
+            if snapshot is None:
+                snapshot = self.network.compute_state()
+                self.network_snapshot = snapshot
+
+            valve_state = snapshot.valves.get(node_name)
+            if valve_state is not None:
+                if valve_state.side_volumes:
+                    v = max(valve_state.side_volumes) + valve_state.valve_volume
+                else:
+                    v = valve_state.region_volume
 
         return v
 
@@ -335,7 +351,9 @@ class ExtractionLineManager(Manager, Consoleable):
         for ci in self.canvases:
             ci.refresh()
 
-    def build_canvas_state(self):
+    def build_canvas_state(
+        self, snapshot: Optional[NetworkSnapshot] = None
+    ) -> CanvasSystemState:
         valves = {}
         degraded_devices = []
         selected_name = ""
@@ -347,6 +365,11 @@ class ExtractionLineManager(Manager, Consoleable):
             active_name = getattr(self.canvas_view_model.active_item, "name", "") or ""
 
         sm = self.switch_manager
+        if snapshot is None and self.use_network:
+            snapshot = self.network.compute_state()
+        if snapshot is None:
+            snapshot = NetworkSnapshot()
+
         if sm is not None:
             names = set(sm.switches.keys())
             child_map = {}
@@ -357,11 +380,26 @@ class ExtractionLineManager(Manager, Consoleable):
             for name in names:
                 switch = sm.switches[name]
                 connected_volume = 0
+                region_id = ""
+                dominant_source = ""
+                dominant_source_node = ""
+                blocked_boundaries = []
+                side_volumes = []
                 if self.use_network:
-                    try:
-                        connected_volume = self.get_volume(name) or 0
-                    except BaseException:
-                        self.debug_exception()
+                    network_valve = snapshot.valves.get(name)
+                    if network_valve is not None:
+                        if network_valve.side_volumes:
+                            connected_volume = (
+                                max(network_valve.side_volumes)
+                                + network_valve.valve_volume
+                            )
+                        else:
+                            connected_volume = network_valve.region_volume or 0
+                        region_id = network_valve.region_id or ""
+                        dominant_source = network_valve.dominant_source or ""
+                        dominant_source_node = network_valve.dominant_source_node or ""
+                        blocked_boundaries = list(network_valve.blocked_boundaries or [])
+                        side_volumes = list(network_valve.side_volumes or [])
 
                 valves[name] = ValveVisualState(
                     name=name,
@@ -398,6 +436,11 @@ class ExtractionLineManager(Manager, Consoleable):
                     connected_volume=connected_volume,
                     description=switch.description or "",
                     address=getattr(switch, "address", "") or "",
+                    network_region_id=region_id,
+                    network_dominant_source=dominant_source,
+                    network_dominant_source_node=dominant_source_node,
+                    network_blocked_boundaries=blocked_boundaries,
+                    network_side_volumes=side_volumes,
                 )
 
         if self.devices:
@@ -426,30 +469,40 @@ class ExtractionLineManager(Manager, Consoleable):
             active_item=active_name,
             selected_item=selected_name,
             degraded_devices=degraded_devices,
-            network_regions={},
+            network_regions=snapshot.regions or {},
+            network=snapshot,
+            network_region_count=snapshot.region_count or 0,
+            blocked_boundaries=list(snapshot.blocked_boundaries or []),
             recent_events=[],
             refresh_age_seconds=refresh_age_seconds,
             simulation_mode=globalv.communication_simulation,
         )
 
-    def push_canvas_state(self, refresh=False):
-        state = self.build_canvas_state()
+    def push_canvas_state(self, refresh: bool = False) -> CanvasSystemState:
+        snapshot = None
+        if self.use_network:
+            snapshot = self.network.compute_state()
+        self.network_snapshot = snapshot or NetworkSnapshot()
+
+        state = self.build_canvas_state(snapshot=snapshot)
         self.canvas_state = state
         self.canvas_view_model.set_state(state)
         for canvas in self.canvases:
             canvas.apply_canvas_state(state, refresh=refresh)
         return state
 
-    def finish_loading(self):
+    def finish_loading(self) -> None:
         if self.use_network:
             self.network.load(self.canvas_path)
+            self.network_snapshot = self.network.compute_state()
         self._set_logger_level(self.switch_manager)
 
-    def reload_canvas(self):
+    def reload_canvas(self) -> None:
         self.debug("reload canvas")
         self.reload_scene_graph()
         if self.use_network:
             self.network.load(self.canvas_path)
+            self.network_snapshot = self.network.compute_state()
 
         sm = self.switch_manager
         if sm:
@@ -481,30 +534,20 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
         self.push_canvas_state(refresh=True)
 
-    def update_switch_state(self, name, state, *args, **kw):
+    def update_switch_state(
+        self, name, state, refresh: bool = True, *args, **kw
+    ) -> None:
         # self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
 
         if self.use_network:
             self.network.set_valve_state(name, state)
-            for c in self.canvases:
-                self.network.set_canvas_states(c, name)
+        self.push_canvas_state(refresh=refresh)
 
-        for c in self.canvases:
-            c.update_switch_state(name, state, *args, **kw)
-        self.push_canvas_state()
+    def update_switch_lock_state(self, *args, **kw) -> None:
+        self.push_canvas_state(refresh=True)
 
-    def update_switch_lock_state(self, *args, **kw):
-        for c in self.canvases:
-            c.update_switch_lock_state(*args, **kw)
-        self.push_canvas_state()
-
-    def update_switch_owned_state(self, *args, **kw):
-        for c in self.canvases:
-            try:
-                c.update_switch_owned_state(*args, **kw)
-            except BaseException:
-                self.debug_exception()
-        self.push_canvas_state()
+    def update_switch_owned_state(self, *args, **kw) -> None:
+        self.push_canvas_state(refresh=True)
 
     def set_valve_owner(self, name, owner):
         """
@@ -1130,38 +1173,30 @@ class ExtractionLineManager(Manager, Consoleable):
         self._set_pipette_counts(obj.name, new)
 
     @on_trait_change("use_network,network:inherit_state")
-    def _update_network(self):
-        from pychron.canvas.canvas2D.scene.primitives.valves import Valve
-
-        if not self.use_network:
-            for c in self.canvases:
-                scene = c.canvas2D.scene
-                for item in scene.get_items():
-                    if not isinstance(item, Valve):
-                        item.active_color = item.default_color
-                    else:
-                        item.active_color = item.oactive_color
-        else:
+    def _update_network(self) -> None:
+        if self.use_network:
             net = self.network
             if self.switch_manager:
-                for k, vi in self.switch_manager.switches.items():
-                    net.set_valve_state(k, vi.state)
-            self.reload_canvas()
+                for name, switch in self.switch_manager.switches.items():
+                    net.set_valve_state(name, switch.state)
+            self.push_canvas_state(refresh=True)
+        else:
+            self.network_snapshot = NetworkSnapshot()
+            self.push_canvas_state(refresh=True)
 
     @on_trait_change("display_volume,volume_key")
     def _update_canvas_inspector(self, name, new):
         for c in self.canvases:
             c.canvas2D.trait_set(**{name: new})
 
-    def _handle_state(self, new):
+    def _handle_state(self, new) -> None:
         # self.debug('handle state {}'.format(new))
         if isinstance(new, tuple):
-            self.update_switch_state(*new)
+            self.update_switch_state(*new, refresh=True)
         else:
-            # n = len(new)
+            n = len(new)
             for i, ni in enumerate(new):
-                self.update_switch_state(*ni)
-                # self.update_switch_state(refresh=i == n - 1, *ni)
+                self.update_switch_state(*ni, refresh=i == n - 1)
 
     def _handle_lock_state(self, new):
         self.debug("refresh_lock_state fired. {}".format(new))

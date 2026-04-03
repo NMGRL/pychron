@@ -146,13 +146,59 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if refresh:
                 self.invalidate_and_redraw()
 
-    def apply_canvas_state(self, state, refresh=True):
+    def apply_canvas_state(self, state, refresh: bool = True) -> None:
         self.canvas_state = state
         for name, valve_state in state.valves.items():
             self.set_valve_visual_state(name, valve_state, refresh=False)
 
+        if self.manager and self.manager.use_network and state.network:
+            self.apply_network_snapshot(state.network)
+        else:
+            self._reset_network_visualization()
+
         if refresh:
             self.invalidate_and_redraw()
+
+    def apply_network_snapshot(self, snapshot) -> None:
+        scene = self.scene
+        if scene is None or snapshot is None:
+            return
+
+        color_by_source = {}
+        for state_dict in (snapshot.node_states, snapshot.edge_states):
+            for name, payload in state_dict.items():
+                obj = scene.get_item(name)
+                if obj is None:
+                    continue
+
+                color_source = payload.get("dominant_source_node")
+                if color_source and color_source not in color_by_source:
+                    source_item = scene.get_item(color_source)
+                    if source_item is not None:
+                        color_by_source[color_source] = source_item.default_color
+
+                obj.state = bool(payload.get("is_active"))
+                if obj.state and color_source in color_by_source:
+                    obj.active_color = color_by_source[color_source]
+                elif hasattr(obj, "default_color"):
+                    obj.active_color = obj.default_color
+
+        for valve_name, valve_state in snapshot.valves.items():
+            obj = scene.get_item(valve_name)
+            if not isinstance(obj, (BaseValve, Switch)):
+                continue
+
+            if self.manager.network.inherit_state and getattr(obj, "state", None) not in (
+                "closed",
+                False,
+            ):
+                source = valve_state.dominant_source_node
+                if source and source in color_by_source:
+                    obj.active_color = color_by_source[source]
+                elif hasattr(obj, "oactive_color"):
+                    obj.active_color = obj.oactive_color
+            elif hasattr(obj, "oactive_color"):
+                obj.active_color = obj.oactive_color
 
     def set_valve_visual_state(self, name, visual_state, refresh=True):
         switch = self._get_switch_by_name(name)
@@ -441,6 +487,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def _toggle_laser_state(self, item):
         item.toggle_animate()
         self.request_redraw()
+
+    def _reset_network_visualization(self) -> None:
+        for item in self.scene.get_items():
+            if hasattr(item, "active_color") and hasattr(item, "default_color"):
+                item.active_color = item.default_color
+            if hasattr(item, "oactive_color"):
+                item.active_color = item.oactive_color
 
     def _get_switch_by_name(self, name):
         if self.scene and self.scene.valves:
