@@ -44,8 +44,8 @@ readonly = lambda x, **kw: Item(x, style="readonly", show_label=False, **kw)
 
 
 class Command(HasTraits):
-    description = Str
-    example = Str
+    description: str = ""
+    example: str = ""
     name = Property
 
     #    implements(ICommand)
@@ -66,7 +66,7 @@ class Command(HasTraits):
 
     #        return self.__class__.__name__.lower()
 
-    def _to_string(self):
+    def _to_string(self) -> str:
         return ""
 
     @classmethod
@@ -99,9 +99,7 @@ class Command(HasTraits):
         return self.to_string()
 
     def traits_view(self):
-        v = View(
-            self._get_view(), title=self.__class__.__name__, buttons=OKCancelButtons
-        )
+        v = View(self._get_view(), title=self.__class__.__name__, buttons=OKCancelButtons)
         return v
 
     def help_view(self):
@@ -189,14 +187,16 @@ MeasurementPyScripts live in ../scripts/measurement
             #                    width=600,
         )
 
-    def _to_string(self):
-        if os.path.isfile(self.path):
-            head, tail = os.path.split(self.path)
+    def _to_string(self) -> str:
+        path = str(self.path)
+        if path and os.path.isfile(path):
+            head, tail = os.path.split(path)
             words = [
                 ("name", tail),
                 ("root", head),
             ]
             return self._keywords(words)
+        return ""
 
 
 class BeginInterval(Command):

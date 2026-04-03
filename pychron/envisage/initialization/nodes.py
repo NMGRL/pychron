@@ -51,8 +51,8 @@ class PackageTreeNode(TreeNode):
 
 
 class BaseNode(HasTraits):
-    name = Str
-    enabled = Bool
+    name: str = ""
+    enabled: bool = True
 
 
 class Plugin(BaseNode):
@@ -73,11 +73,7 @@ class PluginTree(Plugin):
     def get_subtree(self, name):
         name = name.lower()
         return next(
-            (
-                p
-                for p in self.plugins
-                if isinstance(p, PluginTree) and p.name.lower() == name
-            )
+            (p for p in self.plugins if isinstance(p, PluginTree) and p.name.lower() == name)
         )
 
     def set_all_enabled(self, v):

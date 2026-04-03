@@ -17,13 +17,16 @@
 
 # =============enthought library imports=======================
 # ============= standard library imports ========================
+from __future__ import annotations
+
+
 # ============= local library imports  ==========================
 class ErrorCode(object):
-    msg = ""
-    code = None
-    description = ""
+    msg: str = ""
+    code: str | None = None
+    description: str = ""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "ERROR {} : {}".format(self.code, self.msg)
 
 
