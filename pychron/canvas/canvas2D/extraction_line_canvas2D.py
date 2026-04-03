@@ -22,7 +22,7 @@ from enable.enable_traits import Pointer
 from pyface.action.menu_manager import MenuManager
 from pyface.qt.QtCore import QPoint
 from pyface.qt.QtGui import QToolTip
-from traits.api import Any, Str, on_trait_change, Bool, List
+from traits.api import Any, Str, on_trait_change, Bool, List, Event, Instance
 from traitsui.menu import Action
 
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import (
@@ -107,6 +107,12 @@ class ExtractionLineCanvas2D(SceneCanvas):
     edit_mode = Bool(False)
     _constrain = False
 
+    # Selection model
+    selected_items = List
+    _box_start = Any
+    _box_end = Any
+    _is_box_selecting = Bool(False)
+
     _px = None
     _py = None
     canvas_state = Any
@@ -115,9 +121,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def __init__(self, *args, **kw):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
 
-        tool = ExtractionLineInfoTool(
-            scene=self.scene, manager=self.manager, component=self
-        )
+        tool = ExtractionLineInfoTool(scene=self.scene, manager=self.manager, component=self)
         overlay = ExtractionLineInfoOverlay(tool=tool, component=self)
         self.tool = tool
         self.tools.append(ExtractionLineMenuTool(component=self, parent=self))
@@ -229,9 +233,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.soft_lock = lockstate
             self.invalidate_and_redraw()
 
-    def load_canvas_file(
-        self, canvas_path=None, canvas_config_path=None, valves_path=None
-    ):
+    def load_canvas_file(self, canvas_path=None, canvas_config_path=None, valves_path=None):
         if canvas_path is None:
             canvas_path = self.manager.application.preferences.get(
                 "pychron.extraction_line.canvas_path"
@@ -251,9 +253,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _over_item(self, event):
         x, y = event.x, event.y
-        return self.scene.get_is_in(
-            x, y, exclude=[BorderLine, Elbow, Connection, Fork, Cross, Tee]
-        )
+        return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow, Connection, Fork, Cross, Tee])
 
     def normal_left_down(self, event):
         event.handled = True
@@ -320,10 +320,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     mode = "shift_select"
 
                 if state:
-                    # ok, change = self.manager.open_valve(item.name, mode=mode)
                     func = self.manager.open_valve
                 else:
-                    # ok, change = self.manager.close_valve(item.name, mode=mode)
                     func = self.manager.close_valve
 
                 args = func(item.name, mode=mode)
@@ -342,6 +340,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self.manager.set_selected_explanation_item(item)
 
         if self.edit_mode:
+            if event.shift_down:
+                self._toggle_item_selection(item)
+                return
+
             self.event_state = "drag"
             event.window.set_pointer(self.drag_pointer)
             return
@@ -353,14 +355,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
         state = item.state
         nstate = not state
         if isinstance(item, Switch):
-            # mode = "normal"
-            # # try:
-            # if state:
-            #     ok, change = self.manager.open_valve(item.name, mode=mode)
-            # else:
-            #     ok, change = self.manager.close_valve(item.name, mode=mode)
-            #     # except TypeError, e:
-            #     # ok, change = True, True
             set_state(nstate)
 
         else:
@@ -374,13 +368,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 from pychron.core.ui.dialogs import myConfirmationDialog
                 from pyface.api import NO
 
-                if isinstance(item, ManualSwitch) or (
-                    isinstance(item, RoughValve) and not state
-                ):
+                if isinstance(item, ManualSwitch) or (isinstance(item, RoughValve) and not state):
                     msg = "Are you sure you want to {} {}".format(
                         "open" if not state else "close", item.name
                     )
-                    # event.handled = True
 
                     dlg = myConfirmationDialog(
                         message=msg, title="Verfiy Valve Action", style="modal"
@@ -402,39 +393,111 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
         event.handled = True
 
-    def drag_mouse_move(self, event):
-        si = self.active_item
-
-        x, y = event.x, event.y
-        dx, dy = self.map_data((x, y))
-        w, h = si.width, si.height
-
-        dx -= w / 2.0
-        dy -= h / 2.0
-
-        if self.snap_to_grid:
-            dx, dy = snap_to_grid(dx, dy, interval=self.grid_interval)
-
+    def edit_left_down(self, event):
         if event.shift_down:
-            if self._px is not None and not self._constrain:
-                xx = abs(x - self._px)
-                yy = abs(y - self._py)
-                self._constrain = "v" if yy > xx else "h"
+            self._is_box_selecting = True
+            self._box_start = self.map_data((event.x, event.y))
+            self._box_end = self._box_start
+            event.handled = True
+            return
+
+        item = self._over_item(event)
+        if item is not None:
+            self._toggle_item_selection(item)
+        else:
+            self.clear_selection()
+        event.handled = True
+
+    def edit_mouse_move(self, event):
+        if self._is_box_selecting:
+            self._box_end = self.map_data((event.x, event.y))
+            self.invalidate_and_redraw()
+        event.handled = True
+
+    def edit_left_up(self, event):
+        if self._is_box_selecting:
+            self._is_box_selecting = False
+            self._perform_box_select()
+            self._box_start = None
+            self._box_end = None
+            self.invalidate_and_redraw()
+        event.handled = True
+
+    def _toggle_item_selection(self, item):
+        if item in self.selected_items:
+            self.selected_items.remove(item)
+            item.selected = False
+        else:
+            self.selected_items.append(item)
+            item.selected = True
+
+    def clear_selection(self):
+        for item in self.selected_items:
+            item.selected = False
+        self.selected_items = []
+
+    def select_all(self):
+        self.clear_selection()
+        for item in self.scene.get_items():
+            if isinstance(item, (BaseValve, Switch, Laser)):
+                self.selected_items.append(item)
+                item.selected = True
+        self.invalidate_and_redraw()
+
+    def _perform_box_select(self):
+        if self._box_start is None or self._box_end is None:
+            return
+
+        x1 = min(self._box_start[0], self._box_end[0])
+        x2 = max(self._box_start[0], self._box_end[0])
+        y1 = min(self._box_start[1], self._box_end[1])
+        y2 = max(self._box_start[1], self._box_end[1])
+
+        if not event.shift_down:
+            self.clear_selection()
+
+        for item in self.scene.get_items():
+            bx, by, bx2, by2 = item.get_bounds()
+            if bx2 >= x1 and bx <= x2 and by2 >= y1 and by <= y2:
+                if item not in self.selected_items:
+                    self.selected_items.append(item)
+                    item.selected = True
+        self.invalidate_and_redraw()
+
+    def drag_mouse_move(self, event):
+        if not self.selected_items:
+            self.selected_items = [self.active_item] if self.active_item else []
+
+        dx, dy = self.map_data((event.x, event.y))
+
+        for si in self.selected_items:
+            w, h = si.width, si.height
+            nx = dx - w / 2.0
+            ny = dy - h / 2.0
+
+            if self.snap_to_grid:
+                nx, ny = snap_to_grid(nx, ny, interval=self.grid_interval)
+
+            if event.shift_down:
+                if self._px is not None and not self._constrain:
+                    xx = abs(event.x - self._px)
+                    yy = abs(event.y - self._py)
+                    self._constrain = "v" if yy > xx else "h"
+                else:
+                    self._px = event.x
+                    self._py = event.y
             else:
-                self._px = x
-                self._py = y
-        else:
-            self._constrain = False
-            self._px, self._py = None, None
+                self._constrain = False
+                self._px, self._py = None, None
 
-        if self._constrain == "h":
-            si.x = dx
-        elif self._constrain == "v":
-            si.y = dy
-        else:
-            si.x, si.y = dx, dy
+            if self._constrain == "h":
+                si.x = nx
+            elif self._constrain == "v":
+                si.y = ny
+            else:
+                si.x, si.y = nx, ny
 
-        si.request_layout()
+            si.request_layout()
         self.invalidate_and_redraw()
 
     def drag_left_up(self, event):
@@ -547,9 +610,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             global_pos = getattr(event, "global_pos", None)
             if global_pos is None and control is not None:
                 size = control.size()
-                global_pos = control.mapToGlobal(
-                    QPoint(int(event.x), int(size.height() - event.y))
-                )
+                global_pos = control.mapToGlobal(QPoint(int(event.x), int(size.height() - event.y)))
 
             if global_pos is not None and hasattr(menu, "exec_"):
                 menu.exec_(global_pos)

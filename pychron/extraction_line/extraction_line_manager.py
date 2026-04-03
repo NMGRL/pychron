@@ -181,13 +181,9 @@ class ExtractionLineManager(Manager, Consoleable):
             try:
                 bind_preference(self, attr, "{}.{}".format(prefid, attr))
             except BaseException as e:
-                self.warning(
-                    "failed binding extraction line preference {}. {}".format(attr, e)
-                )
+                self.warning("failed binding extraction line preference {}. {}".format(attr, e))
 
-        bind_preference(
-            self.network, "inherit_state", "{}.inherit_state".format(prefid)
-        )
+        bind_preference(self.network, "inherit_state", "{}.inherit_state".format(prefid))
 
         self.console_bind_preferences("{}.console".format(prefid))
 
@@ -211,9 +207,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 "display_volume",
                 "{}.display_volume".format(prefid),
             )
-            bind_preference(
-                self.canvas.canvas2D, "volume_key", "{}.volume_key".format(prefid)
-            )
+            bind_preference(self.canvas.canvas2D, "volume_key", "{}.volume_key".format(prefid))
 
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
@@ -234,9 +228,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.link_valve_actuation_dict[name] = func
 
     def enable_auto_reload(self):
-        self.file_listener = FileListener(
-            path=self.canvas_path, callback=self.reload_canvas
-        )
+        self.file_listener = FileListener(path=self.canvas_path, callback=self.reload_canvas)
 
     def disable_auto_reload(self):
         if self.file_listener:
@@ -262,9 +254,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 err = sc.check_evacuation()
                 if err:
                     name = sc.chamber
-                    msg = "Are you sure you want to evacuate the {} chamber. {}".format(
-                        name, err
-                    )
+                    msg = "Are you sure you want to evacuate the {} chamber. {}".format(name, err)
                     if not self.confirmation_dialog(msg):
                         return
 
@@ -275,9 +265,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 return
 
             if self.confirmation_dialog("Ready to Finish Sample Change"):
-                self._handle_console_message(
-                    ("===== Finish Sample Change =====", "maroon")
-                )
+                self._handle_console_message(("===== Finish Sample Change =====", "maroon"))
                 sc.finish_chamber_change()
 
     def get_volume(self, node_name: str) -> float:
@@ -351,9 +339,7 @@ class ExtractionLineManager(Manager, Consoleable):
         for ci in self.canvases:
             ci.refresh()
 
-    def build_canvas_state(
-        self, snapshot: Optional[NetworkSnapshot] = None
-    ) -> CanvasSystemState:
+    def build_canvas_state(self, snapshot: Optional[NetworkSnapshot] = None) -> CanvasSystemState:
         valves = {}
         degraded_devices = []
         selected_name = ""
@@ -390,8 +376,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     if network_valve is not None:
                         if network_valve.side_volumes:
                             connected_volume = (
-                                max(network_valve.side_volumes)
-                                + network_valve.valve_volume
+                                max(network_valve.side_volumes) + network_valve.valve_volume
                             )
                         else:
                             connected_volume = network_valve.region_volume or 0
@@ -419,18 +404,12 @@ class ExtractionLineManager(Manager, Consoleable):
                     is_stale=switch.state is None,
                     last_state_timestamp=switch.last_actuation or "",
                     last_readback_timestamp=switch.last_actuation or "",
-                    state_source=(
-                        "simulated"
-                        if globalv.communication_simulation
-                        else "hardware"
-                    ),
+                    state_source=("simulated" if globalv.communication_simulation else "hardware"),
                     can_actuate=not switch.software_lock and not bool(switch.owner),
                     cannot_actuate_reason=(
                         "Software locked"
                         if switch.software_lock
-                        else "Owned by {}".format(switch.owner)
-                        if switch.owner
-                        else ""
+                        else "Owned by {}".format(switch.owner) if switch.owner else ""
                     ),
                     children=child_map.get(switch.display_name, []),
                     connected_volume=connected_volume,
@@ -445,22 +424,22 @@ class ExtractionLineManager(Manager, Consoleable):
 
         if self.devices:
             degraded_devices = [
-                dev.name
-                for dev in self.devices
-                if hasattr(dev, "enabled") and not dev.enabled
+                dev.name for dev in self.devices if hasattr(dev, "enabled") and not dev.enabled
             ]
 
         refresh_age_seconds = 0
         if sm is not None:
             timestamps = [
-                switch.last_actuation
-                for switch in sm.switches.values()
-                if switch.last_actuation
+                switch.last_actuation for switch in sm.switches.values() if switch.last_actuation
             ]
             if timestamps:
                 try:
                     last = max(timestamps)
-                    refresh_age_seconds = max(time.time() - time.mktime(time.strptime(last.split(".")[0], "%Y-%m-%dT%H:%M:%S")), 0)
+                    refresh_age_seconds = max(
+                        time.time()
+                        - time.mktime(time.strptime(last.split(".")[0], "%Y-%m-%dT%H:%M:%S")),
+                        0,
+                    )
                 except BaseException:
                     refresh_age_seconds = 0
 
@@ -534,9 +513,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
         self.push_canvas_state(refresh=True)
 
-    def update_switch_state(
-        self, name, state, refresh: bool = True, *args, **kw
-    ) -> None:
+    def update_switch_state(self, name, state, *args, refresh: bool = True, **kw) -> None:
         # self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
 
         if self.use_network:
@@ -604,9 +581,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def get_indicator_state(self, name=None, description=None):
         if self.switch_manager is not None:
             if description is not None and description.strip():
-                return self.switch_manager.get_indicator_state_by_description(
-                    description
-                )
+                return self.switch_manager.get_indicator_state_by_description(description)
             else:
                 return self.switch_manager.get_indicator_state_by_name(name)
 
@@ -620,9 +595,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.switch_manager is not None:
             # only query valve states if not already doing a
             # hardware_update via _trigger_update
-            return self.switch_manager.get_states(
-                query=not self.use_hardware_update, version=1
-            )
+            return self.switch_manager.get_states(query=not self.use_hardware_update, version=1)
 
     def get_lock_word(self):
         if self.switch_manager is not None:
@@ -713,9 +686,7 @@ class ExtractionLineManager(Manager, Consoleable):
         p = os.path.join(root, name)
         if os.path.isfile(p):
             context = {}
-            se.execute_script(
-                name, root, delay_start=1, manager=self, context=context, kind="Aqua"
-            )
+            se.execute_script(name, root, delay_start=1, manager=self, context=context, kind="Aqua")
             self._aqua_active_flag = True
         else:
             self.warning(f"{p} is not a valid file")
@@ -759,11 +730,7 @@ class ExtractionLineManager(Manager, Consoleable):
             selected = None
             if obj:
                 selected = next(
-                    (
-                        i
-                        for i in self.explanation.explanable_items
-                        if obj.name == i.name
-                    ),
+                    (i for i in self.explanation.explanable_items if obj.name == i.name),
                     None,
                 )
 
@@ -779,9 +746,7 @@ class ExtractionLineManager(Manager, Consoleable):
         c = ExtractionLineCanvas(manager=self, display_name="Extraction Line")
         # c.load_canvas_file(canvas_config_path=config)
         self.canvases.append(c)
-        c.canvas2D.trait_set(
-            display_volume=self.display_volume, volume_key=self.volume_key
-        )
+        c.canvas2D.trait_set(display_volume=self.display_volume, volume_key=self.volume_key)
         if self.switch_manager:
             self.switch_manager.load_valve_states()
             self.switch_manager.load_valve_lock_states(force=True)
@@ -895,9 +860,7 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def _log_spec_event(self, name, action):
-        sm = self.application.get_service(
-            "pychron.spectrometer.scan_manager.ScanManager"
-        )
+        sm = self.application.get_service("pychron.spectrometer.scan_manager.ScanManager")
         if sm:
             color = 0x98FF98 if action == "open" else 0xFF9A9A
             sm.add_spec_event_marker(
@@ -935,9 +898,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 name = vm.get_name_by_description(description, name=name)
 
             if not name:
-                self.warning(
-                    "Invalid valve name={}, description={}".format(oname, description)
-                )
+                self.warning("Invalid valve name={}, description={}".format(oname, description))
                 return False
 
             v = vm.get_switch_by_name(name)
@@ -950,19 +911,13 @@ class ExtractionLineManager(Manager, Consoleable):
             self.refresh_canvas()
             return True
 
-    def _open_close_valve(
-        self, name, action, description=None, address=None, mode="remote", **kw
-    ):
+    def _open_close_valve(self, name, action, description=None, address=None, mode="remote", **kw):
         vm = self.switch_manager
         if vm is not None:
             oname = name
-            name = self._resolve_switch_name(
-                name, description=description, address=address
-            )
+            name = self._resolve_switch_name(name, description=description, address=address)
             if not name:
-                self.warning(
-                    "Invalid valve name={}, description={}".format(oname, description)
-                )
+                self.warning("Invalid valve name={}, description={}".format(oname, description))
                 return False, False
 
             result = self._change_switch_state(name, mode, action, **kw)
@@ -979,16 +934,12 @@ class ExtractionLineManager(Manager, Consoleable):
         if self._check_ownership(name, sender_address):
             func = getattr(self.switch_manager, "{}_by_name".format(action))
             ret = func(name, mode=mode, **kw)
-            self.debug(
-                "change switch state name={} action={} ret={}".format(name, action, ret)
-            )
+            self.debug("change switch state name={} action={} ret={}".format(name, action, ret))
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
                     if change:
-                        self.update_switch_state(
-                            name, True if action == "open" else False
-                        )
+                        self.update_switch_state(name, True if action == "open" else False)
         return result, change
 
     def _resolve_switch_name(self, name, description=None, address=None):
@@ -1142,9 +1093,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 return m
             else:
                 self.debug(
-                    "could not create manager {}, {},{},{}".format(
-                        klass, manager, params, kw
-                    )
+                    "could not create manager {}, {},{},{}".format(klass, manager, params, kw)
                 )
 
     def _set_logger_level(self, obj=None):
