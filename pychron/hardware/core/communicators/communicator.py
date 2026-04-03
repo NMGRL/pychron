@@ -21,6 +21,7 @@ from __future__ import absolute_import
 # ============= local library imports  ==========================
 import binascii
 import codecs
+import os
 import time
 from threading import RLock
 
@@ -92,6 +93,14 @@ class Communicator(HeadlessConfigLoadable):
     handle = None
     scheduler = None
     address = None
+    backend = "real"
+    transport_adapter = None
+    fixture_path = None
+    scenario_path = None
+    simulator_protocol = None
+    simulator_seed = 1
+    replay_mode = "strict"
+    fault_names = None
     _comms_report_attrs = None
 
     def __init__(self, *args, **kw):
@@ -141,6 +150,34 @@ class Communicator(HeadlessConfigLoadable):
         if self.read_terminator == "CRLF":
             self.read_terminator = "\r\n"
 
+        self.backend = self.config_get(
+            config, "Communications", "backend", optional=True, default="real"
+        )
+        self.fixture_path = self.config_get(
+            config, "Communications", "fixture_path", optional=True
+        )
+        self.scenario_path = self.config_get(
+            config, "Communications", "scenario_path", optional=True
+        )
+        self.simulator_protocol = self.config_get(
+            config, "Communications", "simulator_protocol", optional=True
+        )
+        self.simulator_seed = self.config_get(
+            config,
+            "Communications",
+            "simulator_seed",
+            cast="int",
+            optional=True,
+            default=1,
+        )
+        self.replay_mode = self.config_get(
+            config, "Communications", "replay_mode", optional=True, default="strict"
+        )
+        faults = self.config_get(config, "Communications", "faults", optional=True)
+        if faults:
+            self.fault_names = [fault.strip() for fault in faults.split(",") if fault.strip()]
+
+        self._configure_transport_backend(path)
         return True
 
     def report(self):
@@ -149,7 +186,8 @@ class Communicator(HeadlessConfigLoadable):
         self.debug("=================================================")
 
     def close(self):
-        pass
+        if self.transport_adapter is not None:
+            self.transport_adapter.close()
 
     def delay(self, ms):
         """
@@ -168,6 +206,63 @@ class Communicator(HeadlessConfigLoadable):
 
     def read(self, *args, **kw):
         pass
+
+    def set_transport_adapter(self, adapter, backend=None):
+        self.transport_adapter = adapter
+        if backend is not None:
+            self.backend = backend
+        if adapter is not None:
+            self.simulation = True
+        return adapter
+
+    def clear_transport_adapter(self):
+        self.transport_adapter = None
+        self.backend = "real"
+
+    def has_transport_adapter(self):
+        return self.transport_adapter is not None
+
+    def _configure_transport_backend(self, path):
+        if self.backend in (None, "", "real"):
+            return
+
+        if self.transport_adapter is not None:
+            return
+
+        try:
+            from pychron.hardware.core.simulation.factory import build_transport_adapter
+
+            self.set_transport_adapter(
+                build_transport_adapter(
+                    self.backend,
+                    transport_kind=self._transport_kind(),
+                    fixture_path=self._resolve_backend_path(path, self.fixture_path),
+                    scenario_path=self._resolve_backend_path(path, self.scenario_path),
+                    mode=self.replay_mode,
+                    protocol_name=self.simulator_protocol,
+                    seed=self.simulator_seed,
+                    fault_names=self.fault_names,
+                ),
+                backend=self.backend,
+            )
+        except BaseException:
+            self.warning(
+                "Failed configuring transport backend '{}'".format(self.backend)
+            )
+            self.debug_exception()
+
+    def _resolve_backend_path(self, config_path, value):
+        if not value:
+            return
+        if os.path.isabs(value):
+            return value
+        root = config_path
+        if config_path and os.path.isfile(config_path):
+            root = os.path.dirname(config_path)
+        return os.path.join(root or "", value)
+
+    def _transport_kind(self):
+        return self.__class__.__name__.replace("Communicator", "").lower()
 
     def log_tell(self, cmd, info=None):
         """

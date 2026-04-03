@@ -1,9 +1,12 @@
-import json
 import os
 import shutil
 
 from pychron.cli_profiles import merge_profiles
-from pychron.install_validation import profile_state_path
+from pychron.install_runtime import (
+    normalize_root,
+    prepare_runtime_root,
+    save_bootstrap_state,
+)
 from pychron.paths import paths
 from pychron.starter_bundles import resolve_bundles
 
@@ -11,11 +14,6 @@ DEFAULT_ROOT = "~/Pychron"
 SKIP_SOURCE_NAMES = {".DS_Store"}
 SKIP_SOURCE_PREFIXES = ("~", "~~")
 SKIP_SOURCE_SUFFIXES = (".bk", ".orig")
-
-
-def normalize_root(root):
-    root = root or DEFAULT_ROOT
-    return os.path.expanduser(root)
 
 
 def ensure_directory(path):
@@ -33,19 +31,6 @@ def write_file_if_missing(path, text):
     with open(path, "w") as wfile:
         wfile.write(text or "")
     return True
-
-
-def save_bootstrap_state(root, merged, bundles=None, source_profiles=None):
-    path = profile_state_path(root)
-    ensure_directory(os.path.dirname(path))
-    payload = {
-        "bundles": list(bundles or ()),
-        "requested": list(merged.requested),
-        "resolved": list(merged.resolved),
-        "source_profiles": list(source_profiles or ()),
-    }
-    with open(path, "w") as wfile:
-        json.dump(payload, wfile, indent=2, sort_keys=True)
 
 
 def should_skip_source_name(name):
@@ -135,9 +120,7 @@ def bootstrap_runtime_root(
     overwrite_source_files=False,
 ):
     root = normalize_root(root)
-    paths.build(root)
-    if write_defaults:
-        paths.write_defaults()
+    _, default_files = prepare_runtime_root(root, write_defaults=write_defaults)
 
     profile_names = []
     for bundle in resolve_bundles(bundles or ()):
@@ -152,11 +135,12 @@ def bootstrap_runtime_root(
     for directory in merged.directories:
         ensure_directory(os.path.join(paths.root_dir, directory))
 
+    created_profile_files = []
     for file_spec in merged.required_files + merged.optional_files:
         if file_spec.default_text is not None:
-            write_file_if_missing(
-                os.path.join(paths.root_dir, file_spec.path), file_spec.default_text
-            )
+            path = os.path.join(paths.root_dir, file_spec.path)
+            if write_file_if_missing(path, file_spec.default_text):
+                created_profile_files.append(path)
 
     copied = apply_source_profiles(
         root,
@@ -184,5 +168,17 @@ def bootstrap_runtime_root(
         paths.repository_dataset_dir,
     ]
     created.extend(os.path.join(paths.root_dir, d) for d in merged.directories)
+    created.extend(default_files)
+    created.extend(created_profile_files)
     created.extend(copied)
-    return root, created, merged
+    unique_created = []
+    seen = set()
+    for item in created:
+        if item not in seen:
+            seen.add(item)
+            unique_created.append(item)
+    return root, unique_created, merged
+
+
+def repair_runtime_root(root, **kw):
+    return bootstrap_runtime_root(root, **kw)

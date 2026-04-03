@@ -12,6 +12,11 @@ Recommended workflow
 3. Bootstrap the runtime tree with ``pychron-bootstrap``.
 4. Validate the result with ``pychron-doctor``.
 
+``pychron-bootstrap`` is the supported initialization and repair entrypoint.
+The GUI first-run wizard and startup validation use the same bootstrap and
+validation services, while preserving the existing runtime files such as
+``setupfiles/initialization.xml`` and the ``preferences`` tree.
+
 Examples
 --------
 
@@ -38,6 +43,12 @@ Bootstrap a new installation:
 .. code-block:: bash
 
    pychron-bootstrap --root ~/Pychron --profile data-reduction
+
+Repair an existing installation without overwriting site-authored files:
+
+.. code-block:: bash
+
+   pychron-bootstrap --root ~/Pychron --bundle ngx-collection
 
 Bootstrap using a versioned starter bundle:
 
@@ -83,3 +94,9 @@ installs:
 
 These do not change the Pychron runtime path structure. They only make the
 installation intent clearer when using ``uv sync --extra ...``.
+
+Bootstrap-managed files include the default ``initialization.xml``,
+``startup_tests.yaml``, and ``.appdata`` support files. Profile-specific files
+with shipped defaults are also created when missing. Files without defaults are
+still treated as lab-authored configuration and are reported by
+``pychron-doctor`` with guidance instead of being silently overwritten.

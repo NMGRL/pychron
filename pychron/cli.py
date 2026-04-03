@@ -15,7 +15,7 @@ from pychron.install_support import (
     export_config_bundle,
     import_config_bundle,
 )
-from pychron.install_validation import validate_runtime_root
+from pychron.install_validation import build_runtime_validation_report
 from pychron.starter_bundles import BUNDLES, available_bundle_names
 
 DEFAULT_ROOT = "~/Pychron"
@@ -106,7 +106,8 @@ def _git_check():
 
 def _path_checks(root, profiles=None, bundles=None):
     results = []
-    for issue in validate_runtime_root(root, profiles=profiles, bundles=bundles):
+    report = build_runtime_validation_report(root, profiles=profiles, bundles=bundles)
+    for issue in report.issues:
         detail = issue.detail
         if issue.hint:
             detail = "{} Hint: {}".format(detail, issue.hint)

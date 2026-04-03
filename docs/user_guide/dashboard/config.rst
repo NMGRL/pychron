@@ -8,6 +8,10 @@ The dashboard.xml or dashboard.yaml file defines which devices and values the da
 
 .. note:: Labspy is Django-based web app for displaying the laboratory status
 
+Pychron validates the dashboard configuration before polling starts. Duplicate
+tags, invalid periods, missing required fields, and invalid conditional scripts
+are surfaced as startup errors instead of being silently ignored.
+
 Basic Structure
 +++++++++++++++++++++
 

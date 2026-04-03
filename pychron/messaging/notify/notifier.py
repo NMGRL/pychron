@@ -18,7 +18,7 @@
 from traits.api import Int, Dict, Bool
 
 import zmq
-from threading import Thread, Lock
+from threading import Thread, Event, Lock
 
 from pychron.messaging.broadcaster import Broadcaster
 
@@ -27,12 +27,16 @@ class Notifier(Broadcaster):
     _handlers = Dict
     port = Int
     _lock = None
+    _request_stop = None
 
     def setup(self, port):
         if port:
+            self.close()
             self._lock = Lock()
+            self._request_stop = Event()
 
             context = zmq.Context()
+            self._context = context
             self._setup_publish(context, port)
 
             self._req_sock = context.socket(zmq.REP)
@@ -46,16 +50,9 @@ class Notifier(Broadcaster):
         self._handlers[name] = func
 
     def close(self):
-        with self._lock:
-            if self._sock:
-                self._sock.setsockopt(zmq.LINGER, 0)
-                self._sock.close()
-                self._sock = None
-
-            if self._req_sock:
-                self._req_sock.setsockopt(zmq.LINGER, 0)
-                self._req_sock.close()
-                self._req_sock = None
+        if self._request_stop is not None:
+            self._request_stop.set()
+        super(Notifier, self).close()
 
     def send_notification(self, uuid, tag="RunAdded"):
         msg = "{} {}".format(tag, uuid)
@@ -78,21 +75,26 @@ class Notifier(Broadcaster):
         poll = zmq.Poller()
         poll.register(self._req_sock, zmq.POLLIN)
 
-        while sock:
+        while sock and not self._request_stop.is_set():
             socks = dict(poll.poll(1000))
             with self._lock:
                 try:
                     if socks.get(sock) == zmq.POLLIN:
-                        req = sock.recv()
+                        req = sock.recv_string()
                         if req == "ping":
-                            sock.send("echo")
+                            sock.send_string("echo")
                         elif req in self._handlers:
                             func = self._handlers[req]
-                            sock.send(func())
+                            response = func()
+                            if isinstance(response, bytes):
+                                sock.send(response)
+                            else:
+                                sock.send_string(response)
                 except zmq.ZMQBaseError:
                     pass
 
-        poll.unregister(self._req_sock)
+        if self._req_sock is not None:
+            poll.unregister(self._req_sock)
 
 
 # ============= EOF =============================================

@@ -80,12 +80,20 @@ class Primitive(HasTraits):
     _cached_wh = None
     _cached_xy = None
     _layout_needed = True
+    _cached_colors = None
+    _cached_text_extent = None
+    _cached_bounds = None
+    _cached_bounds_key = None
 
     def __init__(self, x, y, *args, **kw):
         self.x = x
         self.y = y
         self.ox = x
         self.oy = y
+        self._cached_colors = {}
+        self._cached_text_extent = {}
+        self._cached_bounds = None
+        self._cached_bounds_key = None
         super(Primitive, self).__init__(*args, **kw)
         self._initialized = True
 
@@ -117,6 +125,7 @@ class Primitive(HasTraits):
     def request_layout(self):
         self._cached_wh = None
         self._cached_xy = None
+        self._cached_bounds = None
         self._layout_needed = True
 
     def render(self, gc):
@@ -205,6 +214,16 @@ class Primitive(HasTraits):
 
         return w
 
+    def get_bounds(self):
+        """Get bounding box as (x, y, x2, y2)."""
+        key = (self.x, self.y, self.width, self.height)
+        if self._cached_bounds is None or self._cached_bounds_key != key:
+            x, y = self.get_xy(clear_layout_needed=False)
+            w, h = self.get_wh()
+            self._cached_bounds = (x, y, x + w, y + h)
+            self._cached_bounds_key = key
+        return self._cached_bounds
+
     bounds = None
 
     def set_canvas(self, canvas):
@@ -232,23 +251,22 @@ class Primitive(HasTraits):
 
     def is_in_region(self, x1, x2, y1, y2):
         """
+        Check if component's bounding box intersects with region.
 
-          |------------- x2,y2
-          |       T      |
-          |              |
-        x1,y1------------|    F
+          x1,y1 ---------------
+          |                   |
+          |    component      |
+          |        (x,y)     |
+          |        +----+     |
+          |        |    |     |
+          |        +----+-----|
+          |              (x2,y2)
 
-
-        check to see if self.x and self.y within region
-        :param x1: float
-        :param x2: float
-        :param y1: float
-        :param y2: float
-        :return: bool
-
+        Returns True if component intersects region.
         """
+        bx, by, bx2, by2 = self.get_bounds()
 
-        return x1 <= self.x <= x2 and y1 <= self.y <= y2
+        return not (x2 < bx or x1 > bx2 or y2 < by or y1 > by2)
 
     # private
     def _render(self, gc):
@@ -263,7 +281,11 @@ class Primitive(HasTraits):
                 self._render_textbox(gc, x, y, w, h, txt)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
-        tw, th, _, _ = gc.get_full_text_extent(txt)
+        if txt not in self._cached_text_extent:
+            tw, th, _, _ = gc.get_full_text_extent(txt)
+            self._cached_text_extent[txt] = (tw, th)
+        else:
+            tw, th = self._cached_text_extent[txt]
         x = x + w / 2.0 - tw / 2.0
         y = y + h / 2.0 - th / 2.0
 
@@ -277,9 +299,15 @@ class Primitive(HasTraits):
             gc.show_text(t)
 
     def _convert_color(self, c):
+        cache_key = id(c)
+        if cache_key in self._cached_colors:
+            return self._cached_colors[cache_key]
+
         if not isinstance(c, (list, tuple)):
             c = c.red, c.green, c.blue
         c = [x / 255.0 for x in c]
+
+        self._cached_colors[cache_key] = c
         return c
 
     # handlers
@@ -287,6 +315,9 @@ class Primitive(HasTraits):
         "default_color, active_color, name_color, text_color, x, y, width, height, state, visible"
     )
     def _refresh_canvas(self):
+        self._cached_colors.clear()
+        self._cached_text_extent.clear()
+        self._cached_bounds = None
         self.request_redraw()
 
     def request_redraw(self):
@@ -299,11 +330,17 @@ class Primitive(HasTraits):
 
 class QPrimitive(Primitive):
     def _convert_color(self, c):
+        cache_key = id(c)
+        if cache_key in self._cached_colors:
+            return self._cached_colors[cache_key]
+
         if not isinstance(c, (list, tuple)):
             c = c.rgba
 
         if any((ci > 1 for ci in c)):
             c = [x / 255.0 for x in c]
+
+        self._cached_colors[cache_key] = c
         return c
 
     def is_in(self, x, y):

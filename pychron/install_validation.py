@@ -1,11 +1,16 @@
-import json
 import os
 from dataclasses import dataclass
 
 from pychron.cli_profiles import merge_profiles
+from pychron.install_runtime import (
+    base_runtime_directories,
+    load_bootstrap_state,
+    make_runtime_layout,
+    managed_runtime_files,
+    normalize_root,
+    profile_state_path,
+)
 from pychron.starter_bundles import bundle_profiles, resolve_bundles
-
-PROFILE_STATE = "bootstrap_profiles.json"
 
 
 @dataclass(frozen=True)
@@ -14,69 +19,55 @@ class ValidationIssue:
     status: str
     detail: str
     hint: str = ""
+    category: str = ""
+    managed_by: str = "bootstrap"
 
 
 @dataclass(frozen=True)
-class RuntimeLayout:
+class RuntimeValidationReport:
     root: str
-    setup_dir: str
-    scripts_dir: str
-    preferences_dir: str
-    data_dir: str
-    dvc_dir: str
-    repository_dir: str
-    appdata_dir: str
-    startup_tests: str
-    identifiers_file: str
-    task_extensions_file: str
-    initialization_file: str
+    issues: tuple[ValidationIssue, ...]
 
+    @property
+    def blocking_issues(self):
+        return tuple(issue for issue in self.issues if issue.status == "FAIL")
 
-def normalize_root(root):
-    root = root or "~/Pychron"
-    return os.path.normpath(os.path.expanduser(root))
+    @property
+    def recommended_issues(self):
+        return tuple(issue for issue in self.issues if issue.status == "WARN")
 
+    @property
+    def info_issues(self):
+        return tuple(issue for issue in self.issues if issue.status == "OK")
 
-def make_runtime_layout(root):
-    root = normalize_root(root)
-    setup_dir = os.path.join(root, "setupfiles")
-    scripts_dir = os.path.join(root, "scripts")
-    appdata_dir = os.path.join(root, ".appdata")
-    data_dir = os.path.join(root, "data")
-    dvc_dir = os.path.join(data_dir, ".dvc")
-    return RuntimeLayout(
-        root=root,
-        setup_dir=setup_dir,
-        scripts_dir=scripts_dir,
-        preferences_dir=os.path.join(root, "preferences"),
-        data_dir=data_dir,
-        dvc_dir=dvc_dir,
-        repository_dir=os.path.join(dvc_dir, "repositories"),
-        appdata_dir=appdata_dir,
-        startup_tests=os.path.join(setup_dir, "startup_tests.yaml"),
-        identifiers_file=os.path.join(appdata_dir, "identifiers.yaml"),
-        task_extensions_file=os.path.join(appdata_dir, "task_extensions.yaml"),
-        initialization_file=os.path.join(setup_dir, "initialization.xml"),
-    )
+    @property
+    def should_prompt_first_run(self):
+        return bool(
+            [
+                issue
+                for issue in self.blocking_issues
+                if issue.category
+                in ("root", "base_dir", "base_file", "profile_dir", "profile_file")
+            ]
+        )
 
+    def summary_lines(self, limit=5):
+        if not self.blocking_issues:
+            return ()
 
-def profile_state_path(root):
-    return os.path.join(make_runtime_layout(root).appdata_dir, PROFILE_STATE)
-
-
-def load_bootstrap_state(root):
-    path = profile_state_path(root)
-    if not os.path.isfile(path):
-        return {}
-
-    try:
-        with open(path, "r") as rfile:
-            return json.load(rfile)
-    except Exception:
-        return {}
+        lines = [
+            "Pychron setup is incomplete. {} blocking issue(s) found.".format(
+                len(self.blocking_issues)
+            )
+        ]
+        for issue in self.blocking_issues[:limit]:
+            lines.append("- {}: {}".format(issue.name, issue.detail))
+        lines.append("Run `pychron-doctor --root {}` for a full report.".format(self.root))
+        return tuple(lines)
 
 
 def combine_profile_inputs(profiles=None, bundles=None, saved_state=None):
+    saved_state = saved_state or {}
     bundle_names = tuple(bundles or saved_state.get("bundles") or ())
     profile_names = list(bundle_profiles(bundle_names))
 
@@ -94,10 +85,24 @@ def _bootstrap_hint(root, profiles=None, bundles=None):
         parts.extend(("--bundle", bundle))
     for profile in profiles or ():
         parts.extend(("--profile", profile))
-    return "Run `{}` to initialize the expected layout.".format(" ".join(parts))
+    return "Run `{}` to initialize or repair this runtime.".format(" ".join(parts))
 
 
-def validate_runtime_root(root, profiles=None, bundles=None):
+def _managed_file_hint(spec, bootstrap_hint):
+    if spec.default_text is not None:
+        return bootstrap_hint
+
+    if spec.required:
+        return "This file is required for the selected workflow and must be supplied by the lab."
+
+    return "Create this file when the workflow needs it."
+
+
+def _profile_file_managed_by(file_spec):
+    return "bootstrap" if file_spec.default_text is not None else "lab"
+
+
+def build_runtime_validation_report(root, profiles=None, bundles=None):
     layout = make_runtime_layout(root)
     saved_state = load_bootstrap_state(root)
     requested_profiles, bundle_names = combine_profile_inputs(
@@ -112,8 +117,7 @@ def validate_runtime_root(root, profiles=None, bundles=None):
     )
 
     if os.path.isdir(layout.root):
-        issues.append(
-            ValidationIssue("Path root", "OK", layout.root, ""))
+        issues.append(ValidationIssue("Path root", "OK", layout.root, category="root"))
     else:
         issues.append(
             ValidationIssue(
@@ -121,21 +125,20 @@ def validate_runtime_root(root, profiles=None, bundles=None):
                 "FAIL",
                 "{} (missing)".format(layout.root),
                 bootstrap_hint,
+                category="root",
             )
         )
 
-    base_dirs = (
-        ("setupfiles", layout.setup_dir),
-        ("scripts", layout.scripts_dir),
-        ("preferences", layout.preferences_dir),
-        ("data", layout.data_dir),
-        ("DVC root", layout.dvc_dir),
-        ("repositories", layout.repository_dir),
-        ("appdata", layout.appdata_dir),
-    )
-    for label, directory in base_dirs:
+    for label, directory in base_runtime_directories(layout):
         if os.path.isdir(directory):
-            issues.append(ValidationIssue("Path {}".format(label), "OK", directory))
+            issues.append(
+                ValidationIssue(
+                    "Path {}".format(label),
+                    "OK",
+                    directory,
+                    category="base_dir",
+                )
+            )
         else:
             issues.append(
                 ValidationIssue(
@@ -143,25 +146,41 @@ def validate_runtime_root(root, profiles=None, bundles=None):
                     "FAIL",
                     "{} (missing)".format(directory),
                     bootstrap_hint,
+                    category="base_dir",
                 )
             )
 
-    file_checks = (
-        ("initialization.xml", layout.initialization_file),
-        ("startup_tests.yaml", layout.startup_tests),
-        ("identifiers.yaml", layout.identifiers_file),
-        ("task_extensions.yaml", layout.task_extensions_file),
-    )
-    for label, path in file_checks:
-        if os.path.isfile(path):
-            issues.append(ValidationIssue("File {}".format(label), "OK", path))
+    for spec in managed_runtime_files(layout):
+        if os.path.isfile(spec.path):
+            issues.append(
+                ValidationIssue(
+                    "File {}".format(spec.label),
+                    "OK",
+                    spec.path,
+                    category="base_file",
+                    managed_by=spec.managed_by,
+                )
+            )
+        elif spec.required:
+            issues.append(
+                ValidationIssue(
+                    "File {}".format(spec.label),
+                    "FAIL",
+                    "{} (missing)".format(spec.path),
+                    _managed_file_hint(spec, bootstrap_hint),
+                    category="base_file",
+                    managed_by=spec.managed_by,
+                )
+            )
         else:
             issues.append(
                 ValidationIssue(
-                    "File {}".format(label),
+                    "File {}".format(spec.label),
                     "WARN",
-                    "{} (missing)".format(path),
-                    bootstrap_hint,
+                    "{} (missing)".format(spec.path),
+                    _managed_file_hint(spec, bootstrap_hint),
+                    category="base_file",
+                    managed_by=spec.managed_by,
                 )
             )
 
@@ -172,15 +191,18 @@ def validate_runtime_root(root, profiles=None, bundles=None):
         issues.append(ValidationIssue("Bundles", "OK", detail))
 
     if merged.resolved:
-        issues.append(
-            ValidationIssue("Profiles", "OK", ", ".join(merged.resolved))
-        )
+        issues.append(ValidationIssue("Profiles", "OK", ", ".join(merged.resolved)))
 
     for directory in merged.directories:
         full_path = os.path.join(layout.root, directory)
         if os.path.isdir(full_path):
             issues.append(
-                ValidationIssue("Profile dir {}".format(directory), "OK", full_path)
+                ValidationIssue(
+                    "Profile dir {}".format(directory),
+                    "OK",
+                    full_path,
+                    category="profile_dir",
+                )
             )
         else:
             issues.append(
@@ -189,40 +211,46 @@ def validate_runtime_root(root, profiles=None, bundles=None):
                     "FAIL",
                     "{} (missing for selected profile)".format(full_path),
                     bootstrap_hint,
+                    category="profile_dir",
                 )
             )
 
-    for file_spec in merged.required_files:
+    for file_spec in merged.required_files + merged.optional_files:
         full_path = os.path.join(layout.root, file_spec.path)
-        if os.path.isfile(full_path):
-            issues.append(
-                ValidationIssue("Profile file {}".format(file_spec.path), "OK", full_path)
-            )
-        else:
+        status = "OK" if os.path.isfile(full_path) else ("FAIL" if file_spec.required else "WARN")
+        if status == "OK":
             issues.append(
                 ValidationIssue(
                     "Profile file {}".format(file_spec.path),
-                    "FAIL",
-                    "{} (missing for selected profile)".format(full_path),
-                    bootstrap_hint,
+                    status,
+                    full_path,
+                    category="profile_file",
+                    managed_by=_profile_file_managed_by(file_spec),
                 )
             )
+            continue
 
-    for file_spec in merged.optional_files:
-        full_path = os.path.join(layout.root, file_spec.path)
-        if os.path.isfile(full_path):
-            issues.append(
-                ValidationIssue("Profile file {}".format(file_spec.path), "OK", full_path)
+        issues.append(
+            ValidationIssue(
+                "Profile file {}".format(file_spec.path),
+                status,
+                "{} ({})".format(
+                    full_path,
+                    "missing for selected profile"
+                    if file_spec.required
+                    else "recommended by selected profile",
+                ),
+                bootstrap_hint
+                if file_spec.default_text is not None
+                else (
+                    "This file is required for the selected workflow and must be supplied by the lab."
+                    if file_spec.required
+                    else "Create this file when the workflow needs it."
+                ),
+                category="profile_file",
+                managed_by=_profile_file_managed_by(file_spec),
             )
-        else:
-            issues.append(
-                ValidationIssue(
-                    "Profile file {}".format(file_spec.path),
-                    "WARN",
-                    "{} (recommended by selected profile)".format(full_path),
-                    "Import a site bundle or create this file when the workflow needs it.",
-                )
-            )
+        )
 
     if not saved_state and not bundle_specs and not merged.resolved:
         issues.append(
@@ -231,6 +259,7 @@ def validate_runtime_root(root, profiles=None, bundles=None):
                 "WARN",
                 "{} (missing)".format(profile_state_path(layout.root)),
                 "Run `pychron-bootstrap` so the install records its selected profiles.",
+                category="bootstrap_state",
             )
         )
     elif saved_state:
@@ -248,7 +277,14 @@ def validate_runtime_root(root, profiles=None, bundles=None):
                 "Bootstrap state",
                 "OK",
                 "; ".join(details) or profile_state_path(layout.root),
+                category="bootstrap_state",
             )
         )
 
-    return issues
+    return RuntimeValidationReport(root=normalize_root(root), issues=tuple(issues))
+
+
+def validate_runtime_root(root, profiles=None, bundles=None):
+    return list(
+        build_runtime_validation_report(root, profiles=profiles, bundles=bundles).issues
+    )

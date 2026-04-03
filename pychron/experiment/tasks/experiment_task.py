@@ -866,7 +866,7 @@ class ExperimentEditorTask(EditorTask):
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
-                PaneItem("pychron.wait"),
+                PaneItem("pychron.wait", height=120),
                 Tabbed(
                     PaneItem(
                         "pychron.experiment.factory",

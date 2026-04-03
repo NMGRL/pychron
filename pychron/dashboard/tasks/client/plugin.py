@@ -53,9 +53,10 @@ class DashboardClientPlugin(BaseTaskPlugin):
         bind_preference(client, "host", "pychron.dashboard.client.host")
         bind_preference(client, "port", "pychron.dashboard.client.port")
 
-        client.connect()
+        client.connect(timeout=1)
         client.load_configuration()
         client.listen()
+        self.dashboard_client = client
 
         return client
 
@@ -66,7 +67,8 @@ class DashboardClientPlugin(BaseTaskPlugin):
         # s.activate()
 
     def stop(self):
-        pass
+        if self.dashboard_client:
+            self.dashboard_client.close()
         # self.dashboard_server.deactivate()
 
     def _preferences_panes_default(self):

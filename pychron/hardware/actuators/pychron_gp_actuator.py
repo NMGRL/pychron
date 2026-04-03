@@ -119,7 +119,9 @@ class PychronGPActuator(GPActuator, ClientMixin):
         obj: valve object
         action: str,  "Open" or "Close"
         """
-        if self.simulation:
+        if self.simulation and not (
+            self.communicator and self.communicator.has_transport_adapter()
+        ):
             return True
 
         cmd = "{} {}".format(action, get_valve_name(obj))

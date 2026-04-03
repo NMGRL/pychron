@@ -343,9 +343,17 @@ class EthernetCommunicator(Communicator):
             if k in kw:
                 setattr(self, k, kw[k])
 
+        if self.transport_adapter is not None:
+            self.simulation = True
+            return self.transport_adapter.open(**kw)
+
         return self.test_connection()
 
     def test_connection(self):
+        if self.transport_adapter is not None:
+            self.simulation = True
+            return self.transport_adapter.connected or self.transport_adapter.open()
+
         self.simulation = False
 
         # with self._lock:
@@ -448,6 +456,20 @@ class EthernetCommunicator(Communicator):
 
         """
 
+        if self.transport_adapter is not None:
+            payload = "{}{}".format(cmd, self.write_terminator)
+            with self._lock:
+                r = self.transport_adapter.request(
+                    payload,
+                    timeout=timeout,
+                    message_frame=message_frame,
+                    delay=delay,
+                )
+                re = process_response(r) if r is not None else "ERROR: replay returned no response"
+                if verbose or (self.verbose and not quiet):
+                    self.log_response(payload, re, info)
+                return r
+
         if self.simulation:
             if verbose:
                 self.info("no handle    {}".format(cmd.strip()))
@@ -496,6 +518,9 @@ class EthernetCommunicator(Communicator):
         return r
 
     def reset(self):
+        if self.transport_adapter is not None:
+            self.transport_adapter.reset()
+            return
         if self.handler:
             self.handler.end()
         if self.read_handler:
@@ -503,6 +528,9 @@ class EthernetCommunicator(Communicator):
         self._reset_connection()
 
     def select_read(self, *args, **kw):
+        if self.transport_adapter is not None:
+            return self.transport_adapter.select_read(*args, **kw)
+
         timeout = self.timeout
         handler = self.get_handler(timeout=timeout)
         if handler:
@@ -511,6 +539,9 @@ class EthernetCommunicator(Communicator):
         return handler.select_read(*args, **kw)
 
     def readline(self, terminator=b"\r\n"):
+        if self.transport_adapter is not None:
+            return self.transport_adapter.readline(terminator=terminator)
+
         timeout = self._reset_error_mode()
 
         handler = self.get_handler(timeout=timeout)
@@ -528,6 +559,9 @@ class EthernetCommunicator(Communicator):
                 self.error_mode = True
 
     def read(self, datasize=None, *args, **kw):
+        if self.transport_adapter is not None:
+            return self.transport_adapter.read(datasize=datasize, *args, **kw)
+
         for i in range(3):
             with self._lock:
                 timeout = self._reset_error_mode()
@@ -549,6 +583,14 @@ class EthernetCommunicator(Communicator):
             return ""
 
     def tell(self, cmd, verbose=True, quiet=False, info=None):
+        if self.transport_adapter is not None:
+            payload = "{}{}".format(cmd, self.write_terminator)
+            with self._lock:
+                self.transport_adapter.write(payload)
+                if verbose or self.verbose and not quiet:
+                    self.log_tell(payload, info)
+            return
+
         with self._lock:
             handler = self.get_handler()
             if handler:
