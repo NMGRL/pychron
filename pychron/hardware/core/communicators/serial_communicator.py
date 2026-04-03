@@ -94,6 +94,8 @@ class SerialCommunicator(Communicator):
         return self.port
 
     def test_connection(self):
+        if self.transport_adapter is not None:
+            return self.transport_adapter.connected
         return self.handle is not None
 
     def reset(self):
@@ -117,6 +119,9 @@ class SerialCommunicator(Communicator):
             self.warning("failed to reset connection")
 
     def close(self):
+        if self.transport_adapter is not None:
+            self.transport_adapter.close()
+            return
         if self.handle:
             self.debug("closing handle {}".format(self.handle))
             self.handle.close()
@@ -219,6 +224,13 @@ class SerialCommunicator(Communicator):
 
     def tell(self, cmd, is_hex=False, info=None, verbose=True, **kw):
         """ """
+        if self.transport_adapter is not None:
+            with self._lock:
+                self.transport_adapter.write(cmd, is_hex=is_hex, **kw)
+                if verbose:
+                    self.log_tell(cmd, info)
+            return
+
         if self.handle is None:
             if verbose:
                 info = "no handle"
@@ -232,6 +244,10 @@ class SerialCommunicator(Communicator):
 
     def read(self, nchars=None, *args, **kw):
         """ """
+        if self.transport_adapter is not None:
+            with self._lock:
+                return self.transport_adapter.read(nchars=nchars, *args, **kw)
+
         with self._lock:
             if nchars is not None:
                 r = self._read_nchars(nchars)
@@ -257,6 +273,24 @@ class SerialCommunicator(Communicator):
         nchars=None,
     ):
         """ """
+        if self.transport_adapter is not None:
+            with self._lock:
+                re = self.transport_adapter.request(
+                    cmd,
+                    is_hex=is_hex,
+                    delay=delay,
+                    handshake=handshake,
+                    nchars=nchars,
+                    nbytes=nbytes,
+                    read_terminator=read_terminator,
+                    terminator_position=terminator_position,
+                )
+            if remove_eol and not is_hex:
+                re = remove_eol_func(re)
+            if verbose:
+                pre = process_response(re, replace, remove_eol=not is_hex)
+                self.log_response(cmd, pre, info)
+            return re
 
         if self.handle is None:
             if verbose:
@@ -309,6 +343,10 @@ class SerialCommunicator(Communicator):
         stopbits= STOPBITS_ONE
         timeout=None
         """
+        if self.transport_adapter is not None:
+            self.simulation = True
+            return self.transport_adapter.open(**kw)
+
         port = kw.get("port")
         if port is None:
             port = self.port

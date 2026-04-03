@@ -29,7 +29,7 @@ from traits.etsconfig.api import ETSConfig
 from traitsui.qt.table_editor import TableDelegate
 from traitsui.qt.ui_panel import heading_text
 
-from pychron.environment.util import set_application_home
+from pychron.install_runtime import prepare_runtime_root
 
 # ============= local library imports  ==========================
 
@@ -540,11 +540,9 @@ def initialize_version(appname, debug):
     if not env:
         return False
 
-    set_application_home(appname, env)
-
     from pychron.paths import paths
+    prepare_runtime_root(env, appname=appname, write_defaults=True)
     logger.debug('using Pychron environment: {}'.format(env))
-    paths.build(env)
 
     from configparser import ConfigParser, NoSectionError
     cp = ConfigParser()
@@ -567,11 +565,6 @@ def initialize_version(appname, debug):
     build_globals(user, debug)
 
     from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.paths import build_directories
-
-    # build directories
-    build_directories()
-    paths.write_defaults()
 
     # setup logging. set a basename for log files and logging level
 

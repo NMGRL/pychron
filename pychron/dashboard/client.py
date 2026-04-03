@@ -16,136 +16,36 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import pickle
 import time
 
-from traits.api import HasTraits, List, Float, Property, Str, Bool
+from traits.api import HasTraits, List, Float, Property, Str, Bool, Dict
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import convert_timestamp
+from pychron.dashboard.messages import (
+    CRITICAL_KIND,
+    ERROR_KIND,
+    HEARTBEAT_KIND,
+    TIMEOUT_KIND,
+    VALUE_KIND,
+    WARNING_KIND,
+    decode_config_payload,
+    decode_event_message,
+    decode_legacy_config_payload,
+)
 from pychron.messaging.notify.subscriber import Subscriber
-
-CONFIG = """(lp0
-ctraits.traits
-__newobj__
-p1
-(csrc.dashboard.tasks.server.device
-ProcessValue
-p2
-tp3
-Rp4
-(dp5
-S'__traits_version__'
-p6
-S'4.3.0'
-p7
-sS'name'
-p8
-S'IG_pressure'
-p9
-sS'func_name'
-p10
-S'get_ion_pressure'
-p11
-sS'enabled'
-p12
-I01
-sS'period'
-p13
-S'on_change'
-p14
-sS'tag'
-p15
-S'<BoneGauges,IG_pressure>'
-p16
-sS'last_value'
-p17
-F0.0
-sS'last_time'
-p18
-F0.0
-sbag1
-(g2
-tp19
-Rp20
-(dp21
-g6
-g7
-sg8
-S'CG1_pressure'
-p22
-sg10
-S'get_convectron_a_pressure'
-p23
-sg12
-I01
-sg13
-F2.0
-sg15
-S'<BoneGauges,CG1_pressure>'
-p24
-sg17
-F0.0
-sg18
-F0.0
-sbag1
-(g2
-tp25
-Rp26
-(dp27
-g6
-g7
-sg8
-S'temperature'
-p28
-sg10
-S'get_temperature'
-p29
-sg12
-I01
-sg13
-F2.0
-sg15
-S'<EnvironmentalMonitor,temperature>'
-p30
-sg17
-F0.0
-sg18
-F0.0
-sbag1
-(g2
-tp31
-Rp32
-(dp33
-g6
-g7
-sg8
-S'humidity'
-p34
-sg10
-S'get_humidity'
-p35
-sg12
-I01
-sg13
-F10.0
-sg15
-S'<EnvironmentalMonitor,humidity>'
-p36
-sg17
-F0.0
-sg18
-F0.0
-sba."""
 
 
 class DashboardValue(HasTraits):
     name = Str
+    tag = Str
+    units = Str
     value = Float
     last_time = Float
     last_time_str = Property(depends_on="last_time")
     timed_out = Bool
+    stale = Bool
 
     def _get_last_time_str(self):
         r = ""
@@ -156,42 +56,123 @@ class DashboardValue(HasTraits):
 
     def handle_update(self, new):
         if new == "timeout":
-            if not self.timed_out:
-                self.timed_out = True
-                self.last_time = time.time()
+            self.handle_timeout()
 
         else:
             self.value = float(new)
             self.last_time = time.time()
+            self.timed_out = False
+            self.stale = False
+
+    def handle_timeout(self):
+        if not self.timed_out:
+            self.timed_out = True
+        self.stale = True
+        self.last_time = time.time()
 
 
 class DashboardClient(Subscriber):
     values = List
     error_flag = Str
+    last_config_error = Str
+    active_alert = Str
+    active_alerts = List(Str)
+    server_url = Property(depends_on="host,port")
+    value_map = Dict
+
+    def _get_server_url(self):
+        return "{}:{}".format(self.host, self.port)
 
     def load_configuration(self):
-        config = self.request("config")
+        self.config_loaded = False
+        self.last_config_error = ""
+
+        config = self.request("config_json")
         if config:
-            self._load_configuration(config)
+            try:
+                payload = decode_config_payload(config)
+                self._load_configuration_payload(payload)
+                self.config_loaded = True
+                return
+            except (TypeError, ValueError) as exc:
+                self.last_config_error = str(exc)
+
+        legacy = self.request("config")
+        if legacy:
+            self._load_configuration(legacy)
 
     def set_error_flag(self, new):
         self.error_flag = new
 
     def _load_configuration(self, config):
         try:
-            d = pickle.loads(config)
-        except (pickle.PickleError, ImportError):
+            data = decode_legacy_config_payload(config)
+        except (ImportError, TypeError, ValueError):
+            self.last_config_error = "Could not load legacy dashboard configuration"
             self.warning("Could not load configuration: {}".format(config))
             return
 
         vs = []
-        for di in d:
-            pv = DashboardValue(name=di.name)
+        value_map = {}
+        for di in data:
+            pv = DashboardValue(name=di.name, tag=di.tag, units=getattr(di, "units", ""))
             vs.append(pv)
+            value_map[di.tag] = pv
             self.subscribe(di.tag, pv.handle_update, verbose=True)
 
         self.subscribe("error", self.set_error_flag, verbose=True)
         self.values = vs
+        self.value_map = value_map
+        self.config_loaded = True
+        self.connection_state = "connected"
+
+    def _load_configuration_payload(self, payload):
+        devices = payload.get("devices", ())
+        vs = []
+        value_map = {}
+        self.subscribe("dashboard", self._handle_dashboard_message, verbose=False)
+        for device in devices:
+            for value in device.get("values", ()):
+                pv = DashboardValue(
+                    name=value["name"],
+                    tag=value["tag"],
+                    units=value.get("units", ""),
+                )
+                vs.append(pv)
+                value_map[pv.tag] = pv
+
+        self.values = vs
+        self.value_map = value_map
+        self.config_loaded = True
+        self.connection_state = "connected"
+        self.last_config_error = ""
+
+    def _handle_dashboard_message(self, payload):
+        event = decode_event_message("dashboard {}".format(payload))
+        if event is None:
+            return
+
+        kind = event.get("kind")
+        self.last_message_time = time.time()
+        if kind == HEARTBEAT_KIND:
+            self.last_heartbeat_time = time.time()
+            self.connection_state = "connected"
+            return
+
+        if kind == VALUE_KIND:
+            value = self.value_map.get(event.get("tag"))
+            if value is not None:
+                value.handle_update(event.get("value"))
+        elif kind == TIMEOUT_KIND:
+            value = self.value_map.get(event.get("tag"))
+            if value is not None:
+                value.handle_timeout()
+        elif kind in (WARNING_KIND, CRITICAL_KIND, ERROR_KIND):
+            message = event.get("message", "")
+            self.active_alert = message
+            self.error_flag = message if kind in (CRITICAL_KIND, ERROR_KIND) else self.error_flag
+            if message and message not in self.active_alerts:
+                self.active_alerts.append(message)
 
 
 # ============= EOF =============================================

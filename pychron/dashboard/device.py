@@ -47,6 +47,7 @@ class DashboardDevice(Loggable):
     hardware_device = Instance(ICoreDevice)
 
     update_value_event = Event
+    timeout_event = Event
     conditional_event = Event
 
     graph = Instance(StreamStackedGraph)
@@ -110,6 +111,8 @@ class DashboardDevice(Loggable):
                 nv = random.random()
             if nv is not None:
                 self._push_value(value, nv)
+            elif kw.get("force"):
+                self.timeout_event = (value.name, value.tag)
         except BaseException:
             import traceback
 

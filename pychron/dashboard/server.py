@@ -16,57 +16,55 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Instance, on_trait_change, List, Button, Bool
+from traits.api import Instance, on_trait_change, List, Button, Bool, Str, Float, Property
 
 # ============= standard library imports ========================
 from threading import Thread
 import os
-import pickle
 import time
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.datetime_tools import convert_timestamp
+from pychron.dashboard.config import DashboardConfigError, load_dashboard_config
 from pychron.dashboard.constants import CRITICAL, NOERROR, WARNING
 from pychron.dashboard.device import DashboardDevice
+from pychron.dashboard.messages import (
+    CONFIG_KIND,
+    CRITICAL_KIND,
+    ERROR_KIND,
+    HEARTBEAT_KIND,
+    TIMEOUT_KIND,
+    VALUE_KIND,
+    WARNING_KIND,
+    encode_config_payload,
+    encode_event,
+    encode_legacy_config_payload,
+    make_event,
+    make_legacy_error_message,
+    make_legacy_value_message,
+)
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.core.helpers.filetools import add_extension
-from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.dummy_device import DummyDevice
 from pychron.loggable import Loggable
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
-from pychron.core.xml.xml_parser import XMLParser
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-
-
-def get_parser():
-    p = os.path.join(paths.setup_dir, "dashboard.xml")
-    parser = XMLParser(p)
-    return parser
-
-
-def get_xml_value(elem, tag, default):
-    ret = default
-
-    tt = elem.find(tag)
-    if tt is not None:
-        ret = tt.text.strip()
-
-    return ret
-
-
-def set_nfail(elem, kw):
-    nfail = elem.find("nfail")
-    if nfail is not None:
-        try:
-            kw["nfail"] = int(nfail.text.strip())
-        except ValueError:
-            pass
 
 
 class DashboardServer(Loggable):
     devices = List
     values = List
+    config_source = Str
+    config_error = Str
+    health_state = Str("stopped")
+    notifier_bound = Bool(False)
+    config_loaded = Bool(False)
+    poll_thread_active = Bool(False)
+    last_publish_time = Float
+    last_publish_time_str = Property(depends_on="last_publish_time")
+    last_device_error = Str
     selected_device = Instance(DashboardDevice)
     extraction_line_manager = Instance(
         "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
@@ -79,6 +77,14 @@ class DashboardServer(Loggable):
 
     use_db = False
     _alive = False
+    _config = None
+    _poll_thread = None
+    _last_heartbeat = 0
+
+    def _get_last_publish_time_str(self):
+        if self.last_publish_time:
+            return convert_timestamp(self.last_publish_time)
+        return ""
 
     def bind_preferences(self):
         bind_preference(
@@ -86,6 +92,9 @@ class DashboardServer(Loggable):
         )
 
     def activate(self):
+        if self._alive:
+            return
+
         emailer = self.application.get_service("pychron.social.emailer.Emailer")
         self.emailer = emailer
 
@@ -93,9 +102,16 @@ class DashboardServer(Loggable):
             self.warning_dialog(
                 "Extraction Line Plugin not initialized. Will not be able to take valve actions"
             )
+        try:
+            self.load_devices()
+        except DashboardConfigError as exc:
+            self.config_error = "\n".join(exc.issues)
+            self.health_state = "config_error"
+            self.warning_dialog(self.config_error)
+            return
+
         self.setup_notifier()
 
-        self.load_devices()
         if self.devices:
             self.start_poll()
 
@@ -103,7 +119,11 @@ class DashboardServer(Loggable):
             self.labspy_client.start()
 
     def deactivate(self):
-        pass
+        self._alive = False
+        self.poll_thread_active = False
+        self.health_state = "stopped"
+        self.notifier_bound = False
+        self.notifier.close()
 
     # def deactivate(self):
     # if self.use_db:
@@ -115,137 +135,81 @@ class DashboardServer(Loggable):
 
     def setup_notifier(self):
         if self.notifier.enabled:
-            parser = get_parser()
-
-            port = 8100
-            elem = parser.get_elements("port")
-            if elem is not None:
-                try:
-                    port = int(elem[0].text.strip())
-                except (IndexError, ValueError):
-                    pass
-
-            self.notifier.port = port
-            # host = gethostbyname(gethostname())
-            # self.url = '{}:{}'.format(host, port)
-            # add a config request handler
+            self.notifier.port = self._config.port if self._config else 8100
             self.notifier.add_request_handler("config", self._handle_config)
+            self.notifier.add_request_handler("config_json", self._handle_config_json)
+            self.notifier.setup(self.notifier.port)
+            self.notifier_bound = True
+        else:
+            self.notifier_bound = False
 
     def start_poll(self):
         self.info("starting dashboard poll")
         self._alive = True
-        t = Thread(name="poll", target=self._poll)
-
-        t.setDaemon(1)
-        t.start()
+        self.health_state = "polling"
+        self._poll_thread = Thread(name="poll", target=self._poll)
+        self._poll_thread.setDaemon(1)
+        self._poll_thread.start()
+        self.poll_thread_active = True
 
     def load_devices(self):
-        dd = self._assemble_dev_dicts()
-        self._load_devices(dd)
+        self._config = load_dashboard_config(
+            paths.root_dir, script_validator=self._validate_script
+        )
+        self.config_source = self._config.source_path
+        self.config_error = ""
+        self.config_loaded = True
+        self.health_state = "configured"
 
-    def _assemble_dev_dicts(self):
-        parser = get_parser()
-        for dev in parser.get_elements("device"):
-            name = dev.text.strip()
-            dname = dev.find("name")
-            if dname is None:
-                self.warning("no device name for {}. use a <name> tag".format(name))
-                continue
-
-            denabled = dev.find("use")
-            if denabled is not None:
-                denabled = to_bool(denabled.text.strip())
-
-            vs = []
-            for v in dev.findall("value"):
-                n = v.text.strip()
-                tag = "<{},{}>".format(name, n)
-
-                func_name = get_xml_value(v, "func", "get")
-                period = get_xml_value(v, "period", 60)
-                if not period == "on_change":
-                    try:
-                        period = int(period)
-                    except ValueError:
-                        period = 60
-
-                enabled = to_bool(get_xml_value(v, "enabled", False))
-                record = to_bool(get_xml_value(v, "record", False))
-                timeout = get_xml_value(v, "timeout", 60)
-                threshold = float(get_xml_value(v, "change_threshold", 1e-20))
-                units = get_xml_value(v, "units", "")
-                bindname = get_xml_value(v, "bind", "")
-                cs = []
-                conds = v.find("conditionals")
-                if conds is not None:
-                    for warn in conds.findall("warn"):
-                        cd = {"teststr": warn.text.strip()}
-                        set_nfail(warn, cd)
-                        cs.append((WARNING, cd))
-                    for critical in conds.findall("critical"):
-                        teststr = critical.text.strip()
-                        cd = {"teststr": teststr}
-                        set_nfail(critical, cd)
-                        script = critical.find("script")
-                        if script is not None:
-                            sname = script.text.strip()
-                            if self._validate_script(sname):
-                                cd["script"] = sname
-                            else:
-                                self.warning(
-                                    'Failed to add condition "{}". '
-                                    'Invalid script "scripts/extraction/{}"'.format(
-                                        teststr, sname
-                                    )
-                                )
-                                continue
-                        cs.append((CRITICAL, cd))
-
-                vd = (
-                    {
-                        "name": n,
-                        "tag": tag,
-                        "func_name": func_name,
-                        "period": period,
-                        "enabled": enabled,
-                        "threshold": threshold,
-                        "units": units,
-                        "timeout": timeout,
-                        "record": record,
-                        "bindname": bindname,
-                    },
-                    cs,
-                )
-                vs.append(vd)
-
-            dd = {
-                "name": name,
-                "device": dname.text.strip(),
-                "enabled": bool(denabled),
-                "values": vs,
-            }
-            yield dd
-
-    def _load_devices(self, dev_dicts):
         app = self.application
         ds = []
-        for dd in dev_dicts:
-            name = dd["name"]
-            dev_name = dd["device"]
+        self.values = []
+        for spec in self._config.devices:
+            name = spec.name
+            dev_name = spec.device
             device = app.get_service(ICoreDevice, query='name=="{}"'.format(dev_name))
             if device is None:
                 self.warning('no device named "{}" available'.format(dev_name))
+                self.last_device_error = 'No device named "{}" available'.format(
+                    dev_name
+                )
                 if globalv.dashboard_simulation:
                     device = DummyDevice(name=dev_name)
                 else:
                     continue
 
-            d = DashboardDevice(name=name, use=dd["enabled"], hardware_device=device)
-            for args, cs in dd["values"]:
-                pv = d.add_value(**args)
+            d = DashboardDevice(name=name, use=spec.enabled, hardware_device=device)
+            for value_spec in spec.values:
+                if value_spec.bindname and not hasattr(device, value_spec.bindname):
+                    msg = '{} missing bind "{}" for dashboard value "{}"'.format(
+                        dev_name, value_spec.bindname, value_spec.name
+                    )
+                    self.last_device_error = msg
+                    self.warning(msg)
+                    continue
+
+                pv = d.add_value(
+                    name=value_spec.name,
+                    tag=value_spec.tag,
+                    func_name=value_spec.func_name,
+                    period=value_spec.period,
+                    enabled=value_spec.enabled,
+                    threshold=value_spec.threshold,
+                    units=value_spec.units,
+                    timeout=value_spec.timeout,
+                    record=value_spec.record,
+                    bindname=value_spec.bindname,
+                )
                 self.values.append(pv)
-                for level, kw in cs:
-                    d.add_conditional(pv, level, **kw)
+                for conditional in value_spec.conditionals:
+                    d.add_conditional(
+                        pv,
+                        conditional.severity,
+                        teststr=conditional.teststr,
+                        nfail=conditional.nfail,
+                        script=conditional.script,
+                        emails=conditional.emails,
+                    )
 
             d.setup_graph()
             ds.append(d)
@@ -260,9 +224,16 @@ class DashboardServer(Loggable):
         """
         config = [pv for dev in self.devices for pv in dev.values]
 
-        return pickle.dumps(config)
+        return encode_legacy_config_payload(config)
+
+    def _handle_config_json(self):
+        return encode_config_payload(self._config)
 
     def _poll(self):
+        if not self.devices:
+            self.poll_thread_active = False
+            return
+
         if any((v.period == "on_change" for dev in self.devices for v in dev.values)):
             mperiod = 1
         else:
@@ -271,6 +242,7 @@ class DashboardServer(Loggable):
         self.debug("min period {}".format(mperiod))
         while self._alive:
             sst = time.time()
+            self._publish_heartbeat()
             # self.debug('============= poll iteration start ============')
             for dev in self.devices:
                 if not dev.use:
@@ -287,6 +259,9 @@ class DashboardServer(Loggable):
                 if time.time() - st >= pp:
                     break
                 time.sleep(0.1)
+
+        self.poll_thread_active = False
+        self.health_state = "stopped"
 
             # dur = time.time() - sst
             # self.debug('============= poll iteration finished dur={:0.1f}============'.format(dur))
@@ -342,6 +317,25 @@ class DashboardServer(Loggable):
         if self.labspy_client:
             self.labspy_client.update_status(error=error)
 
+    def _publish_event(self, event, legacy_message=None):
+        self.notifier.send_message(encode_event(event), verbose=False)
+        self.last_publish_time = time.time()
+        if legacy_message:
+            self.notifier.send_message(legacy_message)
+
+    def _publish_heartbeat(self):
+        if time.time() - self._last_heartbeat < 2:
+            return
+
+        self._last_heartbeat = time.time()
+        self._publish_event(
+            make_event(
+                HEARTBEAT_KIND,
+                source=self.config_source,
+                state=self.health_state,
+            )
+        )
+
     # handlers
     def _clear_button_fired(self):
         self.info("Clear Dashboard errors")
@@ -355,19 +349,51 @@ class DashboardServer(Loggable):
     @on_trait_change("devices:conditional_event")
     def _handle_conditional(self, obj, name, old, new):
         action, script, emails, message = new.split("|")
-
-        self.notifier.send_message(message)
         if action == WARNING:
+            self._publish_event(
+                make_event(WARNING_KIND, device=obj.name, message=message),
+                legacy_message=message,
+            )
             self._send_email(emails, message)
         elif action == CRITICAL:
-            self.notifier.send_message("error {}".format(message))
+            self.notifier.send_message(message)
+            self._publish_event(
+                make_event(
+                    CRITICAL_KIND,
+                    device=obj.name,
+                    message=message,
+                    script=script,
+                ),
+                legacy_message=make_legacy_error_message(message),
+            )
             self._do_script(script)
             self._send_email(emails, message)
+            self._update_labspy_error(message)
 
     @on_trait_change("devices:update_value_event")
     def _handle_publish(self, obj, name, old, new):
-        self.notifier.send_message("{} {}".format(*new))
-        self._update_labspy_device(obj.name, *new)
+        value_name, value, units = new
+        pv = next((item for item in obj.values if item.name == value_name), None)
+        tag = pv.tag if pv is not None else "<{},{}>".format(obj.name, value_name)
+        self._publish_event(
+            make_event(
+                VALUE_KIND,
+                device=obj.name,
+                name=value_name,
+                tag=tag,
+                value=value,
+                units=units,
+            ),
+            legacy_message=make_legacy_value_message(tag, value),
+        )
+        self._update_labspy_device(obj.name, value_name, value, units)
+
+    @on_trait_change("devices:timeout_event")
+    def _handle_timeout(self, obj, name, old, new):
+        value_name, tag = new
+        self._publish_event(
+            make_event(TIMEOUT_KIND, device=obj.name, name=value_name, tag=tag)
+        )
         # self._update_labspy_devices()
         # if self.use_db:
         #     self.db_manager.publish_device(obj)

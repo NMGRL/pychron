@@ -80,6 +80,10 @@ The repo now exposes a Typer-based CLI for basic setup and diagnostics:
 - `pychron import-config --root ~/Pychron_clone --archive ~/pychron-config.zip`
 - `python -m pychron doctor`
 
+The CLI bootstrap path is the canonical initialization flow. The GUI first-run
+wizard and startup validation now use the same runtime bootstrap and validation
+services, so operator-facing setup and repair behavior stays aligned.
+
 Typical workflow:
 
 1. Branch from `develop` or the active integration branch.

@@ -31,6 +31,11 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 class DashboardCentralPane(TraitsTaskPane):
     def traits_view(self):
         url = CustomLabel("object.notifier.url", label="URL")
+        state = CustomLabel("object.health_state", label="State")
+        source = CustomLabel("object.config_source", label="Config")
+        last_publish = CustomLabel("object.last_publish_time_str", label="Last Publish")
+        config_error = CustomLabel("object.config_error", label="Config Error")
+        device_error = CustomLabel("object.last_device_error", label="Device Error")
 
         agrp = VGroup(
             UItem(
@@ -44,7 +49,7 @@ class DashboardCentralPane(TraitsTaskPane):
             label="All",
         )
         igrp = VGroup(UItem("selected_device", style="custom"), label="Individual")
-        tgrp = HGroup(url, UItem("clear_button", tooltip="Clear current errors"))
+        tgrp = HGroup(url, state, UItem("clear_button", tooltip="Clear current errors"))
 
         # v = View(
         # VGroup(HGroup(url, UItem('clear_button', tooltip='Clear current errors')),
@@ -52,7 +57,15 @@ class DashboardCentralPane(TraitsTaskPane):
         #                  style='custom'),
         #
         #     )))
-        v = View(VGroup(tgrp, Group(agrp, igrp, layout="tabbed")))
+        v = View(
+            VGroup(
+                tgrp,
+                HGroup(source, last_publish),
+                config_error,
+                device_error,
+                Group(agrp, igrp, layout="tabbed"),
+            )
+        )
         return v
 
 

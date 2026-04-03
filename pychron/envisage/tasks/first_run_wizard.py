@@ -9,7 +9,7 @@ from pychron.cli_profiles import available_profile_names
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.install_bootstrap import bootstrap_runtime_root
-from pychron.install_validation import validate_runtime_root
+from pychron.install_validation import build_runtime_validation_report
 from pychron.loggable import Loggable
 from pychron.starter_bundles import available_bundle_names
 
@@ -28,12 +28,12 @@ class FirstRunWizard(Loggable):
             profiles=self.selected_profiles,
             bundles=self.selected_bundles,
         )
-        issues = validate_runtime_root(
+        report = build_runtime_validation_report(
             root,
             profiles=merged.requested,
             bundles=self.selected_bundles,
         )
-        return root, merged, issues
+        return root, merged, report
 
     def _browse_fired(self):
         dialog = DirectoryDialog(
