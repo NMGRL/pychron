@@ -38,7 +38,6 @@ class _WebViewEditor(Editor):
     def _create_control(self):
         q = QWebEngineView()
         # q.resize(self.item.width, self.item.height)
-        print(self.item.width, self.item.height)
         return q
 
     def update_editor(self):
@@ -147,9 +146,4 @@ class MapFigureEditor(BaseEditor):
         )
         return v
 
-
-if __name__ == "__main__":
-    m = MapFigureEditor()
-    m.load()
-    m.configure_traits()
 # ============= EOF =============================================

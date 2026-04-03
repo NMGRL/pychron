@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any
+from typing import Any, List as TypingList
+
+from traits.api import Any, HasTraits, List, Property
 
 # from pychron.pipeline.plot.layout import FigureLayout
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -44,11 +46,12 @@ class FigureModel(HasTraits):
     force_refresh_panels = True
     _panel_signature = None
 
-    def refresh(self, force=False):
+    def refresh(self, force: bool = False) -> bool:
+        panels_rebuilt = False
         if force:
-            self.refresh_panels(force=True)
+            panels_rebuilt = self.refresh_panels(force=True)
         elif self._panels_need_refresh():
-            self.refresh_panels()
+            panels_rebuilt = self.refresh_panels()
 
         for p in self.panels:
             if not p.figures or force:
@@ -57,7 +60,9 @@ class FigureModel(HasTraits):
             for f in p.figures:
                 f.replot()
 
-    def dump_metadata(self):
+        return panels_rebuilt
+
+    def dump_metadata(self) -> TypingList[Any]:
         ps = []
 
         for pp in self.panels:
@@ -65,7 +70,7 @@ class FigureModel(HasTraits):
 
         return ps
 
-    def load_metadata(self, metadata):
+    def load_metadata(self, metadata: TypingList[Any]) -> None:
         for pp, meta in zip(self.panels, metadata):
             pp.load_metadata(meta)
 
@@ -73,16 +78,19 @@ class FigureModel(HasTraits):
     # def _analyses_items_changed(self):
     #     self.refresh_panels()
 
-    def refresh_panels(self, force=False):
+    def refresh_panels(self, force: bool = False) -> bool:
         if force or not self.panels or self.force_refresh_panels:
             ps = self._make_panels()
             self.panels = ps
             self._panel_signature = self._make_panel_signature()
+            rebuilt = True
         else:
             self._sync_panels()
+            rebuilt = False
         self.reset_panel_gen()
+        return rebuilt
 
-    def reset_panel_gen(self):
+    def reset_panel_gen(self) -> None:
         self.panel_gen = (gi for gi in self.panels)
 
     def _panel_factory(self, *args, **kw):
@@ -146,10 +154,10 @@ class FigureModel(HasTraits):
             for index, analyses in enumerate(groups)
         )
 
-    def _panels_need_refresh(self):
+    def _panels_need_refresh(self) -> bool:
         return self._panel_signature != self._make_panel_signature()
 
-    def _sync_panels(self):
+    def _sync_panels(self) -> None:
         groups = self._make_panel_groups()
         titles = tuple(self.titles) if self.titles else ()
 
@@ -172,7 +180,7 @@ class FigureModel(HasTraits):
 
         self._panel_signature = self._make_panel_signature()
 
-    def _get_npanels(self):
+    def _get_npanels(self) -> int:
         return len(self.panels)
 
     def next_panel(self):

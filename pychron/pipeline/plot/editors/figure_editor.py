@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import logging
+from typing import Any as TypingAny
 
 from enable.component_editor import ComponentEditor
 from traits.api import Any, List
@@ -80,24 +81,25 @@ class FigureEditor(GraphEditor):
                 ap.clear_ylimits()
                 ap.clear_xlimits()
 
-    def set_items(self, *args, **kw):
+    def set_items(self, *args, **kw) -> None:
         self.clear_aux_plot_limits()
         super(FigureEditor, self).set_items(*args, **kw)
 
-    def force_update(self, force=False):
-        model = self._figure_model_factory()
-        model.refresh(force=force)
+    def force_update(self, force: bool = False) -> None:
+        self.request_refresh(force=force)
 
-    def _component_factory(self):
+    def _component_factory(self) -> TypingAny:
         model = self._figure_model_factory()
+        force_refresh = self.consume_refresh_request()
+        panels_rebuilt = model.refresh(force=force_refresh)
 
         if not self.figure_container:
             self.figure_container = FigureContainer()
         #
         omodel = self.figure_container.model
         self.figure_container.model = model
-        if model == omodel:
-            self.figure_container.model_changed()
+        if model != omodel or panels_rebuilt:
+            self.figure_container.model_changed(clear=panels_rebuilt, refresh_panels=False)
 
         self.figure_container.component.padding = (
             self.plotter_options.get_page_margins()
@@ -112,7 +114,7 @@ class FigureEditor(GraphEditor):
         self._get_component_hook(model)
         return self.figure_container.component
 
-    def _figure_model_factory(self):
+    def _figure_model_factory(self) -> TypingAny:
         model = self.figure_model
         if model is None:
             model = self.figure_model_klass()

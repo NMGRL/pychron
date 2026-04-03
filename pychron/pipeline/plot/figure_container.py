@@ -36,8 +36,11 @@ class FigureContainer(HasTraits):
     rows = Int
     cols = Int
 
-    def refresh(self, clear=False):
+    def refresh(self, clear: bool = False) -> None:
         comp = self.component
+        if clear and hasattr(comp, "components"):
+            del comp.components[:]
+
         for i in range(self.rows):
             for j in range(self.cols):
                 try:
@@ -51,9 +54,15 @@ class FigureContainer(HasTraits):
                         ap.clear_ylimits()
                         ap.clear_xlimits()
 
-    def model_changed(self, clear=True):
+        if hasattr(comp, "invalidate_and_redraw"):
+            comp.invalidate_and_redraw()
+        elif hasattr(comp, "request_redraw"):
+            comp.request_redraw()
+
+    def model_changed(self, clear: bool = True, refresh_panels: bool = True) -> None:
         layout = self.model.plot_options.layout
-        self.model.refresh_panels()
+        if refresh_panels:
+            self.model.refresh_panels()
         if hasattr(self.model.plot_options, "orientation_layout"):
             if self.model.plot_options.orientation_layout == "Vertical":
                 layout.fixed = "column"
@@ -71,10 +80,10 @@ class FigureContainer(HasTraits):
 
         self.refresh(clear=clear)
 
-    def _model_changed(self):
+    def _model_changed(self) -> None:
         self.model_changed(True)
 
-    def _component_factory(self, r, c):
+    def _component_factory(self, r: int, c: int):
         op = GridPlotContainer(
             shape=(r, c),
             use_backbuffer=True,
@@ -83,7 +92,7 @@ class FigureContainer(HasTraits):
         )
         return op, r, c
 
-    def _component_default(self):
+    def _component_default(self) -> VPlotContainer:
         return VPlotContainer()
 
 

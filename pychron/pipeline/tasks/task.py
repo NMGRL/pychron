@@ -313,7 +313,7 @@ class PipelineTask(BaseBrowserTask):
         self.set_tag("outlier", outlier_ans, use_filter=False)
         self.set_tag("invalid", invalid_ans)
 
-    def set_tag(self, tag=None, items=None, use_filter=True, warn=True):
+    def set_tag(self, tag=None, items=None, use_filter: bool = True, warn: bool = True) -> None:
         """
         set tag for either
         analyses selected in unknowns pane
@@ -365,7 +365,7 @@ class PipelineTask(BaseBrowserTask):
 
                 if self.active_editor:
                     self.active_editor.figure_model = None
-                    self.active_editor.refresh_needed = True
+                    self.active_editor.request_rebuild()
 
                 self.browser_model.table.set_tags(tag, items)
                 self.browser_model.table.remove_invalid()
