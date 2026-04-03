@@ -915,7 +915,7 @@ requires-dist = [
     { name = "tables", specifier = ">=3.10.2,<4" },
     { name = "traits", specifier = ">=7.0.2,<8" },
     { name = "traitsui", specifier = ">=8.0.0,<9" },
-    { name = "twisted", marker = "extra == 'valve'", specifier = ">=22.8.0,<23" },
+    { name = "twisted", marker = "extra == 'valve'", specifier = ">=22.8.0,<25" },
     { name = "typer", specifier = ">=0.16.1,<1" },
     { name = "uncertainties", specifier = ">=3.2.3,<4" },
     { name = "utm", specifier = ">=0.8.1,<1" },
@@ -1371,7 +1371,7 @@ wheels = [
 
 [[package]]
 name = "twisted"
-version = "22.10.0"
+version = "24.7.0rc1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -1379,23 +1379,12 @@ dependencies = [
     { name = "constantly" },
     { name = "hyperlink" },
     { name = "incremental" },
-    { name = "twisted-iocpsupport", marker = "sys_platform == 'win32'" },
     { name = "typing-extensions" },
     { name = "zope-interface" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b2/ce/cbb56597127b1d51905b0cddcc3f314cc769769efc5e9a8a67f4617f7bca/Twisted-22.10.0.tar.gz", hash = "sha256:32acbd40a94f5f46e7b42c109bfae2b302250945561783a8b7a059048f2d4d31", size = 3524935, upload-time = "2022-10-31T09:29:31.201Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/aa/5a39fdeec1946815e475028eacbf82e79a95ffa41ee37255b9b7a3cfdaeb/twisted-24.7.0rc1.tar.gz", hash = "sha256:bbc4a2193ca34cfa32f626300746698a6d70fcd77d9c0b79a664c347e39634fc", size = 3517026, upload-time = "2024-07-29T13:44:14.025Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/63/b5540d15dfeb7388fbe12fa55a902c118fd2b324be5430cdeac0c0439489/Twisted-22.10.0-py3-none-any.whl", hash = "sha256:86c55f712cc5ab6f6d64e02503352464f0400f66d4f079096d744080afcccbd0", size = 3119575, upload-time = "2022-10-31T09:29:29.008Z" },
-]
-
-[[package]]
-name = "twisted-iocpsupport"
-version = "1.0.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f3/35/f18bd75e29f7d887e918a9401e0aa66c10634861561fc085d197a738759f/twisted-iocpsupport-1.0.4.tar.gz", hash = "sha256:858096c0d15e33f15ac157f455d8f86f2f2cdd223963e58c0f682a3af8362d89", size = 10022, upload-time = "2023-08-10T10:11:51.307Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/9d/b223c791d14a502d8d4c4405add78c6189f68506fdc43f3c2a6183efb7b4/twisted_iocpsupport-1.0.4-cp312-cp312-win32.whl", hash = "sha256:6081bd7c2f4fcf9b383dcdb3b3385d75a26a7c9d2be25b6950c3d8ea652d2d2d", size = 42594, upload-time = "2023-08-10T10:11:31.904Z" },
-    { url = "https://files.pythonhosted.org/packages/f3/9d/3813cd573dff68426e0ab0f9f47c7876dd9d98238e55aefa019c89c400b9/twisted_iocpsupport-1.0.4-cp312-cp312-win_amd64.whl", hash = "sha256:76f7e67cec1f1d097d1f4ed7de41be3d74546e1a4ede0c7d56e775c4dce5dfb0", size = 47608, upload-time = "2023-08-10T10:11:33.531Z" },
+    { url = "https://files.pythonhosted.org/packages/15/2b/8306eb4dae2d3e0e192c033f5ca5458e9f6cb7cdfdf4643aedc72597ee74/twisted-24.7.0rc1-py3-none-any.whl", hash = "sha256:f37d6656fe4e2871fab29d8952ae90bd6ca8b48a9e4dfa1b348f4cd62e6ba0bb", size = 3181543, upload-time = "2024-07-29T13:44:10.617Z" },
 ]
 
 [[package]]
