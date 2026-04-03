@@ -98,4 +98,13 @@ valve = [
 dev = [
     "black",
     "mypy>=1.15.0,<2",
+    "pre-commit>=4.2.0,<5",
+    "types-requests",
+    "types-pyyaml",
+    "types-six",
+    "types-simplejson",
+    "types-ujson",
+    "types-pytz",
+    "types-pymysql",
+    "types-paramiko",
 ]

@@ -29,7 +29,7 @@ from pychron.tx.protocols.service import ServiceProtocol
 
 
 class BaseValveProtocol(ServiceProtocol):
-    manager_protocol = None
+    manager_protocol: str | None = None
 
     def __init__(self, application, addr, logger):
         ServiceProtocol.__init__(self, logger=logger)

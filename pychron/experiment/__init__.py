@@ -23,7 +23,7 @@ class ExtractionException(BaseException):
 
 
 class CheckException(BaseException):
-    tag = None
+    tag: str | None = None
 
     def __init__(self, msg):
         self._msg = msg

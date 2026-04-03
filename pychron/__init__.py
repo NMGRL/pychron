@@ -17,9 +17,9 @@ from __future__ import absolute_import
 from .version import __version__
 
 try:
-    import ujson as json
+    import ujson as json  # type: ignore[no-redef]
 except ImportError:
     try:
-        import simplejson as json
+        import simplejson as json  # type: ignore[no-redef]
     except ImportError:
-        import json
+        import json  # type: ignore[no-redef]
