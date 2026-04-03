@@ -17,29 +17,30 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
+from __future__ import annotations
+
 from pychron.pychron_constants import LINE_STR, NULL_STR, LIGHT_YELLOW
 
 SYSTEM = 10
 QUEUE = 20
 RUN = 30
 
-LEVEL_TXT_MAP = {SYSTEM: "system", QUEUE: "queue", RUN: "run"}
-LEVEL_COLOR_MAP = {SYSTEM: "white", QUEUE: "lightblue", RUN: LIGHT_YELLOW}
+LEVEL_TXT_MAP: dict[int, str] = {SYSTEM: "system", QUEUE: "queue", RUN: "run"}
+LEVEL_COLOR_MAP: dict[int, str] = {SYSTEM: "white", QUEUE: "lightblue", RUN: LIGHT_YELLOW}
 
 CONDITIONAL_GROUP_TAGS = ("action", "cancelation", "truncation", "termination")
 
 
-def level_text(l):
+def level_text(l: int) -> str:
     return LEVEL_TXT_MAP.get(l, "")
 
 
-def level_color(l):
+def level_color(l: int) -> str:
     return LEVEL_COLOR_MAP.get(l, "white")
 
 
-def test_queue_conditionals_name(name):
-    return bool(name and not name in ("Queue Conditionals", NULL_STR, LINE_STR))
+def test_queue_conditionals_name(name: str) -> bool:
+    return bool(name and name not in ("Queue Conditionals", NULL_STR, LINE_STR))
 
 
 # ============= EOF =============================================

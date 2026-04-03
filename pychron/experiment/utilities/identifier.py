@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import annotations
 
 import os
 import re
 from itertools import groupby
+from typing import Dict, List, Optional, Tuple, Union
 
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
@@ -32,16 +34,16 @@ SPECIAL_IDENTIFIER_REGEX = re.compile(
     r"(?P<identifier>\w{1,2}-[\d\w]+-\w)-(?P<aliquot>\d+)"
 )
 
-ANALYSIS_MAPPING_UNDERSCORE_KEY = dict()  # blank_air: ba
-ANALYSIS_MAPPING = dict()  # ba: 'Blank Air'
-NON_EXTRACTABLE = dict()  # ba: 'Blank Air'
-ANALYSIS_MAPPING_INTS = dict()  # blank_air: 0
-SPECIAL_MAPPING = dict()  # blank_air: ba
-SPECIAL_NAMES = [SPECIAL_IDENTIFIER, LINE_STR]  # 'Blank Air'
-SPECIAL_KEYS = []  # ba
+ANALYSIS_MAPPING_UNDERSCORE_KEY: Dict[str, str] = dict()
+ANALYSIS_MAPPING: Dict[str, str] = dict()
+NON_EXTRACTABLE: Dict[str, str] = dict()
+ANALYSIS_MAPPING_INTS: Dict[str, int] = dict()
+SPECIAL_MAPPING: Dict[str, str] = dict()
+SPECIAL_NAMES: List[str] = [SPECIAL_IDENTIFIER, LINE_STR]
+SPECIAL_KEYS: List[str] = []
 
 
-def load_identifiers_file():
+def load_identifiers_file() -> None:
     p = None
     if paths.hidden_dir:
         p = os.path.join(paths.hidden_dir, "identifiers.yaml")
@@ -72,10 +74,12 @@ def load_identifiers_file():
 try:
     load_identifiers_file()
 except BaseException:
-    print("failed loading identifier file")
+    import logging
+
+    logging.getLogger(__name__).warning("failed loading identifier file")
 
 
-def convert_identifier_to_int(ln):
+def convert_identifier_to_int(ln: Union[str, int]) -> int:
     m = {"ba": 1, "bc": 2, "bu": 3, "bg": 4, "u": 5, "c": 6, "ic": 7}
 
     try:
@@ -84,60 +88,37 @@ def convert_identifier_to_int(ln):
         return m[ln]
 
 
-def convert_special_name(name, output="shortname"):
-    """
-    input name output shortname
-
-    name='Background'
-    returns:
-
-        if output=='shortname'
-            return 'bg'
-        else
-            return 4 #identifier
-    """
+def convert_special_name(
+    name: Union[str, int], output: str = "shortname"
+) -> Union[str, int]:
     if isinstance(name, str):
-        name = name.lower()
-        name = name.replace(" ", "_")
-        if name in SPECIAL_MAPPING:
-            sn = SPECIAL_MAPPING[name]
+        name_lower = name.lower().replace(" ", "_")
+        if name_lower in SPECIAL_MAPPING:
+            sn = SPECIAL_MAPPING[name_lower]
             if output == "labnumber":
                 sn = convert_identifier(sn)
             return sn
-    else:
-        return name
+    return name
 
 
-def convert_identifier(identifier):
-    """
-    old:
-        identifier=='bg, a, ...'
-        return  1
-
-    identifier== bu-FD-J, 51234, 13212-01
-    return bu-FD-J, 51234, 13212
-
-    """
+def convert_identifier(identifier: str) -> str:
     if "-" in identifier:
         ln = identifier.split("-")[0]
         try:
-            ln = int(ln)
-            identifier = str(ln)
+            int(ln)
+            return str(ln)
         except ValueError:
             return identifier
 
     return identifier
 
 
-def get_analysis_type(idn):
-    """
-    idn: str like 'a-...' or '43513'
-    """
+def get_analysis_type(idn: str) -> str:
     idn = idn.lower()
 
     items = SPECIAL_MAPPING.items()
 
-    def key(x):
+    def key(x: Tuple[str, str]) -> int:
         return len(x[1])
 
     for cnt, gitems in groupby(sorted(items, key=key, reverse=True), key=key):
@@ -148,7 +129,7 @@ def get_analysis_type(idn):
     return "unknown"
 
 
-def get_analysis_type_shortname(idn):
+def get_analysis_type_shortname(idn: str) -> str:
     at = get_analysis_type(idn)
     if at != "unknown":
         at = SPECIAL_MAPPING[at]
@@ -157,7 +138,7 @@ def get_analysis_type_shortname(idn):
     return at
 
 
-def strip_runid(r):
+def strip_runid(r: str) -> Tuple[str, int, str]:
     l, x = r.split("-")
 
     a = ""
@@ -175,7 +156,7 @@ def strip_runid(r):
     return l, int(a), s
 
 
-def make_identifier(ln, ed, ms):
+def make_identifier(ln: str, ed: Union[str, int], ms: Union[str, int]) -> str:
     try:
         _ = int(ln)
         return ln
@@ -183,13 +164,12 @@ def make_identifier(ln, ed, ms):
         return make_special_identifier(ln, ed, ms)
 
 
-def make_standard_identifier(ln, modifier, ms, aliquot=None):
-    """
-    ln: str or int
-    a: int
-    modifier: str or int. if int zero pad
-    ms: int or str
-    """
+def make_standard_identifier(
+    ln: Union[str, int],
+    modifier: Union[str, int],
+    ms: Union[str, int],
+    aliquot: Optional[int] = None,
+) -> str:
     if isinstance(ms, int):
         ms = "{:02d}".format(ms)
     try:
@@ -203,13 +183,9 @@ def make_standard_identifier(ln, modifier, ms, aliquot=None):
     return d
 
 
-def make_special_identifier(ln, ed, ms, aliquot=None):
-    """
-    ln: str or int
-    a: int aliquot
-    ms: int mass spectrometer id
-    ed: int extract device id
-    """
+def make_special_identifier(
+    ln: Union[str, int], ed: Union[str, int], ms: Union[str, int], aliquot: Optional[Union[str, int]] = None
+) -> str:
     if isinstance(ed, int):
         ed = "{:02d}".format(ed)
     if isinstance(ms, int):
@@ -224,34 +200,27 @@ def make_special_identifier(ln, ed, ms, aliquot=None):
     return d
 
 
-def is_special(ln):
-    special = False
+def is_special(ln: str) -> bool:
     if "-" in ln:
-        special = ln.split("-")[0] in ANALYSIS_MAPPING
-    return special
+        return ln.split("-")[0] in ANALYSIS_MAPPING
+    return False
 
 
 STEPHEATRE = re.compile(r"^\d+-\d+[A_Z]{1,2}$")
 
 
-def is_step_heat(runid):
+def is_step_heat(runid: str) -> Optional[re.Match]:
     return STEPHEATRE.match(runid)
 
 
-def convert_extract_device(name):
-    """
-    change Fusions UV to FusionsUV, etc
-    """
+def convert_extract_device(name: str) -> str:
     n = ""
     if name:
         n = name.replace(" ", "")
     return n
 
 
-def pretty_extract_device(ident):
-    """
-    change fusions_uv to Fusions UV, etc
-    """
+def pretty_extract_device(ident: str) -> str:
     n = ""
     if ident:
         args = ident.split("_")
