@@ -17,7 +17,12 @@ import copy
 import os
 import shutil
 from operator import attrgetter
-from typing import Any, Dict, List, Optional
+from typing import (
+    Any as TypingAny,
+    Dict as TypingDict,
+    List as TypingList,
+    Optional as TypingOptional,
+)
 
 import yaml
 from pyface.ui_traits import PyfaceColor
@@ -157,7 +162,7 @@ class UndoStack(HasTraits):
         self._undo_stack.append(command)
         self._redo_stack.clear()
 
-    def undo(self) -> Optional[Command]:
+    def undo(self) -> TypingOptional[Command]:
         if not self._undo_stack:
             return None
         command = self._undo_stack.pop()
@@ -165,7 +170,7 @@ class UndoStack(HasTraits):
         self._redo_stack.append(command)
         return command
 
-    def redo(self) -> Optional[Command]:
+    def redo(self) -> TypingOptional[Command]:
         if not self._redo_stack:
             return None
         command = self._redo_stack.pop()
@@ -246,7 +251,7 @@ class CanvasEditor(Loggable):
     copy_button = Button
     paste_button = Button
     duplicate_button = Button
-    _clipboard: List[Any] = []
+    _clipboard: TypingList[TypingAny] = []
 
     def load(self, canvas, path):
         self.canvas = canvas
@@ -371,7 +376,7 @@ class CanvasEditor(Loggable):
         with open(p, "w") as wfile:
             yaml.dump(obj, wfile)
 
-    def _validate_before_save(self) -> List[str]:
+    def _validate_before_save(self) -> TypingList[str]:
         """Validate canvas state before saving. Returns list of error messages."""
         errors = []
         scene = self.canvas.scene
@@ -479,7 +484,7 @@ class CanvasEditor(Loggable):
             return
         item = g.selected[0]
         old_color = item.default_color
-        item.default_color = tuple(255 * i for i in new)
+        item.default_color = new
 
         cmd = PropertyCommand(
             name="Change Color",
