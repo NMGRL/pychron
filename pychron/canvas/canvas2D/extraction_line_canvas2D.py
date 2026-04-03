@@ -181,7 +181,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     if source_item is not None:
                         color_by_source[color_source] = source_item.default_color
 
-                obj.state = bool(payload.get("is_active"))
+                is_active = bool(payload.get("is_active"))
+                obj.state = is_active
                 if obj.state and color_source in color_by_source:
                     obj.active_color = color_by_source[color_source]
                 elif hasattr(obj, "default_color"):
@@ -192,9 +193,15 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if not isinstance(obj, (BaseValve, Switch)):
                 continue
 
-            if self.manager.network.inherit_state and getattr(obj, "state", None) not in (
-                "closed",
-                False,
+            if (
+                self.manager
+                and self.manager.network
+                and self.manager.network.inherit_state
+                and getattr(obj, "state", None)
+                not in (
+                    "closed",
+                    False,
+                )
             ):
                 source = valve_state.dominant_source_node
                 if source and source in color_by_source:
@@ -203,6 +210,51 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     obj.active_color = obj.oactive_color
             elif hasattr(obj, "oactive_color"):
                 obj.active_color = obj.oactive_color
+
+        self._propagate_connector_colors()
+
+    def _propagate_connector_colors(self) -> None:
+        """Propagate state/color to visual connectors not in the network graph."""
+        scene = self.scene
+        if scene is None:
+            return
+
+        for item in scene.get_items():
+            if not isinstance(item, (BorderLine, Connection, Elbow, Tee, Fork, Cross)):
+                continue
+
+            endpoint_states = []
+            endpoint_colors = []
+            for tag in ("start", "end", "left", "right", "mid", "top", "bottom"):
+                point = getattr(item, f"{tag}_point", None)
+                if point is None:
+                    continue
+                px, py = point.get_xy()
+                nearby = self._find_item_at(px, py, exclude=item)
+                if nearby is not None and hasattr(nearby, "state"):
+                    endpoint_states.append(bool(nearby.state))
+                    if hasattr(nearby, "active_color") and nearby.state:
+                        endpoint_colors.append(nearby.active_color)
+
+            if endpoint_states:
+                new_state = any(endpoint_states)
+                item.state = new_state
+                if item.state and endpoint_colors:
+                    item.active_color = endpoint_colors[0]
+                elif hasattr(item, "default_color"):
+                    item.active_color = item.default_color
+
+    def _find_item_at(self, x, y, exclude=None):
+        """Find the scene item at the given data coordinates."""
+        scene = self.scene
+        if scene is None:
+            return None
+        for item in scene.get_items():
+            if item is exclude:
+                continue
+            if item.is_in(x, y):
+                return item
+        return None
 
     def set_valve_visual_state(self, name, visual_state, refresh=True):
         switch = self._get_switch_by_name(name)

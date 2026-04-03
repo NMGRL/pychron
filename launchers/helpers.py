@@ -17,6 +17,7 @@
 import logging
 import os
 import subprocess
+
 # ============= standard library imports ========================
 import sys
 import warnings
@@ -60,7 +61,7 @@ logger = logging.getLogger()
 def monkey_patch_preferences():
     def setfunc(obj, key, value):
         if isinstance(value, QtGui.QColor):
-            value = '#{:02X}{:02X}{:02X}'.format(value.red(), value.green(), value.blue())
+            value = "#{:02X}{:02X}{:02X}".format(value.red(), value.green(), value.blue())
         else:
             value = str(value)
 
@@ -80,6 +81,7 @@ def monkey_patch_preferences():
             listener(obj, key, old, value)
 
     from apptools.preferences.preferences import Preferences
+
     Preferences._set = setfunc
 
 
@@ -95,28 +97,24 @@ class myQTabBar(QtGui.QTabBar):
 
 
 class myPanel(BasePanel):
-    """PyQt user interface panel for Traits-based user interfaces.
-    """
+    """PyQt user interface panel for Traits-based user interfaces."""
 
     def __init__(self, ui, parent, is_subpanel):
-        """Initialise the object.
-        """
+        """Initialise the object."""
         self.ui = ui
         history = ui.history
         view = ui.view
 
         # Reset any existing history listeners.
         if history is not None:
-            history.on_trait_change(self._on_undoable, 'undoable', remove=True)
-            history.on_trait_change(self._on_redoable, 'redoable', remove=True)
-            history.on_trait_change(self._on_revertable, 'undoable',
-                                    remove=True)
+            history.on_trait_change(self._on_undoable, "undoable", remove=True)
+            history.on_trait_change(self._on_redoable, "redoable", remove=True)
+            history.on_trait_change(self._on_revertable, "undoable", remove=True)
 
         # Determine if we need any buttons or an 'undo' history.
         buttons = [self.coerce_button(button) for button in view.buttons]
         nr_buttons = len(buttons)
-        has_buttons = (not is_subpanel and (nr_buttons != 1 or
-                                            not self.is_button(buttons[0], '')))
+        has_buttons = not is_subpanel and (nr_buttons != 1 or not self.is_button(buttons[0], ""))
 
         if nr_buttons == 0:
             if view.undo:
@@ -128,7 +126,7 @@ class myPanel(BasePanel):
 
         if not is_subpanel and history is None:
             for button in buttons:
-                if self.is_button(button, 'Undo') or self.is_button(button, 'Revert'):
+                if self.is_button(button, "Undo") or self.is_button(button, "Revert"):
                     history = ui.history = UndoHistory()
                     break
 
@@ -140,9 +138,14 @@ class myPanel(BasePanel):
         # Suppress the title if this is a subpanel or if we think it should be
         # superceded by the title of an "outer" widget (eg. a dock widget).
         title = view.title
-        if (is_subpanel or (isinstance(parent, QtGui.QMainWindow) and
-                            not isinstance(parent.parent(), QtGui.QDialog)) or
-                isinstance(parent, QtGui.QTabWidget)):
+        if (
+            is_subpanel
+            or (
+                isinstance(parent, QtGui.QMainWindow)
+                and not isinstance(parent.parent(), QtGui.QDialog)
+            )
+            or isinstance(parent, QtGui.QTabWidget)
+        ):
             title = ""
 
         # ============ Monkey Patch ===============
@@ -176,8 +179,7 @@ class myPanel(BasePanel):
 
                 # Add the horizontal separator
                 separator = QtGui.QFrame()
-                separator.setFrameStyle(QtGui.QFrame.Sunken |
-                                        QtGui.QFrame.HLine)
+                separator.setFrameStyle(QtGui.QFrame.Sunken | QtGui.QFrame.HLine)
                 separator.setFixedHeight(2)
                 layout.addWidget(separator)
 
@@ -185,27 +187,23 @@ class myPanel(BasePanel):
                 bbox = QtGui.QDialogButtonBox(QtCore.Qt.Horizontal)
                 for button in buttons:
                     role = QtGui.QDialogButtonBox.ActionRole
-                    if self.is_button(button, 'Undo'):
-                        self.undo = self.add_button(button, bbox, role,
-                                                    self._on_undo, False,
-                                                    'Undo')
-                        self.redo = self.add_button(button, bbox, role,
-                                                    self._on_redo, False,
-                                                    'Redo')
-                        history.on_trait_change(self._on_undoable, 'undoable',
-                                                dispatch='ui')
-                        history.on_trait_change(self._on_redoable, 'redoable',
-                                                dispatch='ui')
-                    elif self.is_button(button, 'Revert'):
+                    if self.is_button(button, "Undo"):
+                        self.undo = self.add_button(
+                            button, bbox, role, self._on_undo, False, "Undo"
+                        )
+                        self.redo = self.add_button(
+                            button, bbox, role, self._on_redo, False, "Redo"
+                        )
+                        history.on_trait_change(self._on_undoable, "undoable", dispatch="ui")
+                        history.on_trait_change(self._on_redoable, "redoable", dispatch="ui")
+                    elif self.is_button(button, "Revert"):
                         role = QtGui.QDialogButtonBox.ResetRole
-                        self.revert = self.add_button(button, bbox, role,
-                                                      self._on_revert, False)
-                        history.on_trait_change(self._on_revertable, 'undoable',
-                                                dispatch='ui')
-                    elif self.is_button(button, 'Help'):
+                        self.revert = self.add_button(button, bbox, role, self._on_revert, False)
+                        history.on_trait_change(self._on_revertable, "undoable", dispatch="ui")
+                    elif self.is_button(button, "Help"):
                         role = QtGui.QDialogButtonBox.HelpRole
                         self.add_button(button, bbox, role, self._on_help)
-                    elif not self.is_button(button, ''):
+                    elif not self.is_button(button, ""):
                         self.add_button(button, bbox, role)
                 layout.addWidget(bbox)
 
@@ -217,13 +215,14 @@ class myPanel(BasePanel):
 
 def monkey_patch_panel():
     from traitsui.qt import ui_panel
+
     ui_panel._Panel = myPanel
 
 
 def monkey_patch_checkbox_render():
     class CheckboxRenderer(TableDelegate):
-        """ A renderer which displays a checked-box for a True value and an
-            unchecked box for a false value.
+        """A renderer which displays a checked-box for a True value and an
+        unchecked box for a false value.
         """
 
         # ---------------------------------------------------------------------------
@@ -231,9 +230,11 @@ def monkey_patch_checkbox_render():
         # ---------------------------------------------------------------------------
 
         def editorEvent(self, event, model, option, index):
-            """ Reimplemented to handle mouse button clicks.
-            """
-            if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.LeftButton:
+            """Reimplemented to handle mouse button clicks."""
+            if (
+                event.type() == QtCore.QEvent.MouseButtonRelease
+                and event.button() == QtCore.Qt.LeftButton
+            ):
                 column = index.model()._editor.columns[index.column()]
                 obj = index.data(QtCore.Qt.UserRole)
                 checked = bool(column.get_raw_value(obj))
@@ -243,8 +244,7 @@ def monkey_patch_checkbox_render():
                 return False
 
         def paint(self, painter, option, index):
-            """ Reimplemented to paint the checkbox.
-            """
+            """Reimplemented to paint the checkbox."""
             # Determine whether the checkbox is check or unchecked
             column = index.model()._editor.columns[index.column()]
             obj = index.data(QtCore.Qt.UserRole)
@@ -271,19 +271,19 @@ def monkey_patch_checkbox_render():
 
             # Align the checkbox appropriately.
             box.rect = option.rect
-            size = style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
-                                          QtCore.QSize(), None)
+            size = style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box, QtCore.QSize(), None)
             box.rect.setWidth(size.width())
             margin = style.pixelMetric(QtGui.QStyle.PM_ButtonMargin, box)
             alignment = column.horizontal_alignment
-            if alignment == 'left':
+            if alignment == "left":
                 box.rect.setLeft(option.rect.left() + margin)
-            elif alignment == 'right':
+            elif alignment == "right":
                 box.rect.setLeft(option.rect.right() - size.width() - margin)
             else:
                 # FIXME: I don't know why I need the 2 pixels, but I do.
-                box.rect.setLeft(option.rect.left() + option.rect.width() // 2 -
-                                 size.width() // 2 + margin - 2)
+                box.rect.setLeft(
+                    option.rect.left() + option.rect.width() // 2 - size.width() // 2 + margin - 2
+                )
 
             box.state = QtGui.QStyle.State_Enabled | QtGui.QStyle.State_Active
             if checked:
@@ -294,12 +294,10 @@ def monkey_patch_checkbox_render():
             painter.restore()
 
         def sizeHint(self, option, index):
-            """ Reimplemented to provide size hint based on a checkbox
-            """
+            """Reimplemented to provide size hint based on a checkbox"""
             box = QtGui.QStyleOptionButton()
             style = QtGui.QApplication.instance().style()
-            return style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
-                                          QtCore.QSize(), None)
+            return style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box, QtCore.QSize(), None)
 
     from traitsui.qt.extra import checkbox_renderer
 
@@ -333,15 +331,9 @@ def monkey_patch_table_view():
     def resizeColumnsToContents(self):
         """Support proportional column width specifications."""
 
-        # TODO: The proportional size specification approach found in the
-        # TableColumns is not entirely compatible with the ability to
-        # specify the resize_mode.  Namely, there are combinations of
-        # specifications that are redundant, and others which are
-        # contradictory.  Rework this method so that the various values
-        # for **width** have a well-defined, sensible meaning for each
-        # of the possible values of resize_mode.
-
         editor = self._editor
+        if editor.factory is None:
+            return
         available_space = self.viewport().width()
         hheader = self.horizontalHeader()
 
@@ -350,16 +342,9 @@ def monkey_patch_table_view():
         for column_index in range(len(editor.columns)):
             column = editor.columns[column_index]
             requested_width = column.get_width()
-            if (
-                    column.resize_mode in ("interactive", "stretch")
-                    and 0 < requested_width <= 1.0
-            ):
+            if column.resize_mode in ("interactive", "stretch") and 0 < requested_width <= 1.0:
                 proportional.append((column_index, requested_width))
-            elif (
-                    column.resize_mode == "interactive"
-                    and requested_width < 0
-                    and self._initial_size
-            ):
+            elif column.resize_mode == "interactive" and requested_width < 0 and self._initial_size:
                 # Keep previous size if initial sizing has been done
                 available_space -= hheader.sectionSize(column_index)
             else:
@@ -377,6 +362,7 @@ def monkey_patch_table_view():
 
     TableView.resizeColumnsToContents = resizeColumnsToContents
     TableView.sizeHint = sizeHint
+
 
 def monkey_patch_toolbar():
     from pyface.ui.qt.application_window import ApplicationWindow
@@ -397,18 +383,21 @@ def monkey_patch_toolbar():
 
     ApplicationWindow._update_tool_bar_managers = _update_tool_bar_managers
 
-KLASS_MAP = {'pyexperiment': 'PyExperiment',
-             'pyview': 'PyView',
-             'pyvalve': 'PyValve',
-             'pyco2': 'PyCO2',
-             'pydiode': 'PyDiode',
-             'pysampleprep': 'PySamplePrep',
-             'pycrunch': 'PyCrunch'}
+
+KLASS_MAP = {
+    "pyexperiment": "PyExperiment",
+    "pyview": "PyView",
+    "pyvalve": "PyValve",
+    "pyco2": "PyCO2",
+    "pydiode": "PyDiode",
+    "pysampleprep": "PySamplePrep",
+    "pycrunch": "PyCrunch",
+}
 
 
 def entry_point(appname, debug=False):
     """
-        entry point
+    entry point
     """
     klass = KLASS_MAP.get(appname)
 
@@ -428,31 +417,32 @@ def entry_point(appname, debug=False):
 
         # import app klass and pass to launch function
         if check_dependencies(debug):
-            mod = __import__('pychron.applications.{}'.format(appname), fromlist=[klass])
+            mod = __import__("pychron.applications.{}".format(appname), fromlist=[klass])
             app = getattr(mod, klass)
             from pychron.envisage.pychron_run import launch
 
             launch(app)
     else:
-        logger.critical('Failed to initialize environment')
+        logger.critical("Failed to initialize environment")
 
 
 def check_dependencies(debug):
     """
-        check the dependencies and install if possible/required
+    check the dependencies and install if possible/required
     """
     # suppress dependency checks temporarily
     return True
 
-    with open('ENV.txt', 'r') as fp:
+    with open("ENV.txt", "r") as fp:
         env = fp.read().strip()
 
     ret = False
-    logger.info('================ Checking Dependencies ================')
-    for npkg, req in (('uncertainties', '2.1'),
-                      ('pint', '0.5'),
-            # ('fant', '0.1')
-                      ):
+    logger.info("================ Checking Dependencies ================")
+    for npkg, req in (
+        ("uncertainties", "2.1"),
+        ("pint", "0.5"),
+        # ('fant', '0.1')
+    ):
         try:
             pkg = __import__(npkg)
             ver = pkg.__version__
@@ -466,16 +456,21 @@ def check_dependencies(debug):
                 warning(None, 'Install "{}" package. required version>={} '.format(npkg, req))
                 break
 
-        vargs = ver.split('.')
+        vargs = ver.split(".")
         maj = int(vargs[0])
         if maj < int(float(req)):
-            warning(None, 'Update "{}" package. your version={}. required version>={} '.format(npkg, maj, req))
+            warning(
+                None,
+                'Update "{}" package. your version={}. required version>={} '.format(
+                    npkg, maj, req
+                ),
+            )
             break
-        logger.info('{:<15s} >={:<5s} satisfied. Current ver: {}'.format(npkg, req, ver))
+        logger.info("{:<15s} >={:<5s} satisfied. Current ver: {}".format(npkg, req, ver))
     else:
         ret = True
 
-    logger.info('=======================================================')
+    logger.info("=======================================================")
     return ret
 
 
@@ -484,27 +479,27 @@ def install_package(pkg, env, debug):
     # use absolute path to pip /anaconda/envs/.../bin/pip
     # use -n to specify environment
 
-    if not subprocess.check_call(['conda', 'search', '{}'.format(pkg)], stdout=subprocess.PIPE):
+    if not subprocess.check_call(["conda", "search", "{}".format(pkg)], stdout=subprocess.PIPE):
 
         try:
-            subprocess.check_call(['pip', 'install', '{}'.format(pkg)], stdout=subprocess.PIPE)
+            subprocess.check_call(["pip", "install", "{}".format(pkg)], stdout=subprocess.PIPE)
         except subprocess.CalledProcessError:
             return
     else:
         if debug:
-            cmd = ['conda', 'install', '-yq', '{}'.format(pkg)]
+            cmd = ["conda", "install", "-yq", "{}".format(pkg)]
         else:
-            cmd = ['conda', 'install', '-yq', '-n', env, '{}'.format(pkg)]
+            cmd = ["conda", "install", "-yq", "-n", env, "{}".format(pkg)]
         subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
     if debug:
-        cmd = ['conda', 'list']
+        cmd = ["conda", "list"]
     else:
-        cmd = ['conda', 'list', '-n', env]
+        cmd = ["conda", "list", "-n", env]
 
     deps = subprocess.check_output(cmd)
-    for dep in deps.split('\n'):
-        if dep.split(' ')[0] == pkg:
+    for dep in deps.split("\n"):
+        if dep.split(" ")[0] == pkg:
             logger.info('"{}" installed successfully'.format(pkg))
             return True
 
@@ -513,9 +508,8 @@ def set_commandline_args():
     from pychron.globals import globalv
     import argparse
 
-    parser = argparse.ArgumentParser(description='Generate a password')
-    parser.add_argument('-t', '--testbot',
-                        action='store')
+    parser = argparse.ArgumentParser(description="Generate a password")
+    parser.add_argument("-t", "--testbot", action="store")
     args = parser.parse_args()
     globalv.use_testbot = args.testbot
 
@@ -531,6 +525,7 @@ def initialize_version(appname, debug):
     # from pychron.environment.util import get_environment
     # env = get_environment(appname)
     from pychron.envisage.user_login import get_user
+
     args = get_user()
     if args is None:
         return False
@@ -541,24 +536,26 @@ def initialize_version(appname, debug):
         return False
 
     from pychron.paths import paths
+
     prepare_runtime_root(env, appname=appname, write_defaults=True)
-    logger.debug('using Pychron environment: {}'.format(env))
+    logger.debug("using Pychron environment: {}".format(env))
 
     from configparser import ConfigParser, NoSectionError
+
     cp = ConfigParser()
-    pref_path = os.path.join(ETSConfig.application_home, 'preferences.ini')
+    pref_path = os.path.join(ETSConfig.application_home, "preferences.ini")
     cp.read(pref_path)
     try:
-        cp.set('pychron.general', 'environment', env)
+        cp.set("pychron.general", "environment", env)
     except NoSectionError:
-        cp.add_section('pychron.general')
-        cp.set('pychron.general', 'environment', env)
+        cp.add_section("pychron.general")
+        cp.set("pychron.general", "environment", env)
 
     root = os.path.dirname(pref_path)
     if not os.path.isdir(root):
         os.mkdir(root)
 
-    with open(pref_path, 'w') as wfile:
+    with open(pref_path, "w") as wfile:
         cp.write(wfile)
 
     # build globals
@@ -569,25 +566,33 @@ def initialize_version(appname, debug):
     # setup logging. set a basename for log files and logging level
 
     from pychron.core.helpers.exception_helper import set_exception_handler
+
     set_exception_handler()
 
     try:
-        logging_setup('pychron', level='DEBUG')
+        logging_setup("pychron", level="DEBUG")
     except PermissionError as e:
-        warning(None, 'Failed to setup logging due to a PermissionError. '
-                      'Is Pychron already open? Please quit any running instance of Pychron '
-                      'before trying to relaunch.  Error: {}'.format(e))
+        warning(
+            None,
+            "Failed to setup logging due to a PermissionError. "
+            "Is Pychron already open? Please quit any running instance of Pychron "
+            "before trying to relaunch.  Error: {}".format(e),
+        )
         return False
     except FileExistsError as e:
-        warning(None, 'Failed to setup logging. '
-                      ' Error: {}'.format(e))
+        warning(None, "Failed to setup logging. " " Error: {}".format(e))
 
         return False
     except FileExistsError as e:
         emsg = str(e)
-        path = emsg.split('File exists:')[-1]
-        warning(None, """Failed to setup logging.  Error: {}\n\n
-Delete directory {} to proceed""".format(e, path))
+        path = emsg.split("File exists:")[-1]
+        warning(
+            None,
+            """Failed to setup logging.  Error: {}\n\n
+Delete directory {} to proceed""".format(
+                e, path
+            ),
+        )
         return False
 
     return env
@@ -595,18 +600,18 @@ Delete directory {} to proceed""".format(e, path))
 
 def build_sys_path():
     """
-        need to launch from terminal
+    need to launch from terminal
     """
 
     sys.path.insert(0, os.path.dirname(os.getcwd()))
 
 
 def add_eggs(root):
-    egg_path = os.path.join(root, 'pychron.pth')
+    egg_path = os.path.join(root, "pychron.pth")
     if os.path.isfile(egg_path):
         # use a pychron.pth to get additional egg paths
-        with open(egg_path, 'r') as rfile:
-            eggs = [ei.strip() for ei in rfile.read().split('\n')]
+        with open(egg_path, "r") as rfile:
+            eggs = [ei.strip() for ei in rfile.read().split("\n")]
             eggs = [ei for ei in eggs if ei]
 
             for egg_name in eggs:
@@ -628,19 +633,30 @@ def build_globals(user, debug):
     err = ip.verify()
     if err:
         from pyface.message_dialog import warning
-        warning(None, 'There is an issue with your initialization.xml file. Please resolve before relaunching\n'
-                      '\n{}\n\nError: {}'.format(ip.path, err))
+
+        warning(
+            None,
+            "There is an issue with your initialization.xml file. Please resolve before relaunching\n"
+            "\n{}\n\nError: {}".format(ip.path, err),
+        )
         sys.exit(1)
 
     from pychron.globals import globalv
+
     try:
         globalv.build(ip)
     except BaseException:
         from pyface.message_dialog import warning
-        warning(None, 'There is an issue with your initialization.xml file. Please resolve before relaunching\n'
-                      '\n{}'.format(ip.path))
+
+        warning(
+            None,
+            "There is an issue with your initialization.xml file. Please resolve before relaunching\n"
+            "\n{}".format(ip.path),
+        )
         sys.exit(1)
 
     globalv.debug = debug
     globalv.username = user
+
+
 # ============= EOF =============================================
