@@ -66,12 +66,6 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          type: 'docSidebar',
-          sidebarId: 'hardwareSidebar',
-          position: 'left',
-          label: 'Hardware',
-        },
-        {
           href: 'https://github.com/NMGRL/pychron',
           label: 'GitHub',
           position: 'right',

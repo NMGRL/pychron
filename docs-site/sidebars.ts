@@ -1,9 +1,6 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
-  // -------------------------------------------------------------------------
-  // Main documentation sidebar
-  // -------------------------------------------------------------------------
   docsSidebar: [
     'intro',
 
@@ -15,6 +12,17 @@ const sidebars: SidebarsConfig = {
       items: [
         'getting-started/installation',
         'getting-started/quick-start',
+      ],
+    },
+
+    {
+      type: 'category',
+      label: 'Hardware',
+      collapsible: true,
+      collapsed: true,
+      items: [
+        'hardware/overview',
+        'hardware/compatibility-matrix',
       ],
     },
 
@@ -77,14 +85,6 @@ const sidebars: SidebarsConfig = {
         'dashboard/configuration',
       ],
     },
-  ],
-
-  // -------------------------------------------------------------------------
-  // Hardware sidebar
-  // -------------------------------------------------------------------------
-  hardwareSidebar: [
-    'hardware/overview',
-    'hardware/compatibility-matrix',
   ],
 };
 
