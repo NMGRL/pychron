@@ -64,12 +64,48 @@ from pychron.envisage.view_util import open_view
 from pychron.experiment import events, PreExecuteCheckException
 from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
+from pychron.experiment.state_machines import ExecutorController, TransitionRecord
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conditional.conditionals_view import ConditionalsView
 from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.experiment_scheduler import ExperimentScheduler
 from pychron.experiment.experiment_status import ExperimentStatus
+from pychron.experiment.state_machines.executor_machine import (
+    ABORTED as EXEC_ABORTED,
+    CANCELED as EXEC_CANCELED,
+    COMPLETED as EXEC_COMPLETED,
+    FAILED as EXEC_FAILED,
+)
+from pychron.experiment.state_machines.queue_machine import (
+    QUEUE_ABORTED,
+    QUEUE_CANCELED,
+    QUEUE_COMPLETED,
+    QUEUE_FAILED,
+)
+from pychron.experiment.state_machines.run_machine import (
+    ABORT,
+    CANCEL,
+    CREATE,
+    EXTRACTION_COMPLETE,
+    EXTRACTION_FAILED,
+    FINISH,
+    MARK_INVALID,
+    MEASUREMENT_COMPLETE,
+    MEASUREMENT_FAILED,
+    POST_MEASUREMENT_COMPLETE,
+    POST_MEASUREMENT_FAILED,
+    PRECHECK_FAILED as RUN_PRECHECK_FAILED,
+    PRECHECK_PASSED as RUN_PRECHECK_PASSED,
+    SAVE_COMPLETE as RUN_SAVE_COMPLETE,
+    SAVE_FAILED,
+    START,
+    START_EXTRACTION,
+    START_MEASUREMENT,
+    START_POST_MEASUREMENT,
+    START_SAVE,
+    TRUNCATE,
+)
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import (
     test_queue_conditionals_name,
@@ -181,12 +217,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     pyscript_runner = Instance(IPyScriptRunner)
     monitor = Instance("pychron.monitors.automated_run_monitor.AutomatedRunMonitor")
 
-    measuring_run = Instance(
-        "pychron.experiment.automated_run.automated_run.AutomatedRun"
-    )
-    extracting_run = Instance(
-        "pychron.experiment.automated_run.automated_run.AutomatedRun"
-    )
+    measuring_run = Instance("pychron.experiment.automated_run.automated_run.AutomatedRun")
+    extracting_run = Instance("pychron.experiment.automated_run.automated_run.AutomatedRun")
 
     datahub = Instance(Datahub)
     dashboard_client = Instance("pychron.dashboard.client.DashboardClient")
@@ -278,8 +310,152 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.wait_control_lock = Lock()
         self._exception_queue = Queue()
         self._save_complete_evt = TEvent()
+        self._controller = ExecutorController(self)
+        self._controller.register_on_transition(self._handle_state_transition)
         # self.set_managers()
         # self.notification_manager = NotificationManager()
+
+    def _handle_state_transition(self, machine_name: str, record: TransitionRecord) -> None:
+        self._sync_compatibility_state()
+        if machine_name == "executor" and not record.accepted:
+            self.debug(
+                "executor transition rejected event={} state={} reason={}".format(
+                    record.event, record.old_state, record.reason
+                )
+            )
+
+    def _sync_compatibility_state(self) -> None:
+        self.alive = self._controller.is_alive
+        self.measuring = self._controller.measuring
+        self.extracting = self._controller.extracting
+        self.end_at_run_completion = self._controller.end_at_run_completion
+
+    def _set_executor_terminal_result(self, result: str, reason: str | None = None) -> None:
+        self._controller.finalize_with_result(result, reason=reason)
+        self._sync_compatibility_state()
+
+    def _current_terminal_result(self) -> str:
+        return self._controller.queue_terminal_result(self._err_message or None)
+
+    def _should_stop_at_boundary(self) -> bool:
+        return self._controller.should_end_at_run_completion()
+
+    def _should_abort_execution(self) -> bool:
+        return self._controller.should_abort()
+
+    def _should_cancel_execution(self) -> bool:
+        return self._controller.should_cancel() and not self._controller.should_abort()
+
+    def _should_overlap_run(self, run, spec) -> bool:
+        overlap_enabled = bool(spec.overlap[0])
+        return self._controller.should_queue_overlap(
+            run_is_last=bool(run.is_last),
+            analysis_type=str(run.spec.analysis_type),
+            overlap_enabled=overlap_enabled,
+        )
+
+    def _run_execution_mode(self, run, spec) -> str:
+        overlap_enabled = bool(spec.overlap[0])
+        return self._controller.queue_run_execution_mode(
+            run_is_last=bool(run.is_last),
+            analysis_type=str(run.spec.analysis_type),
+            overlap_enabled=overlap_enabled,
+        )
+
+    def _execute_run_overlap(self, exp, run, delay_after_previous_analysis, con) -> bool:
+        self._controller.mark_queue_overlap(True, queue_name=exp.name)
+        t = None
+        for action in self._controller.queue_overlap_launch_actions():
+            if action == "wait_extracting":
+                self.debug("waiting for extracting_run to finish")
+                self._wait_for(lambda x: self.extracting_run)
+            elif action == "start_overlap_thread":
+                self.info("overlaping")
+                t = Thread(
+                    target=self._do_run,
+                    args=(run, delay_after_previous_analysis),
+                    name=run.runid,
+                )
+                t.start()
+            elif action == "wait_overlap_signal":
+                run.wait_for_overlap()
+                self.debug("overlap finished. starting next run")
+
+        if t is not None:
+            con.add_consumable((t, run))
+        return False
+
+    def _execute_run_serial(self, exp, spec, run, delay_after_previous_analysis) -> bool:
+        self._controller.mark_queue_overlap(False, queue_name=exp.name)
+        self._join_run(spec, run, delay_after_previous_analysis)
+        return True
+
+    def _settle_active_runs(self) -> None:
+        actions = self._controller.queue_settle_actions(
+            has_extracting_run=bool(self.extracting_run),
+            extracting_is_special=bool(
+                self.extracting_run and self.extracting_run.spec.is_special()
+            ),
+            has_measuring_run=bool(self.measuring_run),
+        )
+        self.debug("settling active runs actions={}".format(actions))
+        for action in actions:
+            if action == "wait_extracting":
+                self._wait_for(lambda x: self.extracting_run)
+            elif action == "cancel_special_extracting" and self.extracting_run:
+                self.extracting_run.cancel_run()
+            elif action == "wait_measuring":
+                self._wait_for(lambda x: self.measuring_run)
+            elif action == "wait_active_runs":
+                self._wait_for(lambda x: self.extracting_run or self.measuring_run)
+
+    def _get_run_subject_id(self, run: Any) -> str:
+        subject_id = getattr(run, "uuid", None) or getattr(run, "runid", "unknown-run")
+        return str(subject_id)
+
+    def _transition_run_failure(self, run, reason: str) -> None:
+        run_id = self._get_run_subject_id(run)
+        machine = self._controller.get_run_machine(run_id)
+        if machine is None:
+            return
+
+        event = None
+        state = machine.observed_state
+        if state == "run_starting":
+            event = RUN_PRECHECK_FAILED
+        elif state in ("run_precheck", "run_extracting", "run_waiting_overlap_signal"):
+            event = EXTRACTION_FAILED
+        elif state in ("run_waiting_min_pumptime", "run_measuring"):
+            event = MEASUREMENT_FAILED
+        elif state == "run_post_measurement":
+            event = POST_MEASUREMENT_FAILED
+        elif state == "run_saving":
+            event = SAVE_FAILED
+        elif state == "run_finishing":
+            event = ABORT if self._aborted else CANCEL
+
+        if event:
+            if event == ABORT:
+                self._controller.abort_run(run_id, reason=reason)
+            elif event == CANCEL:
+                self._controller.cancel_run(run_id, reason=reason)
+            elif event == RUN_PRECHECK_FAILED:
+                self._controller.mark_run_started(run_id, failed=True)
+            elif event == EXTRACTION_FAILED:
+                self._controller.complete_run_extraction(run_id, failed=True, reason=reason)
+            elif event == MEASUREMENT_FAILED:
+                self._controller.complete_run_measurement(run_id, failed=True, reason=reason)
+            elif event == POST_MEASUREMENT_FAILED:
+                self._controller.complete_run_post_measurement(run_id, failed=True, reason=reason)
+            elif event == SAVE_FAILED:
+                self._controller.complete_run_save(
+                    run_id, queue_name=self.experiment_queue.name, failed=True, reason=reason
+                )
+
+    @on_trait_change("end_at_run_completion")
+    def _handle_end_at_run_completion_change(self, new):
+        if hasattr(self, "_controller"):
+            self._controller.end_at_run_completion = bool(new)
 
     def set_managers(self, prog=None):
         p1 = "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
@@ -291,9 +467,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.spectrometer_manager = self.application.get_service(p2)
             if self.spectrometer_manager is None:
                 if not globalv.ignore_plugin_warnings:
-                    self.warning_dialog(
-                        "Spectrometer Plugin is required for Experiment"
-                    )
+                    self.warning_dialog("Spectrometer Plugin is required for Experiment")
                     return
             self.ion_optics_manager = self.application.get_service(p3)
 
@@ -302,9 +476,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.extraction_line_manager = self.application.get_service(p1)
             if self.extraction_line_manager is None:
                 if not globalv.ignore_plugin_warnings:
-                    self.warning_dialog(
-                        "Extraction Line Plugin is required for Experiment"
-                    )
+                    self.warning_dialog("Extraction Line Plugin is required for Experiment")
                     return
 
         dh = self.datahub
@@ -344,9 +516,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         )
 
         # dashboard
-        self._preference_binder(
-            "pychron.dashboard.experiment", ("use_dashboard_client",)
-        )
+        self._preference_binder("pychron.dashboard.experiment", ("use_dashboard_client",))
 
         # colors
         attrs = ("signal_color", "sniff_color", "baseline_color")
@@ -368,14 +538,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, ("use_message_colormapping",))
 
         # general
-        self._preference_binder(
-            "pychron.general", ("default_principal_investigator", "laboratory")
-        )
+        self._preference_binder("pychron.general", ("default_principal_investigator", "laboratory"))
 
     def add_event(self, *events):
         self.events.extend(events)
 
     def execute(self):
+        self._controller.execute()
         prog = open_progress(100, position=(100, 100))
 
         pre_execute_result = False
@@ -387,6 +556,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # if self._pre_execute_check(prog):
         if pre_execute_result:
             self.info("pre execute check successful")
+            self._controller.precheck_passed()
             prog.close()
             # reset executor
             self._reset()
@@ -395,6 +565,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             t.start()
             return t
         else:
+            self._controller.precheck_failed(reason="pre execute check failed")
+            self._set_executor_terminal_result("failed", reason="pre execute check failed")
             prog.close()
             self.alive = False
             self.info("pre execute check failed")
@@ -448,7 +620,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return False
 
         except Empty:
-            return self.alive
+            return self._controller.is_alive
 
     def continued(self):
         self.stats.continue_run()
@@ -471,6 +643,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def stop(self):
         if self.delaying_between_runs:
+            self._controller.request_stop_at_boundary()
             self.alive = False
             self.stats.stop_timer()
             self.wait_group.stop()
@@ -546,7 +719,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             "current_run_duration": self.stats.current_run_duration_f,
             "etf_iso": self.stats.etf_iso,
             "err_message": self._err_message,
-            "canceled": self._canceled,
+            "canceled": self._should_cancel_execution(),
             "experiment_name": exp.name,
             "experiment": exp,
             "starttime": exp.start_timestamp,
@@ -560,29 +733,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return ctx
 
     def _reset(self):
+        self._controller.reset()
         self.alive = True
         self._canceled = False
         self._aborted = False
 
         self._err_message = ""
         self.end_at_run_completion = False
+        self._controller.end_at_run_completion = False
         self.experiment_status.reset()
         self.experiment_queue.executed = True
         # scroll to the first run
         self.experiment_queue.automated_runs_scroll_to_row = 0
+        self._sync_compatibility_state()
 
     def _wait_for_dvc_save(self, spec):
-        if (
-            self.use_dvc_overlap_save
-            and self._save_complete_evt
-            and self.use_dvc_persistence
-        ):
+        if self.use_dvc_overlap_save and self._save_complete_evt and self.use_dvc_persistence:
             timeout = self.dvc_save_timeout_minutes
-            self.debug(
-                "waiting for save event to clear. Timeout after {} minutes".format(
-                    timeout
-                )
-            )
+            self.debug("waiting for save event to clear. Timeout after {} minutes".format(timeout))
             timeoutseconds = timeout * 60
             st = time.time()
             while self._save_complete_evt.is_set():
@@ -654,7 +822,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.heading('Waiting until {} to start "{}"'.format(st, name))
             self.set_extract_state("scheduled start {}".format(st), flash=False)
             while 1:
-                if self._canceled or not self.alive:
+                if self._should_cancel_execution() or not self._controller.is_alive:
                     return
                 if time.time() > tseconds:
                     break
@@ -668,18 +836,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._delay(exp.delay_before_analyses, message="before")
 
         for i, exp in enumerate(self.experiment_queues):
+            self._controller.queue_selected(queue_name=exp.name)
             self._set_thread_name(exp.name)
             self.heading('"{}" started'.format(exp.name))
             if self.is_alive():
                 if self._pre_queue_check(exp):
                     self.debug("pre queue check failed for {}".format(exp.name))
+                    self._controller.run_failure(reason="pre queue check failed")
                     break
 
                 self._execute_queue(i, exp)
             else:
                 self.debug("Not alive. not starting {},{}".format(i, exp.name))
 
-            if self.end_at_run_completion:
+            if self._should_stop_at_boundary():
                 self.debug(
                     "Previous queue ended at completion. Not continuing to other opened experiments"
                 )
@@ -689,6 +859,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug("Execute open queues preference not selected")
                 break
 
+        self._set_executor_terminal_result(
+            self._current_terminal_result(), reason=self._err_message or None
+        )
         self.alive = False
 
     def _execute_queue(self, i, exp):
@@ -700,6 +873,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
 
         self.experiment_queue = exp
+        self._controller.begin_queue(exp.name)
 
         self.info("Starting automated runs set={:02d} {}".format(i, exp.name))
         self.debug("reset stats: {}".format(self.stats))
@@ -710,6 +884,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.stats.start_timer()
 
         exp.start_timestamp = datetime.now()
+        self._controller.start_delay_complete(queue_name=exp.name)
 
         self._save_complete_evt.clear()
 
@@ -758,6 +933,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     spec = next(rgen)
                 except StopIteration:
                     self.debug("stop iteration")
+                    self._controller.queue_empty(queue_name=exp.name)
                     break
 
                 if spec.skip:
@@ -766,16 +942,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 if self._check_scheduled_stop(spec):
                     self.info("Experiment scheduled to stop")
+                    self._controller.stop_boundary_reached(queue_name=exp.name)
                     break
 
                 if self._pre_run_check(spec):
                     self.warning("pre run check failed")
+                    self._controller.run_failure(reason="pre run check failed")
                     break
 
-                self._aborted = False
+                self._aborted = self._should_abort_execution()
                 self.ms_pumptime_start = None
                 # overlapping = self.current_run and self.current_run.isAlive()
-                overlapping = self.measuring_run and self.measuring_run.is_alive()
+                overlapping = bool(self.measuring_run and self.measuring_run.is_alive())
                 if not overlapping:
                     if self.is_alive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
@@ -795,11 +973,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 if not self._wait_for_dvc_save(spec):
                     self.debug("wait for dvc save failed")
+                    self._controller.run_failure(reason="wait for dvc save failed")
                     break
 
+                self._controller.prepare_next_run(queue_name=exp.name)
                 run = self._make_run(spec)
                 if run is None:
                     self.debug("failed to make run")
+                    self._controller.run_failure(reason="failed to make run")
                     break
 
                 self.wait_group.active_control.page_name = run.runid
@@ -817,40 +998,23 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         delay_after_previous_analysis, conditional_delay
                     )
 
-                if (
-                    not run.is_last
-                    and run.spec.analysis_type == "unknown"
-                    and spec.overlap[0]
-                ):
-                    self.debug("waiting for extracting_run to finish")
-                    self._wait_for(lambda x: self.extracting_run)
-
-                    self.info("overlaping")
-
-                    t = Thread(
-                        target=self._do_run,
-                        args=(run, delay_after_previous_analysis),
-                        name=run.runid,
+                execution_mode = self._run_execution_mode(run, spec)
+                if execution_mode == "overlap":
+                    is_first_flag = self._execute_run_overlap(
+                        exp, run, delay_after_previous_analysis, con
                     )
-                    t.start()
-
-                    run.wait_for_overlap()
-                    is_first_flag = False
-
-                    self.debug("overlap finished. starting next run")
-
-                    con.add_consumable((t, run))
                 else:
-                    is_first_flag = True
+                    is_first_flag = self._execute_run_serial(
+                        exp, spec, run, delay_after_previous_analysis
+                    )
                     last_runid = run.runid
-                    self._join_run(spec, run, delay_after_previous_analysis)
 
                 # self.tracker.stats.print_summary()
 
                 cnt += 1
                 total_cnt += 1
                 is_first_analysis = False
-                if self.end_at_run_completion:
+                if self._should_stop_at_boundary():
                     self.debug("end at run completion")
                     break
 
@@ -860,40 +1024,25 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 #         break
 
             self.debug(
-                "run loop exited. end at completion:{}".format(
-                    self.end_at_run_completion
-                )
+                "run loop exited. end at completion:{}".format(self._should_stop_at_boundary())
             )
-            if self.end_at_run_completion:
-                # if overlapping run is a special labnumber cancel it and finish experiment
-                if self.extracting_run:
-                    if not self.extracting_run.spec.is_special():
-                        self._wait_for(lambda x: self.extracting_run)
-                    else:
-                        self.extracting_run.cancel_run()
-
-                # wait for the measurement run to finish
-                self._wait_for(lambda x: self.measuring_run)
-
-            else:
-                # wait for overlapped runs to finish.
-                self._wait_for(lambda x: self.extracting_run or self.measuring_run)
+            self._settle_active_runs()
 
         if self._err_message:
             self.warning("automated runs did not complete successfully")
             self.warning("error: {}".format(self._err_message))
 
         self._end_runs()
+        qresult = self._current_terminal_result()
+        self._controller.finish_queue(
+            qresult, queue_name=exp.name, reason=self._err_message or None
+        )
         if last_runid:
-            self.info(
-                "Automated runs ended at {}, runs executed={}".format(
-                    last_runid, total_cnt
-                )
-            )
+            self.info("Automated runs ended at {}, runs executed={}".format(last_runid, total_cnt))
 
         self.heading("experiment queue {} finished".format(exp.name))
 
-        if not self._err_message and self.end_at_run_completion:
+        if not self._err_message and self._should_stop_at_boundary():
             self._err_message = "User terminated"
 
         self._do_event(events.END_QUEUE)
@@ -905,9 +1054,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             yl = yload(path)
             if yl:
                 items = [
-                    (i["name"], i["email"])
-                    for i in yl
-                    if i["enabled"] and i["email"] != email
+                    (i["name"], i["email"]) for i in yl if i["enabled"] and i["email"] != email
                 ]
 
                 if items:
@@ -937,7 +1084,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         while 1:
             et = time.time() - st
-            if not self.alive:
+            if not self._controller.is_alive:
                 break
 
             v = predicate(et)
@@ -988,6 +1135,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _do_run(self, run, delay_after_run):
         self._set_thread_name(run.runid)
+        run_id = self._get_run_subject_id(run)
+        self._controller.begin_run(run_id, queue_name=self.experiment_queue.name)
         # add a new log handler
 
         name = run.runid.replace(":", "_")
@@ -1026,35 +1175,42 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         #
         #     self.debug("waiting complete")
 
-        for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
-            if not self.is_alive():
+        for step in self._controller.run_step_sequence():
+            run_status = self._controller.should_continue_run(
+                alive=self.is_alive(),
+                aborting=self._should_abort_execution(),
+                fatal_error=bool(self.monitor and self.monitor.has_fatal_error()),
+            )
+            if run_status == "stop":
                 break
 
-            if self._aborted:
+            if run_status == "abort":
+                self._controller.abort_run(run_id, reason="executor abort requested")
                 break
 
-            if self.monitor and self.monitor.has_fatal_error():
+            if run_status == "fatal":
                 run.cancel_run()
                 run.spec.transition("fail", force=True, source="execute_run")
+                self._transition_run_failure(run, "fatal monitor error")
                 break
 
             if not getattr(self, step)(run):
                 self.warning("{} did not complete successfully".format(step[1:]))
-                if (
-                    step != "_post_measurement"
-                ):  # save data even if post measurement fails
+                self._controller.handle_run_step_failure(
+                    run_id, step, reason="{} failed".format(step[1:])
+                )
+                if step != "_post_measurement":  # save data even if post measurement fails
                     run.spec.transition("fail", force=True, source="execute_run")
                 break
 
         else:
-            self.debug(
-                "$$$$$$$$$$$$$$$$$$$$ state at run end {}".format(run.spec.state)
-            )
+            self.debug("$$$$$$$$$$$$$$$$$$$$ state at run end {}".format(run.spec.state))
             if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
                 run.spec.transition("complete", source="execute_run")
 
         self._do_event(events.SAVE_RUN, run=run)
-        if self.save_all_runs or run.spec.state in ("success", "truncated"):
+        self._controller.start_run_save(run_id, queue_name=self.experiment_queue.name)
+        if self._controller.should_save_run(run.spec.state, self.save_all_runs):
             kw = {}
             if self.use_dvc_overlap_save:
                 # run.save is non-blocked when exception queue defined
@@ -1064,63 +1220,61 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             run.save(**kw)
 
         self._save_complete_evt.set()
-        self.run_completed = run
-
-        remove_backup(run.uuid)
-
-        # check to see if action should be taken
-        if run.spec.state not in (CANCELED, FAILED):
-            if self._post_run_check(run):
-                self._err_message = "Post Run Check Failed"
-                self.warning("post run check failed")
-            else:
-                self.heading("Post Run Check Passed")
-
-                # update the timeseries graph
-                try:
-                    self._update_timeseries()
-                except BaseException:
-                    self.debug("failed updating timeseries via experiment")
-                    self.debug_exception()
-
+        self._controller.complete_run_save(run_id, queue_name=self.experiment_queue.name)
         t = time.time() - st
-        self.info(
-            "Automated run {} {} duration: {:0.3f} s".format(
-                run.runid, run.spec.state, t
-            )
-        )
-
-        run.finish()
-        if self.experiment_type == AR_AR and run.spec.state in (SUCCESS, TRUNCATED):
-            run.spec.uage = run.isotope_group.uage
-            run.spec.k39 = run.isotope_group.get_computed_value("k39")
-
-        # if run.spec.state not in ('canceled', 'failed', 'aborted'):
-        #     self._retroactive_repository_identifiers(run.spec)
-
-        if self.use_autoplot:
-            self.autoplot_event = run
-
-        self.wait_group.pop()
-
-        # mem_log('end run')
-        self.stats.finish_run()
-        if run.spec.state == SUCCESS:
-            self.stats.update_run_duration(run, t)
-            self.stats.recalculate_etf()
-
-        # write rem and ex queues
-        self._write_rem_ex_experiment_queues()
-
-        # close conditionals view
-        # self._close_cv()
-
-        self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
-
-        remove_root_handler(handler)
-        run.post_finish()
-        self._set_thread_name(self.experiment_queue.name)
-        self.experiment_queue.refresh_table_needed = True
+        for action in self._controller.run_post_save_actions(
+            run_state=str(run.spec.state),
+            use_autoplot=bool(self.use_autoplot),
+            experiment_type=str(self.experiment_type),
+        ):
+            if action == "set_run_completed":
+                self.run_completed = run
+            elif action == "remove_backup":
+                remove_backup(run.uuid)
+            elif action == "post_run_check":
+                if run.spec.state not in (CANCELED, FAILED):
+                    if self._post_run_check(run):
+                        self._err_message = "Post Run Check Failed"
+                        self.warning("post run check failed")
+                    else:
+                        self.heading("Post Run Check Passed")
+                        try:
+                            self._update_timeseries()
+                        except BaseException:
+                            self.debug("failed updating timeseries via experiment")
+                            self.debug_exception()
+            elif action == "log_run_duration":
+                self.info(
+                    "Automated run {} {} duration: {:0.3f} s".format(run.runid, run.spec.state, t)
+                )
+            elif action == "finish_run":
+                run.finish()
+            elif action == "update_arar_values":
+                run.spec.uage = run.isotope_group.uage
+                run.spec.k39 = run.isotope_group.get_computed_value("k39")
+            elif action == "publish_autoplot":
+                self.autoplot_event = run
+            elif action == "pop_wait_group":
+                self.wait_group.pop()
+            elif action == "finish_stats_run":
+                self.stats.finish_run()
+            elif action == "update_stats":
+                if run.spec.state == SUCCESS:
+                    self.stats.update_run_duration(run, t)
+                    self.stats.recalculate_etf()
+            elif action == "write_queue_files":
+                self._write_rem_ex_experiment_queues()
+            elif action == "end_run_event":
+                self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
+            elif action == "remove_root_handler":
+                remove_root_handler(handler)
+            elif action == "post_finish":
+                run.post_finish()
+            elif action == "remove_run_machine":
+                self._controller.remove_run_machine(run_id)
+            elif action == "refresh_queue_table":
+                self._set_thread_name(self.experiment_queue.name)
+                self.experiment_queue.refresh_table_needed = True
 
     def _close_cv(self):
         self.debug("close cv {}".format(self._cv_info))
@@ -1136,9 +1290,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug("write rem/ex queues")
         q = self.experiment_queue
         for runs, tag in ((q.automated_runs, "rem"), (q.executed_runs, "ex")):
-            path = os.path.join(
-                paths.experiment_rem_dir, "{}.{}.txt".format(q.name, tag)
-            )
+            path = os.path.join(paths.experiment_rem_dir, "{}.{}.txt".format(q.name, tag))
             self.debug(path)
             with open(path, "w") as wfile:
                 q.dump(wfile, runs=runs)
@@ -1163,6 +1315,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _abort_run(self):
         self.debug("Abort Run")
+        self._controller.request_abort()
         self.set_extract_state(False)
         self.wait_group.stop()
 
@@ -1171,9 +1324,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if arun:
                 arun.abort_run()
 
-    def _cancel(
-        self, style="queue", cancel_run=False, msg=None, confirm=True, err=None
-    ):
+    def _cancel(self, style="queue", cancel_run=False, msg=None, confirm=True, err=None):
         self.debug(
             "_cancel. style={}, cancel_run={}, msg={}, confirm={}, err={}".format(
                 style, cancel_run, msg, confirm, err
@@ -1201,6 +1352,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if ret == YES:
                 # stop queue
                 if style == "queue":
+                    self._controller.request_cancel()
                     self.alive = False
                     self.debug("Queue cancel. stop timer")
                     invoke_in_main_thread(self.stats.stop_timer)
@@ -1209,6 +1361,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 invoke_in_main_thread(self.wait_group.stop)
 
                 self._canceled = True
+                if style != "queue":
+                    self._controller.request_cancel()
                 for arun in aruns:
                     if arun:
                         if style == "queue":
@@ -1230,49 +1384,36 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _end_runs(self):
         self.debug("End Runs. stats={}".format(self.stats))
-        # self._last_ran = None
-        self.stats.stop_timer()
+        for action in self._controller.queue_completion_actions():
+            if action == "stop_stats_timer":
+                self.stats.stop_timer()
+            elif action == "clear_extract_state":
+                self.set_extract_state(False)
+            elif action == "set_queue_message":
+                msg, color = self._controller.queue_completion_message(
+                    queue_name=self.experiment_queue.name,
+                    stop_at_boundary=self._should_stop_at_boundary(),
+                    canceled=self._should_cancel_execution(),
+                )
+                self._set_message(msg, color)
+            elif action == "sync_compatibility_state":
+                self._sync_compatibility_state()
 
-        # self.db.close()
-        self.set_extract_state(False)
-        # self.extraction_state = False
-        # def _set_extraction_state():
-        if self.end_at_run_completion:
-            c = "orange"
-            msg = "Stopped"
-        else:
-            if self._canceled:
-                c = "red"
-                msg = "Canceled"
-            else:
-                c = "green"
-                msg = "Finished"
-
-        n = self.experiment_queue.name
-        msg = "{} {}".format(n, msg)
-        self._set_message(msg, c)
-
-    def _show_conditionals(
-        self, active_run=None, tripped=None, conditionals=None, kind="live"
-    ):
+    def _show_conditionals(self, active_run=None, tripped=None, conditionals=None, kind="live"):
         try:
             v = ConditionalsView()
 
             self.debug("Show conditionals active run: {}".format(active_run))
             self.debug("Show conditionals measuring run: {}".format(self.measuring_run))
             self.debug(
-                "active_run same as measuring_run: {}".format(
-                    self.measuring_run == active_run
-                )
+                "active_run same as measuring_run: {}".format(self.measuring_run == active_run)
             )
             if active_run:
                 if conditionals:
                     cd = conditionals
                 else:
                     cd = {
-                        "{}s".format(tag): getattr(
-                            active_run, "{}_conditionals".format(tag)
-                        )
+                        "{}s".format(tag): getattr(active_run, "{}_conditionals".format(tag))
                         for tag in CONDITIONAL_GROUP_TAGS
                     }
 
@@ -1352,13 +1493,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.alive = False
             ret = False
             run.spec.transition("fail", force=True, source="pre_execute_check")
+            self._controller.mark_run_started(self._get_run_subject_id(run), failed=True)
 
             msg = "Run {} did not start properly".format(run.runid)
             self._err_message = msg
             self._canceled = True
+            self._controller.request_cancel()
             self.information_dialog(msg)
         else:
             self.experiment_queue.set_run_inprogress(run.runid)
+            self._controller.mark_run_started(
+                run_id=self._get_run_subject_id(run),
+                queue_name=self.experiment_queue.name,
+            )
 
         return ret
 
@@ -1378,9 +1525,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         ret = True
         if ai.start_extraction():
+            self._controller.start_run_extraction(self._get_run_subject_id(ai))
             self.extracting = True
             if not ai.do_extraction(syn_extractor):
+                self._controller.complete_run_extraction(
+                    self._get_run_subject_id(ai), failed=True, reason="Extraction Failed"
+                )
                 ret = self._failed_execution_step("Extraction Failed")
+            else:
+                self._controller.complete_run_extraction(self._get_run_subject_id(ai))
         else:
             ret = ai.is_alive()
 
@@ -1407,20 +1560,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             man.send_configuration()
             if self.verify_spectrometer_configuration:
                 if not man.verify_configuration():
-                    ret = self._failed_execution_step(
-                        "Setting Spectrometer Configuration Failed"
-                    )
+                    ret = self._failed_execution_step("Setting Spectrometer Configuration Failed")
                     return ret
 
         ret = True
         self.measuring_run = ai
         if ai.start_measurement():
+            self._controller.start_run_measurement(self._get_run_subject_id(ai))
             # only set to measuring (e.g switch to iso evo pane) if
             # automated run has a measurement_script
             self.measuring = True
 
             if not ai.do_measurement(**measurement_kwargs):
+                self._controller.complete_run_measurement(
+                    self._get_run_subject_id(ai), failed=True, reason="Measurement Failed"
+                )
                 ret = self._failed_execution_step("Measurement Failed")
+            else:
+                self._controller.complete_run_measurement(self._get_run_subject_id(ai))
         else:
             ret = ai.is_alive()
 
@@ -1432,16 +1589,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         post measurement step
         """
+        self._controller.start_run_post_measurement(self._get_run_subject_id(ai))
         if not ai.do_post_measurement():
+            self._controller.complete_run_post_measurement(
+                self._get_run_subject_id(ai),
+                failed=True,
+                reason="Post Measurement Failed",
+            )
             self._failed_execution_step("Post Measurement Failed")
         else:
+            self._controller.complete_run_post_measurement(self._get_run_subject_id(ai))
             return True
 
     def _failed_execution_step(self, msg):
         self.debug("failed execution step {}".format(msg))
-        if not self._canceled:
+        if not self._should_cancel_execution():
             self.heading(msg)
             self._err_message = msg
+            self._controller.run_failure(reason=msg)
             self.alive = False
         return False
 
@@ -1459,6 +1624,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         exp = self.experiment_queue
 
         if not self._set_run_aliquot(spec):
+            self._controller.invalidate_run(
+                str(getattr(spec, "uuid", spec.runid)), reason="aliquot setup failed"
+            )
             return
 
         run = None
@@ -1470,6 +1638,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if spec.end_after:
             self.end_at_run_completion = True
+            self._controller.request_stop_at_boundary()
             arun.is_last = True
 
         """
@@ -1480,9 +1649,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.integration_time = 1.04
 
-        arun.labspy_client = self.application.get_service(
-            "pychron.labspy.client.LabspyClient"
-        )
+        arun.labspy_client = self.application.get_service("pychron.labspy.client.LabspyClient")
 
         for k in (
             "signal_color",
@@ -1528,14 +1695,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.use_syn_extraction = True
 
         if self.use_dvc_persistence:
-            dvcp = self.application.get_service(
-                "pychron.dvc.dvc_persister.DVCPersister"
-            )
+            dvcp = self.application.get_service("pychron.dvc.dvc_persister.DVCPersister")
             if dvcp:
                 dvcp.load_name = exp.load_name
-                dvcp.default_principal_investigator = (
-                    self.default_principal_investigator
-                )
+                dvcp.default_principal_investigator = self.default_principal_investigator
                 arun.dvc_persister = dvcp
 
                 repid = spec.repository_identifier
@@ -1698,11 +1861,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     import traceback
 
                     traceback.print_exc()
-                    self.debug(
-                        "Invalid Ratio Change Detection file at {}. Error={}".format(
-                            p, e
-                        )
-                    )
+                    self.debug("Invalid Ratio Change Detection file at {}. Error={}".format(p, e))
 
             else:
                 self.warning(
@@ -1739,11 +1898,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
                 return
 
-            self.debug(
-                "checking ratio change for {}. Ratio={}".format(
-                    analysis_type, ratio_name
-                )
-            )
+            self.debug("checking ratio change for {}. Ratio={}".format(analysis_type, ratio_name))
 
             self.debug("retrieved analyses")
             if nominal_ratio:
@@ -1783,9 +1938,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._ratios[atype] = ratios
 
                 n = len(ratios)
-                self.debug(
-                    "n={}, RunIDs={}".format(n, ",".join([ri[1] for ri in ratios]))
-                )
+                self.debug("n={}, RunIDs={}".format(n, ",".join([ri[1] for ri in ratios])))
                 if n == nanalyses:
                     xs = [nominal_value(ri[2]) for ri in ratios[:-1]]
                     es = [std_dev(ri[2]) for ri in ratios[:-1]]
@@ -1817,9 +1970,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 fc = self._failure_counts.get(atype, 0) + 1
                 self._failure_counts[atype] = fc
-                msg = "Ratio change detected. {}, Total failures={}/{}".format(
-                    msg, fc, failure_cnt
-                )
+                msg = "Ratio change detected. {}, Total failures={}/{}".format(msg, fc, failure_cnt)
                 self.debug(msg)
                 if fc >= failure_cnt:
                     if send_email_only:
@@ -1843,9 +1994,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if scheduled_stop is not None:
             et = self.stats.get_endtime(spec)
             self.debug(
-                "Scheduled stop check. Run End Time={}, Scheduled={}".format(
-                    et, scheduled_stop
-                )
+                "Scheduled stop check. Run End Time={}, Scheduled={}".format(et, scheduled_stop)
             )
             return et > scheduled_stop
 
@@ -1874,9 +2023,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if ef:
                     self._err_message = "Dashboard error. {}".format(ef)
                     self.warning(
-                        "Canceling experiment. Dashboard client reports an error\n {}".format(
-                            ef
-                        )
+                        "Canceling experiment. Dashboard client reports an error\n {}".format(ef)
                     )
                     return
 
@@ -1916,11 +2063,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         nonfound = self._check_for_managers()
         if nonfound:
-            self.info(
-                "experiment canceled because could connect to managers {}".format(
-                    nonfound
-                )
-            )
+            self.info("experiment canceled because could connect to managers {}".format(nonfound))
             self._err_message = 'Could not connect to "{}"'.format(",".join(nonfound))
 
             return
@@ -1936,9 +2079,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         exp = self.experiment_queue
         nonfound = []
-        elm_connectable = Connectable(
-            name="Extraction Line", manager=self.extraction_line_manager
-        )
+        elm_connectable = Connectable(name="Extraction Line", manager=self.extraction_line_manager)
         self.connectables = [elm_connectable]
 
         if self.extraction_line_manager is None:
@@ -1981,17 +2122,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     ed_connectable.connected = True
 
         needs_spec_man = any(
-            [
-                ai.measurement_script
-                for ai in exp.cleaned_automated_runs
-                if ai.state == "not run"
-            ]
+            [ai.measurement_script for ai in exp.cleaned_automated_runs if ai.state == "not run"]
         )
 
         if needs_spec_man:
-            s_connectable = Connectable(
-                name="Spectrometer", manager=self.spectrometer_manager
-            )
+            s_connectable = Connectable(name="Spectrometer", manager=self.spectrometer_manager)
             self.connectables.append(s_connectable)
             if self.spectrometer_manager is None:
                 nonfound.append("spectrometer")
@@ -2041,17 +2176,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             ms = self.active_editor.queue.mass_spectrometer
             for tag in ("air", "cocktail", "blank"):
                 repo = "{}_{}{}".format(ms, tag, curtag)
-                dvc.add_repository(
-                    repo, self.default_principal_investigator, inform=False
-                )
+                dvc.add_repository(repo, self.default_principal_investigator, inform=False)
                 dvc.add_readme(repo)
 
             no_repo = []
             for i, ai in enumerate(runs):
                 if not ai.repository_identifier:
-                    self.warning(
-                        "No repository identifier for i={}, {}".format(i + 1, ai.runid)
-                    )
+                    self.warning("No repository identifier for i={}, {}".format(i + 1, ai.runid))
                     no_repo.append(ai)
 
             if no_repo:
@@ -2153,11 +2284,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 "Setup Dated Repositories",
             ),
             (
-                (
-                    self._check_repository_identifiers
-                    if self.use_dvc_persistence
-                    else None
-                ),
+                (self._check_repository_identifiers if self.use_dvc_persistence else None),
                 "Check Repositories",
             ),
             (self._check_managers, "Check Managers"),
@@ -2203,9 +2330,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
 
         self.debug(
-            "============================= Pre {} Check =============================".format(
-                tag
-            )
+            "============================= Pre {} Check =============================".format(tag)
         )
 
         conditionals = self._load_queue_conditionals("pre_run_terminations")
@@ -2217,9 +2342,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             data = self.spectrometer_manager.spectrometer.get_intensities()
             ks = ",".join(data[0])
             ss = ",".join(["{:0.5f}".format(d) for d in data[1]])
-            self.debug(
-                "Pre Extraction Termination data. keys={}, signals={}".format(ks, ss)
-            )
+            self.debug("Pre Extraction Termination data. keys={}, signals={}".format(ks, ss))
 
             if conditionals:
                 self.info("testing user defined conditionals")
@@ -2254,14 +2377,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         self.debug("pre queue check: tray={}".format(exp.tray))
         if exp.tray and exp.tray != NULL_STR:
-            ed = next(
-                (ci for ci in self.connectables if ci.name == exp.extract_device), None
-            )
+            ed = next((ci for ci in self.connectables if ci.name == exp.extract_device), None)
             if ed and ed.connected:
                 name = convert_extract_device(ed.name)
-                man = self.application.get_service(
-                    ed.protocol, 'name=="{}"'.format(name)
-                )
+                man = self.application.get_service(ed.protocol, 'name=="{}"'.format(name))
                 self.debug('Get service {}. name=="{}"'.format(ed.protocol, name))
                 if man:
                     self.debug("{} service found {}".format(name, man))
@@ -2471,14 +2590,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug("checking for connectable errors")
         ret = False
         for c in self.connectables:
-            self.debug(
-                "check connectable name: {} manager: {}".format(c.name, c.manager)
-            )
+            self.debug("check connectable name: {} manager: {}".format(c.name, c.manager))
             man = c.manager
             if man is None:
-                man = self.application.get_service(
-                    c.protocol, 'name=="{}"'.format(c.name)
-                )
+                man = self.application.get_service(c.protocol, 'name=="{}"'.format(c.name))
 
             self.debug("connectable manager: {}".format(man))
             if man:
@@ -2500,9 +2615,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         else:
             # pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
             self.warning(
-                'no system conditionals file located at "{}"'.format(
-                    paths.spectrometer_dir
-                )
+                'no system conditionals file located at "{}"'.format(paths.spectrometer_dir)
             )
 
     def _load_queue_conditionals(self, term_name, **kw):
@@ -2604,11 +2717,7 @@ Use Last "blank_{}"= {}
             # if idx > than an idx need a blank
             nopreceding = True
             ban = next(
-                (
-                    a
-                    for a in aruns
-                    if a.analysis_type == "blank_{}".format(an.analysis_type)
-                ),
+                (a for a in aruns if a.analysis_type == "blank_{}".format(an.analysis_type)),
                 None,
             )
 
@@ -2636,9 +2745,7 @@ Use Last "blank_{}"= {}
                         retval = NO
                         if inform:
                             retval = self.confirmation_dialog(
-                                msg.format(
-                                    an.analysis_type, an.analysis_type, pdbr.record_id
-                                ),
+                                msg.format(an.analysis_type, an.analysis_type, pdbr.record_id),
                                 no_label="Select From Database",
                                 cancel=True,
                                 return_retval=True,
@@ -2659,9 +2766,7 @@ Use Last "blank_{}"= {}
                             return pdbr
                 else:
                     self.warning_dialog(
-                        "No blank for {} is in the database. Run a blank!!".format(
-                            an.analysis_type
-                        )
+                        "No blank for {} is in the database. Run a blank!!".format(an.analysis_type)
                     )
                     return
 
@@ -2714,9 +2819,7 @@ Use Last "blank_{}"= {}
                 ms = self.experiment_queue.mass_spectrometer
             else:
                 if not self.timeseries_mass_spectrometers:
-                    self.timeseries_mass_spectrometers = (
-                        dvc.get_mass_spectrometer_names()
-                    )
+                    self.timeseries_mass_spectrometers = dvc.get_mass_spectrometer_names()
 
                 info = self.edit_traits(
                     view=okcancel_view(
@@ -2846,18 +2949,14 @@ Use Last "blank_{}"= {}
 
     def _timeseries_editor_default(self):
         ed = AnalysisGroupedSeriesEditor()
-        ed.init(
-            atypes=["air", "cocktail", "blank_unknown", "blank_air", "blank_cocktail"]
-        )
+        ed.init(atypes=["air", "cocktail", "blank_unknown", "blank_air", "blank_cocktail"])
         # ed.set_options(self.timeseries_options.selected_options)
 
         return ed
 
     def _dashboard_client_default(self):
         if self.use_dashboard_client:
-            return self.application.get_service(
-                "pychron.dashboard.client.DashboardClient"
-            )
+            return self.application.get_service("pychron.dashboard.client.DashboardClient")
 
     def _scheduler_default(self):
         return ExperimentScheduler()

@@ -9,7 +9,7 @@ mass spectrometer -- from queue setup through data persistence.
 - **Experiment queues** -- tabular lists of analyses loaded from tab-delimited
   files with YAML metadata headers
 - **Automated runs** -- individual analysis executions with a formal state machine
-  (NOT_RUN → EXTRACTION → MEASUREMENT → SUCCESS/FAILED/TRUNCATED/CANCELED)
+  and controller-owned lifecycle policy
 - **Python scripts** -- per-run PyScripts that program extraction, measurement,
   and post-measurement behavior
 - **Conditionals** -- runtime rules that can truncate, terminate, cancel, or
@@ -31,7 +31,8 @@ reduction (see `processing/`).
 | `Experimentor` | `experimentor.py` | Top-level facade; owns factory, queue, executor |
 | `ExperimentFactory` | `factory.py` | Builds queues and run specs from UI input |
 | `ExperimentQueue` | `queue/experiment_queue.py` | Main queue class; manages run list |
-| `ExperimentExecutor` | `experiment_executor.py` (~2900 lines) | Core execution engine |
+| `ExperimentExecutor` | `experiment_executor.py` | Executor adapter for UI/state/effects |
+| `ExecutorController` | `state_machines/controller.py` | Lifecycle controller for executor/queue/run policy |
 | `AutomatedRun` | `automated_run/automated_run.py` (~3350 lines) | Executes a single analysis |
 | `AutomatedRunSpec` | `automated_run/spec.py` | Data model for a queued run |
 | `BaseScript` | `script/script.py` | Per-run PyScript management |
@@ -58,6 +59,12 @@ experiment/
 │   ├── multi_collector.py            # Data collector (multi-collector)
 │   ├── peak_hop_collector.py         # Data collector (peak-hopping)
 │   └── persistence.py                # Save to DB / DVC / Excel
+├── state_machines/
+│   ├── controller.py                 # Executor/queue/run lifecycle controller
+│   ├── executor_machine.py           # Top-level executor states
+│   ├── queue_machine.py              # Queue states and transitions
+│   ├── run_machine.py                # Run states and transitions
+│   └── base.py                       # Shared machine base + transition records
 ├── conditional/
 │   ├── conditional.py                # All conditional types (~900 lines)
 │   └── utilities.py                  # Tokenizer for conditional expressions
@@ -81,6 +88,14 @@ experiment/
 
 ## Runtime Lifecycle
 
+The runtime is no longer only a procedural loop in `ExperimentExecutor`.
+Execution policy is split across:
+
+- `ExperimentExecutor` for Traits/UI compatibility, service lookups, threads,
+  and concrete side effects
+- `ExecutorController` for lifecycle decisions
+- explicit executor, queue, and run state machines under `state_machines/`
+
 ### Phase 0: Setup
 User configures an `ExperimentQueue` via `ExperimentFactory` UI, adding
 `AutomatedRunSpec` entries. Each spec has: labnumber, aliquot, position,
@@ -89,18 +104,22 @@ and parameters (duration, extract value, cleanup times, etc.).
 
 ### Phase 1: Execute
 `ExperimentExecutor.execute()` runs pre-execute checks (hardware connectivity,
-script existence), then starts a new thread `"Execute Queues"`.
+script existence), updates the executor state machine through the controller,
+then starts a new thread `"Execute Queues"`.
 
 ### Phase 2: Queue Loop
-Iterates over all open experiment queues. For each queue: pre-queue check,
-then `_execute_queue()`.
+Iterates over all open experiment queues. Queue lifecycle setup, next-run
+preparation, overlap mode, save waits, settle mode, and terminal result
+selection are now controller/state-machine responsibilities even though
+`ExperimentExecutor` still performs the concrete waits and side effects.
 
 ### Phase 3: Run Loop
 Gets a run generator yielding `AutomatedRunSpec` objects. For each spec:
-pre-run check → `_make_run()` → execute run (sync or thread for overlap mode).
+pre-run check → `_make_run()` → controller selects serial vs overlap execution
+mode → executor performs the selected side effect.
 
 ### Phase 4: Individual Run
-Each run executes four steps sequentially:
+Each run executes major phases in controller-defined order:
 ```
 _start → _extraction → _measurement → _post_measurement
 ```
@@ -110,10 +129,21 @@ _start → _extraction → _measurement → _post_measurement
   (multi-collector or peak-hop). Equilibration scripts run concurrently.
 - **`_post_measurement`**: Runs post-measurement PyScript
 
+The controller now owns:
+
+- run step order
+- continue/stop/abort/fatal step-loop policy
+- overlap eligibility
+- queue settle policy
+- save policy
+- queue terminal result selection
+- queue completion and post-save action plans
+
 After steps: `run.save()` → post-run check → `run.finish()` → `run.teardown()`
 
 ### Phase 5: Completion
-`_end_runs()` stops stats timer, `END_QUEUE` event fires, `alive=False`.
+`_end_runs()` stops stats timer, `END_QUEUE` event fires, and executor/queue
+terminal states are finalized through the controller.
 
 ### Overlap Mode
 If a run's `overlap` flag is set, extraction runs in a separate thread while

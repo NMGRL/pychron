@@ -129,7 +129,7 @@ modules:
     edit_guidance: Usually safe for queue/task coordination changes if executor semantics stay unchanged.
 
   - path: pychron/experiment/experiment_executor.py
-    responsibility: Runtime engine for automated queues, coordinating instrument services, conditionals, persistence, and recovery.
+    responsibility: Runtime executor adapter for automated queues, coordinating instrument services, conditionals, persistence, recovery, and concrete execution side effects.
     important_classes_functions:
       - ExperimentExecutor
       - execute
@@ -150,7 +150,29 @@ modules:
       - execution
       - runtime
     risk: high-risk
-    edit_guidance: Large asynchronous coordinator; prefer narrow fixes with targeted verification.
+    edit_guidance: Large asynchronous coordinator; keep lifecycle policy in state_machines/controller.py when possible and reserve this file for side effects, Traits compatibility, and service integration.
+
+  - path: pychron/experiment/state_machines/
+    responsibility: Explicit executor, queue, and run lifecycle models plus the controller that owns transition sequencing and execution policy.
+    important_classes_functions:
+      - ExecutorController
+      - ExecutorStateMachine
+      - QueueStateMachine
+      - RunStateMachine
+      - TransitionRecord
+    upstream_dependencies:
+      - pychron/experiment/experiment_executor.py
+      - automated run semantics
+    downstream_dependencies:
+      - executor compatibility state
+      - queue/run execution policy
+      - focused experiment lifecycle tests
+    domain_tags:
+      - experiment
+      - state-machine
+      - execution-policy
+    risk: high-risk
+    edit_guidance: Preferred home for lifecycle rules, overlap policy, settle policy, and terminal result selection; add focused tests when transitions or helpers change.
 
   - path: pychron/experiment/automated_run/
     responsibility: Automated run spec/runtime logic, persistence, state machine, and run-level behavior.
