@@ -34,6 +34,43 @@ from pychron.canvas.canvas2D.scene.primitives.rounded import (
 
 class Switch(Connectable, Circle):
     associations = List
+    owned = False
+    soft_lock = False
+    is_stale = False
+    is_interlocked = False
+    is_forced = False
+    owner_name = ""
+    cannot_actuate_reason = ""
+    connected_volume = 0
+    description = ""
+
+    def apply_visual_state(self, state):
+        self.state = state.is_open
+        self.owned = state.is_owned
+        self.soft_lock = state.is_locked
+        self.is_stale = state.is_stale
+        self.is_interlocked = state.is_interlocked
+        self.is_forced = state.is_forced
+        self.owner_name = state.owner
+        self.cannot_actuate_reason = state.cannot_actuate_reason
+        self.connected_volume = state.connected_volume
+        self.description = state.description or self.description
+
+    def get_tooltip_text(self):
+        pieces = ["Switch={}".format(self.name)]
+        if self.description:
+            pieces.append("Desc={}".format(self.description))
+        if self.owner_name:
+            pieces.append("Owner={}".format(self.owner_name))
+        if self.soft_lock:
+            pieces.append("Locked=Yes")
+        if self.is_stale:
+            pieces.append("Stale=Yes")
+        if self.connected_volume:
+            pieces.append("Volume={:0.2f}".format(self.connected_volume))
+        if self.cannot_actuate_reason:
+            pieces.append("Blocked={}".format(self.cannot_actuate_reason))
+        return "\n".join(pieces)
 
     def set_label(self, label, offset_x, offset_y, **kw):
         lb = Label(
@@ -66,6 +103,11 @@ class Switch(Connectable, Circle):
         gc.set_line_width(2)
         gc.draw_path()
 
+        if self.soft_lock:
+            gc.set_stroke_color((0.15, 0.35, 0.95, 1.0))
+            gc.arc(x + r, y + r / 2.0, r + 2, 0, 360)
+            gc.stroke_path()
+
         for p in self.primitives:
             p.x, p.y = self.x, self.y
             p.render(gc)
@@ -84,6 +126,16 @@ class BaseValve(Connectable):
     locked_color = (0.15, 0.35, 0.95, 1.0)
     owned_color = (0.95, 0.6, 0.1, 1.0)
     disconnected_color = (0.45, 0.45, 0.45, 1.0)
+    owner_name = ""
+    is_forced = False
+    is_interlocked = False
+    is_stale = False
+    cannot_actuate_reason = ""
+    last_state_timestamp = ""
+    last_readback_timestamp = ""
+    state_source = "unknown"
+    connected_volume = 0
+    simulation_mode = False
 
     def toyaml(self):
         y = super(BaseValve, self).toyaml()
@@ -102,10 +154,74 @@ class BaseValve(Connectable):
         if self.soft_lock:
             state = "{} (Locked)".format(state)
 
-        owner = "Yes" if self.owned else "No"
-        return "Valve={}\nDesc={}\nState={}\nOwned={}".format(
-            self.name, self.description, state, owner
-        )
+        owner = self.owner_name if self.owner_name else ("Yes" if self.owned else "No")
+        lines = [
+            "Valve={}".format(self.name),
+            "Desc={}".format(self.description),
+            "State={}".format(state),
+            "Owned={}".format(owner),
+        ]
+        if self.is_interlocked:
+            lines.append("Interlocked=Yes")
+        if self.is_stale:
+            lines.append("Stale=Yes")
+        if self.connected_volume:
+            lines.append("Volume={:0.2f}".format(self.connected_volume))
+        if self.cannot_actuate_reason:
+            lines.append("Blocked={}".format(self.cannot_actuate_reason))
+        return "\n".join(lines)
+
+    def apply_visual_state(self, state):
+        self.state = state.is_open
+        self.soft_lock = state.is_locked
+        self.owned = state.is_owned
+        self.owner_name = state.owner
+        self.is_forced = state.is_forced
+        self.is_interlocked = state.is_interlocked
+        self.is_stale = state.is_stale
+        self.cannot_actuate_reason = state.cannot_actuate_reason
+        self.last_state_timestamp = state.last_state_timestamp
+        self.last_readback_timestamp = state.last_readback_timestamp
+        self.state_source = state.state_source
+        self.connected_volume = state.connected_volume
+        self.description = state.description or self.description
+
+    def _draw_visual_state_badges(self, gc, x, y, w, h):
+        if self.soft_lock:
+            self._draw_badge(gc, x + 2, y + h - 10, self.locked_color)
+        if self.owned:
+            self._draw_badge(gc, x + w - 10, y + h - 10, self.owned_color)
+        if self.is_interlocked:
+            self._draw_badge(gc, x + 2, y + 2, (0.85, 0.2, 0.2, 1.0))
+        if self.is_stale:
+            self._draw_badge(gc, x + w - 10, y + 2, self.disconnected_color)
+
+    def _draw_badge(self, gc, x, y, color):
+        with gc:
+            gc.set_fill_color(color)
+            gc.set_stroke_color((0, 0, 0))
+            gc.rect(x, y, 8, 8)
+            gc.draw_path()
+
+    def _draw_soft_lock_rect(self, gc, line_width=5):
+        if self.soft_lock:
+            with gc:
+                gc.set_fill_color((0, 0, 0, 0))
+                gc.set_stroke_color(self.locked_color)
+                gc.set_line_width(line_width)
+                x, y = self.get_xy()
+                width, height = self.get_wh()
+                rounded_rect(gc, x, y, width, height, 3)
+
+    def _draw_owned_rect(self, gc, line_width=3):
+        if self.owned:
+            with gc:
+                gc.set_fill_color((0, 0, 0, 0))
+                gc.set_stroke_color(self.owned_color)
+                gc.set_line_width(line_width)
+                x, y = self.get_xy()
+                width, height = self.get_wh()
+                rounded_rect(gc, x, y, width, height, 3)
 
 
 class ManualSwitch(BaseValve, RoundedRectangle):
@@ -127,6 +243,14 @@ class ManualSwitch(BaseValve, RoundedRectangle):
         with gc:
             gc.translate_ctm(0, 25)
             super(ManualSwitch, self)._render_textbox(gc, *args, **kw)
+
+    def _render(self, gc):
+        super(ManualSwitch, self)._render(gc)
+        x, y = self.get_xy(clear_layout_needed=False)
+        w, h = self.get_wh()
+        self._draw_soft_lock_rect(gc)
+        self._draw_owned_rect(gc)
+        self._draw_visual_state_badges(gc, x, y, w, h)
 
 
 class Valve(BaseValve, RoundedRectangle):
@@ -175,30 +299,13 @@ class Valve(BaseValve, RoundedRectangle):
 
         self._draw_owned(gc)
         self._draw_state_indicator(gc, x, y, w, h)
+        self._draw_visual_state_badges(gc, x, y, w, h)
 
     def _draw_soft_lock(self, gc):
-        if self.soft_lock:
-            with gc:
-                gc.set_fill_color((0, 0, 0, 0))
-                gc.set_stroke_color(self.locked_color)
-                gc.set_line_width(4)
-
-                x, y = self.get_xy()
-                width, height = self.get_wh()
-                corner_radius = 3
-                rounded_rect(gc, x, y, width, height, corner_radius)
+        self._draw_soft_lock_rect(gc, line_width=5)
 
     def _draw_owned(self, gc):
-        if self.owned:
-            with gc:
-                gc.set_fill_color((0, 0, 0, 0))
-                gc.set_stroke_color(self.owned_color)
-                gc.set_line_width(2)
-
-                x, y = self.get_xy()
-                width, height = self.get_wh()
-                corner_radius = 3
-                rounded_rect(gc, x, y, width, height, corner_radius)
+        self._draw_owned_rect(gc, line_width=3)
 
     def _draw_state_indicator(self, gc, x, y, w, h):
         if self.state is False:
@@ -258,7 +365,6 @@ class RoughValve(BaseValve, Bordered):
                 c = self._get_border_color()
                 gc.set_stroke_color(c)
                 func()
-                #                 rounded_triangle(gc, cx, cy, width, height, cr)
         else:
             func()
 
@@ -266,6 +372,7 @@ class RoughValve(BaseValve, Bordered):
         self._render_name(gc, cx, cy, width, height)
         self._draw_owned(gc, func)
         self._draw_soft_lock(gc, func)
+        self._draw_visual_state_badges(gc, cx, cy, width, height)
 
     def _draw_owned(self, gc, func):
         if self.owned:

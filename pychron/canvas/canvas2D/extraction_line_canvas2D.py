@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 import os
 
+from enable.api import Interactor
 from enable.enable_traits import Pointer
 from pyface.action.menu_manager import MenuManager
+from pyface.qt.QtCore import QPoint
 from pyface.qt.QtGui import QToolTip
 from traits.api import Any, Str, on_trait_change, Bool, List
 from traitsui.menu import Action
@@ -60,6 +62,17 @@ class ExtractionLineAction(Action):
     chamber = Str
 
 
+class ExtractionLineMenuTool(Interactor):
+    parent = Any
+
+    def normal_right_down(self, event):
+        if event.handled:
+            return
+
+        if self.parent is not None:
+            self.parent.show_menu(event)
+
+
 class ExtractionLineCanvas2D(SceneCanvas):
     """ """
 
@@ -96,6 +109,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     _px = None
     _py = None
+    canvas_state = Any
+    _context_menu = Any
 
     def __init__(self, *args, **kw):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
@@ -105,6 +120,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         )
         overlay = ExtractionLineInfoOverlay(tool=tool, component=self)
         self.tool = tool
+        self.tools.append(ExtractionLineMenuTool(component=self, parent=self))
         self.tools.append(tool)
         self.overlays.append(overlay)
 
@@ -129,6 +145,27 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.state = nstate
             if refresh:
                 self.invalidate_and_redraw()
+
+    def apply_canvas_state(self, state, refresh=True):
+        self.canvas_state = state
+        for name, valve_state in state.valves.items():
+            self.set_valve_visual_state(name, valve_state, refresh=False)
+
+        if refresh:
+            self.invalidate_and_redraw()
+
+    def set_valve_visual_state(self, name, visual_state, refresh=True):
+        switch = self._get_switch_by_name(name)
+        if switch is None or visual_state is None:
+            return
+
+        if hasattr(switch, "apply_visual_state"):
+            switch.apply_visual_state(visual_state)
+        else:
+            switch.state = visual_state.is_open
+
+        if refresh:
+            self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
@@ -184,10 +221,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self.event_state = "select"
             if item != self.active_item:
                 self.active_item = item
+                if self.manager:
+                    self.manager.set_active_canvas_item(item)
             if isinstance(item, (BaseValve, Switch)):
                 event.window.set_pointer(self.select_pointer)
-                if self.manager:
-                    self.manager.set_selected_explanation_item(item)
         else:
             event.window.control.setToolTip("")
             QToolTip.hideText()
@@ -196,7 +233,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self.event_state = "normal"
             event.window.set_pointer(self.normal_pointer)
             if self.manager:
-                self.manager.set_selected_explanation_item(None)
+                self.manager.set_active_canvas_item(None)
 
     def select_mouse_move(self, event):
         """ """
@@ -211,6 +248,18 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def select_right_down(self, event):
         item = self.active_item
         if item is not None:
+            if self.manager and isinstance(item, (BaseValve, Switch)):
+                self.manager.set_selected_explanation_item(item)
+            self._show_menu(event, item)
+        event.handled = True
+
+    def show_menu(self, event):
+        item = self._over_item(event)
+        if item is not None:
+            self.active_item = item
+            if self.manager and isinstance(item, (BaseValve, Switch)):
+                self.manager.set_active_canvas_item(item)
+                self.manager.set_selected_explanation_item(item)
             self._show_menu(event, item)
         event.handled = True
 
@@ -242,6 +291,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         item = self.active_item
         if item is None:
             return
+
+        if self.manager and isinstance(item, (BaseValve, Switch)):
+            self.manager.set_selected_explanation_item(item)
 
         if self.edit_mode:
             self.event_state = "drag"
@@ -348,9 +400,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def on_lock(self):
         item = self._active_item
         if item:
-            item.soft_lock = lock = not item.soft_lock
+            lock = not item.soft_lock
             self.manager.set_software_lock(item.name, lock)
-            self.request_redraw()
 
     def on_force_close(self):
         self._force_actuate(self.manager.close_valve, False)
@@ -414,31 +465,45 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _show_menu(self, event, obj):
         actions = []
+        allow_locking = self.manager.mode != "client" or globalv.client_only_locking
+        allow_force = self.manager.mode != "client" and self.force_actuate_enabled
 
-        if self.manager.mode != "client" or not globalv.client_only_locking:
-            # print self.active_item, isinstance(self.active_item, Switch)
-            # if isinstance(self.active_item, Switch):
-            if isinstance(self.active_item, BaseValve):
-                t = "Lock"
-                if obj.soft_lock:
-                    t = "Unlock"
+        if allow_locking and isinstance(obj, BaseValve):
+            t = "Lock"
+            if obj.soft_lock:
+                t = "Unlock"
 
-                action = self._action_factory(t, "on_lock")
-                actions.append(action)
+            action = self._action_factory(t, "on_lock")
+            actions.append(action)
 
-            if self.force_actuate_enabled:
-                action = self._action_factory("Force Close", "on_force_close")
-                actions.append(action)
+        if allow_force:
+            action = self._action_factory("Force Close", "on_force_close")
+            actions.append(action)
 
-                action = self._action_factory("Force Open", "on_force_open")
-                actions.append(action)
+            action = self._action_factory("Force Open", "on_force_open")
+            actions.append(action)
 
         if actions:
             menu_manager = MenuManager(*actions)
 
             self._active_item = self.active_item
-            menu = menu_manager.create_menu(event.window.control, None)
-            menu.show()
+            control = event.window.control
+            menu = menu_manager.create_menu(control, None)
+            self._context_menu = menu
+
+            global_pos = getattr(event, "global_pos", None)
+            if global_pos is None and control is not None:
+                size = control.size()
+                global_pos = control.mapToGlobal(
+                    QPoint(int(event.x), int(size.height() - event.y))
+                )
+
+            if global_pos is not None and hasattr(menu, "exec_"):
+                menu.exec_(global_pos)
+            elif hasattr(menu, "exec_"):
+                menu.exec_()
+            else:
+                menu.show()
 
 
 # ============= EOF ====================================

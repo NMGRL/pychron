@@ -44,6 +44,8 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line import LOG_LEVEL_NAMES, LOG_LEVELS
+from pychron.extraction_line.canvas.state import CanvasSystemState, ValveVisualState
+from pychron.extraction_line.canvas.view_model import ExtractionLineCanvasViewModel
 from pychron.extraction_line.explanation.extraction_line_explanation import (
     ExtractionLineExplanation,
 )
@@ -82,6 +84,7 @@ class ExtractionLineManager(Manager, Consoleable):
     plugin_canvases = List
 
     explanation = Instance(ExtractionLineExplanation, ())
+    canvas_view_model = Instance(ExtractionLineCanvasViewModel, ())
     monitor = Instance(SystemMonitor)
 
     switch_manager = Any
@@ -128,6 +131,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     canvas_editor = Instance(CanvasEditor, ())
     logging_level = Enum(LOG_LEVEL_NAMES)
+    canvas_state = Instance(CanvasSystemState, ())
 
     def set_extract_state(self, *args, **kw):
         pass
@@ -331,6 +335,111 @@ class ExtractionLineManager(Manager, Consoleable):
         for ci in self.canvases:
             ci.refresh()
 
+    def build_canvas_state(self):
+        valves = {}
+        degraded_devices = []
+        selected_name = ""
+        if self.canvas_view_model.selected_item is not None:
+            selected_name = getattr(self.canvas_view_model.selected_item, "name", "") or ""
+
+        active_name = ""
+        if self.canvas_view_model.active_item is not None:
+            active_name = getattr(self.canvas_view_model.active_item, "name", "") or ""
+
+        sm = self.switch_manager
+        if sm is not None:
+            names = set(sm.switches.keys())
+            child_map = {}
+            for switch in sm.switches.values():
+                if switch.parent:
+                    child_map.setdefault(switch.parent, []).append(switch.display_name)
+
+            for name in names:
+                switch = sm.switches[name]
+                connected_volume = 0
+                if self.use_network:
+                    try:
+                        connected_volume = self.get_volume(name) or 0
+                    except BaseException:
+                        self.debug_exception()
+
+                valves[name] = ValveVisualState(
+                    name=name,
+                    is_open=switch.state,
+                    is_locked=switch.software_lock,
+                    is_owned=bool(switch.owner),
+                    owner=switch.owner or "",
+                    is_forced=False,
+                    is_interlocked=bool(
+                        any(
+                            sm.get_switch_by_name(interlock).state
+                            for interlock in switch.interlocks
+                            if sm.get_switch_by_name(interlock) is not None
+                        )
+                        or sm._check_positive_interlocks(name)
+                    ),
+                    is_stale=switch.state is None,
+                    last_state_timestamp=switch.last_actuation or "",
+                    last_readback_timestamp=switch.last_actuation or "",
+                    state_source=(
+                        "simulated"
+                        if globalv.communication_simulation
+                        else "hardware"
+                    ),
+                    can_actuate=not switch.software_lock and not bool(switch.owner),
+                    cannot_actuate_reason=(
+                        "Software locked"
+                        if switch.software_lock
+                        else "Owned by {}".format(switch.owner)
+                        if switch.owner
+                        else ""
+                    ),
+                    children=child_map.get(switch.display_name, []),
+                    connected_volume=connected_volume,
+                    description=switch.description or "",
+                    address=getattr(switch, "address", "") or "",
+                )
+
+        if self.devices:
+            degraded_devices = [
+                dev.name
+                for dev in self.devices
+                if hasattr(dev, "enabled") and not dev.enabled
+            ]
+
+        refresh_age_seconds = 0
+        if sm is not None:
+            timestamps = [
+                switch.last_actuation
+                for switch in sm.switches.values()
+                if switch.last_actuation
+            ]
+            if timestamps:
+                try:
+                    last = max(timestamps)
+                    refresh_age_seconds = max(time.time() - time.mktime(time.strptime(last.split(".")[0], "%Y-%m-%dT%H:%M:%S")), 0)
+                except BaseException:
+                    refresh_age_seconds = 0
+
+        return CanvasSystemState(
+            valves=valves,
+            active_item=active_name,
+            selected_item=selected_name,
+            degraded_devices=degraded_devices,
+            network_regions={},
+            recent_events=[],
+            refresh_age_seconds=refresh_age_seconds,
+            simulation_mode=globalv.communication_simulation,
+        )
+
+    def push_canvas_state(self, refresh=False):
+        state = self.build_canvas_state()
+        self.canvas_state = state
+        self.canvas_view_model.set_state(state)
+        for canvas in self.canvases:
+            canvas.apply_canvas_state(state, refresh=refresh)
+        return state
+
     def finish_loading(self):
         if self.use_network:
             self.network.load(self.canvas_path)
@@ -353,6 +462,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
         self._reload_canvas_hook()
 
+        self.push_canvas_state(refresh=True)
         self.refresh_canvas()
 
     def reload_scene_graph(self):
@@ -369,6 +479,7 @@ class ExtractionLineManager(Manager, Consoleable):
                         vc.state = v.state
 
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
+        self.push_canvas_state(refresh=True)
 
     def update_switch_state(self, name, state, *args, **kw):
         # self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
@@ -380,18 +491,20 @@ class ExtractionLineManager(Manager, Consoleable):
 
         for c in self.canvases:
             c.update_switch_state(name, state, *args, **kw)
+        self.push_canvas_state()
 
     def update_switch_lock_state(self, *args, **kw):
         for c in self.canvases:
             c.update_switch_lock_state(*args, **kw)
+        self.push_canvas_state()
 
     def update_switch_owned_state(self, *args, **kw):
         for c in self.canvases:
-            if "state" in kw:
-                try:
-                    c.update_switch_owned_state(*args, **kw)
-                except BaseException:
-                    self.debug_exception()
+            try:
+                c.update_switch_owned_state(*args, **kw)
+            except BaseException:
+                self.debug_exception()
+        self.push_canvas_state()
 
     def set_valve_owner(self, name, owner):
         """
@@ -612,6 +725,12 @@ class ExtractionLineManager(Manager, Consoleable):
                 )
 
             self.explanation.selected = selected
+        name = getattr(obj, "name", "") if obj else ""
+        self.canvas_view_model.set_selected_item(name)
+
+    def set_active_canvas_item(self, obj):
+        name = getattr(obj, "name", "") if obj else ""
+        self.canvas_view_model.set_active_item(name)
 
     def new_canvas(self, config=None):
         c = ExtractionLineCanvas(manager=self, display_name="Extraction Line")
@@ -625,6 +744,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.switch_manager.load_valve_lock_states(force=True)
             self.switch_manager.load_valve_owners()
             c.refresh()
+        self.push_canvas_state(refresh=True)
 
         return c
 

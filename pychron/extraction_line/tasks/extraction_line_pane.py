@@ -18,7 +18,14 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Any, Int
-from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor, VGroup
+from traitsui.api import (
+    View,
+    UItem,
+    InstanceEditor,
+    ListEditor,
+    TabularEditor,
+    VGroup,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -149,6 +156,14 @@ class ExplanationPane(TraitsDockPane):
     def traits_view(self):
         v = View(UItem("explanation", style="custom"))
         return v
+
+
+class InspectorPane(TraitsDockPane):
+    name = "Inspector"
+    id = "pychron.extraction_line.inspector"
+
+    def traits_view(self):
+        return View(UItem("canvas_view_model", style="custom", editor=InstanceEditor()))
 
 
 class ReadbackAdapter(TabularAdapter):

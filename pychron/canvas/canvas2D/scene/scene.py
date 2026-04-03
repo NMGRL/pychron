@@ -209,11 +209,10 @@ class Scene(HasTraits):
     # private
     def _render(self, gc, canvas, components, bounds):
         for ci in components:
-            if ci.is_in_region(*bounds):
-                if self.font:
-                    ci.font = self.font
-                ci.set_canvas(canvas)
-                ci.render(gc)
+            ci.set_canvas(canvas)
+            if self.font:
+                ci.font = self.font
+            ci.render(gc)
 
     def _get_canvas_parser(self, p=None):
         if p is not None:

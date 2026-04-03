@@ -24,8 +24,8 @@ import os
 import shutil
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from typing import BinaryIO, Optional, Union
 
-from pychron.core.helpers.filetools import list_directory, unique_path2
 from pychron.paths import paths
 
 NAME_WIDTH = 40
@@ -35,26 +35,57 @@ gFORMAT = (
     )
 )
 gLEVEL = logging.DEBUG
+PYCHRON_MANAGED_HANDLER = "_pychron_managed_handler"
 
 
-def simple_logger(name):
+def _coerce_level(level: Optional[Union[int, str]]) -> int:
+    if level is None:
+        return gLEVEL
+
+    if isinstance(level, str):
+        return getattr(logging, level.upper(), gLEVEL)
+
+    return level
+
+
+def _close_handler(handler: logging.Handler) -> None:
+    handler.flush()
+    handler.close()
+
+
+def _clear_managed_root_handlers(root: logging.Logger) -> None:
+    for handler in tuple(root.handlers):
+        if getattr(handler, PYCHRON_MANAGED_HANDLER, False):
+            root.removeHandler(handler)
+            _close_handler(handler)
+
+
+def simple_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    h = logging.StreamHandler()
-    h.setFormatter(logging.Formatter(gFORMAT))
-    logger.addHandler(h)
+    logger.setLevel(gLEVEL)
+
+    for handler in logger.handlers:
+        if getattr(handler, PYCHRON_MANAGED_HANDLER, False):
+            break
+    else:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(gFORMAT))
+        setattr(handler, PYCHRON_MANAGED_HANDLER, True)
+        logger.addHandler(handler)
+
     return logger
 
 
-def get_log_text(n):
+def get_log_text(n: int) -> Optional[str]:
     root = logging.getLogger()
     for h in root.handlers:
         if isinstance(h, RotatingFileHandler):
             with open(h.baseFilename, "rb") as rfile:
                 return tail(rfile, n)
+    return None
 
 
-def tail(f, lines=20):
+def tail(f: BinaryIO, lines: int = 20) -> str:
     """
     http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
     """
@@ -97,12 +128,19 @@ def tail(f, lines=20):
 #         logger.addHandler(h)
 
 
-def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
+def logging_setup(
+    name: str,
+    use_archiver: bool = True,
+    root: Optional[str] = None,
+    use_file: bool = True,
+    **kw
+) -> None:
     """ """
     # set up deprecation warnings
     # import warnings
     #     warnings.simplefilter('default')
     bdir = paths.log_dir if root is None else root
+    level = _coerce_level(kw.pop("level", None))
 
     # make sure we have a log directory
     # if not os.path.isdir(bdir):
@@ -168,12 +206,13 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
             creation_date = datetime.fromtimestamp(mt)
 
             bk = os.path.join(bdir, creation_date.strftime("%y%m%d%H%M%S"))
-            os.mkdir(bk)
+            os.makedirs(bk, exist_ok=True)
             for src in glob.glob(os.path.join(bdir, "{}*".format(logname))):
                 shutil.move(src, bk)
 
     root = logging.getLogger()
-    root.setLevel(gLEVEL)
+    _clear_managed_root_handlers(root)
+    root.setLevel(level)
     shandler = logging.StreamHandler()
 
     handlers = [shandler]
@@ -183,14 +222,22 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
 
     fmt = logging.Formatter(gFORMAT)
     for hi in handlers:
-        hi.setLevel(gLEVEL)
+        hi.setLevel(level)
         hi.setFormatter(fmt)
+        setattr(hi, PYCHRON_MANAGED_HANDLER, True)
         root.addHandler(hi)
 
 
-def add_root_handler(path, level=None, strformat=None, **kw):
+def add_root_handler(
+    path: str,
+    level: Optional[Union[int, str]] = None,
+    strformat: Optional[str] = None,
+    **kw
+) -> logging.Handler:
     if level is None:
         level = gLEVEL
+    else:
+        level = _coerce_level(level)
 
     if strformat is None:
         strformat = gFORMAT
@@ -204,12 +251,13 @@ def add_root_handler(path, level=None, strformat=None, **kw):
     return handler
 
 
-def remove_root_handler(handler):
+def remove_root_handler(handler: logging.Handler) -> None:
     root = logging.getLogger()
     root.removeHandler(handler)
+    _close_handler(handler)
 
 
-def new_logger(name):
+def new_logger(name: str) -> logging.Logger:
     name = "{:<{}}".format(name, NAME_WIDTH)
     l = logging.getLogger(name)
     l.setLevel(gLEVEL)
@@ -217,7 +265,7 @@ def new_logger(name):
     return l
 
 
-def wrap(items, width=40, indent=90, delimiter=","):
+def wrap(items, width: int = 40, indent: int = 90, delimiter: str = ",") -> str:
     """
     wrap a list
     """

@@ -17,6 +17,7 @@
 
 # ============= standard library imports ========================
 from threading import current_thread
+from typing import Any as TypingAny, Callable, Dict
 
 # ============= enthought library imports =======================
 from traits.api import Any, String
@@ -31,15 +32,15 @@ from pychron.globals import globalv
 
 color_name_gen = colorname_generator()
 NAME_WIDTH = 40
-__gloggers__ = dict()
+__gloggers__: Dict[str, TypingAny] = dict()
 
 
 class unique(object):
-    def __init__(self):
-        self._registry = {}
+    def __init__(self) -> None:
+        self._registry: Dict[int, list[int]] = {}
 
-    def __call__(self, f):
-        def wrapped_f(*args, **kw):
+    def __call__(self, f: Callable[..., TypingAny]) -> Callable[..., None]:
+        def wrapped_f(*args, **kw) -> None:
             obj = args[0]
             msg = args[1]
             hmsg = hash(msg)
@@ -50,7 +51,7 @@ class unique(object):
             msgs = self._registry[ido]
             if hmsg not in msgs:
                 msgs.append(hmsg)
-                f(*args)
+                f(*args, **kw)
 
         return wrapped_f
 
@@ -67,18 +68,18 @@ class Loggable(BaseFS):
     logcolor = "black"
     shared_logger = False
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args, **kw) -> None:
         super(Loggable, self).__init__(*args, **kw)
         self.init_logger()
 
-    def init_logger(self):
-        t = str(type(self))
-        if self.shared_logger and t in __gloggers__:
-            self.logger = __gloggers__[t]
+    def init_logger(self) -> None:
+        cache_key = self._logger_cache_key()
+        if self.shared_logger and cache_key in __gloggers__:
+            self.logger = __gloggers__[cache_key]
         else:
             self._add_logger()
 
-    def report_logger_stats(self):
+    def report_logger_stats(self) -> None:
         self.debug("&&&& len __gloggers__ = {}".format(len(__gloggers__)))
 
     @unique()
@@ -93,7 +94,7 @@ class Loggable(BaseFS):
     def unique_debug(self, *args, **kw):
         self.debug(*args, **kw)
 
-    def warning(self, msg):
+    def warning(self, msg: str) -> None:
         """ """
 
         if self.logger is not None:
@@ -109,7 +110,7 @@ class Loggable(BaseFS):
 
             self._log_("warning", msg)
 
-    def info(self, msg, dolater=False, color=None):
+    def info(self, msg: str, dolater: bool = False, color=None) -> None:
         """ """
         if self.logger is not None:
             if globalv.use_logger_display:
@@ -123,31 +124,31 @@ class Loggable(BaseFS):
 
             self._log_("info", msg)
 
-    def debug_exception(self):
+    def debug_exception(self) -> str:
         import traceback
 
         exc = traceback.format_exc()
         self.debug(exc)
         return exc
 
-    def warning_exception(self):
+    def warning_exception(self) -> str:
         import traceback
 
         exc = traceback.format_exc()
         self.warning_dialog(exc)
         return exc
 
-    def critical(self, msg):
+    def critical(self, msg: str) -> None:
         self._log_("critical", msg)
 
-    def debug(self, msg, *args, **kw):
+    def debug(self, msg: str, *args, **kw) -> None:
         try:
             msg = msg.format(*args, **kw)
         except BaseException:
             pass
         self._log_("debug", msg)
 
-    def log(self, msg, level=10):
+    def log(self, msg: str, level: int = 10) -> None:
         def log(m, *args, **kw):
             self.logger.debug(m)
             self.logger.log(level, m, *args, **kw)
@@ -155,7 +156,7 @@ class Loggable(BaseFS):
         self._log_(log, msg)
 
     # dialogs
-    def warning_dialog(self, msg, sound=None, title="Warning", **kw):
+    def warning_dialog(self, msg: str, sound=None, title: str = "Warning", **kw) -> None:
         self.warning(msg)
 
         from pychron.core.ui.dialogs import myMessageDialog
@@ -175,7 +176,7 @@ class Loggable(BaseFS):
     def confirmation_dialog(self, *args, **kw):
         return confirmation_dialog(*args, **kw)
 
-    def information_dialog(self, msg, title="Information", **kw):
+    def information_dialog(self, msg: str, title: str = "Information", **kw) -> None:
         from pychron.core.ui.dialogs import myMessageDialog
 
         self.info(msg)
@@ -184,7 +185,7 @@ class Loggable(BaseFS):
         )
         dlg.open()
 
-    def message(self, msg):
+    def message(self, msg: str) -> None:
         from pychron.core.displays.gdisplays import gMessageDisplay
 
         if not gMessageDisplay.opened and not gMessageDisplay.was_closed:
@@ -198,7 +199,19 @@ class Loggable(BaseFS):
         self.info(msg)
 
     # private
-    def _add_logger(self):
+    def _logger_cache_key(self) -> str:
+        if self.shared_logger:
+            return str(type(self))
+
+        if self.logger_name:
+            return self.logger_name
+
+        if self.name:
+            return self.name
+
+        return self.__class__.__name__
+
+    def _add_logger(self) -> None:
         """ """
         if self.logger_name:
             name = self.logger_name
@@ -209,14 +222,14 @@ class Loggable(BaseFS):
 
         if self.logger is None:
             self.logger = new_logger(name)
-            __gloggers__[name] = self.logger
+            __gloggers__[self._logger_cache_key()] = self.logger
 
         c = normalize_color_name(next(color_name_gen))
         while contrast_color(c, dark="black", light="white") != "white":
             c = normalize_color_name(next(color_name_gen))
         self.logcolor = c
 
-    def _log_(self, func, msg):
+    def _log_(self, func, msg) -> None:
         # def get_thread_name():
         #     name = 'foo'
         #     # ct = current_thread()
@@ -245,10 +258,10 @@ class Loggable(BaseFS):
         return msg
 
     # handlers
-    def _name_changed(self):
+    def _name_changed(self) -> None:
         self._add_logger()
 
-    def _logger_name_changed(self):
+    def _logger_name_changed(self) -> None:
         self._add_logger()
 
 

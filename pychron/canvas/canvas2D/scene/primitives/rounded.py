@@ -29,6 +29,11 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import (
 )
 
 
+def calc_border_gap_half_width(border_width, connection):
+    """Trim border cutouts to the connector interior instead of the full span."""
+    return max((connection.width - border_width) / 2.0, 1)
+
+
 def rounded_rect(gc, x, y, width, height, corner_radius):
     with gc:
         gc.translate_ctm(x, y)  # draw a rounded rectangle
@@ -115,7 +120,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
             if self.use_border_gaps and use_border_gaps:
                 # with gc:
                 for t, c in self.connections:
-                    cw4 = c.width / 2
+                    cw4 = calc_border_gap_half_width(self.border_width, c)
                     with gc:
                         gc.set_line_width(self.border_width + 1)
                         if isinstance(c, (BorderLine, Tee, Elbow, Cross)):
@@ -201,7 +206,7 @@ class CircleStage(Connectable, Bordered):
             gc.set_stroke_color(self._convert_color(self.default_color))
             for t, c in self.connections:
                 if isinstance(c, BorderLine):
-                    dw = math.atan((c.width - c.border_width / 2) / r)
+                    dw = math.atan(calc_border_gap_half_width(self.border_width, c) / r)
 
                     p1, p2 = c.start_point, c.end_point
                     p2x, p2y = p2.get_xy()
