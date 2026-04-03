@@ -364,6 +364,116 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if item.soft_lock:
                 return
 
+            # Use preview API for structured confirmation
+            if self.manager and self.confirm_open:
+                action = "open" if nstate else "close"
+                preview_func = (
+                    self.manager.preview_open_valve if nstate else self.manager.preview_close_valve
+                )
+                preview = preview_func(item.name)
+
+                if not preview.allowed:
+                    self._show_preview_dialog(preview)
+                    return
+
+                if preview.requires_confirmation or self.confirm_open:
+                    if not self._show_preview_dialog(preview):
+                        return
+
+            ok, change = set_state(nstate)
+
+        if ok:
+            item.state = nstate
+
+        if change and ok:
+            self._select_hook(item)
+
+        if change:
+            self.invalidate_and_redraw()
+
+        event.handled = True
+
+    def _show_preview_dialog(self, preview):
+        """Show structured preview dialog. Returns True if user confirms."""
+        from pyface.api import confirm, YES
+
+        lines = []
+        action_label = "Open" if preview.requested_action == "open" else "Close"
+        lines.append("{} valve {}?".format(action_label, preview.valve_name))
+        lines.append("")
+
+        if preview.current_state is not None:
+            lines.append("Current state: {}".format("Open" if preview.current_state else "Closed"))
+
+        if preview.owner:
+            lines.append("Owner: {}".format(preview.owner))
+
+        if preview.is_soft_locked:
+            lines.append("WARNING: Software locked")
+
+        if preview.interlocks:
+            lines.append("Interlock present: {}".format(", ".join(preview.interlocks)))
+
+        if preview.affected_children:
+            lines.append("Also affects: {}".format(", ".join(preview.affected_children)))
+
+        if preview.network_region_changes:
+            for change in preview.network_region_changes:
+                lines.append(change)
+
+        if preview.reasons_blocking:
+            lines.append("")
+            lines.append("Blocked: {}".format("; ".join(preview.reasons_blocking)))
+
+        msg = "\n".join(lines)
+
+        if preview.warning_level == "error":
+            title = "Actuation Blocked"
+            from pyface.message_dialog import error
+
+            error(None, msg, title=title)
+            return False
+
+        if preview.warning_level == "warning":
+            title = "Actuation Warning"
+        else:
+            title = "Confirm Valve Action"
+
+        result = confirm(None, msg, title=title)
+        return result == YES
+
+        item = self.active_item
+        if item is None:
+            return
+
+        if self.manager and isinstance(item, (BaseValve, Switch)):
+            self.manager.set_selected_explanation_item(item)
+
+        if self.edit_mode:
+            if event.shift_down:
+                self._toggle_item_selection(item)
+                return
+
+            self.event_state = "drag"
+            event.window.set_pointer(self.drag_pointer)
+            return
+
+        if isinstance(item, Laser):
+            self._toggle_laser_state(item)
+            return
+
+        state = item.state
+        nstate = not state
+        if isinstance(item, Switch):
+            set_state(nstate)
+
+        else:
+            if not isinstance(item, BaseValve):
+                return
+
+            if item.soft_lock:
+                return
+
             if self.confirm_open:
                 from pychron.core.ui.dialogs import myConfirmationDialog
                 from pyface.api import NO

@@ -45,6 +45,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line import LOG_LEVEL_NAMES, LOG_LEVELS
+from pychron.extraction_line.actuation_preview import ActuationPreview
 from pychron.extraction_line.canvas.state import (
     CanvasSystemState,
     NetworkSnapshot,
@@ -653,6 +654,135 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def close_valve(self, name, **kw):
         return self._open_close_valve(name, "close", **kw)
+
+    def preview_open_valve(self, name, description=None, address=None, sender_address=None):
+        """Dry-run preview of opening a valve. Returns ActuationPreview."""
+        return self._preview_actuation(name, "open", description, address, sender_address)
+
+    def preview_close_valve(self, name, description=None, address=None, sender_address=None):
+        """Dry-run preview of closing a valve. Returns ActuationPreview."""
+        return self._preview_actuation(name, "close", description, address, sender_address)
+
+    def _preview_actuation(self, name, action, description=None, address=None, sender_address=None):
+        """Build an ActuationPreview without executing the actuation."""
+        vm = self.switch_manager
+        preview = ActuationPreview(
+            requested_action=action,
+            valve_name=name,
+            current_state=None,
+        )
+
+        if vm is None:
+            preview.allowed = False
+            preview.reasons_blocking.append("Switch manager not available")
+            preview.warning_level = "error"
+            return preview
+
+        resolved = self._resolve_switch_name(name, description=description, address=address)
+        if not resolved:
+            preview.allowed = False
+            preview.reasons_blocking.append("Valve '{}' not found".format(name))
+            preview.warning_level = "error"
+            return preview
+
+        preview.valve_name = resolved
+        valve = vm.get_switch_by_name(resolved)
+        if valve is None:
+            preview.allowed = False
+            preview.reasons_blocking.append("Valve '{}' not found".format(resolved))
+            preview.warning_level = "error"
+            return preview
+
+        preview.current_state = valve.state
+        preview.is_soft_locked = valve.software_lock
+        preview.is_enabled = getattr(valve, "enabled", True)
+        preview.owner = valve.owner or ""
+
+        # Check if already in target state
+        target_state = action == "open"
+        if valve.state == target_state:
+            preview.allowed = False
+            preview.reasons_blocking.append(
+                "Valve is already {}".format("open" if target_state else "closed")
+            )
+            preview.warning_level = "info"
+            return preview
+
+        # Check soft lock
+        if valve.software_lock:
+            preview.allowed = False
+            preview.reasons_blocking.append("Software locked")
+            preview.warning_level = "warning"
+            return preview
+
+        # Check enabled
+        if not getattr(valve, "enabled", True):
+            preview.allowed = False
+            preview.reasons_blocking.append("Valve not enabled")
+            preview.warning_level = "warning"
+            return preview
+
+        # Check ownership
+        if not self._check_ownership(resolved, sender_address):
+            preview.allowed = False
+            preview.reasons_blocking.append("Owned by {}".format(valve.owner))
+            preview.warning_level = "warning"
+            return preview
+
+        # Check soft interlocks
+        if action == "open":
+            interlocked = vm._check_soft_interlocks(resolved)
+            if interlocked:
+                preview.allowed = False
+                preview.reasons_blocking.append("Interlock: {} is open".format(interlocked.name))
+                preview.warning_level = "error"
+                return preview
+
+            positive = vm._check_positive_interlocks(resolved)
+            if positive:
+                preview.allowed = False
+                preview.interlocks = positive
+                preview.reasons_blocking.append(
+                    "Positive interlocks not enabled: {}".format(", ".join(positive))
+                )
+                preview.warning_level = "warning"
+                return preview
+        else:
+            interlocked = vm._check_soft_interlocks(resolved)
+            if interlocked:
+                preview.allowed = False
+                preview.reasons_blocking.append("Interlock: {} is open".format(interlocked.name))
+                preview.warning_level = "error"
+                return preview
+
+        # Collect affected children
+        children = vm.get_children(resolved)
+        if children:
+            preview.affected_children = [c.name for c in children]
+
+        # Network region changes
+        if self.use_network and self.network:
+            try:
+                snapshot = self.network.compute_state()
+                if snapshot and resolved in snapshot.valves:
+                    nv = snapshot.valves[resolved]
+                    if nv.side_volumes:
+                        preview.network_region_changes = [
+                            "Volume changes from {:0.1f} to {:0.1f} cc".format(
+                                min(nv.side_volumes), max(nv.side_volumes) + nv.valve_volume
+                            )
+                        ]
+                    if nv.region_id:
+                        preview.network_region_changes.append("Region: {}".format(nv.region_id))
+            except BaseException:
+                pass
+
+        # Determine if confirmation is needed
+        if preview.affected_children or preview.network_region_changes:
+            preview.requires_confirmation = True
+            preview.warning_level = "info"
+
+        return preview
 
     def sample(self, name, **kw):
         def sample():

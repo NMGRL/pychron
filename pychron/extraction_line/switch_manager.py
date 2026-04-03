@@ -108,6 +108,10 @@ class SwitchManager(Manager):
         for act in self.actuators:
             act.logger.setLevel(level)
 
+    def get_children(self, name):
+        """Return all switches that have ``name`` defined as their parent."""
+        return [v for v in self.switches.values() if v.parent == name]
+
     def actuate_children(self, name, action, mode):
         """
         actuate all switches that have ``name`` defined as their parent
@@ -117,9 +121,7 @@ class SwitchManager(Manager):
             if v.parent == name:
                 self.debug("actuating child, {}, {}".format(v.display_name, action))
                 if v.parent_inverted:
-                    func = (
-                        self.open_by_name if action == "close" else self.close_by_name
-                    )
+                    func = self.open_by_name if action == "close" else self.close_by_name
                 else:
                     func = self.open_by_name if action == "open" else self.close_by_name
 
@@ -231,9 +233,7 @@ class SwitchManager(Manager):
 
     def get_locked(self):
         return [
-            v.name
-            for v in self.switches.values()
-            if v.software_lock and not v.ignore_lock_warning
+            v.name for v in self.switches.values() if v.software_lock and not v.ignore_lock_warning
         ]
 
     @add_checksum
@@ -416,9 +416,7 @@ class SwitchManager(Manager):
             return v.software_lock
         else:
             self.critical(
-                'failed to located valve name="{}", description="{}"'.format(
-                    name, description
-                )
+                'failed to located valve name="{}", description="{}"'.format(name, description)
             )
 
     def open_switch(self, *args, **kw):
@@ -477,9 +475,7 @@ class SwitchManager(Manager):
         else return true
         """
 
-        return next(
-            (False for vi in v.interlocks if self.get_switch_by_name(vi).state), True
-        )
+        return next((False for vi in v.interlocks if self.get_switch_by_name(vi).state), True)
 
     def load_valve_states(self):
         self.load_indicator_states()
@@ -658,11 +654,7 @@ class SwitchManager(Manager):
                     return vi
         else:
             return next(
-                (
-                    valve
-                    for valve in self.switches.values()
-                    if getattr(valve, attr) == a
-                ),
+                (valve for valve in self.switches.values() if getattr(valve, attr) == a),
                 None,
             )
 
@@ -819,11 +811,7 @@ class SwitchManager(Manager):
         p = os.path.join(paths.hidden_dir, "{}_manual_states".format(self.name))
         self.info("saving manual states to {}".format(p))
         with open(p, "wb") as f:
-            obj = {
-                k: v.state
-                for k, v in self.switches.items()
-                if isinstance(v, ManualSwitch)
-            }
+            obj = {k: v.state for k, v in self.switches.items() if isinstance(v, ManualSwitch)}
             pickle.dump(obj, f)
 
     def _save_soft_lock_states(self):
@@ -878,15 +866,11 @@ class SwitchManager(Manager):
             iname = interlocked_valve.name
             if s and not s.state:
                 self.warning(
-                    "Software Interlock. {} is OPEN. But {} is already closed".format(
-                        iname, name
-                    )
+                    "Software Interlock. {} is OPEN. But {} is already closed".format(iname, name)
                 )
                 ret = True
             else:
-                msg = "Software Interlock. {} is OPEN!. Will not close {}".format(
-                    iname, name
-                )
+                msg = "Software Interlock. {} is OPEN!. Will not close {}".format(iname, name)
                 self.console_message = (msg, "red")
                 self.warning(msg)
 
@@ -925,9 +909,7 @@ class SwitchManager(Manager):
             if v.track_actuation:
                 self._update_actuation_tracker(v)
 
-        if result is None and (
-            globalv.communication_simulation or globalv.experiment_debug
-        ):
+        if result is None and (globalv.communication_simulation or globalv.experiment_debug):
             result = True
             changed = True
 
@@ -1020,9 +1002,7 @@ class SwitchManager(Manager):
             self._report_valves()
 
     def _report_valves(self):
-        self.debug(
-            "========================== Switch Report =========================="
-        )
+        self.debug("========================== Switch Report ==========================")
 
         widths = []
         keys = [
@@ -1037,10 +1017,7 @@ class SwitchManager(Manager):
             "query_state",
         ]
         for k in keys:
-            vs = [
-                getattr(v, k) if hasattr(v, k) else "---"
-                for v in self.switches.values()
-            ]
+            vs = [getattr(v, k) if hasattr(v, k) else "---" for v in self.switches.values()]
             vs = [len(str(vi) if vi else k) for vi in vs]
             vs = max(len(k), max(vs)) + 3
 
@@ -1048,14 +1025,10 @@ class SwitchManager(Manager):
         # widths =[32,40,40,20,20]
         header = ["{{:<{}s}}".format(w).format(v) for w, v in zip(widths, keys)]
         self.debug("".join(header))
-        for klass, vs in groupby_key(
-            self.switches.values(), key=lambda v: str(type(v))
-        ):
+        for klass, vs in groupby_key(self.switches.values(), key=lambda v: str(type(v))):
             for v in vs:
                 self.debug(v.summary(widths, keys))
-        self.debug(
-            "===================================================================="
-        )
+        self.debug("====================================================================")
 
     def _pipette_factory_yaml(self, pobj):
         inner = pobj.get("inner")
@@ -1101,9 +1074,7 @@ class SwitchManager(Manager):
                         )
                         self.warning_dialog(
                             'No actuator for "{}". Valve will not operate. '
-                            "Check setupfiles/extractionline/valves.{}".format(
-                                b, ctx["name"], ext
-                            )
+                            "Check setupfiles/extractionline/valves.{}".format(b, ctx["name"], ext)
                         )
 
                 ctx[b] = actuator
@@ -1185,9 +1156,7 @@ class SwitchManager(Manager):
         state_elem = v_elem.find("state_device")
         description = v_elem.find("description")
 
-        positive_interlocks = [
-            i.text.strip() for i in v_elem.findall("positive_interlock")
-        ]
+        positive_interlocks = [i.text.strip() for i in v_elem.findall("positive_interlock")]
         interlocks = [i.text.strip() for i in v_elem.findall("interlock")]
         if description is not None:
             description = description.text.strip()
@@ -1207,9 +1176,7 @@ class SwitchManager(Manager):
         state_address = ""
         state_invert = False
         if klass != ManualSwitch:
-            actname = (
-                act_elem.text.strip() if act_elem is not None else "switch_controller"
-            )
+            actname = act_elem.text.strip() if act_elem is not None else "switch_controller"
             if state_elem is not None:
                 state_device_name = state_elem.text.strip()
                 state_address = v_elem.find("state_address")
