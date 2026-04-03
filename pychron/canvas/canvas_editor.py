@@ -140,9 +140,14 @@ class PropertyCommand(Command):
 class UndoStack(HasTraits):
     """Undo/redo command stack."""
 
-    _undo_stack: List[Command] = []
-    _redo_stack: List[Command] = []
+    _undo_stack: list[Command]
+    _redo_stack: list[Command]
     max_depth = Int(50)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._undo_stack = []
+        self._redo_stack = []
 
     def push(self, command: Command) -> None:
         if command._done:
