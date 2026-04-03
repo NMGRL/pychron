@@ -394,9 +394,7 @@ class PipelineEngine(Loggable):
                     gi.fixed_step_low = s.step
                     gi.fixed_step_high = e.step
 
-                    self.selected.editor.figure_model.force_refresh_panels = False
-                    self.selected.editor.refresh_needed = True
-                    self.selected.editor.figure_model.force_refresh_panels = True
+                    self.selected.editor.request_refresh()
                     break
 
     def unknowns_clear_all_grouping(self):
@@ -436,12 +434,12 @@ class PipelineEngine(Loggable):
         max_gid = max([getattr(si, key) for si in items]) + 1
         self._set_grouping(items_to_set, max_gid, attr=key)
 
-    def unknowns_toggle_status(self):
+    def unknowns_toggle_status(self) -> None:
         for i in self.selected_unknowns:
             # print('asdf', i.temp_status)
             i.temp_status = "ok" if i.temp_status == "omit" else "omit"
             if hasattr(self.selected, "editor") and self.selected.editor:
-                self.selected.editor.refresh_needed = True
+                self.selected.editor.request_refresh()
 
     def play_analysis_video(self):
         self.debug("play analysis video")
@@ -485,7 +483,10 @@ class PipelineEngine(Loggable):
                         if yes:
                             for ni in es:
                                 ni.plotter_options = e.plotter_options
-                                ni.refresh_needed = True
+                                if hasattr(ni, "request_rebuild"):
+                                    ni.request_rebuild()
+                                else:
+                                    ni.refresh_needed = True
 
                         if remember:
                             self._confirmation_cache[tag] = yes
@@ -767,11 +768,11 @@ class PipelineEngine(Loggable):
     def resume_pipeline(self):
         return self.run_pipeline(state=self.state)
 
-    def refresh_figure_editors(self):
+    def refresh_figure_editors(self) -> None:
         for ed in self.state.editors:
             if isinstance(ed, FigureEditor):
                 self.debug("refresh figure editors")
-                ed.refresh_needed = True
+                ed.request_refresh()
 
     def rerun_with(self, unks, post_run=True):
         if not self.state:
@@ -1193,12 +1194,12 @@ class PipelineEngine(Loggable):
                 if not r.update():
                     self.warning('Failed to update repo="{}"'.format(r.name))
 
-    def _set_grouping(self, items, gid, attr="group_id"):
+    def _set_grouping(self, items, gid, attr: str = "group_id") -> None:
         for si in items:
             setattr(si, attr, gid)
 
         if hasattr(self.selected, "editor") and self.selected.editor:
-            self.selected.editor.refresh_needed = True
+            self.selected.editor.request_refresh()
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
@@ -1370,7 +1371,7 @@ class PipelineEngine(Loggable):
     _len_references_cnt = 0
     _len_references_removed = 0
 
-    def _handle_len(self, k, func):
+    def _handle_len(self, k, func) -> None:
         lr = "_len_{}_removed".format(k)
         lc = "_len_{}_cnt".format(k)
 
@@ -1391,7 +1392,10 @@ class PipelineEngine(Loggable):
             setattr(self, lc, 0)
             if editor:
                 func(editor)
-                editor.refresh_needed = True
+                if hasattr(editor, "request_rebuild"):
+                    editor.request_rebuild()
+                else:
+                    editor.refresh_needed = True
 
     def _dclicked_changed(self, new):
         self.configure(new)

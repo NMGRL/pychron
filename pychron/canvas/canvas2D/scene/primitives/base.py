@@ -216,7 +216,14 @@ class Primitive(HasTraits):
 
     def get_bounds(self):
         """Get bounding box as (x, y, x2, y2)."""
-        key = (self.x, self.y, self.width, self.height)
+        canvas_bounds = None
+        if self.canvas is not None:
+            canvas_bounds = tuple(self.canvas.bounds) if self.canvas.bounds is not None else None
+            if self.bounds != canvas_bounds:
+                self._layout_needed = True
+                self.bounds = canvas_bounds
+
+        key = (self.x, self.y, self.width, self.height, canvas_bounds)
         if self._cached_bounds is None or self._cached_bounds_key != key:
             x, y = self.get_xy(clear_layout_needed=False)
             w, h = self.get_wh()

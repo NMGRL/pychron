@@ -1,0 +1,309 @@
+version: 1
+description: >
+  Compact class/function index for major entrypoints and coordination objects.
+  Use this to decide which file to open next.
+entries:
+  - symbol: PychronApplication
+    kind: class
+    module: pychron/applications/pychron_application.py
+    responsibility: Main Envisage tasks application wrapper for GUI apps.
+    important_methods:
+      - exit
+      - stop
+      - get_service_by_name
+    upstream_dependencies:
+      - BaseTasksApplication
+      - preferences
+    downstream_dependencies:
+      - plugins
+      - tasks
+      - service registry consumers
+    domain_tags:
+      - application
+      - startup
+      - gui
+    risk: high-risk
+
+  - symbol: ExtractionLineManager
+    kind: class
+    module: pychron/extraction_line/extraction_line_manager.py
+    responsibility: Main extraction-line coordinator and service boundary.
+    important_methods:
+      - activate
+      - deactivate
+      - bind_preferences
+      - reload_canvas
+    upstream_dependencies:
+      - ExtractionLinePlugin
+      - Manager
+    downstream_dependencies:
+      - SwitchManager
+      - canvas
+      - experiment runtime
+    domain_tags:
+      - extraction-line
+      - manager
+    risk: high-risk
+
+  - symbol: SwitchManager
+    kind: class
+    module: pychron/extraction_line/switch_manager.py
+    responsibility: Valve definitions, state, interlocks, actuator dispatch, and ownership logic.
+    important_methods:
+      - finish_loading
+      - actuate_children
+      - calculate_checksum
+      - refresh_network
+    upstream_dependencies:
+      - ExtractionLineManager
+      - valve config files
+    downstream_dependencies:
+      - HardwareValve
+      - Switch
+      - actuators
+    domain_tags:
+      - extraction-line
+      - valves
+    risk: high-risk
+
+  - symbol: Experimentor
+    kind: class
+    module: pychron/experiment/experimentor.py
+    responsibility: Coordinate queue editing state, metadata refresh, and executor handoff.
+    important_methods:
+      - refresh_executable
+      - update_info
+      - execute_queues
+      - sync_queue
+    upstream_dependencies:
+      - ExperimentEditorTask
+      - ExperimentFactory
+    downstream_dependencies:
+      - ExperimentExecutor
+      - ExperimentQueue
+    domain_tags:
+      - experiment
+      - coordinator
+    risk: medium
+
+  - symbol: ExperimentExecutor
+    kind: class
+    module: pychron/experiment/experiment_executor.py
+    responsibility: Execute automated experiment queues and coordinate instrument services.
+    important_methods:
+      - execute
+      - cancel
+      - set_queue_modified
+      - _do_run
+    upstream_dependencies:
+      - Experimentor
+      - ExperimentQueue
+    downstream_dependencies:
+      - AutomatedRun
+      - extraction line
+      - spectrometer
+      - DVC/datahub
+    domain_tags:
+      - experiment
+      - execution
+      - runtime
+    risk: high-risk
+
+  - symbol: AutomatedRun
+    kind: class
+    module: pychron/experiment/automated_run/automated_run.py
+    responsibility: Run-level execution object for extraction, measurement, and persistence.
+    important_methods:
+      - start
+      - do_extraction
+      - do_measurement
+      - finish
+    upstream_dependencies:
+      - ExperimentExecutor
+      - AutomatedRunSpec
+    downstream_dependencies:
+      - scripts
+      - persisters
+      - result models
+    domain_tags:
+      - experiment
+      - automated-run
+    risk: high-risk
+
+  - symbol: ExperimentFactory
+    kind: class
+    module: pychron/experiment/factory.py
+    responsibility: Build experiment queues and connect queue/run factories used by the editor.
+    important_methods:
+      - activate
+      - sync_queue_meta
+      - new_queue
+    upstream_dependencies:
+      - ExperimentEditorTask
+    downstream_dependencies:
+      - ExperimentQueueFactory
+      - AutomatedRunFactory
+    domain_tags:
+      - experiment
+      - factory
+      - editor
+    risk: medium
+
+  - symbol: BaseCoreDevice
+    kind: class
+    module: pychron/hardware/core/base_core_device.py
+    responsibility: Common communicator-backed device behavior and polling/scanning hooks.
+    important_methods:
+      - load
+      - open
+      - initialize
+      - ask
+      - tell
+      - post_initialize
+    upstream_dependencies:
+      - HasCommunicator
+      - communicator classes
+    downstream_dependencies:
+      - concrete device families
+    domain_tags:
+      - hardware
+      - communication
+      - device
+    risk: high-risk
+
+  - symbol: AbstractDevice
+    kind: class
+    module: pychron/hardware/core/abstract_device.py
+    responsibility: Compose a core device and expose a derived logical device interface.
+    important_methods:
+      - load_additional_args
+      - initialize
+      - get
+      - set
+    upstream_dependencies:
+      - CoreDevice
+      - config files
+    downstream_dependencies:
+      - proxy/derived devices
+    domain_tags:
+      - hardware
+      - abstraction
+    risk: medium
+
+  - symbol: DVC
+    kind: class
+    module: pychron/dvc/dvc.py
+    responsibility: Repository/database access layer for analyses, metadata, and persistence support.
+    important_methods:
+      - initialize
+      - session_ctx
+      - meta_pull
+      - get_usernames
+    upstream_dependencies:
+      - DVCPlugin
+      - git/database config
+    downstream_dependencies:
+      - PipelineTask
+      - ExperimentExecutor
+      - repo workflows
+    domain_tags:
+      - dvc
+      - persistence
+      - repository
+    risk: high-risk
+
+  - symbol: PipelineEngine
+    kind: class
+    module: pychron/pipeline/engine.py
+    responsibility: Orchestrate pipeline execution, templates, and node registry.
+    important_methods:
+      - run_pipeline
+      - resume
+      - load_predefined_templates
+      - reset
+    upstream_dependencies:
+      - PipelineTask
+      - DVC
+    downstream_dependencies:
+      - Pipeline
+      - BaseNode implementations
+    domain_tags:
+      - pipeline
+      - orchestration
+    risk: high-risk
+
+  - symbol: Pipeline
+    kind: class
+    module: pychron/pipeline/engine.py
+    responsibility: Ordered collection of nodes with reset, resume, and template serialization support.
+    important_methods:
+      - add_node
+      - reset
+      - iternodes
+      - to_template
+    upstream_dependencies:
+      - PipelineEngine
+    downstream_dependencies:
+      - BaseNode implementations
+    domain_tags:
+      - pipeline
+      - workflow
+    risk: medium
+
+  - symbol: BaseNode
+    kind: class
+    module: pychron/pipeline/nodes/base.py
+    responsibility: Base type for pipeline steps that transform state or generate outputs.
+    important_methods:
+      - run
+      - configure
+      - reset
+      - to_template
+    upstream_dependencies:
+      - PipelineEngine
+    downstream_dependencies:
+      - all concrete pipeline nodes
+    domain_tags:
+      - pipeline
+      - node
+    risk: medium
+
+  - symbol: DVCAnalysis
+    kind: class
+    module: pychron/dvc/dvc_analysis.py
+    responsibility: Analysis model used in DVC-backed processing and plotting workflows.
+    important_methods:
+      - load_raw_data
+      - sync_irradiation
+      - sync_metadata
+    upstream_dependencies:
+      - DVC
+    downstream_dependencies:
+      - AnalysisGroup
+      - pipeline nodes
+    domain_tags:
+      - dvc
+      - analysis
+      - processing
+    risk: medium
+
+  - symbol: AnalysisGroup
+    kind: class
+    module: pychron/processing/analyses/analysis_group.py
+    responsibility: Group-level reduction/statistics model for Ar-Ar workflows.
+    important_methods:
+      - weighted_age
+      - integrated_age
+      - isochron_age
+      - mswd
+    upstream_dependencies:
+      - DVCAnalysis
+      - argon calculation helpers
+    downstream_dependencies:
+      - ideogram/spectrum editors
+      - interpreted age workflows
+    domain_tags:
+      - processing
+      - arar
+      - statistics
+    risk: high-risk

@@ -77,7 +77,7 @@ class FigureNode(SortableNode):
     use_plotting = True
     editors = Dict
 
-    def bind_preferences(self):
+    def bind_preferences(self) -> None:
         bind_preference(self, "skip_meaning", "pychron.pipeline.skip_meaning")
 
     def reset(self) -> None:
@@ -87,9 +87,9 @@ class FigureNode(SortableNode):
 
     def refresh(self) -> None:
         for e in self.editors.values():
-            e.refresh_needed = True
+            e.request_rebuild()
 
-    def run(self, state):
+    def run(self, state) -> None:
         self.plotter_options = self.plotter_options_manager.selected_options
         po = self.plotter_options
         if not po:
@@ -125,7 +125,7 @@ class FigureNode(SortableNode):
                         unks = [u for u in unks if u.tag.lower() != "skip"]
 
                     editor.set_items(list(unks))
-                    editor.refresh_needed = True
+                    editor.request_refresh()
 
         for name, es in groupby_key(state.editors, "name"):
             for i, ei in enumerate(es):

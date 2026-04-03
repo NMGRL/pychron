@@ -103,6 +103,16 @@ class SceneCanvas(BaseDataCanvas):
         if old:
             old.on_trait_change(self.request_redraw, "layout_needed", remove=True)
 
+    def _bounds_changed(self, old, new):
+        handler = getattr(super(SceneCanvas, self), "_bounds_changed", None)
+        if handler is not None:
+            handler(old, new)
+
+        if self.scene:
+            self.scene.request_layout()
+        self.invalidate_draw()
+        self.request_redraw()
+
     def _scene_default(self):
         if self.scene_klass:
             return self.scene_klass()

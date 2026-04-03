@@ -14,121 +14,130 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
 
-from traits.api import HasTraits, Dict, Bool
+from collections import deque
+from typing import Dict as TypingDict
+from typing import Iterable, List, Optional, Set, Tuple
+
+from traits.api import Any, Bool, Dict, HasTraits
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
-from pychron.canvas.canvas2D.scene.primitives.valves import Valve
+from pychron.extraction_line.canvas.state import (
+    NetworkRegionState,
+    NetworkSnapshot,
+    NetworkValveState,
+)
 from pychron.extraction_line.graph.nodes import (
-    ValveNode,
-    RootNode,
-    PumpNode,
+    ColdFingerNode,
     Edge,
-    SpectrometerNode,
-    LaserNode,
-    TankNode,
-    PipetteNode,
     GaugeNode,
     GetterNode,
-    ColdFingerNode,
+    LaserNode,
+    PipetteNode,
+    PumpNode,
+    RootNode,
+    SpectrometerNode,
+    TankNode,
+    ValveNode,
 )
-from pychron.extraction_line.graph.traverse import bft
 
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-
-def split_graph(n):
+def split_graph(node: ValveNode) -> Tuple:
     """
-    valves only have binary connections
-    so can only split in half
+    Backward-compatible helper for callers that still use legacy split behavior.
     """
-
-    if len(n.edges) == 2:
-        e1, e2 = n.edges
-
-        n1, n2 = e1.get_nodes(n), e2.get_nodes(n)
+    if len(node.edges) == 2:
+        edge_a, edge_b = node.edges
+        neighbors_a = edge_a.get_nodes(node)
+        neighbors_b = edge_b.get_nodes(node)
         try:
-            n1, n2 = n1[0], n2[0]
+            node_a, node_b = neighbors_a[0], neighbors_b[0]
         except IndexError:
-            # occurs when edge is not connected to a node
-            return []
+            return tuple()
 
-        # ensure first node is a Valve node otherwise states not set correctly
-        # see issue #335
-        if not isinstance(n1, ValveNode):
-            return n2, n1
-        else:
-            return n1, n2
-    else:
-        if n.edges:
-            return (n.edges[0].get_nodes(n)[0],)
-        else:
-            return []
+        if not isinstance(node_a, ValveNode):
+            return node_b, node_a
+        return node_a, node_b
+
+    if node.edges:
+        return (node.edges[0].get_nodes(node)[0],)
+    return tuple()
 
 
 class ExtractionLineGraph(HasTraits):
     nodes = Dict
     suppress_changes = False
     inherit_state = Bool
+
     _cp = None
     _yd = None
+    _edges: List[Edge]
+    _last_snapshot = Any
 
-    def _findname(self, elem, tag):
+    def __init__(self, *args, **kw) -> None:
+        super(ExtractionLineGraph, self).__init__(*args, **kw)
+        self._edges = []
+        self._last_snapshot = None
+
+    def _findname(self, elem, tag: str) -> str:
         if self._cp:
-            a = elem.find(tag).text
+            value = elem.find(tag).text
         else:
-            # if isinstance(elem, (str, int)):
-            #     a = str(elem)
-            # else:
-            a = elem.get(tag)
-            if isinstance(a, dict):
-                a = str(a["name"])
-            # a = str(elem.get(tag)["name"])
+            value = elem.get(tag)
+            if isinstance(value, dict):
+                value = str(value["name"])
+        return value.strip()
 
-        return a.strip()
-
-    def _get_volume(self, v, tag="volume", default=0):
+    def _get_volume(self, elem, tag: str = "volume", default: float = 0) -> float:
         if self._cp:
-            vol = get_volume(v, tag, default)
-        else:
-            vol = v.get(tag, default)
-        return vol
+            return get_volume(elem, tag, default)
+        return elem.get(tag, default)
 
-    def _get_text(self, v):
+    def _get_text(self, elem) -> str:
         if self._cp:
-            t = v.text
+            text = elem.text
         else:
-            t = str(v.get("name", ""))
-        return t.strip()
+            text = str(elem.get("name", ""))
+        return text.strip()
 
-    def _get_elements(self, key):
+    def _get_elements(self, key: str) -> list:
         if self._cp:
             return self._cp.get_elements(key)
-        else:
-            return self._yd.get(key, [])
+        return self._yd.get(key, [])
 
-    def load(self, p):
-        if p.endswith(".yaml") or p.endswith(".yml"):
+    def _add_edge(
+        self, nodes: TypingDict[str, RootNode], edge: Edge, node_names: Iterable[str]
+    ) -> None:
+        connected = []
+        for name in node_names:
+            if name in nodes:
+                node = nodes[name]
+                edge.nodes.append(node)
+                node.add_edge(edge)
+                connected.append(name)
+        delimiter = "-" if len(connected) > 2 else "_"
+        edge.name = delimiter.join(connected)
+        self._edges.append(edge)
+
+    def load(self, path: str) -> None:
+        self._cp = None
+        self._yd = None
+        self._edges = []
+
+        if path.endswith(".yaml") or path.endswith(".yml"):
             from pychron.core.yaml import yload
 
-            self._yd = yload(p)
+            self._yd = yload(path)
         else:
-            self._cp = CanvasParser(p)
+            self._cp = CanvasParser(path)
             if self._cp.get_root() is None:
+                self.nodes = {}
                 return
 
-        nodes = dict()
-
-        # =======================================================================
-        # load nodes
-        # =======================================================================
-        # load roots
-        for t, klass in (
+        nodes: TypingDict[str, RootNode] = {}
+        for tag, klass in (
             ("stage", RootNode),
             ("circle_stage", RootNode),
             ("spectrometer", SpectrometerNode),
@@ -145,276 +154,301 @@ class ExtractionLineGraph(HasTraits):
             ("getter", GetterNode),
             ("coldfinger", ColdFingerNode),
         ):
-            for si in self._get_elements(t):
-                n = self._get_text(si)
-                if t in ("valve", "rough_valve", "manual_valve"):
-                    o_vol = self._get_volume(si, tag="open_volume", default=10)
-                    c_vol = self._get_volume(si, tag="closed_volume", default=5)
-                    vol = (o_vol, c_vol)
+            for element in self._get_elements(tag):
+                name = self._get_text(element)
+                if not name:
+                    continue
+                if tag in ("valve", "rough_valve", "manual_valve"):
+                    open_volume = self._get_volume(element, tag="open_volume", default=10)
+                    closed_volume = self._get_volume(
+                        element, tag="closed_volume", default=5
+                    )
+                    volume = (open_volume, closed_volume)
                 else:
-                    vol = self._get_volume(si)
+                    volume = self._get_volume(element)
 
-                node = klass(name=n, volume=vol)
-                nodes[n] = node
+                nodes[name] = klass(name=name, volume=volume)
 
-        # =======================================================================
-        # load edges
-        # =======================================================================
         for tag in ("connection", "elbow", "vconnection", "hconnection", "rconnection"):
-            for ei in self._get_elements(tag):
-                skey = self._findname(ei, "start")
-                ekey = self._findname(ei, "end")
-                vol = self._get_volume(ei)
-                edge = Edge(volume=vol)
-                s_name = ""
+            for element in self._get_elements(tag):
+                start = self._findname(element, "start")
+                end = self._findname(element, "end")
+                edge = Edge(volume=self._get_volume(element))
+                self._add_edge(nodes, edge, (start, end))
 
-                if skey in nodes:
-                    s_name = skey
-                    sa = nodes[s_name]
-                    edge.nodes.append(sa)
-                    sa.add_edge(edge)
-
-                e_name = ""
-                if ekey in nodes:
-                    e_name = ekey
-                    ea = nodes[e_name]
-                    # edge.b_node = ea
-                    edge.nodes.append(ea)
-                    ea.add_edge(edge)
-
-                edge.name = "{}_{}".format(s_name, e_name)
-
-        for c in ("tee_connection", "fork_connection"):
-            for conn in self._get_elements(c):
-                left = self._findname(conn, "left")
-                right = self._findname(conn, "right")
-                mid = self._findname(conn, "mid")
-
-                edge = Edge(vol=self._get_volume(conn))
-
-                ns = []
-                for x in (left, mid, right):
-                    if x in nodes:
-                        ln = nodes[x]
-                        edge.nodes.append(ln)
-                        ln.add_edge(edge)
-                        ns.append(x)
-
-                edge.name = "-".join(ns)
+        for tag in ("tee_connection", "fork_connection"):
+            for element in self._get_elements(tag):
+                left = self._findname(element, "left")
+                right = self._findname(element, "right")
+                mid = self._findname(element, "mid")
+                edge = Edge(volume=self._get_volume(element))
+                self._add_edge(nodes, edge, (left, mid, right))
 
         self.nodes = nodes
+        self._last_snapshot = self.compute_state()
 
-    def set_default_states(self, canvas):
-        for ni in self.nodes:
-            if isinstance(ni, ValveNode):
-                self.set_valve_state(ni, False)
-            self.set_canvas_states(canvas, ni)
+    def set_default_states(self, canvas) -> None:
+        for name, node in self.nodes.items():
+            if isinstance(node, ValveNode):
+                self.set_valve_state(name, False)
+        self.set_canvas_states(canvas, "")
 
-    def set_valve_state(self, name, state, *args, **kw):
+    def set_valve_state(self, name: str, state, *args, **kw) -> None:
         if name in self.nodes:
-            v_node = self.nodes[name]
-            v_node.state = "open" if state else "closed"
+            node = self.nodes[name]
+            if isinstance(node, ValveNode):
+                node.state = "open" if state else "closed"
+        self._last_snapshot = None
 
-    def set_canvas_states(self, canvas, name):
-        if not self.suppress_changes:
-            if hasattr(canvas, "scene"):
-                scene = canvas.scene
+    def _iter_open_region(
+        self, start: RootNode, visited: Set[str]
+    ) -> Tuple[List[RootNode], List[Edge], Set[str]]:
+        nodes: List[RootNode] = []
+        edges: Set[Edge] = set()
+        boundaries: Set[str] = set()
+        queue = deque([start])
+
+        while queue:
+            node = queue.popleft()
+            if node is None or node.name in visited or node.state == "closed":
+                continue
+
+            visited.add(node.name)
+            nodes.append(node)
+            for edge in node.edges:
+                saw_open_neighbor = False
+                for neighbor in edge.get_nodes(node):
+                    if neighbor is None:
+                        continue
+                    if neighbor.state == "closed":
+                        if isinstance(neighbor, ValveNode):
+                            boundaries.add(neighbor.name)
+                        continue
+                    saw_open_neighbor = True
+                    if neighbor.name not in visited:
+                        queue.append(neighbor)
+
+                if saw_open_neighbor:
+                    edges.add(edge)
+
+        return nodes, list(edges), boundaries
+
+    def _make_region_id(self, nodes: Iterable[RootNode]) -> str:
+        names = sorted(node.name for node in nodes)
+        return "region:{}".format("|".join(names))
+
+    def _source_rank(self, node: RootNode) -> Tuple[int, int, str, str]:
+        tag_priority = {
+            "pump": 0,
+            "pipette": 1,
+            "laser": 2,
+            "tank": 3,
+            "spectrometer": 4,
+            "coldfinger": 5,
+            "getter": 6,
+            "gauge": 7,
+        }
+        tag = getattr(node, "tag", "")
+        return (
+            -getattr(node, "precedence", 0),
+            tag_priority.get(tag, 99),
+            tag,
+            node.name,
+        )
+
+    def _dominant_source(
+        self, nodes: Iterable[RootNode]
+    ) -> Tuple[str, str, Optional[RootNode]]:
+        candidates = [
+            node for node in nodes if getattr(node, "precedence", 0) and hasattr(node, "tag")
+        ]
+        if not candidates:
+            return "", "", None
+
+        selected = sorted(candidates, key=self._source_rank)[0]
+        return getattr(selected, "tag", ""), selected.name, selected
+
+    def _component_volume(self, nodes: Iterable[RootNode], edges: Iterable[Edge]) -> float:
+        return sum(node.volume for node in nodes) + sum(edge.volume for edge in edges)
+
+    def _adjacent_regions(
+        self, valve: ValveNode, node_to_region: TypingDict[str, str]
+    ) -> List[str]:
+        region_ids: Set[str] = set()
+        for edge in valve.edges:
+            for neighbor in edge.get_nodes(valve):
+                if neighbor is None or neighbor.state == "closed":
+                    continue
+                region_id = node_to_region.get(neighbor.name)
+                if region_id:
+                    region_ids.add(region_id)
+        return sorted(region_ids)
+
+    def compute_state(self) -> NetworkSnapshot:
+        if self._last_snapshot is not None:
+            return self._last_snapshot
+
+        regions = {}
+        valves = {}
+        node_states = {}
+        edge_states = {}
+        node_to_region = {}
+        blocked_boundaries: Set[str] = set()
+        visited: Set[str] = set()
+        for node_name in sorted(self.nodes):
+            node = self.nodes[node_name]
+            if node.state == "closed" or node.name in visited:
+                continue
+
+            region_nodes, region_edges, boundaries = self._iter_open_region(node, visited)
+            if not region_nodes:
+                continue
+
+            region_id = self._make_region_id(region_nodes)
+            dominant_source, dominant_name, dominant_node = self._dominant_source(
+                region_nodes
+            )
+            region = NetworkRegionState(
+                identifier=region_id,
+                node_names=sorted(node.name for node in region_nodes),
+                edge_names=sorted(edge.name for edge in region_edges),
+                boundary_valves=sorted(boundaries),
+                dominant_source=dominant_source,
+                dominant_source_node=dominant_name,
+                volume=self._component_volume(region_nodes, region_edges),
+            )
+            regions[region_id] = region
+            blocked_boundaries.update(boundaries)
+
+            for region_node in region_nodes:
+                node_to_region[region_node.name] = region_id
+                node_states[region_node.name] = {
+                    "is_active": True,
+                    "region_id": region_id,
+                    "dominant_source": dominant_source,
+                    "dominant_source_node": dominant_name,
+                }
+
+            color_source = dominant_name if dominant_node is not None else ""
+            for region_edge in region_edges:
+                edge_states[region_edge.name] = {
+                    "is_active": True,
+                    "region_id": region_id,
+                    "dominant_source": dominant_source,
+                    "dominant_source_node": color_source,
+                }
+
+        for node in self.nodes.values():
+            if not isinstance(node, ValveNode):
+                continue
+
+            if node.state == "closed":
+                adjacent_regions = self._adjacent_regions(node, node_to_region)
+                side_volumes = [regions[rid].volume for rid in adjacent_regions if rid in regions]
+                max_side_volume = max(side_volumes) if side_volumes else 0
+                dominant_source = ""
+                dominant_source_node = ""
+                if adjacent_regions:
+                    dominant_region = max(adjacent_regions, key=lambda rid: regions[rid].volume)
+                    dominant_source = regions[dominant_region].dominant_source
+                    dominant_source_node = regions[dominant_region].dominant_source_node
+
+                valves[node.name] = NetworkValveState(
+                    name=node.name,
+                    region_id="",
+                    dominant_source=dominant_source,
+                    dominant_source_node=dominant_source_node,
+                    region_volume=max_side_volume,
+                    valve_volume=node.volume,
+                    side_volumes=side_volumes,
+                    blocked_by_closed=bool(adjacent_regions),
+                    blocked_boundaries=list(adjacent_regions),
+                )
+                node_states[node.name] = {
+                    "is_active": False,
+                    "region_id": "",
+                    "dominant_source": dominant_source,
+                    "dominant_source_node": dominant_source_node,
+                }
             else:
-                scene = canvas.canvas2D.scene
-            if name in self.nodes:
-                s_node = self.nodes[name]
+                region_id = node_to_region.get(node.name, "")
+                region = regions.get(region_id)
+                dominant_source = region.dominant_source if region else ""
+                dominant_source_node = region.dominant_source_node if region else ""
+                blocked_for_region = region.boundary_valves if region else []
 
-                # new algorithm
-                # if valve closed
-                #    split tree and fill each sub tree
-                # else:
-                #    for each edge of the start node
-                #        breath search for the max state
-                #
-                #    find max max_state
-                #    fill nodes with max_state
-                #        using a depth traverse
-                #
-                # new variant
-                # recursively split tree if node is closed
+                valves[node.name] = NetworkValveState(
+                    name=node.name,
+                    region_id=region_id,
+                    dominant_source=dominant_source,
+                    dominant_source_node=dominant_source_node,
+                    region_volume=region.volume if region else 0,
+                    valve_volume=node.volume,
+                    side_volumes=[],
+                    blocked_by_closed=bool(blocked_for_region),
+                    blocked_boundaries=list(blocked_for_region),
+                )
 
-                self._set_state(s_node, scene)
-                self._clear_visited()
+        snapshot = NetworkSnapshot(
+            regions=regions,
+            valves=valves,
+            node_states=node_states,
+            edge_states=edge_states,
+            node_to_region=node_to_region,
+            region_count=len(regions),
+            blocked_boundaries=sorted(blocked_boundaries),
+        )
+        self._last_snapshot = snapshot
+        return snapshot
 
-    def _set_state(self, n, scene=None):
-        if n:
-            if n.state == "closed" and not n.visited:
-                n.visited = True
-                # print('splitting on {}'.format(n.name))
-                # print(','.join([x.name for x in split_graph(n)]))
-                for ni in split_graph(n):
-                    self._set_state(ni, scene)
-            else:
-                state, term = self._find_max_state(n)
-                # print(state, term, n.__class__.__name__, n.name)
-                self.fill(scene, n, state, term)
-                self._clear_fvisited()
-
-    def calculate_volumes(self, node):
+    def calculate_volumes(self, node) -> List[Tuple[str, float]]:
         if isinstance(node, str):
-            if node not in self.nodes:
-                return [
-                    (0, 0),
-                ]
-
-            node = self.nodes[node]
-
-        if node.state == "closed":
-            nodes = split_graph(node)
+            node_obj = self.nodes.get(node)
         else:
-            nodes = (node,)
+            node_obj = node
+        if node_obj is None:
+            return [(0, 0)]
 
-        vs = [(ni.name, self._calculate_volume(ni)) for ni in nodes]
-        self._clear_fvisited()
-        return vs
+        if not isinstance(node_obj, ValveNode):
+            snapshot = self.compute_state()
+            region_id = snapshot.node_to_region.get(node_obj.name, "")
+            region = snapshot.regions.get(region_id)
+            return [(region_id or node_obj.name, region.volume if region else 0)]
 
-    def _calculate_volume(self, node, k=0):
-        """
-        use a Depth-first Traverse
-        accumulate volume
-        """
-        debug = False
-        vol = node.volume
-        node.f_visited = True
-        if debug:
-            print("=" * (k + 1), node.name, node.volume, vol)
+        snapshot = self.compute_state()
+        valve_state = snapshot.valves.get(node_obj.name)
+        if valve_state is None:
+            return [(node_obj.name, 0)]
 
-        for i, ei in enumerate(node.edges):
-            # ns = ei.get_nodes(node)
-            for n in ei.get_nodes(node):
-                if n is None:
-                    continue
+        if valve_state.side_volumes:
+            labels = valve_state.blocked_boundaries
+            return list(zip(labels, valve_state.side_volumes))
+        label = valve_state.region_id or node_obj.name
+        return [(label, valve_state.region_volume)]
 
-                vol += ei.volume
-                if debug:
-                    print("-" * (k + i + 1), ei.name, ei.volume, vol)
-
-                if not n.f_visited:
-                    n.f_visited = True
-                    if n.state == "closed":
-                        vol += n.volume
-                        if debug:
-                            print("e" * (k + i + 1), n.name, n.volume, vol)
-
-                    else:
-                        v = self._calculate_volume(n, k=k + 1)
-                        vol += v
-                        if debug:
-                            print("n" * (k + i + 1), n.name, v, vol)
-
-        return vol
-
-    def _find_max_state(self, node):
-        """
-        use a Breadth-First Traverse
-        acumulate the max state at each node
-        """
-        m_state, term, p = False, "", 0
-
-        for ni in bft(self, node):
-            if isinstance(ni, PumpNode):
-                return "pump", ni.name
-
-            if ni.precedence > p:
-                p = ni.precedence
-                m_state, term = ni.tag, ni.name
-
-            # if isinstance(ni, LaserNode):
-            #     m_state, term = 'laser', ni.name
-            # elif isinstance(ni, PipetteNode):
-            #     m_state, term = 'pipette', ni.name
-            #
-            # if m_state not in ('laser', 'pipette'):
-            #     if isinstance(ni, SpectrometerNode):
-            #         m_state, term = 'spectrometer', ni.name
-            #     elif isinstance(ni, TankNode):
-            #         m_state, term = 'tank', ni.name
-            #     elif isinstance(ni, GetterNode):
-            #         m_state, term = 'getter', ni.name
-        else:
-            return m_state, term
-
-    def fill(self, scene, root, state, term):
-        self._set_item_state(scene, root.name, state, term)
-        for ei in root.edges:
-            # n = ei.get_nodes(root)
-            for n in ei.get_nodes(root):
-                if n is None:
-                    continue
-                self._set_item_state(scene, ei.name, state, term)
-
-                if n.state != "closed" and not n.f_visited:
-                    n.f_visited = True
-                    self.fill(scene, n, state, term)
-
-    def _set_item_state(self, scene, name, state, term, color=None):
-        if not isinstance(name, str):
-            raise ValueError("name needs to be a str. provided={}".format(name))
-
-        obj = scene.get_item(name)
-        if obj is None or obj.type_tag in ("turbo", "tank", "ionpump"):
+    def set_canvas_states(self, canvas, name: str) -> None:
+        if self.suppress_changes:
             return
-
-        if not color and state:
-            color = scene.get_item(term).default_color
-
-        if isinstance(obj, Valve):
-            # set the color of the valve to
-            # the max state if the valve is open
-            if self.inherit_state:
-                if obj.state != "closed":
-                    if state:
-                        obj.active_color = color
-                    else:
-                        obj.active_color = obj.oactive_color
-
-            return
-
-        if state:
-            obj.active_color = color
-            obj.state = True
-        else:
-            obj.state = False
-
-    def _clear_visited(self):
-        for ni in self.nodes.values():
-            ni.visited = False
-
-    def _clear_fvisited(self):
-        for ni in self.nodes.values():
-            ni.f_visited = False
+        snapshot = self.compute_state()
+        if hasattr(canvas, "apply_network_snapshot"):
+            canvas.apply_network_snapshot(snapshot)
+        elif hasattr(canvas, "canvas2D") and hasattr(canvas.canvas2D, "apply_network_snapshot"):
+            canvas.canvas2D.apply_network_snapshot(snapshot)
 
     def __getitem__(self, key):
         if not isinstance(key, str):
             key = key.name
-
         if key in self.nodes:
             return self.nodes[key]
-
-            # def _get_node(self, name):
-            #     return bfs(self, self.root, name)
+        return None
 
 
 if __name__ == "__main__":
-    elg = ExtractionLineGraph()
-    elg.load("/Users/ross/Pychrondata_dev/setupfiles/canvas2D/canvas.xml")
-    elg.set_valve_state("C", True)
-    elg.set_valve_state("D", True)
-
-    elg.set_valve_state("D", False)
-    elg._set_state(elg.nodes["D"])
-    # elg.set_canvas_states('D')
-    # print 'exception', elg.calculate_volumes('Obama')
-    # print 'exception', elg.calculate_volumes('Bone')
-    # state, root = elg.set_valve_state('H', True)
-    # state, root = elg.set_valve_state('H', False)
-
-    # print '-------------------------------'
-    # print state, root
+    graph = ExtractionLineGraph()
+    graph.load("/Users/ross/Pychrondata_dev/setupfiles/canvas2D/canvas.xml")
+    graph.set_valve_state("C", True)
+    graph.set_valve_state("D", True)
+    graph.set_valve_state("D", False)
+    print(graph.calculate_volumes("D"))
 
 # ============= EOF =============================================

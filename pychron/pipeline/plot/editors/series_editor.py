@@ -157,13 +157,13 @@ class AnalysisTypeSeriesEditor(SeriesEditor):
         )
         return opt
 
-    def _configure_plotter_options_button_fired(self):
+    def _configure_plotter_options_button_fired(self) -> None:
         info = OptionsController(model=self.options_manager).edit_traits(
             view=view("Timeseries Options"), kind="livemodal"
         )
         if info.result:
             self.plotter_options = self.options_manager.selected_options
-            self.refresh_needed = True
+            self.request_rebuild()
 
     def traits_view(self):
         return View(

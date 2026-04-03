@@ -66,7 +66,7 @@ class FigureModelRefreshTestCase(unittest.TestCase):
     def test_refresh_reuses_panels_when_topology_is_same(self):
         model = DummyFigureModel(plot_options=DummyOptions())
         model.analyses = [self._analysis("a"), self._analysis("b")]
-        model.refresh(force=True)
+        self.assertTrue(model.refresh(force=True))
 
         panel = model.panels[0]
         figure = panel.figures[0]
@@ -74,7 +74,7 @@ class FigureModelRefreshTestCase(unittest.TestCase):
         self.assertEqual(figure.replot_count, 1)
 
         model.analyses = [self._analysis("c"), self._analysis("d")]
-        model.refresh()
+        self.assertFalse(model.refresh())
 
         self.assertIs(model.panels[0], panel)
         self.assertIs(model.panels[0].figures[0], figure)
@@ -85,7 +85,7 @@ class FigureModelRefreshTestCase(unittest.TestCase):
     def test_refresh_rebuilds_panels_when_topology_changes(self):
         model = DummyFigureModel(plot_options=DummyOptions())
         model.analyses = [self._analysis("a", graph_id=0)]
-        model.refresh(force=True)
+        self.assertTrue(model.refresh(force=True))
 
         panel = model.panels[0]
 
@@ -93,9 +93,20 @@ class FigureModelRefreshTestCase(unittest.TestCase):
             self._analysis("a", graph_id=0),
             self._analysis("b", graph_id=1),
         ]
-        model.refresh()
+        self.assertTrue(model.refresh())
 
         self.assertEqual(len(model.panels), 2)
+        self.assertIsNot(model.panels[0], panel)
+
+    def test_force_refresh_rebuilds_panels_even_when_topology_is_same(self):
+        model = DummyFigureModel(plot_options=DummyOptions())
+        model.analyses = [self._analysis("a"), self._analysis("b")]
+        model.refresh(force=True)
+
+        panel = model.panels[0]
+
+        model.analyses = [self._analysis("c"), self._analysis("d")]
+        self.assertTrue(model.refresh(force=True))
         self.assertIsNot(model.panels[0], panel)
 
 

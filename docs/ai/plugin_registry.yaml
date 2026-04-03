@@ -1,0 +1,151 @@
+version: 1
+description: >
+  Curated plugin registry for the main active plugins and extension points that
+  shape startup and task wiring.
+plugins:
+  - plugin_id: pychron.hardware.plugin
+    class: HardwarePlugin
+    module: pychron/hardware/tasks/hardware_plugin.py
+    responsibility: Bootstrap hardware managers, expose shared hardware services, and optionally start proxy services.
+    service_offers:
+      - FlagManager
+    extension_points_consumed:
+      - pychron.hardware.managers
+    extension_points_provided:
+      - pychron.video.sources
+    upstream_dependencies:
+      - BaseTaskPlugin
+      - preferences
+      - Initializer
+    downstream_dependencies:
+      - hardware managers
+      - ICoreDevice services
+      - HardwareTask
+    domain_tags:
+      - plugin
+      - hardware
+      - bootstrap
+    risk: high-risk
+    safe_to_edit: false
+
+  - plugin_id: pychron.extraction_line
+    class: ExtractionLinePlugin
+    module: pychron/extraction_line/tasks/extraction_line_plugin.py
+    responsibility: Register extraction-line manager, task, preferences panes, and procedure/task menu contributions.
+    service_offers:
+      - ExtractionLineManager
+      - IPyScriptRunner
+    extension_points_consumed:
+      - pychron.extraction_line.plugin_canvases
+    extension_points_provided: []
+    upstream_dependencies:
+      - BaseTaskPlugin
+      - HardwarePlugin
+    downstream_dependencies:
+      - ExtractionLineTask
+      - ExtractionLineManager
+      - procedure actions
+    domain_tags:
+      - plugin
+      - extraction-line
+      - task
+    risk: high-risk
+    safe_to_edit: false
+
+  - plugin_id: pychron.experiment.plugin
+    class: ExperimentPlugin
+    module: pychron/experiment/tasks/experiment_plugin.py
+    responsibility: Register experiment task, preferences panes, run-history utilities, and task extension hooks.
+    service_offers: []
+    extension_points_consumed:
+      - pychron.experiment.events
+      - pychron.experiment.dock_pane_factories
+      - pychron.experiment.activations
+      - pychron.experiment.deactivations
+    extension_points_provided: []
+    upstream_dependencies:
+      - BaseTaskPlugin
+      - DVC services
+    downstream_dependencies:
+      - ExperimentEditorTask
+      - experiment menu/actions
+    domain_tags:
+      - plugin
+      - experiment
+      - task
+    risk: medium
+    safe_to_edit: true
+
+  - plugin_id: pychron.dvc.plugin
+    class: DVCPlugin
+    module: pychron/dvc/tasks/dvc_plugin.py
+    responsibility: Provide the DVC service, repository task, background fetch, and DVC-related tools/actions.
+    service_offers:
+      - DVC
+      - DVCPersister
+    extension_points_consumed: []
+    extension_points_provided:
+      - pychron.background_processes
+    upstream_dependencies:
+      - BaseTaskPlugin
+      - git/database config
+    downstream_dependencies:
+      - PipelineTask
+      - ExperimentExecutor
+      - ExperimentRepoTask
+    domain_tags:
+      - plugin
+      - dvc
+      - persistence
+    risk: high-risk
+    safe_to_edit: false
+
+  - plugin_id: pychron.pipeline.plugin
+    class: PipelinePlugin
+    module: pychron/pipeline/tasks/plugin.py
+    responsibility: Register pipeline task, browser models, node registries, templates, and pipeline menu wiring.
+    service_offers:
+      - SampleBrowserModel
+      - InterpretedAgeBrowserModel
+    extension_points_consumed:
+      - pychron.pipeline.nodes
+      - pychron.pipeline.node_factories
+      - pychron.pipeline.predefined_templates
+      - pychron.pipeline.pipeline_group_icon_map
+    extension_points_provided: []
+    upstream_dependencies:
+      - BaseTaskPlugin
+      - DVC
+    downstream_dependencies:
+      - PipelineTask
+      - PipelineEngine
+      - pipeline node ecosystem
+    domain_tags:
+      - plugin
+      - pipeline
+      - data-reduction
+    risk: medium
+    safe_to_edit: true
+
+  - plugin_id: pychron.pyscript.plugin
+    class: PyScriptPlugin
+    module: pychron/pyscripts/tasks/pyscript_plugin.py
+    responsibility: Expose pyscript editing and related script-facing infrastructure used by experiment and extraction workflows.
+    service_offers: []
+    extension_points_consumed: []
+    extension_points_provided: []
+    upstream_dependencies:
+      - BaseTaskPlugin
+    downstream_dependencies:
+      - procedure/script editors
+      - ExtractionLinePlugin optional procedure menu
+    domain_tags:
+      - plugin
+      - pyscript
+      - scripting
+    risk: medium
+    safe_to_edit: true
+
+notes:
+  - safe_to_edit=true means usually safe for localized menu/task/service wiring changes, not broad lifecycle rewrites.
+  - high-risk plugins affect startup order, shared services, or runtime persistence and should be changed conservatively.

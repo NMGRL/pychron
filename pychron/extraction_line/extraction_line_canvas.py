@@ -51,6 +51,12 @@ class ExtractionLineCanvas(HasTraits):
         """ """
         self._canvas_function("load_canvas_file", *args, **kw)
 
+    def apply_canvas_state(self, state, *args, **kw):
+        self._canvas_function("apply_canvas_state", state, *args, **kw)
+
+    def set_valve_visual_state(self, name, visual_state, *args, **kw):
+        self._canvas_function("set_valve_visual_state", name, visual_state, *args, **kw)
+
     def update_switch_state(self, name, state, *args, **kw):
         """
         do the specific canvas action
@@ -87,7 +93,6 @@ class ExtractionLineCanvas(HasTraits):
 
     def _canvas2D_group(self):
         """ """
-
         g = UItem(
             "canvas2D",
             editor=ComponentEditor(),
