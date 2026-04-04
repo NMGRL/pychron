@@ -22,6 +22,15 @@ from pychron.hardware.core.watchdog.executor_health_checks import (
 )
 from pychron.hardware.core.watchdog.telemetry_integration import (
     HeartbeatTelemetryListener,
+    ServiceHealthTelemetryListener,
+)
+from pychron.hardware.core.watchdog.service_heartbeat import (
+    ServiceHeartbeat,
+    ServiceState,
+)
+from pychron.hardware.core.watchdog.service_quorum_checker import (
+    ServiceQuorumChecker,
+    ServiceQuorumStrategy,
 )
 
 __all__ = [
@@ -35,4 +44,9 @@ __all__ = [
     "DeviceQuorumChecker",
     "log_device_status",
     "HeartbeatTelemetryListener",
+    "ServiceHealthTelemetryListener",
+    "ServiceHeartbeat",
+    "ServiceState",
+    "ServiceQuorumChecker",
+    "ServiceQuorumStrategy",
 ]
