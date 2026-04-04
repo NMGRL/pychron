@@ -6,7 +6,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Dict, List, Any, Optional
 
-from .event import TelemetryEvent
+from .event import TelemetryEvent, EventType
+
+
+# Device operation event types (canonical and legacy names)
+DEVICE_OPERATION_TYPES = {
+    EventType.DEVICE_IO.value,
+    EventType.DEVICE_COMMAND.value,  # Backward compat
+}
+
+# Watchdog event types
+WATCHDOG_EVENT_TYPES = {
+    EventType.DEVICE_HEALTH_STATE_CHANGE.value,
+    EventType.SERVICE_HEALTH_STATE_CHANGE.value,
+    EventType.DEVICE_HEALTH_FAILURE.value,
+    EventType.SERVICE_HEALTH_FAILURE.value,
+    EventType.DEVICE_QUORUM_CHECK.value,
+    EventType.SERVICE_QUORUM_CHECK.value,
+}
 
 
 @dataclass
@@ -15,7 +32,7 @@ class StateTransition:
 
     ts: float
     state_from: Optional[str]
-    state_to: str
+    state_to: Optional[str]
     reason: Optional[str]
     accepted: bool
 
@@ -44,6 +61,7 @@ class ReplayReport:
         state_machine_history: State transitions per machine
         device_commands: Device command spans
         monitor_history: Monitor check and decision events
+        watchdog_events: Device and service health monitoring events
         summary: Human-readable incident summary
     """
 
@@ -55,6 +73,7 @@ class ReplayReport:
     )
     device_commands: List[Dict[str, Any]] = field(default_factory=list)
     monitor_history: List[Dict[str, Any]] = field(default_factory=list)
+    watchdog_events: List[Dict[str, Any]] = field(default_factory=list)
     summary: str = ""
 
 
@@ -135,14 +154,14 @@ def replay_queue_telemetry(path: Path) -> ReplayReport:
             transition = StateTransition(
                 ts=event.ts,
                 state_from=event.state_from,
-                state_to=event.state_to,
+                state_to=event.state_to or "unknown",
                 reason=event.reason,
                 accepted=event.accepted or True,
             )
             report.state_machine_history[machine].append(transition)
 
-        # Extract device commands
-        if event.event_type in ("device_command", "command"):
+        # Extract device commands (both canonical and legacy names)
+        if event.event_type in DEVICE_OPERATION_TYPES:
             report.device_commands.append(
                 {
                     "ts": event.ts,
@@ -166,6 +185,21 @@ def replay_queue_telemetry(path: Path) -> ReplayReport:
                     "ts": event.ts,
                     "event_type": event.event_type,
                     "reason": event.reason,
+                    "payload": event.payload,
+                }
+            )
+
+        # Extract watchdog events (device and service health)
+        if event.event_type in WATCHDOG_EVENT_TYPES:
+            report.watchdog_events.append(
+                {
+                    "ts": event.ts,
+                    "event_type": event.event_type,
+                    "component": event.component,
+                    "action": event.action,
+                    "success": event.success,
+                    "phase": event.payload.get("phase") if event.payload else None,
+                    "message": event.payload.get("message") if event.payload else None,
                     "payload": event.payload,
                 }
             )
@@ -199,6 +233,10 @@ def _generate_incident_summary(report: ReplayReport) -> str:
     # Add monitor summary
     if report.monitor_history:
         lines.append(f"Monitor/Interlock events: {len(report.monitor_history)}")
+
+    # Add watchdog summary
+    if report.watchdog_events:
+        lines.append(f"Watchdog/Health events: {len(report.watchdog_events)}")
 
     return "\n".join(lines)
 

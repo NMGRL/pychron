@@ -30,8 +30,9 @@ from pychron.loggable import Loggable
 
 class WaitControl(Loggable):
     page_name = Str("Wait")
-    message = Str
+    message = Str("")
     message_color = PyfaceColor("black")
+    message_bgcolor = PyfaceColor("#eaebbc")
 
     high = Int(auto_set=False, enter_set=True)
     duration = Float(10)

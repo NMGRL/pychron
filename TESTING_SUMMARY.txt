@@ -1,0 +1,295 @@
+PYCHRON TESTING PATTERNS AND REGRESSION RISK ANALYSIS
+======================================================
+
+ABSOLUTE FILE PATHS FOR KEY TEST FILES:
+
+1. DEVICE BOOTSTRAP TESTS
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/core/tests/device_bootstrap_test.py
+   Lines: 110
+   Pattern: Lightweight harness class (_BootstrapHarness)
+   Coverage: Bootstrap lifecycle, error handling per phase
+   Dependencies: None (PyYAML optional)
+
+2. COMMUNICATOR TESTS (HasCommunicator Mixin)
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/tests/has_communicator_test.py
+   Lines: 82
+   Pattern: Fake communicator class (_FakeCommunicator)
+   Coverage: Communicator factory, creation, opening, reporting
+   Dependencies: None
+
+3. ETHERNET COMMUNICATOR TESTS
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/tests/ethernet_communicator_test.py
+   Lines: 81
+   Pattern: Fake socket class (_FakeSocket)
+   Coverage: TCP/UDP handlers, message framing, socket reset
+   Dependencies: Traits stack (skipIf not available)
+
+4. SIMULATION CORE TESTS
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/tests/simulation_core_test.py
+   Lines: 103
+   Pattern: Adapter pattern with simulator protocol
+   Coverage: Replay adapter, recording adapter, fault policies
+   Dependencies: Traits stack (skipIf not available)
+   Fault Types: timeout, disconnect, stale_status, out_of_range, malformed_packet
+
+5. TRANSPORT SIMULATION TESTS (End-to-End)
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/tests/transport_simulation_test.py
+   Lines: 209
+   Pattern: Full device + communicator + simulator adapter
+   Coverage: Valve actuator, NGX spectrometer, fault injection
+   Dependencies: Traits stack (skipIf not available)
+   Key Test: test_pychron_valve_simulator_end_to_end()
+
+6. EXECUTOR STATE MACHINE TESTS
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/experiment/tests/executor_state_machine_test.py
+   Lines: 251
+   Pattern: Minimal stub executor (_ExecutorStub)
+   Coverage: Queue/run transitions, overlap logic, settle modes
+   Dependencies: None
+
+7. DEVICE I/O TELEMETRY TESTS
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/experiment/telemetry/tests/test_device_io_telemetry.py
+   Lines: 402
+   Pattern: Decorator, context manager, mock objects
+   Coverage: Timing capture, success/failure, context propagation
+   Dependencies: unittest.mock
+   Key Classes: TelemetryDeviceIOContext, telemetry_device_io decorator
+
+8. EXTRACTION LINE NETWORK STATE TESTS
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/extraction_line/tests/network_state_test.py
+   Lines: 191
+   Pattern: Graph construction helpers, state computation
+   Coverage: Region connectivity, valve state, pressure regions
+   Dependencies: YAML (stubbed if missing)
+
+9. EXTRACTION SCRIPT TESTS
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/pyscripts/tests/extraction_script.py
+   Lines: 108
+   Pattern: Dummy device/manager/application classes
+   Coverage: waitfor() functionality, timing behavior
+   Dependencies: None
+
+10. MAIN TEST SUITE
+    Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/test_suite.py
+    Lines: 206
+    Function: suite()
+    Includes: DeviceBootstrapTestCase, executor state machine, telemetry tests
+    MISSING: Hardware communicator tests
+
+CORE DEVICE CLASSES TO UNDERSTAND:
+
+1. BaseCoreDevice
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/base_core_device.py
+   Lines: 348
+   Key Methods: 
+     - ask() - sends commands, has @crc_caller decorator
+     - test_connection() - verifies device reachability
+     - blocking_poll() - waits for condition with timeout
+
+2. ScanableDevice
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/scanable_device.py
+   Lines: 334
+   Key Methods:
+     - setup_scan() - configuration loading
+     - _scan_() - update loop execution
+     - lock_scan() - synchronization
+
+3. HasCommunicator Mixin
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/has_communicator.py
+   Lines: 128
+   Key Methods:
+     - build_communicator() - factory method
+     - create_communicator() - factory + open
+     - require_communicator() - validation with logging
+     - open() - open communicator and report
+
+4. DeviceManager
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/extraction_line/device_manager.py
+   Lines: 84
+   Key Methods:
+     - start_scans() - spawn update thread
+     - _scan() - update loop (NO ERROR HANDLING)
+     - stop_scans() - stop update thread
+
+COMMUNICATORS WITH RETRY LOGIC:
+
+1. EthernetCommunicator
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/communicators/ethernet_communicator.py
+   Lines: 664
+   ask() method (~line 491-506):
+     - Retries 2-3 times on None response
+     - 25ms sleep between retries
+     - Controlled by use_error_mode parameter
+   read() method (~line 565-579):
+     - Retries 3 times on socket.timeout
+     - Sets error_mode flag on failure
+
+2. SerialCommunicator
+   Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/communicators/serial_communicator.py
+   Lines: 644
+   _write() method:
+     - Has retry_on_exception parameter
+     - Retries once after catching exception
+
+SIMULATION FRAMEWORK LOCATION:
+
+Path: /Users/jakeross/_Programming/_PychronLabsLLC/pychron/pychron/hardware/core/simulation/
+
+Key Classes:
+  - SimulatorTransportAdapter - main injection point
+  - FaultPolicy - configures fault injection patterns
+  - TransportSession - records/replays sessions
+  - ReplayTransportAdapter - deterministic replay
+  - RecordingTransportAdapter - session capture
+  - PychronValveSimulatorProtocol - valve simulator
+  - NGXSimulatorProtocol - spectrometer simulator
+
+TESTING STRATEGY FOR WATCHDOG:
+
+Phase 1: Unit Tests (No Dependencies)
+  - Test health check logic in isolation
+  - Test heartbeat message construction
+  - Test state tracking without device interaction
+  - Use lightweight harness classes
+  - Files: core/tests/device_bootstrap_test.py pattern
+
+Phase 2: Integration Tests (Simulation Only)
+  - Test health checks with simulated devices
+  - Inject timeout/disconnect faults
+  - Verify recovery logic with fault injection
+  - Use SimulatorTransportAdapter
+  - Files: hardware/core/tests/transport_simulation_test.py pattern
+
+Phase 3: Manager Integration Tests
+  - Test watchdog in DeviceManager._scan() loop
+  - Mock devices with error conditions
+  - Verify scan loop error handling
+  - Track health check execution
+  - Create new test file: extraction_line/tests/device_watchdog_test.py
+
+Phase 4: State Machine Tests
+  - Verify executor state machine unaffected
+  - Test telemetry capture of health operations
+  - Verify no interference with active runs
+  - Use executor_state_machine_test.py pattern
+
+REGRESSION TEST COMMAND:
+
+Basic smoke test (no traits required):
+  python -m unittest pychron.core.tests.device_bootstrap_test
+
+Full hardware tests (requires traits):
+  python -m unittest pychron.hardware.core.tests.has_communicator_test
+  python -m unittest pychron.hardware.core.tests.ethernet_communicator_test
+  python -m unittest pychron.hardware.core.tests.simulation_core_test
+  python -m unittest pychron.hardware.core.tests.transport_simulation_test
+
+Executor tests:
+  python -m unittest pychron.experiment.tests.executor_state_machine_test
+
+Telemetry tests:
+  python -m unittest pychron.experiment.telemetry.tests.test_device_io_telemetry
+
+Full suite:
+  python -m unittest pychron.test_suite
+
+RISK AREAS FOR WATCHDOG IMPLEMENTATION:
+
+HIGH RISK:
+  1. DeviceManager._scan() loop - no error handling, must not break
+  2. Device.ask() - existing retry logic, must coordinate
+  3. Bootstrap lifecycle - watchdog init timing
+  4. State machine transitions - executor control flow
+
+MEDIUM RISK:
+  1. Telemetry system - must log operations correctly
+  2. Device.lock_scan() - contention with health checks
+  3. Communication errors - must distinguish from operational errors
+
+LOW RISK:
+  1. Configuration loading - watchdog config isolated
+  2. UI display - health status independent of operations
+  3. DVC/database - watchdog doesn't save data
+
+MIGRATION PATH:
+
+Baseline (Current):
+  - Device has ask() with built-in retries (2-3 attempts, 25ms)
+  - EthernetCommunicator has error_mode flag
+  - SerialCommunicator has retry_on_exception flag
+  - No device health tracking
+  - No periodic heartbeats
+
+Phase 1 (Add Watchdog):
+  - Add heartbeat_period to BaseCoreDevice
+  - Add last_heartbeat_time tracking
+  - Add health status enum (OK, STALE, UNREACHABLE)
+  - Tests: has_communicator_test.py pattern
+
+Phase 2 (Integration):
+  - Add watchdog execution to DeviceManager._scan()
+  - Coordinate with existing retry logic
+  - Use simulation adapter for testing
+  - Tests: transport_simulation_test.py pattern
+
+Phase 3 (Recovery):
+  - Add recovery decision logic
+  - Trigger device reset/reinit on failure
+  - Coordinate with executor state machine
+  - Tests: executor_state_machine_test.py pattern
+
+REUSABLE TEST FIXTURES:
+
+1. _FakeCommunicator (from has_communicator_test.py):
+   - Minimal interface for unit tests
+   - Tracks calls for verification
+   - Fast execution, no I/O
+
+2. _FakeSocket (from ethernet_communicator_test.py):
+   - Simulates network socket behavior
+   - Configurable recv chunks
+   - Useful for testing packet handling
+
+3. SimulatorTransportAdapter (from simulation/):
+   - Full protocol simulation
+   - Fault injection support
+   - Session recording/replay
+   - Highly recommended for integration tests
+
+4. TelemetryRecorder (from telemetry/):
+   - Records operation timing and status
+   - Structured JSON logging
+   - Useful for performance analysis
+
+KEY INSIGHTS:
+
+1. Error Path Coverage Gap:
+   - Retry logic exists but not extensively tested
+   - No tests for sustained disconnections
+   - No device health aggregation tests
+   - No recovery decision tests
+
+2. Test Isolation is Critical:
+   - Hardware tests can be skipped (traits optional)
+   - Core tests have zero dependencies
+   - Simulation layer avoids real hardware
+   - This enables safe local development
+
+3. Integration Points are Few:
+   - DeviceManager._scan() is main entry point
+   - BaseCoreDevice.ask() is communication point
+   - TelemetryContext captures operations
+   - Executor state machine tracks overall state
+
+4. Minimal Footprint Possible:
+   - Heartbeat logic can live in BaseCoreDevice
+   - Manager integration is 5-10 lines
+   - Tests can use existing simulator framework
+   - No new dependencies required
+
+5. Regression Risk Mitigated By:
+   - Comprehensive existing test suite
+   - Simulation framework for isolation
+   - Lightweight harness patterns
+   - Clear separation of concerns
+

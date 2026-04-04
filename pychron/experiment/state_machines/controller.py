@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 from pychron import globals as globalv
 from pychron.experiment.telemetry.context import TelemetryContext
@@ -149,6 +149,7 @@ class ExecutorController:
         # Initialize telemetry (app-wide context and recorder)
         self.telemetry_context: TelemetryContext | None = None
         self.telemetry_recorder: TelemetryRecorder | None = None
+        self._queue_recorders: Dict[str, TelemetryRecorder] = {}
         if getattr(globalv, "telemetry_enabled", False):
             self.telemetry_context = TelemetryContext()
             telemetry_dir = Path.home() / ".pychron_telemetry" / "logs"
@@ -180,6 +181,60 @@ class ExecutorController:
 
     def register_on_transition(self, callback: Callable[[str, TransitionRecord], None]) -> None:
         self._on_transition.append(callback)
+
+    def get_queue_recorder(self, queue_name: str) -> TelemetryRecorder:
+        """Get or create recorder for this queue.
+
+        Args:
+            queue_name: Name of the queue
+
+        Returns:
+            TelemetryRecorder instance for the queue
+        """
+        if queue_name not in self._queue_recorders:
+            telemetry_dir = Path.home() / ".pychron_telemetry" / "logs"
+            telemetry_dir.mkdir(parents=True, exist_ok=True)
+            log_file = telemetry_dir / f"telemetry_{queue_name}_{os.getpid()}.jsonl"
+            recorder = TelemetryRecorder(log_path=log_file)
+            self._queue_recorders[queue_name] = recorder
+        return self._queue_recorders[queue_name]
+
+    def finalize_queue(self, queue_name: str) -> None:
+        """Flush and close queue recorder.
+
+        Args:
+            queue_name: Name of the queue to finalize
+        """
+        recorder = self._queue_recorders.pop(queue_name, None)
+        if recorder:
+            recorder.flush()
+            recorder.close()
+        # Clear queue context
+        if self.telemetry_context:
+            self.telemetry_context.set_queue_id(None)
+
+    def close_session(self) -> None:
+        """Flush all recorders and close session."""
+        # Flush and close all queue recorders
+        for recorder in self._queue_recorders.values():
+            try:
+                recorder.flush()
+                recorder.close()
+            except Exception:
+                pass
+        self._queue_recorders.clear()
+
+        # Flush and close main recorder
+        if self.telemetry_recorder:
+            try:
+                self.telemetry_recorder.flush()
+                self.telemetry_recorder.close()
+            except Exception:
+                pass
+
+        # Clear all context
+        if self.telemetry_context:
+            self.telemetry_context.clear_all()
 
     def _notify(self, machine_name: str, record: TransitionRecord) -> None:
         for cb in self._on_transition:

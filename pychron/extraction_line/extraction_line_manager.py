@@ -153,7 +153,13 @@ class ExtractionLineManager(Manager, Consoleable):
         devs = self.application.get_services(ICoreDevice)
         self.devices = devs
 
-    def deactivate(self):
+    def deactivate(self) -> None:
+        if self.switch_manager:
+            try:
+                self.switch_manager._save_states()
+            except BaseException as e:
+                self.warning("failed saving soft lock states on deactivate: {}".format(e))
+
         for t in ("gauge", "heater", "pump"):
             self.info("start {} scans".format(t))
             man = getattr(self, "{}_manager".format(t))
@@ -228,8 +234,12 @@ class ExtractionLineManager(Manager, Consoleable):
             )
             self.link_valve_actuation_dict[name] = func
 
-    def enable_auto_reload(self):
-        self.file_listener = FileListener(path=self.canvas_path, callback=self.reload_canvas)
+    def toggle_auto_reload(self) -> None:
+        if self.file_listener:
+            self.file_listener.stop()
+            self.file_listener = None
+        else:
+            self.file_listener = FileListener(path=self.canvas_path, callback=self.reload_canvas)
 
     def disable_auto_reload(self):
         if self.file_listener:
@@ -872,17 +882,17 @@ class ExtractionLineManager(Manager, Consoleable):
         name = getattr(obj, "name", "") if obj else ""
         self.canvas_view_model.set_active_item(name)
 
-    def new_canvas(self, config=None):
+    def new_canvas(self, config: Optional[str] = None) -> ExtractionLineCanvas:
         c = ExtractionLineCanvas(manager=self, display_name="Extraction Line")
-        # c.load_canvas_file(canvas_config_path=config)
+        c._pending_canvas_config = config
         self.canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume, volume_key=self.volume_key)
         if self.switch_manager:
             self.switch_manager.load_valve_states()
             self.switch_manager.load_valve_lock_states(force=True)
             self.switch_manager.load_valve_owners()
-            c.refresh()
-        self.push_canvas_state(refresh=True)
+
+        do_after(0, self._sync_initial_canvas_state)
 
         return c
 
@@ -1252,16 +1262,33 @@ class ExtractionLineManager(Manager, Consoleable):
         self._set_pipette_counts(obj.name, new)
 
     @on_trait_change("use_network,network:inherit_state")
-    def _update_network(self) -> None:
+    def _sync_initial_canvas_state(self) -> None:
+        for c in self.canvases:
+            if getattr(c.canvas2D, "control", None) is None:
+                do_after(100, self._sync_initial_canvas_state)
+                return
+
+        for c in self.canvases:
+            config = getattr(c, "_pending_canvas_config", None)
+            c.load_canvas_file(canvas_config_path=config)
+
+        if self.use_network:
+            self._update_network(refresh=False)
+        else:
+            self.push_canvas_state(refresh=False)
+
+        self.refresh_canvas()
+
+    def _update_network(self, refresh: bool = True) -> None:
         if self.use_network:
             net = self.network
             if self.switch_manager:
                 for name, switch in self.switch_manager.switches.items():
                     net.set_valve_state(name, switch.state)
-            self.push_canvas_state(refresh=True)
+            self.push_canvas_state(refresh=refresh)
         else:
             self.network_snapshot = NetworkSnapshot()
-            self.push_canvas_state(refresh=True)
+            self.push_canvas_state(refresh=refresh)
 
     @on_trait_change("display_volume,volume_key")
     def _update_canvas_inspector(self, name, new):

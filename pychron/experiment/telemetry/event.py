@@ -51,6 +51,11 @@ class EventType(Enum):
     DEVICE_HEALTH_RECOVERY_SUCCESS = "device_health_recovery_success"
     DEVICE_QUORUM_CHECK = "device_quorum_check"
 
+    # Service health monitoring
+    SERVICE_QUORUM_CHECK = "service_quorum_check"
+    SERVICE_HEALTH_STATE_CHANGE = "service_health_state_change"
+    SERVICE_HEALTH_FAILURE = "service_health_failure"
+
     # Session lifecycle
     TELEMETRY_SESSION_START = "telemetry_session_start"
     TELEMETRY_SESSION_END = "telemetry_session_end"

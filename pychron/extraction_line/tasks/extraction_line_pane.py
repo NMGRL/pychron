@@ -70,17 +70,8 @@ class CanvasDockPane(TraitsDockPane):
     name = "Extraction Line Canvas"
     canvas = Any
 
-    def traits_view(self):
-        v = View(
-            UItem(
-                "canvas",
-                editor=InstanceEditor(),
-                style="custom",
-                height=700,
-                width=900,
-            ),
-        )
-        return v
+    def traits_view(self) -> View:
+        return View(UItem("canvas", editor=InstanceEditor(), style="custom"), resizable=True)
 
 
 class HeaterPane(TraitsDockPane):
@@ -187,9 +178,7 @@ class ReadbackPane(TraitsDockPane):
         v = View(
             UItem(
                 "devices",
-                editor=TabularEditor(
-                    adapter=ReadbackAdapter(), auto_update=True, editable=False
-                ),
+                editor=TabularEditor(adapter=ReadbackAdapter(), auto_update=True, editable=False),
             )
         )
         return v
@@ -248,9 +237,7 @@ class EditorPane(TraitsDockPane):
             )
         )
 
-        v = View(
-            VGroup(UItem("edit_mode"), VGroup(g, agrp, egrp, enabled_when="edit_mode"))
-        )
+        v = View(VGroup(UItem("edit_mode"), VGroup(g, agrp, egrp, enabled_when="edit_mode")))
         return v
 
 
