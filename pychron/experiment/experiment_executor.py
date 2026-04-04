@@ -72,6 +72,8 @@ from pychron.experiment.datahub import Datahub
 from pychron.experiment.experiment_scheduler import ExperimentScheduler
 from pychron.experiment.experiment_status import ExperimentStatus
 from pychron.experiment.telemetry.span import Span
+from pychron.experiment.telemetry.context import TelemetryContext
+from pychron.experiment.telemetry.event import TelemetryEvent, EventType
 from pychron.experiment.state_machines.executor_machine import (
     ABORTED as EXEC_ABORTED,
     CANCELED as EXEC_CANCELED,
@@ -836,6 +838,25 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # delay before starting
         self._delay(exp.delay_before_analyses, message="before")
 
+        # Record session start
+        _session_id = None
+        _recorder = self._controller.telemetry_recorder
+        if _recorder is not None:
+            _session_id = f"session_{int(time.time())}"
+            _recorder.record_event(
+                TelemetryEvent(
+                    event_type=EventType.TELEMETRY_SESSION_START.value,
+                    ts=time.time(),
+                    level="info",
+                    component="executor",
+                    action="session_start",
+                    payload={
+                        "session_id": _session_id,
+                        "total_queues": len(self.experiment_queues),
+                    },
+                )
+            )
+
         for i, exp in enumerate(self.experiment_queues):
             self._controller.queue_selected(queue_name=exp.name)
             self._set_thread_name(exp.name)
@@ -860,6 +881,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug("Execute open queues preference not selected")
                 break
 
+        # Record session end
+        if _recorder is not None and _session_id is not None:
+            _recorder.record_event(
+                TelemetryEvent(
+                    event_type=EventType.TELEMETRY_SESSION_END.value,
+                    ts=time.time(),
+                    level="info",
+                    component="executor",
+                    action="session_end",
+                    payload={
+                        "session_id": _session_id,
+                        "total_queues": len(self.experiment_queues),
+                    },
+                )
+            )
+
         self._set_executor_terminal_result(
             self._current_terminal_result(), reason=self._err_message or None
         )
@@ -875,6 +912,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.experiment_queue = exp
         self._controller.begin_queue(exp.name)
+
+        # Set up queue-level telemetry context
+        if self._controller.telemetry_context:
+            queue_name = exp.name
+            trace_id = f"queue_{queue_name}_{int(time.time())}"
+            TelemetryContext.set_queue_id(queue_name)
+            TelemetryContext.set_trace_id(trace_id)
 
         self.info("Starting automated runs set={:02d} {}".format(i, exp.name))
         self.debug("reset stats: {}".format(self.stats))
@@ -1138,6 +1182,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._set_thread_name(run.runid)
         run_id = self._get_run_subject_id(run)
         self._controller.begin_run(run_id, queue_name=self.experiment_queue.name)
+
+        # Set up run-level telemetry context
+        if self._controller.telemetry_context:
+            TelemetryContext.set_run_id(run.runid)
+            TelemetryContext.set_run_uuid(str(run.uuid))
+
         # add a new log handler
 
         name = run.runid.replace(":", "_")

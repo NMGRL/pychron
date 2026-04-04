@@ -102,9 +102,13 @@ class Span:
         if self._ended:
             return
 
+        # Capture parent span ID BEFORE popping from span stack
+        parent_span_id = TelemetryContext.get_parent_span_id()
+
         # Pop from span stack
         TelemetryContext.pop_span_id()
 
+        assert self.start_time is not None, "Span.__exit__ called without __enter__"
         self.end_time = time.time()
         self.duration_ms = (self.end_time - self.start_time) * 1000
 
@@ -112,22 +116,28 @@ class Span:
         if self.success is None:
             if exc_type is not None:
                 self.record_failure(
-                    reason=exc_type.__name__, error=str(exc_val) if exc_val else None
+                    reason=exc_type.__name__,
+                    error=str(exc_val) if exc_val else None,
+                    parent_span_id=parent_span_id,
                 )
             else:
-                self.record_success()
+                self.record_success(parent_span_id=parent_span_id)
 
-    def record_success(self, payload: Optional[Dict[str, Any]] = None) -> None:
+    def record_success(
+        self, payload: Optional[Dict[str, Any]] = None, parent_span_id: Optional[str] = None
+    ) -> None:
         """Record span_end with success status.
 
         Args:
             payload: Optional additional payload for the end event
+            parent_span_id: Optional parent span ID (from __exit__)
         """
         if self._ended:
             return
 
         self._ended = True
         self.success = True
+        assert self.start_time is not None, "Span.record_success called without __enter__"
         self.end_time = time.time()
         self.duration_ms = (self.end_time - self.start_time) * 1000
 
@@ -145,7 +155,7 @@ class Span:
                 run_uuid=TelemetryContext.get_run_uuid(),
                 trace_id=TelemetryContext.get_trace_id(),
                 span_id=self.span_id,
-                parent_span_id=TelemetryContext.get_parent_span_id(),
+                parent_span_id=parent_span_id or TelemetryContext.get_parent_span_id(),
                 component=self.component,
                 action=self.action,
                 duration_ms=self.duration_ms,
@@ -155,7 +165,11 @@ class Span:
             self.recorder.record_event(event)
 
     def record_failure(
-        self, reason: str, error: Optional[str] = None, payload: Optional[Dict[str, Any]] = None
+        self,
+        reason: str,
+        error: Optional[str] = None,
+        payload: Optional[Dict[str, Any]] = None,
+        parent_span_id: Optional[str] = None,
     ) -> None:
         """Record span_end with failure status.
 
@@ -163,6 +177,7 @@ class Span:
             reason: Failure reason (e.g., "exception", "threshold_exceeded")
             error: Optional error message or exception string
             payload: Optional additional payload
+            parent_span_id: Optional parent span ID (from __exit__)
         """
         if self._ended:
             return
@@ -170,6 +185,7 @@ class Span:
         self._ended = True
         self.success = False
         self.error = error
+        assert self.start_time is not None, "Span.record_failure called without __enter__"
         self.end_time = time.time()
         self.duration_ms = (self.end_time - self.start_time) * 1000
 
@@ -187,7 +203,7 @@ class Span:
                 run_uuid=TelemetryContext.get_run_uuid(),
                 trace_id=TelemetryContext.get_trace_id(),
                 span_id=self.span_id,
-                parent_span_id=TelemetryContext.get_parent_span_id(),
+                parent_span_id=parent_span_id or TelemetryContext.get_parent_span_id(),
                 component=self.component,
                 action=self.action,
                 reason=reason,
