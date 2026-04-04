@@ -71,6 +71,7 @@ dependencies = [
 pychron = "pychron.cli:main"
 pychron-bootstrap = "pychron.cli:bootstrap_main"
 pychron-doctor = "pychron.cli:doctor_main"
+pychron-telemetry = "pychron.experiment.telemetry.cli:main"
 
 [project.optional-dependencies]
 hardware = [
