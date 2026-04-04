@@ -28,6 +28,7 @@ from traitsui.api import (
     Item,
     UReadonly,
     TabularEditor,
+    TextEditor,
 )
 
 # ============= standard library imports ========================
@@ -35,6 +36,20 @@ from traitsui.api import (
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.envisage.icon_button_editor import icon_button_editor
+
+
+class LibraryEntryAdapter(TabularAdapter):
+    """Adapter for displaying library entries in a table."""
+
+    columns = [
+        ("Name", "name"),
+        ("Class", "class_name"),
+        ("Company", "company"),
+        ("Status", "is_complete"),
+    ]
+
+    is_complete_text = property(lambda self: "Complete" if self.item.is_complete else "Incomplete")
+    is_complete_alignment = "center"
 
 
 class CurrentDevicePane(TraitsTaskPane):
@@ -116,9 +131,7 @@ class ConfigurationPane(TraitsDockPane):
             VGroup(
                 HGroup(
                     UReadonly("config_name"),
-                    icon_button_editor(
-                        "save_button", "document-save", enabled_when="config_path"
-                    ),
+                    icon_button_editor("save_button", "document-save", enabled_when="config_path"),
                 ),
                 comms_grp,
                 scan_grp,
@@ -134,9 +147,7 @@ class InfoPane(TraitsDockPane):
     name = "Current Device"
 
     def traits_view(self):
-        v = View(
-            UItem("selected", style="custom", editor=InstanceEditor(view="info_view"))
-        )
+        v = View(UItem("selected", style="custom", editor=InstanceEditor(view="info_view")))
         return v
 
 
@@ -155,6 +166,60 @@ class DevicesPane(TraitsDockPane):
             columns=cols, editable=False, selected="selected", selection_mode="row"
         )
         v = View(UItem("devices", editor=table_editor))
+        return v
+
+
+class LibraryPane(TraitsDockPane):
+    """Pane for displaying hardware device library and generating configs."""
+
+    id = "hardware.library"
+    name = "Device Library"
+
+    def traits_view(self):
+        library_table = TabularEditor(
+            adapter=LibraryEntryAdapter(), selected="library_selected", selection_mode="row"
+        )
+
+        config_group = VGroup(
+            HGroup(
+                Item("generate_config_device_name", label="Device Name"),
+                Item("generate_config_comm_type", label="Comm Type"),
+            ),
+            HGroup(
+                Item("generate_config_allow_overwrite", label="Allow Overwrite"),
+                icon_button_editor(
+                    "generate_config_button",
+                    "document-new",
+                    tooltip="Generate device config",
+                    enabled_when="library_selected.is_complete",
+                ),
+            ),
+            enabled_when="library_selected",
+            show_border=True,
+            label="Generate Config",
+        )
+
+        metadata_group = VGroup(
+            UReadonly("library_selected.description", style="readonly"),
+            UReadonly("library_selected.docs_url", label="Docs URL"),
+            UReadonly("library_selected.website", label="Website"),
+            UReadonly("library_selected.model", label="Model"),
+            UReadonly("library_selected.vendor_part_number", label="Part Number"),
+            enabled_when="library_selected",
+            show_border=True,
+            label="Metadata",
+            scrollable=True,
+        )
+
+        v = View(
+            VGroup(
+                UItem("library_entries", editor=library_table, height=250),
+                metadata_group,
+                config_group,
+            ),
+            height=600,
+            resizable=True,
+        )
         return v
 
 

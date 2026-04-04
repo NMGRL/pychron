@@ -18,7 +18,7 @@
 
 import os
 
-from traits.api import HasTraits, Button, Instance, List, Str, Enum, Int, Float
+from traits.api import HasTraits, Button, Instance, List, Str, Enum, Int, Float, Event
 from traits.trait_types import Bool
 from traitsui.api import View, Item, VGroup
 
@@ -28,6 +28,7 @@ from pychron.core.pychron_traits import IPAddress
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.hardware.library import LibraryEntry
 
 
 # ============= standard library imports ========================
@@ -61,9 +62,7 @@ class CommunicationGroup(ConfigGroup):
 
 class SerialCommunicationGroup(CommunicationGroup):
     port = Str
-    baudrate = Enum(
-        300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400
-    )
+    baudrate = Enum(300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400)
 
     def load_from_config(self, cfg):
         self.port = cfg("port")
@@ -198,6 +197,29 @@ class Hardwarer(Loggable):
     responses = List
     send_command_button = Button
 
+    # Library management
+    library_entries = List(LibraryEntry)
+    library_selected = Instance(LibraryEntry)
+    generate_config_button = Button
+    generate_config_comm_type = Enum("ethernet", "serial")
+    generate_config_device_name = Str
+    generate_config_allow_overwrite = Bool(False)
+    config_generated = Event
+
+    def __init__(self, *args, **kwargs):
+        super(Hardwarer, self).__init__(*args, **kwargs)
+        self._load_library()
+
+    def _load_library(self):
+        """Load and cache hardware library entries."""
+        try:
+            from pychron.hardware.library import get_library_entries
+
+            self.library_entries = get_library_entries()
+            self.debug(f"Loaded {len(self.library_entries)} hardware library entries")
+        except Exception as e:
+            self.warning(f"Failed to load hardware library: {e}")
+
     def _send_command_button_fired(self):
         if self.selected:
             c = CommandResponse(command=self.command)
@@ -205,6 +227,36 @@ class Hardwarer(Loggable):
             resp = self.selected.ask(self.command)
             if resp is not None:
                 c.response = resp
+
+    def _generate_config_button_fired(self):
+        """Generate config file for selected library entry."""
+        if not self.library_selected:
+            self.warning("No library entry selected")
+            return
+
+        if not self.library_selected.is_complete:
+            self.warning(f"Cannot generate config: {self.library_selected.missing_fields}")
+            return
+
+        device_name = self.generate_config_device_name or self.library_selected.name
+
+        try:
+            from pychron.hardware.library import generate_device_config
+
+            result = generate_device_config(
+                self.library_selected,
+                device_name,
+                comm_type=self.generate_config_comm_type,
+                allow_overwrite=self.generate_config_allow_overwrite,
+            )
+
+            if result.success:
+                self.info(str(result))
+                self.config_generated = True
+            else:
+                self.warning(f"Config generation failed: {result.error}")
+        except Exception as e:
+            self.exception(f"Error generating config: {e}")
 
     def _selected_changed(self, new):
         if new:
