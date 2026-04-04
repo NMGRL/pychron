@@ -9,8 +9,20 @@ from pychron.hardware.core.watchdog.device_heartbeat import (
     DeviceHeartbeat,
     HeartbeatState,
 )
+from pychron.hardware.core.watchdog.retry_strategy import (
+    RetryStrategy,
+    CircuitBreaker,
+    CircuitBreakerOpen,
+    BackoffType,
+    CircuitBreakerState,
+)
 
 __all__ = [
     "DeviceHeartbeat",
     "HeartbeatState",
+    "RetryStrategy",
+    "CircuitBreaker",
+    "CircuitBreakerOpen",
+    "BackoffType",
+    "CircuitBreakerState",
 ]
