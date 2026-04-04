@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `5a1c03a99`  
-**Generated:** 2026-04-04 04:49 UTC  
-**Compare:** [`54ca0ecffc18f3ac33b4af7c0f474963ae7a6161...5a1c03a99`](../../compare/54ca0ecffc18f3ac33b4af7c0f474963ae7a6161...5a1c03a99)
+**Triggered by commit:** `fade497c8`  
+**Generated:** 2026-04-04 15:43 UTC  
+**Compare:** [`4693d40c414891585961f14f541d7798adbf27c3...fade497c8`](../../compare/4693d40c414891585961f14f541d7798adbf27c3...fade497c8)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 1 file | ✅ Reviewed |
+| [Hardware Compatibility Matrix](#hardware-matrix) | 14 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,65 +16,74 @@
 <summary>Click to expand</summary>
 
 ```
-.readthedocs.yml
-docs/architecture/experiment-execution.md
-pychron/experiment/experiment_executor.py
-pychron/experiment/state_machines/controller.py
-pychron/experiment/telemetry/IMPLEMENTATION_STATUS.md
-pychron/experiment/telemetry/__init__.py
 pychron/experiment/telemetry/cli.py
-pychron/experiment/telemetry/context.py
-pychron/experiment/telemetry/device_io.py
 pychron/experiment/telemetry/event.py
-pychron/experiment/telemetry/monitor_interlock.py
-pychron/experiment/telemetry/recorder.py
-pychron/experiment/telemetry/replay.py
-pychron/experiment/telemetry/span.py
-pychron/experiment/telemetry/state_machine_listener.py
-pychron/experiment/telemetry/tests/__init__.py
-pychron/experiment/telemetry/tests/test_cli.py
-pychron/experiment/telemetry/tests/test_context.py
-pychron/experiment/telemetry/tests/test_device_io_telemetry.py
-pychron/experiment/telemetry/tests/test_event.py
-pychron/experiment/telemetry/tests/test_executor_integration.py
-pychron/experiment/telemetry/tests/test_monitor_telemetry.py
-pychron/experiment/telemetry/tests/test_recorder.py
-pychron/experiment/telemetry/tests/test_replay.py
-pychron/experiment/telemetry/tests/test_span.py
-pychron/experiment/telemetry/tests/test_span_telemetry.py
-pychron/experiment/telemetry/tests/test_state_machine_listener.py
 pychron/globals.py
-pyproject.toml
+pychron/hardware/core/base_core_device.py
+pychron/hardware/core/watchdog/__init__.py
+pychron/hardware/core/watchdog/device_heartbeat.py
+pychron/hardware/core/watchdog/executor_health_checks.py
+pychron/hardware/core/watchdog/retry_strategy.py
+pychron/hardware/core/watchdog/service_heartbeat.py
+pychron/hardware/core/watchdog/service_quorum_checker.py
+pychron/hardware/core/watchdog/telemetry_integration.py
+pychron/hardware/core/watchdog/tests/__init__.py
+pychron/hardware/core/watchdog/tests/test_device_heartbeat.py
+pychron/hardware/core/watchdog/tests/test_executor_health_checks.py
+pychron/hardware/core/watchdog/tests/test_retry_strategy.py
+pychron/hardware/core/watchdog/tests/test_service_heartbeat.py
+pychron/hardware/core/watchdog/tests/test_telemetry_integration.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## Hardware Compatibility Matrix {#hardware-matrix}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/hardware_compatibility_matrix.md`  
+**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
 
 ### Changed Files
 
-- `pyproject.toml`
+- `pychron/hardware/core/base_core_device.py`
+- `pychron/hardware/core/watchdog/__init__.py`
+- `pychron/hardware/core/watchdog/device_heartbeat.py`
+- `pychron/hardware/core/watchdog/executor_health_checks.py`
+- `pychron/hardware/core/watchdog/retry_strategy.py`
+- `pychron/hardware/core/watchdog/service_heartbeat.py`
+- `pychron/hardware/core/watchdog/service_quorum_checker.py`
+- `pychron/hardware/core/watchdog/telemetry_integration.py`
+- `pychron/hardware/core/watchdog/tests/__init__.py`
+- `pychron/hardware/core/watchdog/tests/test_device_heartbeat.py`
+- `pychron/hardware/core/watchdog/tests/test_executor_health_checks.py`
+- `pychron/hardware/core/watchdog/tests/test_retry_strategy.py`
+- `pychron/hardware/core/watchdog/tests/test_service_heartbeat.py`
+- `pychron/hardware/core/watchdog/tests/test_telemetry_integration.py`
 
 ### AI Review
 
 ## Code Change Summary
 
-A new CLI entry point `pychron-telemetry` has been added to the pyproject.toml configuration, which creates an additional command-line tool that will be available after installation. This adds to the suite of CLI tools that users can access once Pychron is installed, alongside the existing `pychron`, `pychron-bootstrap`, and `pychron-doctor` commands.
+The code changes introduce a comprehensive watchdog and heartbeat monitoring system for hardware devices in Pychron. The core change is in `BaseCoreDevice` which now has optional heartbeat monitoring capabilities through a new `DeviceHeartbeat` class, along with supporting infrastructure for retry strategies, circuit breakers, and health verification. This creates a new hardware monitoring layer that tracks device health states and enables pre-phase health checks.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** CLI tools or command-line interface section (likely in post-installation usage or available commands)
-  **Issue:** The new `pychron-telemetry` command is not documented as an available CLI tool
-  **Suggested update:** Add `pychron-telemetry` to the list of available command-line tools, explaining that it provides telemetry functionality for experiment monitoring (the specific functionality should be documented based on what the telemetry CLI actually does)
+- **Section/Topic:** Core Device Classes and Implementation
+  **Issue:** The Hardware Compatibility Matrix needs to document that `BaseCoreDevice` now includes optional heartbeat monitoring capabilities
+  **Suggested update:** Add a note that `BaseCoreDevice` (in `pychron/hardware/core/base_core_device.py`) now supports optional device health monitoring through the `DeviceHeartbeat` class when `globalv.watchdog_enabled` is True. Include the new methods: `get_device_health()`, `is_device_healthy()`, and `reset_device_health()`.
 
-- **Section/Topic:** Installation verification or testing section
-  **Issue:** If there are instructions for verifying CLI tools are properly installed, the new telemetry command is missing
-  **Suggested update:** Include `pychron-telemetry --help` or similar verification step alongside any existing CLI tool verification commands
+- **Section/Topic:** Configuration Fields
+  **Issue:** Missing documentation for the new global configuration flag that enables watchdog functionality
+  **Suggested update:** Add `globalv.watchdog_enabled` as a global configuration field that enables/disables device heartbeat monitoring across all hardware devices inheriting from `BaseCoreDevice`.
+
+- **Section/Topic:** Device Health Monitoring Infrastructure
+  **Issue:** The new watchdog subsystem classes and their functionality are not documented
+  **Suggested update:** Add a new section documenting the watchdog infrastructure located in `pychron/hardware/core/watchdog/`: `DeviceHeartbeat` (device health state machine), `RetryStrategy` (configurable retry with backoff), `CircuitBreaker` (failure protection), `DeviceQuorumChecker` (pre-phase health verification), and related telemetry integration classes. Note that these are infrastructure components that enhance existing device implementations rather than standalone hardware devices.
+
+- **Section/Topic:** Device Health States
+  **Issue:** The new health state enumeration and state machine behavior needs documentation
+  **Suggested update:** Document the `HeartbeatState` enumeration values (HEALTHY, DEGRADED, UNAVAILABLE, RECOVERING) and the state transition logic that tracks device communication failures and recovery attempts.
 
 ---
 
