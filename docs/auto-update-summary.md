@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `fade497c8`  
-**Generated:** 2026-04-04 15:43 UTC  
-**Compare:** [`4693d40c414891585961f14f541d7798adbf27c3...fade497c8`](../../compare/4693d40c414891585961f14f541d7798adbf27c3...fade497c8)
+**Triggered by commit:** `8e5c72aaf`  
+**Generated:** 2026-04-04 23:27 UTC  
+**Compare:** [`92e7af54137bd798786f96189877e1f978ed9fc8...8e5c72aaf`](../../compare/92e7af54137bd798786f96189877e1f978ed9fc8...8e5c72aaf)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Hardware Compatibility Matrix](#hardware-matrix) | 14 files | ✅ Reviewed |
+| [Hardware Compatibility Matrix](#hardware-matrix) | 6 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,23 +16,13 @@
 <summary>Click to expand</summary>
 
 ```
-pychron/experiment/telemetry/cli.py
-pychron/experiment/telemetry/event.py
-pychron/globals.py
-pychron/hardware/core/base_core_device.py
-pychron/hardware/core/watchdog/__init__.py
-pychron/hardware/core/watchdog/device_heartbeat.py
-pychron/hardware/core/watchdog/executor_health_checks.py
-pychron/hardware/core/watchdog/retry_strategy.py
-pychron/hardware/core/watchdog/service_heartbeat.py
-pychron/hardware/core/watchdog/service_quorum_checker.py
-pychron/hardware/core/watchdog/telemetry_integration.py
-pychron/hardware/core/watchdog/tests/__init__.py
-pychron/hardware/core/watchdog/tests/test_device_heartbeat.py
-pychron/hardware/core/watchdog/tests/test_executor_health_checks.py
-pychron/hardware/core/watchdog/tests/test_retry_strategy.py
-pychron/hardware/core/watchdog/tests/test_service_heartbeat.py
-pychron/hardware/core/watchdog/tests/test_telemetry_integration.py
+pychron/docs_hardware.py
+pychron/hardware/library.py
+pychron/hardware/tasks/hardware_pane.py
+pychron/hardware/tasks/hardware_task.py
+pychron/hardware/tasks/hardwarer.py
+pychron/hardware/tests/__init__.py
+pychron/hardware/tests/test_library.py
 ```
 
 </details>
@@ -46,44 +36,36 @@ pychron/hardware/core/watchdog/tests/test_telemetry_integration.py
 
 ### Changed Files
 
-- `pychron/hardware/core/base_core_device.py`
-- `pychron/hardware/core/watchdog/__init__.py`
-- `pychron/hardware/core/watchdog/device_heartbeat.py`
-- `pychron/hardware/core/watchdog/executor_health_checks.py`
-- `pychron/hardware/core/watchdog/retry_strategy.py`
-- `pychron/hardware/core/watchdog/service_heartbeat.py`
-- `pychron/hardware/core/watchdog/service_quorum_checker.py`
-- `pychron/hardware/core/watchdog/telemetry_integration.py`
-- `pychron/hardware/core/watchdog/tests/__init__.py`
-- `pychron/hardware/core/watchdog/tests/test_device_heartbeat.py`
-- `pychron/hardware/core/watchdog/tests/test_executor_health_checks.py`
-- `pychron/hardware/core/watchdog/tests/test_retry_strategy.py`
-- `pychron/hardware/core/watchdog/tests/test_service_heartbeat.py`
-- `pychron/hardware/core/watchdog/tests/test_telemetry_integration.py`
+- `pychron/hardware/library.py`
+- `pychron/hardware/tasks/hardware_pane.py`
+- `pychron/hardware/tasks/hardware_task.py`
+- `pychron/hardware/tasks/hardwarer.py`
+- `pychron/hardware/tests/__init__.py`
+- `pychron/hardware/tests/test_library.py`
 
 ### AI Review
 
 ## Code Change Summary
 
-The code changes introduce a comprehensive watchdog and heartbeat monitoring system for hardware devices in Pychron. The core change is in `BaseCoreDevice` which now has optional heartbeat monitoring capabilities through a new `DeviceHeartbeat` class, along with supporting infrastructure for retry strategies, circuit breakers, and health verification. This creates a new hardware monitoring layer that tracks device health states and enables pre-phase health checks.
+The code changes introduce a new hardware device library system that provides infrastructure for discovering registered hardware drivers, parsing their YAML metadata from docstrings, validating required fields, and generating device configuration files. This includes a new `library.py` module with discovery functions, UI components for browsing the device library, and automated config generation capabilities.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Core Device Classes and Implementation
-  **Issue:** The Hardware Compatibility Matrix needs to document that `BaseCoreDevice` now includes optional heartbeat monitoring capabilities
-  **Suggested update:** Add a note that `BaseCoreDevice` (in `pychron/hardware/core/base_core_device.py`) now supports optional device health monitoring through the `DeviceHeartbeat` class when `globalv.watchdog_enabled` is True. Include the new methods: `get_device_health()`, `is_device_healthy()`, and `reset_device_health()`.
+- **Section/Topic:** Hardware device entries throughout the matrix
+  **Issue:** The documentation currently lacks information about the new YAML metadata format that can be embedded in device class docstrings for automated discovery and config generation
+  **Suggested update:** Add a new column or section describing the YAML metadata format requirements (name, description, company, docs_url/website fields) and indicate which devices support the new automated config generation feature
 
-- **Section/Topic:** Configuration Fields
-  **Issue:** Missing documentation for the new global configuration flag that enables watchdog functionality
-  **Suggested update:** Add `globalv.watchdog_enabled` as a global configuration field that enables/disables device heartbeat monitoring across all hardware devices inheriting from `BaseCoreDevice`.
+- **Section/Topic:** Configuration file generation process
+  **Issue:** The matrix may reference manual config file creation but doesn't mention the new automated config generation feature
+  **Suggested update:** Add information about the automated config generation capability available through the Hardware Library pane, including supported communication types (ethernet, serial) and the template structure it creates
 
-- **Section/Topic:** Device Health Monitoring Infrastructure
-  **Issue:** The new watchdog subsystem classes and their functionality are not documented
-  **Suggested update:** Add a new section documenting the watchdog infrastructure located in `pychron/hardware/core/watchdog/`: `DeviceHeartbeat` (device health state machine), `RetryStrategy` (configurable retry with backoff), `CircuitBreaker` (failure protection), `DeviceQuorumChecker` (pre-phase health verification), and related telemetry integration classes. Note that these are infrastructure components that enhance existing device implementations rather than standalone hardware devices.
+- **Section/Topic:** Device discovery mechanism
+  **Issue:** The matrix doesn't document how devices are discovered and registered in the system
+  **Suggested update:** Add documentation explaining that devices are discovered through the HW_PACKAGE_MAP and PACKAGES registries, and how the new library system validates completeness based on metadata presence
 
-- **Section/Topic:** Device Health States
-  **Issue:** The new health state enumeration and state machine behavior needs documentation
-  **Suggested update:** Document the `HeartbeatState` enumeration values (HEALTHY, DEGRADED, UNAVAILABLE, RECOVERING) and the state transition logic that tracks device communication failures and recovery attempts.
+- **Section/Topic:** Hardware task UI components
+  **Issue:** Missing documentation of the new Library pane in the hardware management interface
+  **Suggested update:** Document the new "Device Library" pane that displays all registered hardware drivers with their metadata, completion status, and config generation capabilities alongside existing Current Device, Configuration, and Terminal panes
 
 ---
 
