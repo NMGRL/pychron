@@ -36,6 +36,7 @@ Design:
 """
 
 from typing import Dict, List, Optional, Any, Tuple
+import time
 from pychron.globals import globalv
 from pychron.core.helpers.logger_setup import new_logger
 
@@ -50,18 +51,21 @@ class ExecutorWatchdogIntegration:
         device_quorum_checker: DeviceQuorumChecker instance (lazy-loaded)
         service_quorum_checker: ServiceQuorumChecker instance (lazy-loaded)
         service_heartbeats: Dict mapping service name to ServiceHeartbeat instance
+        recorder: Optional TelemetryRecorder for telemetry emission
     """
 
-    def __init__(self, executor, logger=None):
+    def __init__(self, executor, logger=None, recorder=None):
         """Initialize executor watchdog integration.
 
         Args:
             executor: ExperimentExecutor instance to monitor
             logger: Optional logger instance (creates new if not provided)
+            recorder: Optional TelemetryRecorder instance for telemetry emission
         """
         self.executor = executor
         self.enabled = globalv.watchdog_enabled
         self.logger = logger or new_logger("ExecutorWatchdog")
+        self.recorder = recorder
 
         # Lazy-loaded checkers
         self._device_quorum_checker = None
@@ -156,6 +160,7 @@ class ExecutorWatchdogIntegration:
 
         Verifies that required devices for the phase are healthy.
         Logs warnings on failure but continues gracefully.
+        Emits telemetry event for monitoring.
 
         Args:
             phase_name: Name of experiment phase (e.g., "extraction", "measurement")
@@ -172,12 +177,22 @@ class ExecutorWatchdogIntegration:
 
         try:
             passed, msg = self.device_quorum_checker.verify_phase_quorum(phase_name, devices)
+
+            # Emit telemetry event for device health check
+            if self.recorder:
+                self._emit_device_quorum_event(phase_name, passed, msg, devices)
+
             if not passed:
                 self.logger.warning(f"Device health check failed for {phase_name}: {msg}")
                 # Graceful degradation: log warning but continue execution
             return True, msg
         except Exception as e:
             self.logger.warning(f"Error during device health check for {phase_name}: {e}")
+
+            # Emit telemetry event for device health check error
+            if self.recorder:
+                self._emit_device_quorum_event(phase_name, False, str(e), devices, error=str(e))
+
             # Graceful degradation: continue on error
             return True, f"Device health check error: {str(e)}"
 
@@ -188,6 +203,7 @@ class ExecutorWatchdogIntegration:
 
         Verifies that required services for the phase are available.
         Logs warnings on failure but continues gracefully.
+        Emits telemetry event for monitoring.
 
         Args:
             phase_name: Name of experiment phase (e.g., "extraction", "measurement", "save")
@@ -204,12 +220,22 @@ class ExecutorWatchdogIntegration:
 
         try:
             passed, msg = self.service_quorum_checker.verify_phase_quorum(phase_name, services)
+
+            # Emit telemetry event for service health check
+            if self.recorder:
+                self._emit_service_quorum_event(phase_name, passed, msg, services)
+
             if not passed:
                 self.logger.warning(f"Service health check failed for {phase_name}: {msg}")
                 # Graceful degradation: log warning but continue execution
             return True, msg
         except Exception as e:
             self.logger.warning(f"Error during service health check for {phase_name}: {e}")
+
+            # Emit telemetry event for service health check error
+            if self.recorder:
+                self._emit_service_quorum_event(phase_name, False, str(e), services, error=str(e))
+
             # Graceful degradation: continue on error
             return True, f"Service health check error: {str(e)}"
 
@@ -256,6 +282,76 @@ class ExecutorWatchdogIntegration:
         else:
             # Assume soft failure for unknown errors
             hb.record_soft_failure(error=error)
+
+    def _emit_device_quorum_event(
+        self,
+        phase_name: str,
+        passed: bool,
+        message: str,
+        devices: Dict[str, object],
+        error: Optional[str] = None,
+    ) -> None:
+        """Emit telemetry event for device quorum check."""
+        from pychron.experiment.telemetry.event import EventType, TelemetryEvent
+        from pychron.experiment.telemetry.context import TelemetryContext
+
+        event = TelemetryEvent(
+            event_type=EventType.DEVICE_QUORUM_CHECK.value,
+            ts=time.time(),
+            level="warning" if not passed else "info",
+            queue_id=TelemetryContext.get_queue_id(),
+            run_id=TelemetryContext.get_run_id(),
+            run_uuid=TelemetryContext.get_run_uuid(),
+            trace_id=TelemetryContext.get_trace_id(),
+            span_id=TelemetryContext.get_current_span_id(),
+            parent_span_id=TelemetryContext.get_parent_span_id(),
+            component="watchdog",
+            action="device_quorum_check",
+            success=passed,
+            error=error,
+            payload={
+                "phase": phase_name,
+                "message": message,
+                "device_count": len(devices),
+                "devices": list(devices.keys()),
+            },
+        )
+        self.recorder.record_event(event)
+
+    def _emit_service_quorum_event(
+        self,
+        phase_name: str,
+        passed: bool,
+        message: str,
+        services: Dict[str, object],
+        error: Optional[str] = None,
+    ) -> None:
+        """Emit telemetry event for service quorum check."""
+        from pychron.experiment.telemetry.event import EventType, TelemetryEvent
+        from pychron.experiment.telemetry.context import TelemetryContext
+
+        event = TelemetryEvent(
+            event_type=EventType.SERVICE_QUORUM_CHECK.value,
+            ts=time.time(),
+            level="warning" if not passed else "info",
+            queue_id=TelemetryContext.get_queue_id(),
+            run_id=TelemetryContext.get_run_id(),
+            run_uuid=TelemetryContext.get_run_uuid(),
+            trace_id=TelemetryContext.get_trace_id(),
+            span_id=TelemetryContext.get_current_span_id(),
+            parent_span_id=TelemetryContext.get_parent_span_id(),
+            component="watchdog",
+            action="service_quorum_check",
+            success=passed,
+            error=error,
+            payload={
+                "phase": phase_name,
+                "message": message,
+                "service_count": len(services),
+                "services": list(services.keys()),
+            },
+        )
+        self.recorder.record_event(event)
 
     def _get_default_devices(self) -> Dict[str, object]:
         """Get default device mapping from executor.

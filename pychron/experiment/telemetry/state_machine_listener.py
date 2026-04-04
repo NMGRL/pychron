@@ -13,6 +13,7 @@ Usage:
 """
 
 from typing import Optional
+import time
 import uuid
 
 from .event import TelemetryEvent, EventType
@@ -72,17 +73,23 @@ class StateMachineListener:
         if run_uuid is None:
             run_uuid = TelemetryContext.get_run_uuid()
 
+        # Get current span for correlation (reuse parent's span_id, not create new)
+        current_span_id = TelemetryContext.get_current_span_id()
+
+        # Use record timestamp if available, otherwise use current time
+        ts = getattr(record, "ts", None) or time.time()
+
         # Create telemetry event
         event = TelemetryEvent(
             event_type=EventType.STATE_TRANSITION.value,
-            ts=record.ts if hasattr(record, "ts") else None,
+            ts=ts,
             level="info",
             queue_id=TelemetryContext.get_queue_id(),
             run_id=run_id,
             run_uuid=run_uuid,
             trace_id=TelemetryContext.get_trace_id(),
-            span_id=str(uuid.uuid4())[:8],
-            parent_span_id=TelemetryContext.get_current_span_id(),
+            span_id=current_span_id or str(uuid.uuid4())[:8],
+            parent_span_id=TelemetryContext.get_parent_span_id(),
             component=machine_name,
             action="transition",
             state_from=state_from,

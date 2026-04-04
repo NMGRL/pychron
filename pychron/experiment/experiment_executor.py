@@ -891,50 +891,54 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
             )
 
-        for i, exp in enumerate(self.experiment_queues):
-            self._controller.queue_selected(queue_name=exp.name)
-            self._set_thread_name(exp.name)
-            self.heading('"{}" started'.format(exp.name))
-            if self.is_alive():
-                if self._pre_queue_check(exp):
-                    self.debug("pre queue check failed for {}".format(exp.name))
-                    self._controller.run_failure(reason="pre queue check failed")
+        try:
+            for i, exp in enumerate(self.experiment_queues):
+                self._controller.queue_selected(queue_name=exp.name)
+                self._set_thread_name(exp.name)
+                self.heading('"{}" started'.format(exp.name))
+                if self.is_alive():
+                    if self._pre_queue_check(exp):
+                        self.debug("pre queue check failed for {}".format(exp.name))
+                        self._controller.run_failure(reason="pre queue check failed")
+                        break
+
+                    self._execute_queue(i, exp)
+                else:
+                    self.debug("Not alive. not starting {},{}".format(i, exp.name))
+
+                if self._should_stop_at_boundary():
+                    self.debug(
+                        "Previous queue ended at completion. Not continuing to other opened experiments"
+                    )
                     break
 
-                self._execute_queue(i, exp)
-            else:
-                self.debug("Not alive. not starting {},{}".format(i, exp.name))
+                if not self.execute_open_queues:
+                    self.debug("Execute open queues preference not selected")
+                    break
 
-            if self._should_stop_at_boundary():
-                self.debug(
-                    "Previous queue ended at completion. Not continuing to other opened experiments"
+            # Record session end
+            if _recorder is not None and _session_id is not None:
+                _recorder.record_event(
+                    TelemetryEvent(
+                        event_type=EventType.TELEMETRY_SESSION_END.value,
+                        ts=time.time(),
+                        level="info",
+                        component="executor",
+                        action="session_end",
+                        payload={
+                            "session_id": _session_id,
+                            "total_queues": len(self.experiment_queues),
+                        },
+                    )
                 )
-                break
 
-            if not self.execute_open_queues:
-                self.debug("Execute open queues preference not selected")
-                break
-
-        # Record session end
-        if _recorder is not None and _session_id is not None:
-            _recorder.record_event(
-                TelemetryEvent(
-                    event_type=EventType.TELEMETRY_SESSION_END.value,
-                    ts=time.time(),
-                    level="info",
-                    component="executor",
-                    action="session_end",
-                    payload={
-                        "session_id": _session_id,
-                        "total_queues": len(self.experiment_queues),
-                    },
-                )
+            self._set_executor_terminal_result(
+                self._current_terminal_result(), reason=self._err_message or None
             )
-
-        self._set_executor_terminal_result(
-            self._current_terminal_result(), reason=self._err_message or None
-        )
-        self.alive = False
+            self.alive = False
+        finally:
+            # CRITICAL: Always close recorder on exit
+            self._controller.close_session()
 
     def _execute_queue(self, i, exp):
         """
@@ -1218,7 +1222,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._controller.begin_run(run_id, queue_name=self.experiment_queue.name)
 
         # Set up run-level telemetry context
+        ctx: TelemetryContext | None = None
+        run_span_id: str | None = None
         if self._controller.telemetry_context:
+            ctx = self._controller.telemetry_context
             TelemetryContext.set_run_id(run.runid)
             TelemetryContext.set_run_uuid(str(run.uuid))
 
@@ -1260,117 +1267,125 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         #
         #     self.debug("waiting complete")
 
-        for step in self._controller.run_step_sequence():
-            run_status = self._controller.should_continue_run(
-                alive=self.is_alive(),
-                aborting=self._should_abort_execution(),
-                fatal_error=bool(self.monitor and self.monitor.has_fatal_error()),
-            )
-            if run_status == "stop":
-                break
-
-            if run_status == "abort":
-                self._controller.abort_run(run_id, reason="executor abort requested")
-                break
-
-            if run_status == "fatal":
-                run.cancel_run()
-                run.spec.transition("fail", force=True, source="execute_run")
-                self._transition_run_failure(run, "fatal monitor error")
-                break
-
-            if not getattr(self, step)(run):
-                self.warning("{} did not complete successfully".format(step[1:]))
-                self._controller.handle_run_step_failure(
-                    run_id, step, reason="{} failed".format(step[1:])
+        try:
+            for step in self._controller.run_step_sequence():
+                run_status = self._controller.should_continue_run(
+                    alive=self.is_alive(),
+                    aborting=self._should_abort_execution(),
+                    fatal_error=bool(self.monitor and self.monitor.has_fatal_error()),
                 )
-                if step != "_post_measurement":  # save data even if post measurement fails
+                if run_status == "stop":
+                    break
+
+                if run_status == "abort":
+                    self._controller.abort_run(run_id, reason="executor abort requested")
+                    break
+
+                if run_status == "fatal":
+                    run.cancel_run()
                     run.spec.transition("fail", force=True, source="execute_run")
-                break
+                    self._transition_run_failure(run, "fatal monitor error")
+                    break
 
-        else:
-            self.debug("$$$$$$$$$$$$$$$$$$$$ state at run end {}".format(run.spec.state))
-            if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
-                run.spec.transition("complete", source="execute_run")
+                if not getattr(self, step)(run):
+                    self.warning("{} did not complete successfully".format(step[1:]))
+                    self._controller.handle_run_step_failure(
+                        run_id, step, reason="{} failed".format(step[1:])
+                    )
+                    if step != "_post_measurement":  # save data even if post measurement fails
+                        run.spec.transition("fail", force=True, source="execute_run")
+                    break
 
-        self._do_event(events.SAVE_RUN, run=run)
-        self._controller.start_run_save(run_id, queue_name=self.experiment_queue.name)
+            else:
+                self.debug("$$$$$$$$$$$$$$$$$$$$ state at run end {}".format(run.spec.state))
+                if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
+                    run.spec.transition("complete", source="execute_run")
 
-        # Phase 6: Watchdog service health checks before save
-        if self.watchdog and self.watchdog.enabled:
-            try:
-                _, msg = self.watchdog.check_phase_service_health("save")
-                if msg and "failed" in msg.lower():
-                    self.warning(f"Service health check before save: {msg}")
-            except Exception as e:
-                self.debug(f"Watchdog health check error before save (continuing): {e}")
-                self.debug_exception()
+            self._do_event(events.SAVE_RUN, run=run)
+            self._controller.start_run_save(run_id, queue_name=self.experiment_queue.name)
 
-        if self._controller.should_save_run(run.spec.state, self.save_all_runs):
-            kw = {}
-            if self.use_dvc_overlap_save:
-                # run.save is non-blocked when exception queue defined
-                kw["exception_queue"] = self._exception_queue
-                kw["complete_event"] = self._save_complete_evt
+            # Phase 6: Watchdog service health checks before save
+            if self.watchdog and self.watchdog.enabled:
+                try:
+                    _, msg = self.watchdog.check_phase_service_health("save")
+                    if msg and "failed" in msg.lower():
+                        self.warning(f"Service health check before save: {msg}")
+                except Exception as e:
+                    self.debug(f"Watchdog health check error before save (continuing): {e}")
+                    self.debug_exception()
 
-            run.save(**kw)
+            if self._controller.should_save_run(run.spec.state, self.save_all_runs):
+                kw = {}
+                if self.use_dvc_overlap_save:
+                    # run.save is non-blocked when exception queue defined
+                    kw["exception_queue"] = self._exception_queue
+                    kw["complete_event"] = self._save_complete_evt
 
-        self._save_complete_evt.set()
-        self._controller.complete_run_save(run_id, queue_name=self.experiment_queue.name)
-        t = time.time() - st
-        for action in self._controller.run_post_save_actions(
-            run_state=str(run.spec.state),
-            use_autoplot=bool(self.use_autoplot),
-            experiment_type=str(self.experiment_type),
-        ):
-            if action == "set_run_completed":
-                self.run_completed = run
-            elif action == "remove_backup":
-                remove_backup(run.uuid)
-            elif action == "post_run_check":
-                if run.spec.state not in (CANCELED, FAILED):
-                    if self._post_run_check(run):
-                        self._err_message = "Post Run Check Failed"
-                        self.warning("post run check failed")
-                    else:
-                        self.heading("Post Run Check Passed")
-                        try:
-                            self._update_timeseries()
-                        except BaseException:
-                            self.debug("failed updating timeseries via experiment")
-                            self.debug_exception()
-            elif action == "log_run_duration":
-                self.info(
-                    "Automated run {} {} duration: {:0.3f} s".format(run.runid, run.spec.state, t)
-                )
-            elif action == "finish_run":
-                run.finish()
-            elif action == "update_arar_values":
-                run.spec.uage = run.isotope_group.uage
-                run.spec.k39 = run.isotope_group.get_computed_value("k39")
-            elif action == "publish_autoplot":
-                self.autoplot_event = run
-            elif action == "pop_wait_group":
-                self.wait_group.pop()
-            elif action == "finish_stats_run":
-                self.stats.finish_run()
-            elif action == "update_stats":
-                if run.spec.state == SUCCESS:
-                    self.stats.update_run_duration(run, t)
-                    self.stats.recalculate_etf()
-            elif action == "write_queue_files":
-                self._write_rem_ex_experiment_queues()
-            elif action == "end_run_event":
-                self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
-            elif action == "remove_root_handler":
-                remove_root_handler(handler)
-            elif action == "post_finish":
-                run.post_finish()
-            elif action == "remove_run_machine":
-                self._controller.remove_run_machine(run_id)
-            elif action == "refresh_queue_table":
-                self._set_thread_name(self.experiment_queue.name)
-                self.experiment_queue.refresh_table_needed = True
+                run.save(**kw)
+
+            self._save_complete_evt.set()
+            self._controller.complete_run_save(run_id, queue_name=self.experiment_queue.name)
+            t = time.time() - st
+            for action in self._controller.run_post_save_actions(
+                run_state=str(run.spec.state),
+                use_autoplot=bool(self.use_autoplot),
+                experiment_type=str(self.experiment_type),
+            ):
+                if action == "set_run_completed":
+                    self.run_completed = run
+                elif action == "remove_backup":
+                    remove_backup(run.uuid)
+                elif action == "post_run_check":
+                    if run.spec.state not in (CANCELED, FAILED):
+                        if self._post_run_check(run):
+                            self._err_message = "Post Run Check Failed"
+                            self.warning("post run check failed")
+                        else:
+                            self.heading("Post Run Check Passed")
+                            try:
+                                self._update_timeseries()
+                            except BaseException:
+                                self.debug("failed updating timeseries via experiment")
+                                self.debug_exception()
+                elif action == "log_run_duration":
+                    self.info(
+                        "Automated run {} {} duration: {:0.3f} s".format(
+                            run.runid, run.spec.state, t
+                        )
+                    )
+                elif action == "finish_run":
+                    run.finish()
+                elif action == "update_arar_values":
+                    run.spec.uage = run.isotope_group.uage
+                    run.spec.k39 = run.isotope_group.get_computed_value("k39")
+                elif action == "publish_autoplot":
+                    self.autoplot_event = run
+                elif action == "pop_wait_group":
+                    self.wait_group.pop()
+                elif action == "finish_stats_run":
+                    self.stats.finish_run()
+                elif action == "update_stats":
+                    if run.spec.state == SUCCESS:
+                        self.stats.update_run_duration(run, t)
+                        self.stats.recalculate_etf()
+                elif action == "write_queue_files":
+                    self._write_rem_ex_experiment_queues()
+                elif action == "end_run_event":
+                    self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
+                elif action == "remove_root_handler":
+                    remove_root_handler(handler)
+                elif action == "post_finish":
+                    run.post_finish()
+                elif action == "remove_run_machine":
+                    self._controller.remove_run_machine(run_id)
+                elif action == "refresh_queue_table":
+                    self._set_thread_name(self.experiment_queue.name)
+                    self.experiment_queue.refresh_table_needed = True
+        finally:
+            # CRITICAL: Clear run context after run completes
+            if ctx:
+                ctx.set_run_id(None)
+                ctx.set_run_uuid(None)
 
     def _close_cv(self):
         self.debug("close cv {}".format(self._cv_info))
@@ -1610,46 +1625,56 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         extraction step
         """
-        if self._pre_step_check(ai, "Extraction"):
-            self._failed_execution_step("Pre Extraction Check Failed")
-            return
+        # Set up extraction phase span context
+        ctx: TelemetryContext | None = None
+        if self._controller.telemetry_context:
+            ctx = self._controller.telemetry_context
 
-        # Phase 6: Watchdog device and service health checks
-        if self.watchdog and self.watchdog.enabled:
-            try:
-                _, msg = self.watchdog.check_phase_device_health("extraction")
-                if msg and "failed" in msg.lower():
-                    self.warning(f"Device health check: {msg}")
-                _, msg = self.watchdog.check_phase_service_health("extraction")
-                if msg and "failed" in msg.lower():
-                    self.warning(f"Service health check: {msg}")
-            except Exception as e:
-                self.debug(f"Watchdog health check error (continuing): {e}")
-                self.debug_exception()
+        with Span(
+            "extraction",
+            run_id=ctx.get_run_id() if ctx else None,
+            trace_id=ctx.get_trace_id() if ctx else None,
+        ):
+            if self._pre_step_check(ai, "Extraction"):
+                self._failed_execution_step("Pre Extraction Check Failed")
+                return
 
-        # make sure status monitor is running a
-        self.extraction_line_manager.setup_status_monitor()
-        syn_extractor = SynExtractionCollector(executor=self)
-        self.extraction_line_manager.set_experiment_type(self.experiment_type)
+            # Phase 6: Watchdog device and service health checks
+            if self.watchdog and self.watchdog.enabled:
+                try:
+                    _, msg = self.watchdog.check_phase_device_health("extraction")
+                    if msg and "failed" in msg.lower():
+                        self.warning(f"Device health check: {msg}")
+                    _, msg = self.watchdog.check_phase_service_health("extraction")
+                    if msg and "failed" in msg.lower():
+                        self.warning(f"Service health check: {msg}")
+                except Exception as e:
+                    self.debug(f"Watchdog health check error (continuing): {e}")
+                    self.debug_exception()
 
-        ret = True
-        if ai.start_extraction():
-            self._controller.start_run_extraction(self._get_run_subject_id(ai))
-            self.extracting = True
-            if not ai.do_extraction(syn_extractor):
-                self._controller.complete_run_extraction(
-                    self._get_run_subject_id(ai), failed=True, reason="Extraction Failed"
-                )
-                ret = self._failed_execution_step("Extraction Failed")
+            # make sure status monitor is running a
+            self.extraction_line_manager.setup_status_monitor()
+            syn_extractor = SynExtractionCollector(executor=self)
+            self.extraction_line_manager.set_experiment_type(self.experiment_type)
+
+            ret = True
+            if ai.start_extraction():
+                self._controller.start_run_extraction(self._get_run_subject_id(ai))
+                self.extracting = True
+                if not ai.do_extraction(syn_extractor):
+                    self._controller.complete_run_extraction(
+                        self._get_run_subject_id(ai), failed=True, reason="Extraction Failed"
+                    )
+                    ret = self._failed_execution_step("Extraction Failed")
+                else:
+                    self._controller.complete_run_extraction(self._get_run_subject_id(ai))
             else:
-                self._controller.complete_run_extraction(self._get_run_subject_id(ai))
-        else:
-            ret = ai.is_alive()
+                ret = ai.is_alive()
 
-        self.extracting = False
-        self.experiment_status.reset()
-        self.extracting_run = None
-        return ret
+            self.extracting = False
+            self.experiment_status.reset()
+            self.extracting_run = None
+            return ret
 
     def syn_measure(self, ai, script):
         return self._measurement(ai, script=script, use_post_on_fail=False)
@@ -1659,52 +1684,64 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         measurement step
         """
-        if self._pre_step_check(ai, "Measurement"):
-            self._failed_execution_step("Pre Measurement Check Failed")
-            return
+        # Set up measurement phase span context
+        ctx: TelemetryContext | None = None
+        if self._controller.telemetry_context:
+            ctx = self._controller.telemetry_context
 
-        # Phase 6: Watchdog device and service health checks
-        if self.watchdog and self.watchdog.enabled:
-            try:
-                _, msg = self.watchdog.check_phase_device_health("measurement")
-                if msg and "failed" in msg.lower():
-                    self.warning(f"Device health check: {msg}")
-                _, msg = self.watchdog.check_phase_service_health("measurement")
-                if msg and "failed" in msg.lower():
-                    self.warning(f"Service health check: {msg}")
-            except Exception as e:
-                self.debug(f"Watchdog health check error (continuing): {e}")
-                self.debug_exception()
+        with Span(
+            "measurement",
+            run_id=ctx.get_run_id() if ctx else None,
+            trace_id=ctx.get_trace_id() if ctx else None,
+        ):
+            if self._pre_step_check(ai, "Measurement"):
+                self._failed_execution_step("Pre Measurement Check Failed")
+                return
 
-        if self.send_config_before_run:
-            self.info("Sending spectrometer configuration")
-            man = self.spectrometer_manager
-            man.send_configuration()
-            if self.verify_spectrometer_configuration:
-                if not man.verify_configuration():
-                    ret = self._failed_execution_step("Setting Spectrometer Configuration Failed")
-                    return ret
+            # Phase 6: Watchdog device and service health checks
+            if self.watchdog and self.watchdog.enabled:
+                try:
+                    _, msg = self.watchdog.check_phase_device_health("measurement")
+                    if msg and "failed" in msg.lower():
+                        self.warning(f"Device health check: {msg}")
+                    _, msg = self.watchdog.check_phase_service_health("measurement")
+                    if msg and "failed" in msg.lower():
+                        self.warning(f"Service health check: {msg}")
+                except Exception as e:
+                    self.debug(f"Watchdog health check error (continuing): {e}")
+                    self.debug_exception()
 
-        ret = True
-        self.measuring_run = ai
-        if ai.start_measurement():
-            self._controller.start_run_measurement(self._get_run_subject_id(ai))
-            # only set to measuring (e.g switch to iso evo pane) if
-            # automated run has a measurement_script
-            self.measuring = True
+            if self.send_config_before_run:
+                self.info("Sending spectrometer configuration")
+                man = self.spectrometer_manager
+                man.send_configuration()
+                if self.verify_spectrometer_configuration:
+                    if not man.verify_configuration():
+                        ret = self._failed_execution_step(
+                            "Setting Spectrometer Configuration Failed"
+                        )
+                        return ret
 
-            if not ai.do_measurement(**measurement_kwargs):
-                self._controller.complete_run_measurement(
-                    self._get_run_subject_id(ai), failed=True, reason="Measurement Failed"
-                )
-                ret = self._failed_execution_step("Measurement Failed")
+            ret = True
+            self.measuring_run = ai
+            if ai.start_measurement():
+                self._controller.start_run_measurement(self._get_run_subject_id(ai))
+                # only set to measuring (e.g switch to iso evo pane) if
+                # automated run has a measurement_script
+                self.measuring = True
+
+                if not ai.do_measurement(**measurement_kwargs):
+                    self._controller.complete_run_measurement(
+                        self._get_run_subject_id(ai), failed=True, reason="Measurement Failed"
+                    )
+                    ret = self._failed_execution_step("Measurement Failed")
+                else:
+                    self._controller.complete_run_measurement(self._get_run_subject_id(ai))
             else:
-                self._controller.complete_run_measurement(self._get_run_subject_id(ai))
-        else:
-            ret = ai.is_alive()
+                ret = ai.is_alive()
 
-        self.measuring = False
-        return ret
+            self.measuring = False
+            return ret
 
     def _post_measurement(self, ai):
         """

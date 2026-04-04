@@ -75,6 +75,23 @@ def _color(text: str, color: Optional[str], bold: bool = False) -> str:
     return typer.style(text, fg=color, bold=bold)
 
 
+def _render_success(success: Optional[bool]) -> str:
+    """Render success status as: ✓/✗/?.
+
+    Args:
+        success: True for passed, False for failed, None for unknown
+
+    Returns:
+        Colored status string (✓, ✗, or ?)
+    """
+    if success is True:
+        return _color(" ✓", typer.colors.GREEN)
+    elif success is False:
+        return _color(" ✗", typer.colors.RED)
+    else:
+        return _color(" ?", typer.colors.YELLOW)
+
+
 def _fmt_event_line(event: TelemetryEvent, index: int) -> str:
     """Format a single event as a one-line summary."""
     ts_str = _fmt_ts(event.ts)
@@ -91,11 +108,12 @@ def _fmt_event_line(event: TelemetryEvent, index: int) -> str:
 
     success_marker = ""
     if event.success is not None:
-        success_marker = (
-            _color(" OK", typer.colors.GREEN)
-            if event.success
-            else _color(" FAIL", typer.colors.RED)
-        )
+        if event.success is True:
+            success_marker = _color(" OK", typer.colors.GREEN)
+        elif event.success is False:
+            success_marker = _color(" FAIL", typer.colors.RED)
+        else:
+            success_marker = _color(" UNKNOWN", typer.colors.YELLOW)
 
     duration = f"  {event.duration_ms:.1f}ms" if event.duration_ms is not None else ""
 
@@ -274,11 +292,7 @@ def timeline(
         bar = bar.ljust(width)
 
         dur = f"{s['duration_ms']:.0f}ms" if s["duration_ms"] is not None else "open"
-        ok = ""
-        if s["success"] is True:
-            ok = _color(" ✓", typer.colors.GREEN)
-        elif s["success"] is False:
-            ok = _color(" ✗", typer.colors.RED)
+        ok = _render_success(s["success"])
 
         typer.echo(f"{label:<{label_width}} |{bar}| {dur}{ok}")
 
@@ -546,6 +560,16 @@ def replay(
             ts = _fmt_ts(m["ts"])
             reason = f"  {m['reason']}" if m.get("reason") else ""
             lines.append(f"  {ts}  {m['event_type']:<22}{reason}")
+        lines.append("")
+
+    if report.watchdog_events:
+        lines.append("--- Watchdog / Health Events ---")
+        for w in report.watchdog_events:
+            ts = _fmt_ts(w["ts"])
+            phase = f" phase={w.get('phase')}" if w.get("phase") else ""
+            success = "✓" if w.get("success") else "✗"
+            msg = f"  {w.get('message')}" if w.get("message") else ""
+            lines.append(f"  {ts}  {w['event_type']:<25} {success}{phase}{msg}")
         lines.append("")
 
     text = "\n".join(lines)

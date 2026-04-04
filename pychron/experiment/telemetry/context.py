@@ -1,7 +1,7 @@
 """Thread-local correlation ID context for telemetry propagation."""
 
 import contextvars
-from typing import Optional
+from typing import Optional, List, Union
 
 
 # Context variables for thread-local storage
@@ -17,7 +17,7 @@ _run_id: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
 _run_uuid: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
     "telemetry_run_uuid", default=None
 )
-_span_stack: contextvars.ContextVar[list] = contextvars.ContextVar(
+_span_stack: contextvars.ContextVar[Optional[List[str]]] = contextvars.ContextVar(
     "telemetry_span_stack", default=None
 )
 
@@ -111,4 +111,9 @@ class TelemetryContext:
         _trace_id.set(None)
         _run_id.set(None)
         _run_uuid.set(None)
-        _span_stack.set(None)
+        _span_stack.set([])
+
+    @staticmethod
+    def clear_all() -> None:
+        """Clear all context (alias for clear, use after session completion)."""
+        TelemetryContext.clear()
