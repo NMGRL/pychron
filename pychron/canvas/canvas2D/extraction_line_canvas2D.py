@@ -97,7 +97,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     display_volume = Bool
     volume_key = Str
-    confirm_open = Bool(True)
+    confirm_open = Bool(False)
 
     force_actuate_enabled = True
 
@@ -223,38 +223,122 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if not isinstance(item, (BorderLine, Connection, Elbow, Tee, Fork, Cross)):
                 continue
 
-            endpoint_states = []
-            endpoint_colors = []
-            for tag in ("start", "end", "left", "right", "mid", "top", "bottom"):
-                point = getattr(item, f"{tag}_point", None)
-                if point is None:
-                    continue
-                px, py = point.get_xy()
-                nearby = self._find_item_at(px, py, exclude=item)
-                if nearby is not None and hasattr(nearby, "state"):
-                    endpoint_states.append(bool(nearby.state))
-                    if hasattr(nearby, "active_color") and nearby.state:
-                        endpoint_colors.append(nearby.active_color)
+            attached_items = self._connected_items_for_connector(item)
+            if not attached_items:
+                attached_items = self._fallback_connected_items(item)
 
+            color_item = self._preferred_connector_color_item(attached_items)
+            color = self._connector_color_for_item(color_item)
+            if color is not None:
+                item.active_color = color
+                item.state = True
+                continue
+
+            endpoint_states = [
+                bool(getattr(attached, "state", False)) for attached in attached_items
+            ]
             if endpoint_states:
-                new_state = any(endpoint_states)
-                item.state = new_state
-                if item.state and endpoint_colors:
-                    item.active_color = endpoint_colors[0]
-                elif hasattr(item, "default_color"):
+                item.state = any(endpoint_states)
+                if hasattr(item, "default_color"):
                     item.active_color = item.default_color
 
-    def _find_item_at(self, x, y, exclude=None):
-        """Find the scene item at the given data coordinates."""
+    def _connector_color_for_item(self, item: object) -> object | None:
+        if item is None:
+            return None
+
+        source_item = item
+        if isinstance(item, BaseValve):
+            source_name = getattr(item, "network_dominant_source_node", "") or ""
+            if source_name:
+                candidate = self.scene.get_item(source_name)
+                if candidate is not None:
+                    source_item = candidate
+
+        if hasattr(source_item, "active_color"):
+            if bool(getattr(source_item, "state", False)):
+                return source_item.active_color
+            return source_item.default_color
+
+        if hasattr(source_item, "default_color"):
+            return source_item.default_color
+
+        return None
+
+    def _preferred_connector_color_item(self, attached_items: list[object]) -> object | None:
+        for attached in attached_items:
+            if not isinstance(attached, (BaseValve, Switch)):
+                return attached
+
+        for attached in attached_items:
+            if self._connector_color_for_item(attached) is not None:
+                return attached
+
+        if attached_items:
+            return attached_items[0]
+
+        return None
+
+    def _connected_items_for_connector(self, connector: object) -> list[object]:
         scene = self.scene
         if scene is None:
-            return None
+            return []
+
+        attached = []
         for item in scene.get_items():
-            if item is exclude:
+            if item is connector:
                 continue
-            if item.is_in(x, y):
-                return item
-        return None
+            if isinstance(item, (BorderLine, Connection, Elbow, Tee, Fork, Cross)):
+                continue
+            if not hasattr(item, "connections"):
+                continue
+
+            if any(c is connector for _, c in getattr(item, "connections", [])):
+                attached.append(item)
+
+        return attached
+
+    def _fallback_connected_items(self, connector: object) -> list[object]:
+        """Fallback to a geometric lookup if connection links are unavailable."""
+        points = []
+        for tag in ("start", "end", "left", "right", "mid", "top", "bottom"):
+            point = getattr(connector, f"{tag}_point", None)
+            if point is not None:
+                points.append(point.get_xy())
+
+        if not points:
+            return []
+
+        x = sum(px for px, _ in points) / len(points)
+        y = sum(py for _, py in points) / len(points)
+
+        scene = self.scene
+        if scene is None:
+            return []
+
+        candidates = []
+        for item in scene.get_items():
+            if item is connector:
+                continue
+            if isinstance(item, (BorderLine, Connection, Elbow, Tee, Fork, Cross)):
+                continue
+            if not hasattr(item, "connections"):
+                continue
+
+            bounds = item.get_bounds() if hasattr(item, "get_bounds") else None
+            if bounds is None:
+                continue
+
+            x1, y1, x2, y2 = bounds
+            if x1 <= x <= x2 and y1 <= y <= y2:
+                return [item]
+
+            dx = 0 if x1 <= x <= x2 else min(abs(x - x1), abs(x - x2))
+            dy = 0 if y1 <= y <= y2 else min(abs(y - y1), abs(y - y2))
+            candidates.append(((dx * dx) + (dy * dy), item))
+
+        if candidates:
+            return [min(candidates, key=lambda t: t[0])[1]]
+        return []
 
     def set_valve_visual_state(self, name, visual_state, refresh=True):
         switch = self._get_switch_by_name(name)
@@ -361,7 +445,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._show_menu(event, item)
         event.handled = True
 
-    def select_left_down(self, event):
+    def select_left_down(self, event) -> None:
         """ """
 
         def set_state(state):
@@ -417,7 +501,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 return
 
             # Use preview API for structured confirmation
-            if self.manager and self.confirm_open:
+            if self.manager and self.confirm_open and not isinstance(item, ManualSwitch):
                 action = "open" if nstate else "close"
                 preview_func = (
                     self.manager.preview_open_valve if nstate else self.manager.preview_close_valve
