@@ -71,6 +71,7 @@ from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.experiment_scheduler import ExperimentScheduler
 from pychron.experiment.experiment_status import ExperimentStatus
+from pychron.experiment.telemetry.span import Span
 from pychron.experiment.state_machines.executor_machine import (
     ABORTED as EXEC_ABORTED,
     CANCELED as EXEC_CANCELED,

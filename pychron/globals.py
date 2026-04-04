@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import os
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 
@@ -117,7 +119,16 @@ class Globals(object):
 
     laser_version = 1
 
+    telemetry_enabled = (
+        False  # Enable structured telemetry collection (env var: PYCHRON_TELEMETRY_ENABLED)
+    )
+
     def build(self, ip):
+        # Check environment variable for telemetry enablement
+        env_telemetry = os.getenv("PYCHRON_TELEMETRY_ENABLED", "false").lower() == "true"
+        if env_telemetry:
+            self.telemetry_enabled = True
+
         for attr, func in [
             ("use_ipc", to_bool),
             ("ignore_plugin_warnings", to_bool),

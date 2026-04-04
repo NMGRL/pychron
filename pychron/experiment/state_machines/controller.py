@@ -16,8 +16,14 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Any, Callable
 
+from pychron import globals as globalv
+from pychron.experiment.telemetry.context import TelemetryContext
+from pychron.experiment.telemetry.recorder import TelemetryRecorder
+from pychron.experiment.telemetry.state_machine_listener import StateMachineListener
 from pychron.experiment.state_machines.executor_machine import (
     ExecutorStateMachine,
     IDLE,
@@ -139,6 +145,18 @@ class ExecutorController:
         self._end_at_run_completion = False
         self._failure_reason: str | None = None
         self._on_transition: list[Callable[[str, TransitionRecord], None]] = []
+
+        # Initialize telemetry (app-wide context and recorder)
+        self.telemetry_context: TelemetryContext | None = None
+        self.telemetry_recorder: TelemetryRecorder | None = None
+        if getattr(globalv, "telemetry_enabled", False):
+            self.telemetry_context = TelemetryContext()
+            telemetry_dir = Path.home() / ".pychron_telemetry" / "logs"
+            telemetry_dir.mkdir(parents=True, exist_ok=True)
+            log_file = telemetry_dir / f"telemetry_{os.getpid()}.jsonl"
+            self.telemetry_recorder = TelemetryRecorder(log_path=log_file)
+            listener = StateMachineListener(self.telemetry_recorder)
+            self.register_on_transition(listener.on_transition)
 
     @property
     def active_run_machines(self) -> list[tuple[str, RunStateMachine]]:
