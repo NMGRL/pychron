@@ -315,6 +315,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._save_complete_evt = TEvent()
         self._controller = ExecutorController(self)
         self._controller.register_on_transition(self._handle_state_transition)
+        # Watchdog integration (Phase 6: executor integration)
+        self._watchdog_integration = None
         # self.set_managers()
         # self.notification_manager = NotificationManager()
 
@@ -487,6 +489,38 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         dh.mainstore.precedence = 1
 
         return True
+
+    def _initialize_watchdog(self) -> bool:
+        """Initialize watchdog integration for device/service health monitoring.
+
+        This is called after set_managers() to set up the watchdog system for
+        pre-phase health checks. Should only be called once at executor startup.
+
+        Returns:
+            True if watchdog initialized successfully or disabled, False on error
+        """
+        try:
+            from pychron.experiment.executor_watchdog_integration import (
+                ExecutorWatchdogIntegration,
+            )
+
+            self._watchdog_integration = ExecutorWatchdogIntegration(self)
+            return self._watchdog_integration.initialize_watchdog_system()
+        except Exception as e:
+            self.warning(f"Failed to initialize watchdog: {e}")
+            self.debug_exception()
+            return False
+
+    @property
+    def watchdog(self) -> "ExecutorWatchdogIntegration":
+        """Get watchdog integration instance (lazy-initialize if needed).
+
+        Returns:
+            ExecutorWatchdogIntegration instance (or None if disabled/failed)
+        """
+        if self._watchdog_integration is None:
+            self._initialize_watchdog()
+        return self._watchdog_integration
 
     def bind_preferences(self):
         self.datahub.bind_preferences()
@@ -1261,6 +1295,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._do_event(events.SAVE_RUN, run=run)
         self._controller.start_run_save(run_id, queue_name=self.experiment_queue.name)
+
+        # Phase 6: Watchdog service health checks before save
+        if self.watchdog and self.watchdog.enabled:
+            try:
+                _, msg = self.watchdog.check_phase_service_health("save")
+                if msg and "failed" in msg.lower():
+                    self.warning(f"Service health check before save: {msg}")
+            except Exception as e:
+                self.debug(f"Watchdog health check error before save (continuing): {e}")
+                self.debug_exception()
+
         if self._controller.should_save_run(run.spec.state, self.save_all_runs):
             kw = {}
             if self.use_dvc_overlap_save:
@@ -1569,6 +1614,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._failed_execution_step("Pre Extraction Check Failed")
             return
 
+        # Phase 6: Watchdog device and service health checks
+        if self.watchdog and self.watchdog.enabled:
+            try:
+                _, msg = self.watchdog.check_phase_device_health("extraction")
+                if msg and "failed" in msg.lower():
+                    self.warning(f"Device health check: {msg}")
+                _, msg = self.watchdog.check_phase_service_health("extraction")
+                if msg and "failed" in msg.lower():
+                    self.warning(f"Service health check: {msg}")
+            except Exception as e:
+                self.debug(f"Watchdog health check error (continuing): {e}")
+                self.debug_exception()
+
         # make sure status monitor is running a
         self.extraction_line_manager.setup_status_monitor()
         syn_extractor = SynExtractionCollector(executor=self)
@@ -1604,6 +1662,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self._pre_step_check(ai, "Measurement"):
             self._failed_execution_step("Pre Measurement Check Failed")
             return
+
+        # Phase 6: Watchdog device and service health checks
+        if self.watchdog and self.watchdog.enabled:
+            try:
+                _, msg = self.watchdog.check_phase_device_health("measurement")
+                if msg and "failed" in msg.lower():
+                    self.warning(f"Device health check: {msg}")
+                _, msg = self.watchdog.check_phase_service_health("measurement")
+                if msg and "failed" in msg.lower():
+                    self.warning(f"Service health check: {msg}")
+            except Exception as e:
+                self.debug(f"Watchdog health check error (continuing): {e}")
+                self.debug_exception()
 
         if self.send_config_before_run:
             self.info("Sending spectrometer configuration")
