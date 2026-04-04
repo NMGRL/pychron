@@ -31,6 +31,7 @@ class EventType(Enum):
     # Commands and operations
     COMMAND = "command"
     DEVICE_COMMAND = "device_command"
+    DEVICE_IO = "device_io"
 
     # Monitor and interlock
     MONITOR_CHECK = "monitor_check"
