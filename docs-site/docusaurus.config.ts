@@ -66,6 +66,12 @@ const config: Config = {
           label: 'Docs',
         },
         {
+          href: 'https://github.com/NMGRL/pychron/wiki',
+          label: 'Wiki',
+          position: 'right',
+          target: '_blank',
+        },
+        {
           href: 'https://github.com/NMGRL/pychron',
           label: 'GitHub',
           position: 'right',
