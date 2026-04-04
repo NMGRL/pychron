@@ -123,11 +123,18 @@ class Globals(object):
         False  # Enable structured telemetry collection (env var: PYCHRON_TELEMETRY_ENABLED)
     )
 
+    watchdog_enabled = False  # Enable device/service watchdog and heartbeat monitoring (env var: PYCHRON_WATCHDOG_ENABLED)
+
     def build(self, ip):
         # Check environment variable for telemetry enablement
         env_telemetry = os.getenv("PYCHRON_TELEMETRY_ENABLED", "false").lower() == "true"
         if env_telemetry:
             self.telemetry_enabled = True
+
+        # Check environment variable for watchdog enablement
+        env_watchdog = os.getenv("PYCHRON_WATCHDOG_ENABLED", "false").lower() == "true"
+        if env_watchdog:
+            self.watchdog_enabled = True
 
         for attr, func in [
             ("use_ipc", to_bool),

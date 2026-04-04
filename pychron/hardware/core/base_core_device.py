@@ -37,6 +37,7 @@ from pychron.has_communicator import HasCommunicator
 
 # =============local library imports  ==========================
 from .i_core_device import ICoreDevice
+from pychron.hardware.core.watchdog import DeviceHeartbeat
 
 
 def crc_caller(func):
@@ -62,6 +63,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     _auto_started = False
     _no_response_counter = 0
     _scheduler_name = None
+    _heartbeat: DeviceHeartbeat | None = None
 
     def load_from_device(self):
         pass
@@ -88,6 +90,27 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         comm = self.communicator
         if comm:
             return not comm.simulation
+
+    def get_device_health(self):
+        """Return device health state.
+
+        Returns:
+            HeartbeatState or None if watchdog disabled
+        """
+        if self._heartbeat:
+            return self._heartbeat.get_state()
+        return None
+
+    def is_device_healthy(self) -> bool:
+        """Check if device is in HEALTHY state."""
+        if self._heartbeat:
+            return self._heartbeat.is_healthy()
+        return True  # Default to healthy if watchdog disabled
+
+    def reset_device_health(self) -> None:
+        """Manually reset device health to HEALTHY state."""
+        if self._heartbeat:
+            self._heartbeat.reset()
 
     def test_connection(self):
         comm = self.require_communicator("test connection")
@@ -151,9 +174,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         return True
 
-    def blocking_poll(
-        self, func, args=None, kwargs=None, period=1, timeout=None, script=None
-    ):
+    def blocking_poll(self, func, args=None, kwargs=None, period=1, timeout=None, script=None):
         """
         repeatedly ask func at 1/period rate
         if func returns true return True
@@ -176,9 +197,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 et = time.time() - st
                 if et > timeout:
                     self.warning(
-                        'blocking poll of "{}" timed out after {}s'.format(
-                            func.__name__, timeout
-                        )
+                        'blocking poll of "{}" timed out after {}s'.format(func.__name__, timeout)
                     )
                     raise TimeoutError(func.__name__, timeout)
             time.sleep(period)
@@ -232,6 +251,10 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     #                                   id_response=self.id_response
     #                                )
     def post_initialize(self, *args, **kw):
+        # Initialize heartbeat if watchdog enabled
+        if globalv.watchdog_enabled:
+            self._heartbeat = DeviceHeartbeat(self.name or "unknown_device")
+
         if self.graph_ytitle:
             self.graph.set_y_title(self.graph_ytitle)
 
@@ -258,9 +281,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             if name is None:
                 name = self._scheduler_name
             if name is not None:
-                sc = self.application.get_service(
-                    CommunicationScheduler, 'name=="{}"'.format(name)
-                )
+                sc = self.application.get_service(CommunicationScheduler, 'name=="{}"'.format(name))
                 if sc is None:
                     sc = CommunicationScheduler(name=name)
                     self.application.register_service(type(sc), sc)
@@ -280,7 +301,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         break_val=None,
         verbose=True,
         delay=None,
-        **kw
+        **kw,
     ):
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)
