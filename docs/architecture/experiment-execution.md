@@ -35,6 +35,12 @@ Describe how Pychron builds experiment queues, validates them, and executes auto
 - `ExperimentExecutor` is the runtime boundary between queue models and instrument services, but lifecycle policy should prefer the controller/state-machine layer.
 - `ExecutorController` should own transition sequencing, overlap eligibility, settle policy, and queue/run terminal result selection.
 - `ExecutorController` should also own lifecycle action plans for queue completion and run post-save cleanup when the executor is only performing concrete side effects.
+- Cancel and abort intervention paths should follow the same pattern: controller-owned action plans, executor-owned concrete effects and dialogs.
+- Overlap teardown and run-failure classification/cleanup should follow the same pattern too; avoid re-encoding those decisions in executor branches.
+- Executor completion, queue-loop failure handling, and queue-end finalization should follow that pattern as well.
+- The existing last-analysis recovery tool should enter and leave controller recovery transitions when invoked from the experiment task.
+- Concrete run-step effects and save effects should be exposed as explicit executor effect methods selected by the controller, not invoked directly from the `_do_run()` loop.
+- `AutomatedRunSpec` and `ExecutorController` should share a single `RunStateMachine` instance per run; legacy run-state strings remain a compatibility view, not a second state engine.
 - Instrument-specific actions should stay behind injected services such as extraction-line, spectrometer, ion optics, DVC, and dashboard clients.
 - Conditional logic should remain in the `conditional` package rather than leaking into UI handlers.
 
