@@ -44,6 +44,13 @@ class EventType(Enum):
     RECOVERY_COMPLETE = "recovery_complete"
     FAILURE_CLASSIFIED = "failure_classified"
 
+    # Device health monitoring
+    DEVICE_HEALTH_STATE_CHANGE = "device_health_state_change"
+    DEVICE_HEALTH_FAILURE = "device_health_failure"
+    DEVICE_HEALTH_RECOVERY_ATTEMPT = "device_health_recovery_attempt"
+    DEVICE_HEALTH_RECOVERY_SUCCESS = "device_health_recovery_success"
+    DEVICE_QUORUM_CHECK = "device_quorum_check"
+
     # Session lifecycle
     TELEMETRY_SESSION_START = "telemetry_session_start"
     TELEMETRY_SESSION_END = "telemetry_session_end"

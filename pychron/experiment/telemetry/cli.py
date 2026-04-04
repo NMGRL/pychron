@@ -54,6 +54,11 @@ _TYPE_COLORS = {
     "interlock_check": typer.colors.BRIGHT_YELLOW,
     "telemetry_session_start": typer.colors.BRIGHT_GREEN,
     "telemetry_session_end": typer.colors.BRIGHT_GREEN,
+    "device_health_state_change": typer.colors.BRIGHT_MAGENTA,
+    "device_health_failure": typer.colors.RED,
+    "device_health_recovery_attempt": typer.colors.YELLOW,
+    "device_health_recovery_success": typer.colors.GREEN,
+    "device_quorum_check": typer.colors.BRIGHT_BLUE,
 }
 
 
@@ -285,7 +290,96 @@ def timeline(
 # ---------------------------------------------------------------------------
 
 
-@app.command()
+def _print_device_health_stats(events: list[TelemetryEvent]) -> None:
+    """Print device health statistics from events.
+
+    Analyzes device health events and prints summary stats including:
+    - Per-device failure and recovery counts
+    - Success rates
+    - Phase quorum check results
+    """
+    # Collect device health events
+    device_events_by_name: dict[str, dict] = {}
+
+    for e in events:
+        if e.event_type in (
+            "device_health_state_change",
+            "device_health_failure",
+            "device_health_recovery_attempt",
+            "device_health_recovery_success",
+        ):
+            payload = e.payload or {}
+            device_name = payload.get("device", "unknown")
+
+            if device_name not in device_events_by_name:
+                device_events_by_name[device_name] = {
+                    "state_changes": [],
+                    "failures": 0,
+                    "recovery_attempts": 0,
+                    "recovery_successes": 0,
+                    "last_state": None,
+                }
+
+            if e.event_type == "device_health_state_change":
+                device_events_by_name[device_name]["state_changes"].append(
+                    {
+                        "from": payload.get("from_state"),
+                        "to": payload.get("to_state"),
+                        "ts": e.ts,
+                    }
+                )
+                device_events_by_name[device_name]["last_state"] = payload.get("to_state")
+            elif e.event_type == "device_health_failure":
+                device_events_by_name[device_name]["failures"] += 1
+            elif e.event_type == "device_health_recovery_attempt":
+                device_events_by_name[device_name]["recovery_attempts"] += 1
+            elif e.event_type == "device_health_recovery_success":
+                device_events_by_name[device_name]["recovery_successes"] += 1
+
+    if device_events_by_name:
+        typer.echo("\n--- Device Health Statistics ---")
+        typer.echo(
+            f"  {'device':<20} {'state':<15} {'failures':>8} {'recovery_ok':>8} {'state_changes':>8}"
+        )
+        typer.echo(f"  {'-' * 20} {'-' * 15} {'-' * 8} {'-' * 8} {'-' * 8}")
+        for device_name, stats in sorted(device_events_by_name.items()):
+            state = stats["last_state"] or "unknown"
+            state_col = _color(state, typer.colors.RED if state != "HEALTHY" else None)
+            typer.echo(
+                f"  {device_name:<20} {state_col:<15} {stats['failures']:>8} {stats['recovery_successes']:>8} {len(stats['state_changes']):>8}"
+            )
+
+    # Collect phase quorum check results
+    phase_quorum_checks: dict[str, dict] = {}
+    for e in events:
+        if e.event_type == "device_quorum_check":
+            payload = e.payload or {}
+            phase_name = payload.get("phase", "unknown")
+            passed = payload.get("passed", False)
+
+            if phase_name not in phase_quorum_checks:
+                phase_quorum_checks[phase_name] = {"passed": 0, "failed": 0}
+
+            if passed:
+                phase_quorum_checks[phase_name]["passed"] += 1
+            else:
+                phase_quorum_checks[phase_name]["failed"] += 1
+
+    if phase_quorum_checks:
+        typer.echo("\n--- Phase Quorum Checks ---")
+        typer.echo(f"  {'phase':<20} {'passed':>8} {'failed':>8} {'total':>8}")
+        typer.echo(f"  {'-' * 20} {'-' * 8} {'-' * 8} {'-' * 8}")
+        for phase_name in sorted(phase_quorum_checks.keys()):
+            stats = phase_quorum_checks[phase_name]
+            total = stats["passed"] + stats["failed"]
+            fail_col = (
+                _color(str(stats["failed"]), typer.colors.RED)
+                if stats["failed"] > 0
+                else str(stats["failed"])
+            )
+            typer.echo(f"  {phase_name:<20} {stats['passed']:>8} {fail_col:>8} {total:>8}")
+
+
 def stats(
     log_file: Path = typer.Argument(..., help="Path to JSONL telemetry log file."),
 ) -> None:
@@ -340,6 +434,9 @@ def stats(
     for etype, count in sorted(type_counts.items(), key=lambda x: -x[1]):
         color = _TYPE_COLORS.get(etype)
         typer.echo(f"  {_color(f'{etype:<35}', color)} {count:>6}")
+
+    # Device health statistics
+    _print_device_health_stats(events)
 
     if durations_by_action:
         typer.echo("\n--- Span durations (ms) by action ---")
