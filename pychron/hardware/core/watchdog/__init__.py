@@ -1,8 +1,8 @@
 """Watchdog and heartbeat monitoring for device and service health.
 
 Provides per-device/service liveness contracts, state machine tracking,
-and configurable retry strategies for robust hardware control and
-experiment execution.
+configurable retry strategies, and pre-phase health verification for robust
+hardware control and experiment execution.
 """
 
 from pychron.hardware.core.watchdog.device_heartbeat import (
@@ -16,6 +16,10 @@ from pychron.hardware.core.watchdog.retry_strategy import (
     BackoffType,
     CircuitBreakerState,
 )
+from pychron.hardware.core.watchdog.executor_health_checks import (
+    DeviceQuorumChecker,
+    log_device_status,
+)
 
 __all__ = [
     "DeviceHeartbeat",
@@ -25,4 +29,6 @@ __all__ = [
     "CircuitBreakerOpen",
     "BackoffType",
     "CircuitBreakerState",
+    "DeviceQuorumChecker",
+    "log_device_status",
 ]
