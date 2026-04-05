@@ -54,7 +54,13 @@ class PrometheusPlugin(BasePlugin):
         """Provide Prometheus observability task."""
         from pychron.observability.tasks.task import PrometheusObservabilityTask
 
-        return [TaskFactory(factory=PrometheusObservabilityTask)]
+        return [
+            TaskFactory(
+                id="pychron.observability.prometheus_task",
+                name="Prometheus Observability",
+                factory=PrometheusObservabilityTask,
+            )
+        ]
 
     def _preferences_panes_default(self):
         """Provide Prometheus preferences pane factory."""
