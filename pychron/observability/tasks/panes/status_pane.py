@@ -9,7 +9,16 @@ from datetime import datetime
 
 from pyface.action.api import Action
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Button, Dict, HasTraits, Int, List as TraitsList, Str, observe
+from traits.api import (
+    Button,
+    Dict,
+    HasTraits,
+    Instance,
+    Int,
+    List as TraitsList,
+    Str,
+    observe,
+)
 from traitsui.api import (
     HGroup,
     Item,
@@ -94,7 +103,7 @@ class PrometheusStatusPane(TraitsTaskPane):
     histogram_metrics = TraitsList(label="Histograms")
 
     # Internal model for observability
-    model = None
+    model = Instance(PrometheusObservabilityModel)
 
     def __init__(self, **kw):
         """Initialize status pane with model."""
