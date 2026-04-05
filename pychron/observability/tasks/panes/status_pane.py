@@ -112,23 +112,56 @@ class PrometheusStatusPane(TraitsTaskPane):
         # Listen for event changes to update metrics preview
         self.model.observe(self._on_model_events_changed, "events")
 
-    def edit_traits(self, view=None, parent=None, kind=None, context=None, **kw):
-        """Override edit_traits to provide model in context for TraitsUI binding."""
-        if context is None:
-            context = {}
-        context["model"] = self.model
-        return super().edit_traits(view=view, parent=parent, kind=kind, context=context, **kw)
+    @property
+    def host(self):
+        """Proxy to model.host."""
+        return self.model.host if self.model else ""
+
+    @property
+    def port(self):
+        """Proxy to model.port."""
+        return self.model.port if self.model else ""
+
+    @property
+    def namespace(self):
+        """Proxy to model.namespace."""
+        return self.model.namespace if self.model else ""
+
+    @property
+    def metrics_url(self):
+        """Proxy to model.metrics_url."""
+        return self.model.metrics_url if self.model else ""
+
+    @property
+    def enabled(self):
+        """Proxy to model.enabled."""
+        return self.model.enabled if self.model else False
+
+    @property
+    def event_count(self):
+        """Proxy to model.event_count."""
+        return self.model.event_count if self.model else 0
+
+    @property
+    def last_event_time(self):
+        """Proxy to model.last_event_time."""
+        return self.model.last_event_time if self.model else ""
+
+    @property
+    def events(self):
+        """Proxy to model.events."""
+        return self.model.events if self.model else []
 
     def traits_view(self):
         """Build the view for the status pane."""
         # Connection info section
         connection_group = VGroup(
-            UReadonly("model.host", label="Host"),
-            UReadonly("model.port", label="Port"),
-            UReadonly("model.namespace", label="Namespace"),
-            UReadonly("model.metrics_url", label="Metrics URL"),
+            UReadonly("host", label="Host"),
+            UReadonly("port", label="Port"),
+            UReadonly("namespace", label="Namespace"),
+            UReadonly("metrics_url", label="Metrics URL"),
             UReadonly(
-                "model.enabled",
+                "enabled",
                 label="Enabled",
             ),
             show_border=True,
@@ -163,10 +196,10 @@ class PrometheusStatusPane(TraitsTaskPane):
 
         # Recent events section
         recent_events_group = VGroup(
-            UReadonly("model.event_count", label="Total Events"),
-            UReadonly("model.last_event_time", label="Last Event"),
+            UReadonly("event_count", label="Total Events"),
+            UReadonly("last_event_time", label="Last Event"),
             UItem(
-                "model.events",
+                "events",
                 editor=TabularEditor(adapter=EventAdapter(), editable=False),
                 height=150,
             ),
