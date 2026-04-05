@@ -177,7 +177,6 @@ class LibraryPane(TraitsDockPane):
 
     def traits_view(self):
         # Phase 2.2: Search and filter controls
-        # Note: library_filter items temporarily simplified to fix initialization issue
         search_group = VGroup(
             UItem("library_filter", editor=InstanceEditor(), style="custom"),
             show_border=True,
@@ -188,60 +187,6 @@ class LibraryPane(TraitsDockPane):
         library_table = TabularEditor(
             adapter=LibraryEntryAdapter(),
             selected="library_selected",
-        )
-
-        # Phase 2.1: Interactive link buttons
-        links_group = HGroup(
-            icon_button_editor(
-                "open_docs_button",
-                "help",
-                tooltip="Open documentation",
-                enabled_when="library_selected is not None and library_selected.docs_url is not None",
-            ),
-            icon_button_editor(
-                "open_website_button",
-                "web",
-                tooltip="Open manufacturer website",
-                enabled_when="library_selected is not None and library_selected.website is not None",
-            ),
-            show_border=True,
-            label="Links",
-        )
-
-        # Phase 2.3: Enhanced metadata display
-        metadata_group = VGroup(
-            Item("library_selected.name", label="Name", style="readonly"),
-            Item("library_selected.description", label="Description", style="readonly"),
-            Item("library_selected.company", label="Company", style="readonly"),
-            Item("library_selected.model", label="Model", style="readonly"),
-            Item("library_selected.vendor_part_number", label="Part Number", style="readonly"),
-            Item("library_selected.default_comm_type", label="Comm Type", style="readonly"),
-            Item("library_selected.docs_url", label="Docs URL", style="readonly"),
-            Item("library_selected.website", label="Website", style="readonly"),
-            enabled_when="library_selected is not None",
-            show_border=True,
-            label="Metadata",
-            scrollable=True,
-        )
-
-        # Config generation
-        config_group = VGroup(
-            HGroup(
-                Item("generate_config_device_name", label="Device Name"),
-                Item("generate_config_comm_type", label="Comm Type"),
-            ),
-            HGroup(
-                Item("generate_config_allow_overwrite", label="Allow Overwrite"),
-                icon_button_editor(
-                    "generate_config_button",
-                    "document-new",
-                    tooltip="Generate device config",
-                    enabled_when="library_selected is not None and library_selected.is_complete",
-                ),
-            ),
-            enabled_when="library_selected is not None",
-            show_border=True,
-            label="Generate Config",
         )
 
         # Statistics display (Phase 2.2)
@@ -270,10 +215,9 @@ class LibraryPane(TraitsDockPane):
                     "save_as_template_button",
                     "document-save",
                     tooltip="Save as template",
-                    enabled_when="template_name_input and library_selected is not None",
+                    enabled_when="template_name_input",
                 ),
             ),
-            enabled_when="library_selected is not None",
             show_border=True,
             label="Templates",
         )
@@ -283,12 +227,9 @@ class LibraryPane(TraitsDockPane):
                 search_group,
                 stats_group,
                 UItem("filtered_library_entries", editor=library_table, height=200),
-                links_group,
-                metadata_group,
-                config_group,
                 template_group,
             ),
-            height=800,
+            height=600,
             resizable=True,
         )
         return v
