@@ -189,33 +189,20 @@ class LibraryPane(TraitsDockPane):
                     "generate_config_button",
                     "document-new",
                     tooltip="Generate device config",
-                    enabled_when="library_selected.is_complete",
+                    enabled_when="library_selected is not None and library_selected.is_complete",
                 ),
             ),
-            enabled_when="library_selected",
+            enabled_when="library_selected is not None",
             show_border=True,
             label="Generate Config",
-        )
-
-        metadata_group = VGroup(
-            UReadonly("library_selected.description", style="readonly"),
-            UReadonly("library_selected.docs_url", label="Docs URL"),
-            UReadonly("library_selected.website", label="Website"),
-            UReadonly("library_selected.model", label="Model"),
-            UReadonly("library_selected.vendor_part_number", label="Part Number"),
-            enabled_when="library_selected",
-            show_border=True,
-            label="Metadata",
-            scrollable=True,
         )
 
         v = View(
             VGroup(
                 UItem("library_entries", editor=library_table, height=250),
-                metadata_group,
                 config_group,
             ),
-            height=600,
+            height=400,
             resizable=True,
         )
         return v
