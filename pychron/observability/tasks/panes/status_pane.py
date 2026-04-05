@@ -112,6 +112,13 @@ class PrometheusStatusPane(TraitsTaskPane):
         # Listen for event changes to update metrics preview
         self.model.observe(self._on_model_events_changed, "events")
 
+    def edit_traits(self, view=None, parent=None, kind=None, context=None, **kw):
+        """Override edit_traits to provide model in context for TraitsUI binding."""
+        if context is None:
+            context = {}
+        context["model"] = self.model
+        return super().edit_traits(view=view, parent=parent, kind=kind, context=context, **kw)
+
     def traits_view(self):
         """Build the view for the status pane."""
         # Connection info section
