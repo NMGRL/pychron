@@ -176,9 +176,7 @@ class LibraryPane(TraitsDockPane):
     name = "Device Library"
 
     def traits_view(self):
-        library_table = TabularEditor(
-            adapter=LibraryEntryAdapter(), selected="library_selected", selection_mode="row"
-        )
+        library_table = TabularEditor(adapter=LibraryEntryAdapter(), selected="library_selected")
 
         config_group = VGroup(
             HGroup(
