@@ -3,12 +3,16 @@
 **Triggered by commit:** `d72e6eb48`  
 **Generated:** 2026-04-05 15:46 UTC  
 **Compare:** [`4bc93cd9929fd5b3999575e0aa751bc241ff7b9e...d72e6eb48`](../../compare/4bc93cd9929fd5b3999575e0aa751bc241ff7b9e...d72e6eb48)
+**Triggered by commit:** `4bc93cd99`  
+**Generated:** 2026-04-05 14:08 UTC  
+**Compare:** [`8c1efd864781da4125621d62641ed3444eeb5548...4bc93cd99`](../../compare/8c1efd864781da4125621d62641ed3444eeb5548...4bc93cd99)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
 | [Hardware Compatibility Matrix](#hardware-matrix) | 19 files | ✅ Reviewed |
+| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -37,16 +41,18 @@ pychron/hardware/tests/test_phase5.py
 pychron/hardware/usage_analytics.py
 pychron/hardware/validation_reporter.py
 pychron/paths.py
+pyproject.toml
+uv.lock
 ```
 
 </details>
 
 ---
 
-## Hardware Compatibility Matrix {#hardware-matrix}
+## Installation Guide {#installation-guide}
 
-**Doc file:** `docs/hardware_compatibility_matrix.md`  
-**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
+**Doc file:** `docs/installation_guide.md`  
+**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
 
 ### Changed Files
 
@@ -69,6 +75,8 @@ pychron/paths.py
 - `pychron/hardware/tests/test_phase5.py`
 - `pychron/hardware/usage_analytics.py`
 - `pychron/hardware/validation_reporter.py`
+- `pyproject.toml`
+- `uv.lock`
 
 ### AI Review
 
@@ -101,6 +109,17 @@ The code changes introduce a comprehensive hardware device management system wit
 - **Section/Topic:** Developer Tools
   **Issue:** New driver generation wizard and development tools are not mentioned
   **Suggested update:** Document `DriverGenerator` and `DriverWizard` classes that provide code generation for device drivers, including generated file types (driver class, config file, unit tests, README), supported communication types, and template system.
+The code changes add a new development dependency `traits-stubs>=6.4.0` to the `dev` optional dependency group in `pyproject.toml`. This is a type stubs package that provides type annotations for the `traits` library, which is used by static type checkers like mypy. The corresponding `uv.lock` file was updated to include the resolved dependency information.
+
+## Documentation Updates Required
+
+- **Section/Topic:** Optional dependency groups section
+  **Issue:** The documentation may list the contents of the `dev` dependency group but would now be missing the newly added `traits-stubs` package
+  **Suggested update:** Add `traits-stubs>=6.4.0` to any enumeration or description of packages included in the `dev` optional dependency group, noting that it provides type stubs for the traits library to support static type checking
+
+- **Section/Topic:** Development environment setup
+  **Issue:** If the documentation provides specific guidance on setting up a development environment or mentions what gets installed with `uv sync --extra dev`, it would now be incomplete
+  **Suggested update:** Include mention that `traits-stubs` will be installed as part of the development dependencies to support type checking workflows
 
 ---
 
