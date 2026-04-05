@@ -1007,6 +1007,20 @@ class ExtractionLineManager(Manager, Consoleable):
                 "{} ({})".format(name, action), mode="valve", extra=name, bgcolor=color
             )
 
+        # Log valve operation to Prometheus observability
+        try:
+            from pychron.observability import event_capture
+
+            event_capture.add_event(
+                event_type="counter",
+                metric_name=f"valve_{action}",
+                value=1.0,
+                labels={"valve": name},
+                status="success",
+            )
+        except Exception as e:
+            self.debug(f"Failed to log valve event to Prometheus: {e}")
+
     def _enable_valve(self, description, state):
         if self.switch_manager:
             valve = self.switch_manager.get_valve_by_description(description)
