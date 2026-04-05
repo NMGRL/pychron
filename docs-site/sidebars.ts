@@ -12,6 +12,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'getting-started/installation',
         'getting-started/quick-start',
+        'getting-started/experiment-workflow',
       ],
     },
 
@@ -63,6 +64,16 @@ const sidebars: SidebarsConfig = {
       items: [
         'pyscripts/overview',
         'pyscripts/api-reference',
+      ],
+    },
+
+    {
+      type: 'category',
+      label: 'Pipeline',
+      collapsible: true,
+      collapsed: true,
+      items: [
+        'pipeline/data-reduction',
       ],
     },
 
