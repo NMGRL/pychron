@@ -157,7 +157,7 @@ class PrometheusStatusPane(TraitsTaskPane):
         """Override create to ensure proper context for TraitsUI."""
         # Explicitly pass self as the context and call parent's edit_traits
         view = self.traits_view()
-        self.ui = self.edit_traits(view=view, kind="subpanel", parent=parent)
+        self.ui = self.edit_traits(view=view, kind="subpanel", parent=parent, context=self)
         self.control = self.ui.control
 
     def traits_view(self):
