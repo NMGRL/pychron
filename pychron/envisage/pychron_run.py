@@ -106,6 +106,8 @@ PACKAGE_DICT = dict(
     EmailPlugin="pychron.social.email.tasks.plugin",
     GoogleCalendarPlugin="pychron.social.google_calendar.tasks.plugin",
     TwitterPlugin="pychron.social.twitter.plugin",
+    # observability
+    PrometheusPlugin="pychron.observability.tasks.plugin",
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
@@ -145,7 +147,7 @@ def get_hardware_plugins():
 def get_klass(package, name):
     m = __import__(package, globals(), locals(), [name])
     klass = getattr(m, name)
-    
+
     try:
         m = __import__(package, globals(), locals(), [name])
         klass = getattr(m, name)
@@ -191,9 +193,7 @@ def get_plugin(pname):
 
         else:
             logger.warning(
-                "***** Invalid {} needs to be a subclass of Plugin ******".format(
-                    klass
-                ),
+                "***** Invalid {} needs to be a subclass of Plugin ******".format(klass),
                 extra={"threadName_": "Launcher"},
             )
 
@@ -229,9 +229,7 @@ def get_user_plugins():
     dvcplugin = next((p for p in plugins if p.name == "DVCPlugin"), None)
     if dvcplugin is not None:
         # ensure a githost plugin is available
-        githost = next(
-            (p for p in plugins if p.name in ("GitHubPlugin", "LocalGitPlugin")), None
-        )
+        githost = next((p for p in plugins if p.name in ("GitHubPlugin", "LocalGitPlugin")), None)
         if githost is None:
             plugins.append(get_plugin("LocalGitPlugin"))
 

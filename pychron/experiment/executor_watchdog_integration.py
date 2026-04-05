@@ -80,7 +80,7 @@ class ExecutorWatchdogIntegration:
         if self._device_quorum_checker is None:
             from pychron.hardware.core.watchdog import DeviceQuorumChecker
 
-            self._device_quorum_checker = DeviceQuorumChecker(logger=self.logger)
+            self._device_quorum_checker = DeviceQuorumChecker()
         return self._device_quorum_checker
 
     @property
@@ -182,6 +182,9 @@ class ExecutorWatchdogIntegration:
             if self.recorder:
                 self._emit_device_quorum_event(phase_name, passed, msg, devices)
 
+            # Record Prometheus metrics
+            self._record_device_health_metrics(phase_name, passed)
+
             if not passed:
                 self.logger.warning(f"Device health check failed for {phase_name}: {msg}")
                 # Graceful degradation: log warning but continue execution
@@ -192,6 +195,9 @@ class ExecutorWatchdogIntegration:
             # Emit telemetry event for device health check error
             if self.recorder:
                 self._emit_device_quorum_event(phase_name, False, str(e), devices, error=str(e))
+
+            # Record Prometheus metrics
+            self._record_device_health_metrics(phase_name, False)
 
             # Graceful degradation: continue on error
             return True, f"Device health check error: {str(e)}"
@@ -225,6 +231,9 @@ class ExecutorWatchdogIntegration:
             if self.recorder:
                 self._emit_service_quorum_event(phase_name, passed, msg, services)
 
+            # Record Prometheus metrics
+            self._record_service_health_metrics(phase_name, passed)
+
             if not passed:
                 self.logger.warning(f"Service health check failed for {phase_name}: {msg}")
                 # Graceful degradation: log warning but continue execution
@@ -235,6 +244,9 @@ class ExecutorWatchdogIntegration:
             # Emit telemetry event for service health check error
             if self.recorder:
                 self._emit_service_quorum_event(phase_name, False, str(e), services, error=str(e))
+
+            # Record Prometheus metrics
+            self._record_service_health_metrics(phase_name, False)
 
             # Graceful degradation: continue on error
             return True, f"Service health check error: {str(e)}"
@@ -414,6 +426,54 @@ class ExecutorWatchdogIntegration:
             for service_name, service in services.items():
                 state = self._get_service_state(service)
                 self.logger.info(f"  {service_name}: {state}")
+
+    def _record_device_health_metrics(self, phase_name: str, passed: bool) -> None:
+        """Record device health check metrics to Prometheus.
+
+        Args:
+            phase_name: Name of the phase
+            passed: Whether the health check passed
+        """
+        try:
+            from pychron.observability import inc_counter
+
+            # Normalize phase name
+            phase = str(phase_name).lower().replace(" ", "_")[:50]
+            kind = "device"
+
+            if not passed:
+                inc_counter(
+                    "phase_healthcheck_failures_total",
+                    "Total phase health check failures",
+                    labels=["phase", "kind"],
+                    labelvalues={"phase": phase, "kind": kind},
+                )
+        except Exception:
+            pass
+
+    def _record_service_health_metrics(self, phase_name: str, passed: bool) -> None:
+        """Record service health check metrics to Prometheus.
+
+        Args:
+            phase_name: Name of the phase
+            passed: Whether the health check passed
+        """
+        try:
+            from pychron.observability import inc_counter
+
+            # Normalize phase name
+            phase = str(phase_name).lower().replace(" ", "_")[:50]
+            kind = "service"
+
+            if not passed:
+                inc_counter(
+                    "phase_healthcheck_failures_total",
+                    "Total phase health check failures",
+                    labels=["phase", "kind"],
+                    labelvalues={"phase": phase, "kind": kind},
+                )
+        except Exception:
+            pass
 
     @staticmethod
     def _get_device_state(device: object) -> str:

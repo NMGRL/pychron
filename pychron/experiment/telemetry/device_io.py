@@ -22,6 +22,66 @@ from .context import TelemetryContext
 from .recorder import TelemetryRecorder
 
 
+def _record_prometheus_device_io_metrics(
+    device_name: str,
+    operation_type: str,
+    duration_seconds: float,
+    success: bool,
+) -> None:
+    """Record Prometheus metrics for device I/O operations.
+
+    Args:
+        device_name: Device identifier
+        operation_type: Operation identifier
+        duration_seconds: Operation duration in seconds
+        success: Whether operation succeeded
+    """
+    try:
+        from pychron.observability import (
+            inc_counter,
+            observe_histogram,
+            set_gauge,
+        )
+
+        # Normalize label values
+        device = str(device_name).lower().replace(" ", "_")[:50]
+        operation = str(operation_type).lower().replace(" ", "_")[:50]
+        result = "success" if success else "failure"
+
+        # Record counter
+        inc_counter(
+            "device_io_operations_total",
+            "Total device I/O operations",
+            labels=["device", "operation", "result"],
+            labelvalues={"device": device, "operation": operation, "result": result},
+        )
+
+        # Record duration histogram
+        observe_histogram(
+            "device_io_duration_seconds",
+            "Device I/O operation duration",
+            duration_seconds,
+            labels=["device", "operation"],
+            labelvalues={"device": device, "operation": operation},
+        )
+
+        # Record last success timestamp (only on success)
+        if success:
+            set_gauge(
+                "device_last_success_timestamp_seconds",
+                "Time of last successful device operation",
+                time.time(),
+                labels=["device"],
+                labelvalues={"device": device},
+            )
+    except Exception as e:
+        # Log the exception once per device to avoid spam
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Failed to record Prometheus metrics for {device_name}.{operation_type}: {e}")
+
+
 def telemetry_device_io(
     device_name: str, operation_type: str, recorder: Optional[TelemetryRecorder] = None
 ) -> Callable:
@@ -66,6 +126,7 @@ def telemetry_device_io(
             finally:
                 # Record device I/O end event
                 duration_ms = (time.time() - start_time) * 1000
+                duration_seconds = duration_ms / 1000.0
                 payload = {
                     "device": device_name,
                     "operation": operation_type,
@@ -95,6 +156,11 @@ def telemetry_device_io(
                 )
 
                 recorder.record_event(event)
+
+                # Record Prometheus metrics
+                _record_prometheus_device_io_metrics(
+                    device_name, operation_type, duration_seconds, success
+                )
 
             return result
 
@@ -151,6 +217,7 @@ class TelemetryDeviceIOContext:
             self.error = str(exc_val)
 
         duration_ms = (time.time() - self.start_time) * 1000
+        duration_seconds = duration_ms / 1000.0
 
         payload = self.payload.copy()
         payload.update(
@@ -180,6 +247,14 @@ class TelemetryDeviceIOContext:
         )
 
         self.recorder.record_event(event)
+
+        # Record Prometheus metrics
+        _record_prometheus_device_io_metrics(
+            self.device_name,
+            self.operation_type,
+            duration_seconds,
+            self.success,
+        )
 
     def set_payload(self, key: str, value: Any) -> None:
         """Update payload during operation (e.g., capture result)."""

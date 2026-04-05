@@ -1,0 +1,109 @@
+# ===============================================================================
+# Copyright 2026 Pychron Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+"""Preferences pane for Prometheus observability configuration."""
+
+from envisage.ui.tasks.preferences_pane import PreferencesPane
+from traits.api import (
+    Bool,
+    Int,
+    Str,
+    HasTraits,
+    Range,
+)
+from traitsui.api import VGroup, Item, Label, HGroup
+
+
+class PrometheusPreferences(HasTraits):
+    """Preferences for Prometheus metrics export."""
+
+    enabled = Bool(
+        False,
+        label="Enabled",
+        help="Enable Prometheus metrics collection and HTTP export",
+    )
+    host = Str(
+        "127.0.0.1",
+        label="Host",
+        help="Host address to bind metrics HTTP server to",
+    )
+    port = Range(
+        low=1,
+        high=65535,
+        value=9109,
+        label="Port",
+        help="Port to bind metrics HTTP server to",
+    )
+    namespace = Str(
+        "pychron",
+        label="Namespace",
+        help="Prometheus metric namespace prefix",
+    )
+
+
+class PrometheusPreferencesPane(PreferencesPane):
+    """Preferences pane for Prometheus configuration."""
+
+    category = "Prometheus"
+    preferences_path = "pychron.observability"
+
+    model_class = PrometheusPreferences
+
+    def traits_view(self):
+        """Build the preferences view."""
+        from traitsui.api import View
+
+        return View(
+            VGroup(
+                Item(
+                    "enabled",
+                    label="Enable Prometheus Metrics Export",
+                    tooltip="Enable to start HTTP metrics server on application startup",
+                ),
+                VGroup(
+                    Label("HTTP Server Configuration"),
+                    Item(
+                        "host",
+                        label="Host",
+                        tooltip="Hostname or IP address for metrics HTTP server",
+                    ),
+                    Item(
+                        "port",
+                        label="Port",
+                        tooltip="Port number for metrics HTTP server (1-65535)",
+                    ),
+                    Item(
+                        "namespace",
+                        label="Metric Namespace",
+                        tooltip="Prefix for all exported metric names",
+                    ),
+                    enabled_when="enabled",
+                    label="Server Settings",
+                ),
+                VGroup(
+                    Label(
+                        "When enabled, Prometheus metrics will be exported to:\n"
+                        "http://<host>:<port>/metrics\n\n"
+                        "Configure your Prometheus instance to scrape this endpoint."
+                    ),
+                    label="Usage",
+                ),
+                label="Observability",
+            ),
+        )
+
+
+# ============= EOF =============================================
