@@ -108,4 +108,5 @@ dev = [
     "types-pytz",
     "types-pymysql",
     "types-paramiko",
+    "traits-stubs>=6.4.0",
 ]
