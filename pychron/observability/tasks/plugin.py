@@ -22,6 +22,7 @@ device I/O, and service health.
 
 from apptools.preferences.preference_binding import bind_preference
 from envisage.plugin import Plugin
+from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import Bool, Int, Str, List
 
 from pychron.envisage.tasks.base_plugin import BasePlugin
@@ -46,6 +47,15 @@ class PrometheusPlugin(BasePlugin):
     # Preferences pane contribution
     preferences_panes = List(contributes_to="envisage.ui.tasks.preferences_panes")
 
+    # Task contribution
+    tasks = List(contributes_to="envisage.ui.tasks.tasks")
+
+    def _tasks_default(self):
+        """Provide Prometheus observability task."""
+        from pychron.observability.tasks.task import PrometheusObservabilityTask
+
+        return [TaskFactory(factory=PrometheusObservabilityTask)]
+
     def _preferences_panes_default(self):
         """Provide Prometheus preferences pane factory."""
         from pychron.observability.tasks.preferences_pane import (
@@ -64,6 +74,9 @@ class PrometheusPlugin(BasePlugin):
         super().start()
         self.debug("Starting Prometheus plugin")
 
+        # Initialize event capture for UI
+        self._initialize_event_capture()
+
         # Bind traits to preferences for automatic synchronization
         self._bind_preferences()
 
@@ -73,6 +86,17 @@ class PrometheusPlugin(BasePlugin):
         # Start exporter if enabled
         if self.enabled:
             self._start_exporter()
+
+    def _initialize_event_capture(self) -> None:
+        """Initialize event capture system for observability UI."""
+        try:
+            from pychron.observability import event_capture
+
+            # Enable event capture
+            event_capture.set_capture_enabled(True)
+            self.debug("Event capture initialized")
+        except Exception as e:
+            self.warning(f"Error initializing event capture: {e}")
 
     def _bind_preferences(self) -> None:
         """Bind plugin traits to preferences system."""

@@ -253,6 +253,27 @@ class PrometheusObservabilityModel(HasTraits):
             "last_event_time": self.last_event_time,
         }
 
+    def get_metrics_preview(self) -> Dict[str, Dict]:
+        """Get a preview of recent metrics by type.
+
+        Returns most recent value for each unique metric_name within each event type.
+
+        Returns:
+            Dict mapping event_type -> {metric_name: value}
+        """
+        preview = {}
+
+        # Group events by type and metric name
+        metrics_by_type = {}
+        for event in self.events:
+            if event.event_type not in metrics_by_type:
+                metrics_by_type[event.event_type] = {}
+
+            # Keep only the most recent value for each metric
+            metrics_by_type[event.event_type][event.metric_name] = event.value
+
+        return metrics_by_type
+
     def destroy(self) -> None:
         """Clean up model resources."""
         if self._event_callback_registered:
