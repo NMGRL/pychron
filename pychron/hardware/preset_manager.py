@@ -34,7 +34,9 @@ class PresetManager:
             presets_dir: Override default presets directory path
         """
         if presets_dir is None:
-            presets_dir = paths.device_presets_dir
+            presets_dir = Path(paths.device_presets_dir)
+        elif not isinstance(presets_dir, Path):
+            presets_dir = Path(presets_dir)
         self.presets_dir = presets_dir
         self.presets: Dict[str, DevicePreset] = {}
 

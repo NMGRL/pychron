@@ -129,6 +129,8 @@ class Paths(object):
 
     preferences_dir = None
     comment_templates_dir = None
+    device_templates_dir = None
+    device_presets_dir = None
     plotter_options_dir = None
     table_options_dir = None
     test_dir = None
@@ -378,13 +380,13 @@ class Paths(object):
         self.table_options_dir = join(self.appdata_dir, "table_options")
         self.plotter_options_dir = join(self.appdata_dir, "plotter_options")
         self.comment_templates_dir = join(self.appdata_dir, "comment_templates")
+        self.device_templates_dir = join(self.appdata_dir, "device_templates")
+        self.device_presets_dir = join(self.appdata_dir, "device_presets")
 
         self.peak_center_config_dir = join(self.appdata_dir, "peak_center_configs")
 
         self.actuation_tracker_file = join(self.appdata_dir, "actuation_tracker.json")
-        self.actuation_tracker_file_yaml = join(
-            self.appdata_dir, "actuation_tracker.yaml"
-        )
+        self.actuation_tracker_file_yaml = join(self.appdata_dir, "actuation_tracker.yaml")
 
         # login
         self.login_file = join(self.appdata_dir, "login")
@@ -405,9 +407,7 @@ class Paths(object):
         self.extraction_line_dir = join(setup_dir, "extractionline")
         self.monitors_dir = join(setup_dir, "monitors")
         self.pattern_dir = join(setup_dir, "patterns")
-        self.incremental_heat_template_dir = join(
-            setup_dir, "incremental_heat_templates"
-        )
+        self.incremental_heat_template_dir = join(setup_dir, "incremental_heat_templates")
 
         self.block_dir = join(setup_dir, "blocks")
         self.map_dir = map_dir = join(setup_dir, "tray_maps")
@@ -483,15 +483,11 @@ class Paths(object):
         self.deflection = join(self.spectrometer_dir, "deflection.yaml")
         self.startup_tests = join(self.setup_dir, "startup_tests.yaml")
         # self.set_search_paths()
-        self.system_conditionals = join(
-            self.spectrometer_dir, "system_conditionals.yaml"
-        )
+        self.system_conditionals = join(self.spectrometer_dir, "system_conditionals.yaml")
         self.experiment_defaults = join(setup_dir, "experiment_defaults.yaml")
         self.ideogram_defaults = join(self.appdata_dir, "ideogram_defaults.yaml")
         self.spectrum_defaults = join(self.appdata_dir, "spectrum_defaults.yaml")
-        self.inverse_isochron_defaults = join(
-            self.appdata_dir, "inverse_isochron_defaults.yaml"
-        )
+        self.inverse_isochron_defaults = join(self.appdata_dir, "inverse_isochron_defaults.yaml")
         self.composites_defaults = join(self.appdata_dir, "composite_defaults.yaml")
 
         self.plotter_options = join(self.plotter_options_dir, "plotter_options.p")
@@ -503,32 +499,22 @@ class Paths(object):
         self.duration_tracker_frequencies = join(
             self.appdata_dir, "duration_tracker_frequencies.txt"
         )
-        self.experiment_launch_history = join(
-            self.appdata_dir, "experiment_launch_history.txt"
-        )
+        self.experiment_launch_history = join(self.appdata_dir, "experiment_launch_history.txt")
         self.notification_triggers = join(self.setup_dir, "notification_triggers.yaml")
 
         self.furnace_firmware = join(self.setup_dir, "furnace_firmware.yaml")
-        self.furnace_sample_states = join(
-            self.appdata_dir, "furnace_sample_states.yaml"
-        )
+        self.furnace_sample_states = join(self.appdata_dir, "furnace_sample_states.yaml")
         self.valid_pi_names = join(self.setup_dir, "valid_pi_names.yaml")
 
-        self.af_demagnetization = join(
-            paths.spectrometer_dir, "af_demagnetization.yaml"
-        )
+        self.af_demagnetization = join(paths.spectrometer_dir, "af_demagnetization.yaml")
 
-        self.ratio_change_detection = join(
-            paths.setup_dir, "ratio_change_detection.yaml"
-        )
+        self.ratio_change_detection = join(paths.setup_dir, "ratio_change_detection.yaml")
 
         self.oauth_file = join(self.appdata_dir, "oauth.json")
 
         self.packages_file = join(self.appdata_dir, "packages.json")
 
-        self.baseline_model = join(
-            self.scripts_dir, "syn_extraction", "baseline_model.csv"
-        )
+        self.baseline_model = join(self.scripts_dir, "syn_extraction", "baseline_model.csv")
 
         build_directories()
 
@@ -570,10 +556,7 @@ class Paths(object):
         return path.join(self.appdata_dir, basename)
 
     def write_defaults(self):
-        if (
-            environ.get("TRAVIS_CI", "False") == "False"
-            and environ.get("RTD", "False") == "False"
-        ):
+        if environ.get("TRAVIS_CI", "False") == "False" and environ.get("RTD", "False") == "False":
             self._write_default_files()
 
     def reset_plot_factory_defaults(self):

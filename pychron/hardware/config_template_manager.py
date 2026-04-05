@@ -50,7 +50,9 @@ class ConfigTemplateManager:
             templates_dir: Override default templates directory path
         """
         if templates_dir is None:
-            templates_dir = paths.device_templates_dir
+            templates_dir = Path(paths.device_templates_dir)
+        elif not isinstance(templates_dir, Path):
+            templates_dir = Path(templates_dir)
         self.templates_dir = templates_dir
         self.templates: Dict[str, ConfigTemplate] = {}
 
