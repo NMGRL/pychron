@@ -113,6 +113,14 @@ class PrometheusStatusPane(TraitsTaskPane):
         # Listen for event changes to update metrics preview
         self.model.observe(self._on_model_events_changed, "events")
 
+    def trait_context(self):
+        """Provide pane traits to the view context.
+
+        This ensures TraitsUI resolves trait references (like 'counter_metrics',
+        'host', etc.) on the pane object, not on the model.
+        """
+        return {"object": self}
+
     @property
     def host(self):
         """Proxy to model.host."""
