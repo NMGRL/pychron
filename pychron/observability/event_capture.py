@@ -65,6 +65,9 @@ def add_event(
         _event_queue.append(event)
         logger.debug(f"Event queue size: {len(_event_queue)}")
 
+    # Update Prometheus metrics registry
+    _update_prometheus_metrics(event)
+
     # Notify callbacks (async, non-blocking)
     _notify_callbacks(event)
 
@@ -161,3 +164,56 @@ def _notify_callbacks(event: PrometheusEvent) -> None:
             threading.Thread(target=_call_callback, daemon=True).start()
         except Exception as e:
             logger.warning(f"Error calling event callback: {e}")
+
+
+def _update_prometheus_metrics(event: PrometheusEvent) -> None:
+    """Update Prometheus metrics registry based on captured event.
+
+    Routes the event to the appropriate metrics function (counter, gauge, histogram)
+    to update the Prometheus registry so metrics appear in /metrics endpoint.
+
+    Args:
+        event: PrometheusEvent to process
+    """
+    try:
+        # Import metrics functions locally to avoid circular imports
+        from . import metrics
+
+        # Skip if metrics are disabled
+        if not metrics.is_enabled():
+            return
+
+        # Convert label names to a list for metrics functions
+        label_names = list(event.labels.keys()) if event.labels else None
+
+        if event.event_type == "counter":
+            metrics.inc_counter(
+                name=event.metric_name,
+                description=f"Counter for {event.metric_name}",
+                labels=label_names,
+                labelvalues=event.labels,
+            )
+            logger.debug(f"Updated counter metric: {event.metric_name}")
+
+        elif event.event_type == "gauge":
+            metrics.set_gauge(
+                name=event.metric_name,
+                description=f"Gauge for {event.metric_name}",
+                value=event.value,
+                labels=label_names,
+                labelvalues=event.labels,
+            )
+            logger.debug(f"Updated gauge metric: {event.metric_name}")
+
+        elif event.event_type == "histogram":
+            metrics.observe_histogram(
+                name=event.metric_name,
+                description=f"Histogram for {event.metric_name}",
+                value=event.value,
+                labels=label_names,
+                labelvalues=event.labels,
+            )
+            logger.debug(f"Updated histogram metric: {event.metric_name}")
+
+    except Exception as e:
+        logger.warning(f"Error updating Prometheus metrics for event {event.metric_name}: {e}")
