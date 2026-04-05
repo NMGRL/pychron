@@ -150,6 +150,7 @@ jobs:
         if: >
           steps.changed.outputs.has_changes == 'true' &&
           steps.check-output.outputs.has_report == 'true'
+        id: create-pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -205,18 +206,61 @@ jobs:
             gh pr edit "$EXISTING_PR" \
               --title "docs: review documentation updates for ${SHORT_SHA}" \
               --body-file "${{ env.OUTPUT_FILE }}"
+            PR_NUMBER="$EXISTING_PR"
           else
-            gh pr create \
+            PR_URL=$(gh pr create \
               --title "docs: review documentation updates for ${SHORT_SHA}" \
               --body-file "${{ env.OUTPUT_FILE }}" \
               --base main \
               --head "$BRANCH" \
               --label documentation \
-              --assignee "${{ github.actor }}"
+              --assignee "${{ github.actor }}")
+            # Extract PR number from the URL (e.g. https://github.com/org/repo/pull/42)
+            PR_NUMBER="${PR_URL##*/}"
           fi
 
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
       # -----------------------------------------------------------------------
-      # 8. Summary step — always runs, prints outcome to the Actions summary page
+      # 8. Enable auto-merge on the PR (squash strategy)
+      #
+      #    GitHub will merge the PR automatically once all required status
+      #    checks pass and any required reviews are approved.
+      #
+      #    IMPORTANT: If the repository has no branch protection rules or
+      #    required status checks on main, GitHub will merge the PR immediately
+      #    after auto-merge is enabled — there is no built-in delay. To gate
+      #    the merge on the Docusaurus build passing, add a required status
+      #    check for the "Build & Deploy Docusaurus" workflow in:
+      #      Settings → Branches → main → Require status checks to pass
+      #
+      #    The `pull-requests: write` permission (set at the top of this file)
+      #    is required to enable auto-merge. The GITHUB_TOKEN is sufficient —
+      #    no PAT is needed as long as auto-merge is allowed for the repository
+      #    (Settings → General → Allow auto-merge must be checked).
+      # -----------------------------------------------------------------------
+      - name: Enable auto-merge
+        if: >
+          steps.changed.outputs.has_changes == 'true' &&
+          steps.check-output.outputs.has_report == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ steps.create-pr.outputs.pr_number }}"
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR number found — skipping auto-merge."
+            exit 0
+          fi
+
+          echo "Enabling auto-merge (squash) on PR #${PR_NUMBER}"
+          gh pr merge "$PR_NUMBER" --auto --squash \
+            --subject "docs: auto-merge documentation update for ${{ steps.changed.outputs.short_sha }}"
+
+          echo "Auto-merge enabled. PR will merge once all required checks pass."
+
+      # -----------------------------------------------------------------------
+      # 10. Summary step — always runs, prints outcome to the Actions summary page
       # -----------------------------------------------------------------------
       - name: Write job summary
         if: always()
@@ -224,6 +268,7 @@ jobs:
           HAS_CHANGES: ${{ steps.changed.outputs.has_changes }}
           HAS_REPORT:  ${{ steps.check-output.outputs.has_report }}
           SHORT_SHA:   ${{ steps.changed.outputs.short_sha }}
+          PR_NUMBER:   ${{ steps.create-pr.outputs.pr_number }}
         run: |
           {
             echo "## Documentation Audit — \`${SHORT_SHA}\`"
@@ -235,8 +280,8 @@ jobs:
               echo ""
               echo "No PR was opened."
             else
-              echo "✅ Audit complete. A draft PR has been opened on branch \`docs/auto-update-${SHORT_SHA}\`."
+              echo "✅ Audit complete. PR #${PR_NUMBER} opened on branch \`docs/auto-update-${SHORT_SHA}\`."
               echo ""
-              echo "Review the PR and apply any suggested documentation updates manually."
+              echo "Auto-merge (squash) is enabled — the PR will merge automatically once all required checks pass."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
