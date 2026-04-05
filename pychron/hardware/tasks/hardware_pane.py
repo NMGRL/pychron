@@ -176,8 +176,59 @@ class LibraryPane(TraitsDockPane):
     name = "Device Library"
 
     def traits_view(self):
-        library_table = TabularEditor(adapter=LibraryEntryAdapter(), selected="library_selected")
+        # Phase 2.2: Search and filter controls
+        search_group = VGroup(
+            Item("library_filter.search_text", label="Search"),
+            HGroup(
+                Item("library_filter.company_filter", label="Company"),
+                Item("library_filter.comm_type_filter", label="Comm Type"),
+                Item("library_filter.completeness_filter", label="Status"),
+            ),
+            show_border=True,
+            label="Search & Filter",
+        )
 
+        # Library table showing filtered entries (Phase 2.2)
+        library_table = TabularEditor(
+            adapter=LibraryEntryAdapter(),
+            selected="library_selected",
+        )
+
+        # Phase 2.1: Interactive link buttons
+        links_group = HGroup(
+            icon_button_editor(
+                "open_docs_button",
+                "help",
+                tooltip="Open documentation",
+                enabled_when="library_selected is not None and library_selected.docs_url is not None",
+            ),
+            icon_button_editor(
+                "open_website_button",
+                "web",
+                tooltip="Open manufacturer website",
+                enabled_when="library_selected is not None and library_selected.website is not None",
+            ),
+            show_border=True,
+            label="Links",
+        )
+
+        # Phase 2.3: Enhanced metadata display
+        metadata_group = VGroup(
+            Item("library_selected.name", label="Name", style="readonly"),
+            Item("library_selected.description", label="Description", style="readonly"),
+            Item("library_selected.company", label="Company", style="readonly"),
+            Item("library_selected.model", label="Model", style="readonly"),
+            Item("library_selected.vendor_part_number", label="Part Number", style="readonly"),
+            Item("library_selected.default_comm_type", label="Comm Type", style="readonly"),
+            Item("library_selected.docs_url", label="Docs URL", style="readonly"),
+            Item("library_selected.website", label="Website", style="readonly"),
+            enabled_when="library_selected is not None",
+            show_border=True,
+            label="Metadata",
+            scrollable=True,
+        )
+
+        # Config generation
         config_group = VGroup(
             HGroup(
                 Item("generate_config_device_name", label="Device Name"),
@@ -197,12 +248,51 @@ class LibraryPane(TraitsDockPane):
             label="Generate Config",
         )
 
+        # Statistics display (Phase 2.2)
+        stats_group = Item("library_stats", label="", style="readonly", show_label=False)
+
+        # Phase 3.1: Template management
+        template_group = VGroup(
+            Item("selected_template_name", editor=TextEditor(), label="Select Template"),
+            HGroup(
+                icon_button_editor(
+                    "load_template_button",
+                    "arrow-down",
+                    tooltip="Load template",
+                    enabled_when="selected_template_name",
+                ),
+                icon_button_editor(
+                    "manage_templates_button",
+                    "document",
+                    tooltip="Manage templates",
+                ),
+            ),
+            Item("template_name_input", label="New Template Name"),
+            Item("template_description_input", label="Description"),
+            HGroup(
+                icon_button_editor(
+                    "save_as_template_button",
+                    "document-save",
+                    tooltip="Save as template",
+                    enabled_when="template_name_input and library_selected is not None",
+                ),
+            ),
+            enabled_when="library_selected is not None",
+            show_border=True,
+            label="Templates",
+        )
+
         v = View(
             VGroup(
-                UItem("library_entries", editor=library_table, height=250),
+                search_group,
+                stats_group,
+                UItem("filtered_library_entries", editor=library_table, height=200),
+                links_group,
+                metadata_group,
                 config_group,
+                template_group,
             ),
-            height=400,
+            height=800,
             resizable=True,
         )
         return v

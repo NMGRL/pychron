@@ -95,6 +95,35 @@ class LibraryEntry:
         """Get additional notes from metadata."""
         return self.metadata.get("notes")
 
+    @property
+    def formatted_specs(self) -> Dict[str, str]:
+        """Return metadata as formatted specifications table."""
+        specs = {
+            "Class": self.class_name,
+            "Company": self.company or "N/A",
+            "Model": self.model or "N/A",
+            "Part Number": self.vendor_part_number or "N/A",
+            "Comm Type": self.default_comm_type,
+            "Status": "Complete" if self.is_complete else "Incomplete",
+        }
+        return specs
+
+    @property
+    def docs_links(self) -> Dict[str, str]:
+        """Return all documentation links as a dictionary."""
+        links = {}
+        if self.docs_url:
+            links["Documentation"] = self.docs_url
+        if self.website:
+            links["Manufacturer"] = self.website
+        if self.metadata.get("manual"):
+            links["Manual"] = self.metadata["manual"]
+        return links
+
+    def has_url(self) -> bool:
+        """Check if entry has any URLs (docs or website)."""
+        return bool(self.docs_url or self.website)
+
 
 def parse_docstring_yaml(docstring: str) -> Optional[Dict[str, Any]]:
     """
