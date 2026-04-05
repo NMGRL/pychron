@@ -63,12 +63,41 @@ class PrometheusPlugin(BasePlugin):
         super().start()
         self.debug("Starting Prometheus plugin")
 
+        # Load configuration from preferences if available
+        self._load_preferences()
+
         # Configure observability
         self._configure_observability()
 
         # Start exporter if enabled
         if self.enabled:
             self._start_exporter()
+
+    def _load_preferences(self) -> None:
+        """Load configuration from the preferences system."""
+        try:
+            prefs = self.application.preferences
+            enabled = prefs.get("pychron.observability.enabled", str(self.enabled)).lower() in (
+                "true",
+                "1",
+                "yes",
+            )
+            host = prefs.get("pychron.observability.host", self.host)
+            port = int(prefs.get("pychron.observability.port", self.port))
+            namespace = prefs.get("pychron.observability.namespace", self.namespace)
+
+            self.enabled = enabled
+            self.host = host
+            self.port = port
+            self.namespace = namespace
+
+            self.debug(
+                f"Loaded preferences: enabled={enabled}, host={host}, "
+                f"port={port}, namespace={namespace}"
+            )
+        except Exception as e:
+            self.warning(f"Error loading preferences: {e}")
+            self.debug(f"Using default configuration")
 
     def _configure_observability(self) -> None:
         """Configure the observability system with current settings."""
