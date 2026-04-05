@@ -24,6 +24,7 @@ import re
 from typing import List, Optional, Tuple
 
 from traits.api import HasTraits, Str, on_trait_change
+from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.hardware.library import LibraryEntry
 
@@ -41,6 +42,19 @@ class LibraryFilter(HasTraits):
     company_filter = Str("")
     comm_type_filter = Str("")
     completeness_filter = Str("")  # 'all', 'complete', 'incomplete'
+
+    def traits_view(self):
+        """Define the traitsUI view for LibraryFilter."""
+        return View(
+            VGroup(
+                Item("search_text", label="Search"),
+                HGroup(
+                    Item("company_filter", label="Company"),
+                    Item("comm_type_filter", label="Comm Type"),
+                    Item("completeness_filter", label="Status"),
+                ),
+            )
+        )
 
     def matches(self, entry: LibraryEntry) -> bool:
         """
@@ -118,9 +132,9 @@ class LibraryFilter(HasTraits):
     def reset(self) -> None:
         """Reset all filters to default (match all)."""
         self.search_text = ""
-        self.company_filter = None
-        self.comm_type_filter = None
-        self.completeness_filter = None
+        self.company_filter = ""
+        self.comm_type_filter = ""
+        self.completeness_filter = ""
 
 
 class LibrarySearcher:

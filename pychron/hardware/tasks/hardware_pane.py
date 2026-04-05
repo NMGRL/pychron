@@ -177,13 +177,9 @@ class LibraryPane(TraitsDockPane):
 
     def traits_view(self):
         # Phase 2.2: Search and filter controls
+        # Note: library_filter items temporarily simplified to fix initialization issue
         search_group = VGroup(
-            Item("library_filter.search_text", label="Search"),
-            HGroup(
-                Item("library_filter.company_filter", label="Company"),
-                Item("library_filter.comm_type_filter", label="Comm Type"),
-                Item("library_filter.completeness_filter", label="Status"),
-            ),
+            UItem("library_filter", editor=InstanceEditor(), style="custom"),
             show_border=True,
             label="Search & Filter",
         )
