@@ -140,34 +140,84 @@ To import:
 
 ## Troubleshooting
 
-### Metrics endpoint not responding
+### Empty metrics endpoint (returns nothing or only HELP/TYPE lines)
 
-**Check if Prometheus is enabled:**
+This is **normal and expected** on a fresh Pychron startup!
+
+**Why?** Metrics are created lazily - they only appear when code actually uses them. This happens when:
+- Experiments are executed
+- Devices perform I/O operations
+- The system has been running and collecting data
+
+**Verify metrics server is running:**
 ```bash
 curl http://127.0.0.1:9109/metrics
 ```
 
-If connection refused:
-- Check Preferences → Prometheus → Enable checkbox
-- Verify Host and Port settings
-- Check Pychron logs for startup errors
+Expected output on fresh start:
+- No output / blank page = HTTP server is running (good!)
+- Connection refused = Prometheus is disabled or crashed
 
-**Change to different host/port:**
-- Default: `127.0.0.1:9109`
-- To expose externally: Change Host to `0.0.0.0` in Preferences
+**Generate some metrics:**
+1. Run an experiment in Pychron
+2. Perform device operations
+3. Wait 15-30 seconds
+4. Curl again: `curl http://127.0.0.1:9109/metrics`
 
-### No metrics appearing
+Now you should see metrics like:
+```
+# HELP pychron_runs_started_total Total number of runs started
+# TYPE pychron_runs_started_total counter
+pychron_runs_started_total 1.0
+```
 
-**Wait a few minutes** - Metrics appear as experiments run and devices operate.
+### Connection refused to metrics endpoint
+
+**Check if Prometheus is enabled:**
+1. Open Preferences → Prometheus
+2. Verify "Enable Prometheus Metrics Export" is CHECKED
+3. Verify Host and Port are correct (default: `127.0.0.1:9109`)
+
+**Restart Pychron after enabling:**
+- Plugin loads on application startup
+- Changes to preferences take effect on restart
+
+**Check port conflicts:**
+```bash
+lsof -i :9109  # macOS/Linux
+netstat -ano | findstr :9109  # Windows
+```
+
+If something else is using port 9109:
+- Change Port in Preferences to unused port (e.g., 9110)
+- Or stop the other service
+
+### Metrics endpoint returns HTML instead of Prometheus format
+
+This usually means **proxy software** is intercepting the request (unlikely on localhost).
+
+If accessing remotely:
+```bash
+curl http://actual-host:9109/metrics  # Use actual hostname/IP
+```
+
+### No metrics appearing after running experiments
+
+**Wait a few seconds** - there's a small delay before metrics export updates.
 
 **Check what's being measured:**
 ```bash
 # See all available metrics
-curl http://127.0.0.1:9109/metrics | grep "^pychron"
+curl http://127.0.0.1:9109/metrics | grep "^#" | head -20
 
-# Filter for specific type
-curl http://127.0.0.1:9109/metrics | grep pychron_experiment
+# Count total metrics
+curl http://127.0.0.1:9109/metrics | grep -v "^#" | wc -l
 ```
+
+**If still nothing:**
+- Verify experiments actually ran (check Pychron UI)
+- Check Pychron logs: `~/.pychron/logs/`
+- Verify observability is not disabled by environment variable
 
 ### Preferences don't persist
 
@@ -190,6 +240,26 @@ cat ~/.pychron/preferences/prometheus.ini
 **When disabled:**
 - < 0.1% CPU (trait evaluation only)
 - < 1MB memory
+
+## When to Expect Metrics
+
+The observability system creates metrics **on demand** as your application runs:
+
+| Operation | Metric | When Appears |
+|-----------|--------|-------------|
+| Start experiment | `pychron_runs_started_total` | Immediately when experiment starts |
+| Complete experiment | `pychron_runs_completed_total` | When experiment finishes successfully |
+| Device read/write | `pychron_device_io_operations_total` | During device I/O |
+| Operation latency | `pychron_device_io_operation_duration_seconds` | After each device operation |
+| Device error | `pychron_device_io_errors_total` | If operation fails |
+
+**On a fresh Pychron start:** No metrics exist yet. This is correct behavior! Metrics are created lazily - they only appear after related code executes.
+
+**To populate metrics:**
+1. Run an experiment
+2. Let devices perform operations
+3. Wait 15-30 seconds for initial data
+4. Curl endpoint again
 
 ## Documentation Map
 
