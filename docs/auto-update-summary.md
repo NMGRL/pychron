@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `8e5c72aaf`  
-**Generated:** 2026-04-04 23:27 UTC  
-**Compare:** [`92e7af54137bd798786f96189877e1f978ed9fc8...8e5c72aaf`](../../compare/92e7af54137bd798786f96189877e1f978ed9fc8...8e5c72aaf)
+**Triggered by commit:** `4bc93cd99`  
+**Generated:** 2026-04-05 14:08 UTC  
+**Compare:** [`8c1efd864781da4125621d62641ed3444eeb5548...4bc93cd99`](../../compare/8c1efd864781da4125621d62641ed3444eeb5548...4bc93cd99)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Hardware Compatibility Matrix](#hardware-matrix) | 6 files | ✅ Reviewed |
+| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,56 +16,38 @@
 <summary>Click to expand</summary>
 
 ```
-pychron/docs_hardware.py
-pychron/hardware/library.py
-pychron/hardware/tasks/hardware_pane.py
-pychron/hardware/tasks/hardware_task.py
-pychron/hardware/tasks/hardwarer.py
-pychron/hardware/tests/__init__.py
-pychron/hardware/tests/test_library.py
+pyproject.toml
+uv.lock
 ```
 
 </details>
 
 ---
 
-## Hardware Compatibility Matrix {#hardware-matrix}
+## Installation Guide {#installation-guide}
 
-**Doc file:** `docs/hardware_compatibility_matrix.md`  
-**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
+**Doc file:** `docs/installation_guide.md`  
+**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
 
 ### Changed Files
 
-- `pychron/hardware/library.py`
-- `pychron/hardware/tasks/hardware_pane.py`
-- `pychron/hardware/tasks/hardware_task.py`
-- `pychron/hardware/tasks/hardwarer.py`
-- `pychron/hardware/tests/__init__.py`
-- `pychron/hardware/tests/test_library.py`
+- `pyproject.toml`
+- `uv.lock`
 
 ### AI Review
 
 ## Code Change Summary
-
-The code changes introduce a new hardware device library system that provides infrastructure for discovering registered hardware drivers, parsing their YAML metadata from docstrings, validating required fields, and generating device configuration files. This includes a new `library.py` module with discovery functions, UI components for browsing the device library, and automated config generation capabilities.
+The code changes add a new development dependency `traits-stubs>=6.4.0` to the `dev` optional dependency group in `pyproject.toml`. This is a type stubs package that provides type annotations for the `traits` library, which is used by static type checkers like mypy. The corresponding `uv.lock` file was updated to include the resolved dependency information.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Hardware device entries throughout the matrix
-  **Issue:** The documentation currently lacks information about the new YAML metadata format that can be embedded in device class docstrings for automated discovery and config generation
-  **Suggested update:** Add a new column or section describing the YAML metadata format requirements (name, description, company, docs_url/website fields) and indicate which devices support the new automated config generation feature
+- **Section/Topic:** Optional dependency groups section
+  **Issue:** The documentation may list the contents of the `dev` dependency group but would now be missing the newly added `traits-stubs` package
+  **Suggested update:** Add `traits-stubs>=6.4.0` to any enumeration or description of packages included in the `dev` optional dependency group, noting that it provides type stubs for the traits library to support static type checking
 
-- **Section/Topic:** Configuration file generation process
-  **Issue:** The matrix may reference manual config file creation but doesn't mention the new automated config generation feature
-  **Suggested update:** Add information about the automated config generation capability available through the Hardware Library pane, including supported communication types (ethernet, serial) and the template structure it creates
-
-- **Section/Topic:** Device discovery mechanism
-  **Issue:** The matrix doesn't document how devices are discovered and registered in the system
-  **Suggested update:** Add documentation explaining that devices are discovered through the HW_PACKAGE_MAP and PACKAGES registries, and how the new library system validates completeness based on metadata presence
-
-- **Section/Topic:** Hardware task UI components
-  **Issue:** Missing documentation of the new Library pane in the hardware management interface
-  **Suggested update:** Document the new "Device Library" pane that displays all registered hardware drivers with their metadata, completion status, and config generation capabilities alongside existing Current Device, Configuration, and Terminal panes
+- **Section/Topic:** Development environment setup
+  **Issue:** If the documentation provides specific guidance on setting up a development environment or mentions what gets installed with `uv sync --extra dev`, it would now be incomplete
+  **Suggested update:** Include mention that `traits-stubs` will be installed as part of the development dependencies to support type checking workflows
 
 ---
 
