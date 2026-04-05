@@ -244,7 +244,7 @@ class Hardwarer(Loggable):
 
     # Template management (Phase 3.1)
     template_manager = Instance(ConfigTemplateManager)
-    available_templates = Property(List(Str), observe="template_manager.templates")
+    available_templates = Property(List(Str))
     selected_template_name = Str
     save_as_template_button = Button
     load_template_button = Button
