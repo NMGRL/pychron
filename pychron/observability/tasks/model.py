@@ -139,9 +139,15 @@ class PrometheusObservabilityModel(HasTraits):
         Called when a metrics operation occurs.
         Thread-safe - events can come from any thread.
         """
+        logger.debug(
+            f"Event captured: {event.metric_name} (from thread: {threading.current_thread().name})"
+        )
+
         try:
             with self._lock:
+                # Direct update is thread-safe with Traits' deque implementation
                 self.events.append(event)
+                logger.debug(f"Event added to model. Total events: {len(self.events)}")
                 # Keep only recent events
                 if len(self.events) > 1000:
                     self.events = self.events[-1000:]

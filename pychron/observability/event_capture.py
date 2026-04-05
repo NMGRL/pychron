@@ -46,6 +46,7 @@ def add_event(
         status: "success" or error message
     """
     if not _is_capture_enabled():
+        logger.debug(f"Event capture disabled, ignoring event: {metric_name}")
         return
 
     event = PrometheusEvent(
@@ -57,9 +58,12 @@ def add_event(
         status=status,
     )
 
+    logger.debug(f"Adding event to queue: {metric_name}, total callbacks: {len(_event_callbacks)}")
+
     # Add to queue (thread-safe via deque)
     with _queue_lock:
         _event_queue.append(event)
+        logger.debug(f"Event queue size: {len(_event_queue)}")
 
     # Notify callbacks (async, non-blocking)
     _notify_callbacks(event)
@@ -143,11 +147,17 @@ def _notify_callbacks(event: PrometheusEvent) -> None:
     with _callbacks_lock:
         callbacks = _event_callbacks.copy()
 
+    logger.debug(f"Notifying {len(callbacks)} callbacks for event: {event.metric_name}")
+
     # Call callbacks in background to avoid blocking
     for callback in callbacks:
         try:
             # Try to call in background thread if available
             # Otherwise call synchronously
-            threading.Thread(target=callback, args=(event,), daemon=True).start()
+            def _call_callback():
+                logger.debug(f"Calling callback from thread: {threading.current_thread().name}")
+                callback(event)
+
+            threading.Thread(target=_call_callback, daemon=True).start()
         except Exception as e:
             logger.warning(f"Error calling event callback: {e}")
