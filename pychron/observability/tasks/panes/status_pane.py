@@ -153,6 +153,13 @@ class PrometheusStatusPane(TraitsTaskPane):
         """Proxy to model.events."""
         return self.model.events if self.model else []
 
+    def create(self, parent):
+        """Override create to ensure proper context for TraitsUI."""
+        # Explicitly pass self as the context and call parent's edit_traits
+        view = self.traits_view()
+        self.ui = self.edit_traits(view=view, kind="subpanel", parent=parent)
+        self.control = self.ui.control
+
     def traits_view(self):
         """Build the view for the status pane."""
         # Connection info section
