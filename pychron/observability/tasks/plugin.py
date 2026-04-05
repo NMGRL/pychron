@@ -20,6 +20,7 @@ Provides Prometheus metrics export for monitoring experiment execution,
 device I/O, and service health.
 """
 
+from apptools.preferences.preference_binding import bind_preference
 from envisage.plugin import Plugin
 from traits.api import Bool, Int, Str, List
 
@@ -63,8 +64,8 @@ class PrometheusPlugin(BasePlugin):
         super().start()
         self.debug("Starting Prometheus plugin")
 
-        # Load configuration from preferences if available
-        self._load_preferences()
+        # Bind traits to preferences for automatic synchronization
+        self._bind_preferences()
 
         # Configure observability
         self._configure_observability()
@@ -73,31 +74,38 @@ class PrometheusPlugin(BasePlugin):
         if self.enabled:
             self._start_exporter()
 
-    def _load_preferences(self) -> None:
-        """Load configuration from the preferences system."""
+    def _bind_preferences(self) -> None:
+        """Bind plugin traits to preferences system."""
         try:
-            prefs = self.application.preferences
-            enabled = prefs.get("pychron.observability.enabled", str(self.enabled)).lower() in (
-                "true",
-                "1",
-                "yes",
+            from pychron.observability.tasks.preferences_pane import (
+                PrometheusPreferences,
             )
-            host = prefs.get("pychron.observability.host", self.host)
-            port = int(prefs.get("pychron.observability.port", self.port))
-            namespace = prefs.get("pychron.observability.namespace", self.namespace)
 
-            self.enabled = enabled
-            self.host = host
-            self.port = port
-            self.namespace = namespace
+            # Get preferences helper instance to read current values
+            prefs_helper = PrometheusPreferences(preferences=self.application.preferences)
+
+            # Update plugin traits from preferences
+            self.enabled = prefs_helper.enabled
+            self.host = prefs_helper.host
+            self.port = prefs_helper.port
+            self.namespace = prefs_helper.namespace
 
             self.debug(
-                f"Loaded preferences: enabled={enabled}, host={host}, "
-                f"port={port}, namespace={namespace}"
+                f"Loaded preferences: enabled={self.enabled}, host={self.host}, "
+                f"port={self.port}, namespace={self.namespace}"
             )
+
+            # Bind traits to preferences for future changes
+            for trait_name in ("enabled", "host", "port", "namespace"):
+                bind_preference(
+                    self,
+                    trait_name,
+                    f"pychron.observability.{trait_name}",
+                    preferences=self.application.preferences,
+                )
         except Exception as e:
-            self.warning(f"Error loading preferences: {e}")
-            self.debug(f"Using default configuration")
+            self.warning(f"Error binding preferences: {e}")
+            self.debug("Using default configuration")
 
     def _configure_observability(self) -> None:
         """Configure the observability system with current settings."""
