@@ -21,14 +21,14 @@ Provides advanced search and filtering across discovered hardware drivers.
 """
 
 import re
-from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
+
+from traits.api import HasTraits, Str, on_trait_change
 
 from pychron.hardware.library import LibraryEntry
 
 
-@dataclass
-class LibraryFilter:
+class LibraryFilter(HasTraits):
     """
     Filter criteria for hardware device library.
 
@@ -37,10 +37,10 @@ class LibraryFilter:
     - Filtering by company, communication type, completeness
     """
 
-    search_text: str = ""
-    company_filter: Optional[str] = None
-    comm_type_filter: Optional[str] = None
-    completeness_filter: Optional[str] = None  # 'all', 'complete', 'incomplete'
+    search_text = Str("")
+    company_filter = Str("")
+    comm_type_filter = Str("")
+    completeness_filter = Str("")  # 'all', 'complete', 'incomplete'
 
     def matches(self, entry: LibraryEntry) -> bool:
         """
