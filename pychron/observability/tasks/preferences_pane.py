@@ -17,7 +17,7 @@
 """Preferences pane for Prometheus observability configuration."""
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool, Str, Range
+from traits.api import Bool, Str, Range, Property
 from traitsui.api import VGroup, Item, Label
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
@@ -50,6 +50,13 @@ class PrometheusPreferences(BasePreferencesHelper):
         label="Namespace",
         help="Prometheus metric namespace prefix",
     )
+
+    # Dynamic property for metrics URL
+    metrics_url = Property(Str, observe="host, port")
+
+    def _get_metrics_url(self):
+        """Generate the metrics endpoint URL from host and port."""
+        return f"http://{self.host}:{self.port}/metrics"
 
 
 class PrometheusPreferencesPane(PreferencesPane):
@@ -90,10 +97,18 @@ class PrometheusPreferencesPane(PreferencesPane):
                     label="Server Settings",
                 ),
                 VGroup(
+                    Item(
+                        "metrics_url",
+                        style="readonly",
+                        label="Metrics URL",
+                        tooltip="The URL where Prometheus metrics will be exposed",
+                    ),
                     Label(
-                        "When enabled, Prometheus metrics will be exported to:\n"
-                        "http://<host>:<port>/metrics\n\n"
-                        "Configure your Prometheus instance to scrape this endpoint."
+                        "Configure your Prometheus instance to scrape this endpoint:\n\n"
+                        "scrape_configs:\n"
+                        "  - job_name: 'pychron'\n"
+                        "    static_configs:\n"
+                        "      - targets: ['<pychron-host>:9109']"
                     ),
                     label="Usage",
                 ),

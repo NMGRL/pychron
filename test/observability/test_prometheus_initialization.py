@@ -74,6 +74,33 @@ class TestPrometheusInitialization(unittest.TestCase):
         self.assertEqual(prefs.port, 8888)
         self.assertEqual(prefs.namespace, "custom")
 
+    def test_prometheus_preferences_metrics_url_default(self):
+        """Test PrometheusPreferences generates correct default metrics URL."""
+        prefs = PrometheusPreferences()
+        self.assertEqual(prefs.metrics_url, "http://127.0.0.1:9109/metrics")
+
+    def test_prometheus_preferences_metrics_url_custom(self):
+        """Test PrometheusPreferences generates correct custom metrics URL."""
+        prefs = PrometheusPreferences(host="0.0.0.0", port=8888)
+        self.assertEqual(prefs.metrics_url, "http://0.0.0.0:8888/metrics")
+
+    def test_prometheus_preferences_metrics_url_dynamic(self):
+        """Test PrometheusPreferences metrics URL updates dynamically."""
+        prefs = PrometheusPreferences()
+
+        # Change host
+        prefs.host = "192.168.1.100"
+        self.assertEqual(prefs.metrics_url, "http://192.168.1.100:9109/metrics")
+
+        # Change port
+        prefs.port = 8080
+        self.assertEqual(prefs.metrics_url, "http://192.168.1.100:8080/metrics")
+
+        # Change both
+        prefs.host = "localhost"
+        prefs.port = 5000
+        self.assertEqual(prefs.metrics_url, "http://localhost:5000/metrics")
+
     def test_prometheus_preferences_pane_creation(self):
         """Test PrometheusPreferencesPane can be instantiated."""
         pane = PrometheusPreferencesPane()
