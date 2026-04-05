@@ -106,10 +106,10 @@ class PrometheusStatusPane(TraitsTaskPane):
     # Internal model for observability
     model = Instance(PrometheusObservabilityModel)
 
-    def __init__(self, **kw):
+    def __init__(self, model=None, **kw):
         """Initialize status pane with model."""
         super().__init__(**kw)
-        self.model = PrometheusObservabilityModel()
+        self.model = model if model is not None else PrometheusObservabilityModel()
         # Listen for event changes to update metrics preview
         self.model.observe(self._on_model_events_changed, "events")
 
@@ -249,7 +249,7 @@ class PrometheusStatusPane(TraitsTaskPane):
                 controls_group,
                 recent_events_group,
                 metrics_preview_group,
-            )
+            ),
         )
         return v
 

@@ -38,8 +38,7 @@ class PrometheusObservabilityTask(BaseTask):
             PrometheusStatusPane,
         )
 
-        pane = PrometheusStatusPane()
-        pane.model = self.model
+        pane = PrometheusStatusPane(model=self.model)
         return pane
 
     def create_dock_panes(self):
