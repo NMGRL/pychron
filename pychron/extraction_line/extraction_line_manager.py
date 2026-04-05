@@ -45,6 +45,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line import LOG_LEVEL_NAMES, LOG_LEVELS
+from pychron.extraction_line.actuation_preview import ActuationPreview
 from pychron.extraction_line.canvas.state import (
     CanvasSystemState,
     NetworkSnapshot,
@@ -152,7 +153,13 @@ class ExtractionLineManager(Manager, Consoleable):
         devs = self.application.get_services(ICoreDevice)
         self.devices = devs
 
-    def deactivate(self):
+    def deactivate(self) -> None:
+        if self.switch_manager:
+            try:
+                self.switch_manager._save_states()
+            except BaseException as e:
+                self.warning("failed saving soft lock states on deactivate: {}".format(e))
+
         for t in ("gauge", "heater", "pump"):
             self.info("start {} scans".format(t))
             man = getattr(self, "{}_manager".format(t))
@@ -227,8 +234,12 @@ class ExtractionLineManager(Manager, Consoleable):
             )
             self.link_valve_actuation_dict[name] = func
 
-    def enable_auto_reload(self):
-        self.file_listener = FileListener(path=self.canvas_path, callback=self.reload_canvas)
+    def toggle_auto_reload(self) -> None:
+        if self.file_listener:
+            self.file_listener.stop()
+            self.file_listener = None
+        else:
+            self.file_listener = FileListener(path=self.canvas_path, callback=self.reload_canvas)
 
     def disable_auto_reload(self):
         if self.file_listener:
@@ -654,6 +665,135 @@ class ExtractionLineManager(Manager, Consoleable):
     def close_valve(self, name, **kw):
         return self._open_close_valve(name, "close", **kw)
 
+    def preview_open_valve(self, name, description=None, address=None, sender_address=None):
+        """Dry-run preview of opening a valve. Returns ActuationPreview."""
+        return self._preview_actuation(name, "open", description, address, sender_address)
+
+    def preview_close_valve(self, name, description=None, address=None, sender_address=None):
+        """Dry-run preview of closing a valve. Returns ActuationPreview."""
+        return self._preview_actuation(name, "close", description, address, sender_address)
+
+    def _preview_actuation(self, name, action, description=None, address=None, sender_address=None):
+        """Build an ActuationPreview without executing the actuation."""
+        vm = self.switch_manager
+        preview = ActuationPreview(
+            requested_action=action,
+            valve_name=name,
+            current_state=None,
+        )
+
+        if vm is None:
+            preview.allowed = False
+            preview.reasons_blocking.append("Switch manager not available")
+            preview.warning_level = "error"
+            return preview
+
+        resolved = self._resolve_switch_name(name, description=description, address=address)
+        if not resolved:
+            preview.allowed = False
+            preview.reasons_blocking.append("Valve '{}' not found".format(name))
+            preview.warning_level = "error"
+            return preview
+
+        preview.valve_name = resolved
+        valve = vm.get_switch_by_name(resolved)
+        if valve is None:
+            preview.allowed = False
+            preview.reasons_blocking.append("Valve '{}' not found".format(resolved))
+            preview.warning_level = "error"
+            return preview
+
+        preview.current_state = valve.state
+        preview.is_soft_locked = valve.software_lock
+        preview.is_enabled = getattr(valve, "enabled", True)
+        preview.owner = valve.owner or ""
+
+        # Check if already in target state
+        target_state = action == "open"
+        if valve.state == target_state:
+            preview.allowed = False
+            preview.reasons_blocking.append(
+                "Valve is already {}".format("open" if target_state else "closed")
+            )
+            preview.warning_level = "info"
+            return preview
+
+        # Check soft lock
+        if valve.software_lock:
+            preview.allowed = False
+            preview.reasons_blocking.append("Software locked")
+            preview.warning_level = "warning"
+            return preview
+
+        # Check enabled
+        if not getattr(valve, "enabled", True):
+            preview.allowed = False
+            preview.reasons_blocking.append("Valve not enabled")
+            preview.warning_level = "warning"
+            return preview
+
+        # Check ownership
+        if not self._check_ownership(resolved, sender_address):
+            preview.allowed = False
+            preview.reasons_blocking.append("Owned by {}".format(valve.owner))
+            preview.warning_level = "warning"
+            return preview
+
+        # Check soft interlocks
+        if action == "open":
+            interlocked = vm._check_soft_interlocks(resolved)
+            if interlocked:
+                preview.allowed = False
+                preview.reasons_blocking.append("Interlock: {} is open".format(interlocked.name))
+                preview.warning_level = "error"
+                return preview
+
+            positive = vm._check_positive_interlocks(resolved)
+            if positive:
+                preview.allowed = False
+                preview.interlocks = positive
+                preview.reasons_blocking.append(
+                    "Positive interlocks not enabled: {}".format(", ".join(positive))
+                )
+                preview.warning_level = "warning"
+                return preview
+        else:
+            interlocked = vm._check_soft_interlocks(resolved)
+            if interlocked:
+                preview.allowed = False
+                preview.reasons_blocking.append("Interlock: {} is open".format(interlocked.name))
+                preview.warning_level = "error"
+                return preview
+
+        # Collect affected children
+        children = vm.get_children(resolved)
+        if children:
+            preview.affected_children = [c.name for c in children]
+
+        # Network region changes
+        if self.use_network and self.network:
+            try:
+                snapshot = self.network.compute_state()
+                if snapshot and resolved in snapshot.valves:
+                    nv = snapshot.valves[resolved]
+                    if nv.side_volumes:
+                        preview.network_region_changes = [
+                            "Volume changes from {:0.1f} to {:0.1f} cc".format(
+                                min(nv.side_volumes), max(nv.side_volumes) + nv.valve_volume
+                            )
+                        ]
+                    if nv.region_id:
+                        preview.network_region_changes.append("Region: {}".format(nv.region_id))
+            except BaseException:
+                pass
+
+        # Determine if confirmation is needed
+        if preview.affected_children or preview.network_region_changes:
+            preview.requires_confirmation = True
+            preview.warning_level = "info"
+
+        return preview
+
     def sample(self, name, **kw):
         def sample():
             valve = self.switch_manager.get_switch_by_name(name)
@@ -742,17 +882,17 @@ class ExtractionLineManager(Manager, Consoleable):
         name = getattr(obj, "name", "") if obj else ""
         self.canvas_view_model.set_active_item(name)
 
-    def new_canvas(self, config=None):
+    def new_canvas(self, config: Optional[str] = None) -> ExtractionLineCanvas:
         c = ExtractionLineCanvas(manager=self, display_name="Extraction Line")
-        # c.load_canvas_file(canvas_config_path=config)
+        c._pending_canvas_config = config
         self.canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume, volume_key=self.volume_key)
         if self.switch_manager:
             self.switch_manager.load_valve_states()
             self.switch_manager.load_valve_lock_states(force=True)
             self.switch_manager.load_valve_owners()
-            c.refresh()
-        self.push_canvas_state(refresh=True)
+
+        do_after(0, self._sync_initial_canvas_state)
 
         return c
 
@@ -1122,16 +1262,33 @@ class ExtractionLineManager(Manager, Consoleable):
         self._set_pipette_counts(obj.name, new)
 
     @on_trait_change("use_network,network:inherit_state")
-    def _update_network(self) -> None:
+    def _sync_initial_canvas_state(self) -> None:
+        for c in self.canvases:
+            if getattr(c.canvas2D, "control", None) is None:
+                do_after(100, self._sync_initial_canvas_state)
+                return
+
+        for c in self.canvases:
+            config = getattr(c, "_pending_canvas_config", None)
+            c.load_canvas_file(canvas_config_path=config)
+
+        if self.use_network:
+            self._update_network(refresh=False)
+        else:
+            self.push_canvas_state(refresh=False)
+
+        self.refresh_canvas()
+
+    def _update_network(self, refresh: bool = True) -> None:
         if self.use_network:
             net = self.network
             if self.switch_manager:
                 for name, switch in self.switch_manager.switches.items():
                     net.set_valve_state(name, switch.state)
-            self.push_canvas_state(refresh=True)
+            self.push_canvas_state(refresh=refresh)
         else:
             self.network_snapshot = NetworkSnapshot()
-            self.push_canvas_state(refresh=True)
+            self.push_canvas_state(refresh=refresh)
 
     @on_trait_change("display_volume,volume_key")
     def _update_canvas_inspector(self, name, new):

@@ -28,6 +28,7 @@ from traitsui.api import (
     Item,
     UReadonly,
     TabularEditor,
+    TextEditor,
 )
 
 # ============= standard library imports ========================
@@ -35,6 +36,20 @@ from traitsui.api import (
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.envisage.icon_button_editor import icon_button_editor
+
+
+class LibraryEntryAdapter(TabularAdapter):
+    """Adapter for displaying library entries in a table."""
+
+    columns = [
+        ("Name", "name"),
+        ("Class", "class_name"),
+        ("Company", "company"),
+        ("Status", "is_complete"),
+    ]
+
+    is_complete_text = property(lambda self: "Complete" if self.item.is_complete else "Incomplete")
+    is_complete_alignment = "center"
 
 
 class CurrentDevicePane(TraitsTaskPane):
@@ -116,9 +131,7 @@ class ConfigurationPane(TraitsDockPane):
             VGroup(
                 HGroup(
                     UReadonly("config_name"),
-                    icon_button_editor(
-                        "save_button", "document-save", enabled_when="config_path"
-                    ),
+                    icon_button_editor("save_button", "document-save", enabled_when="config_path"),
                 ),
                 comms_grp,
                 scan_grp,
@@ -134,9 +147,7 @@ class InfoPane(TraitsDockPane):
     name = "Current Device"
 
     def traits_view(self):
-        v = View(
-            UItem("selected", style="custom", editor=InstanceEditor(view="info_view"))
-        )
+        v = View(UItem("selected", style="custom", editor=InstanceEditor(view="info_view")))
         return v
 
 
@@ -155,6 +166,72 @@ class DevicesPane(TraitsDockPane):
             columns=cols, editable=False, selected="selected", selection_mode="row"
         )
         v = View(UItem("devices", editor=table_editor))
+        return v
+
+
+class LibraryPane(TraitsDockPane):
+    """Pane for displaying hardware device library and generating configs."""
+
+    id = "hardware.library"
+    name = "Device Library"
+
+    def traits_view(self):
+        # Phase 2.2: Search and filter controls
+        search_group = VGroup(
+            UItem("library_filter", editor=InstanceEditor(), style="custom"),
+            show_border=True,
+            label="Search & Filter",
+        )
+
+        # Library table showing filtered entries (Phase 2.2)
+        library_table = TabularEditor(
+            adapter=LibraryEntryAdapter(),
+            selected="library_selected",
+        )
+
+        # Statistics display (Phase 2.2)
+        stats_group = Item("library_stats", label="", style="readonly", show_label=False)
+
+        # Phase 3.1: Template management
+        template_group = VGroup(
+            Item("selected_template_name", editor=TextEditor(), label="Select Template"),
+            HGroup(
+                icon_button_editor(
+                    "load_template_button",
+                    "arrow-down",
+                    tooltip="Load template",
+                    enabled_when="selected_template_name",
+                ),
+                icon_button_editor(
+                    "manage_templates_button",
+                    "document",
+                    tooltip="Manage templates",
+                ),
+            ),
+            Item("template_name_input", label="New Template Name"),
+            Item("template_description_input", label="Description"),
+            HGroup(
+                icon_button_editor(
+                    "save_as_template_button",
+                    "document-save",
+                    tooltip="Save as template",
+                    enabled_when="template_name_input",
+                ),
+            ),
+            show_border=True,
+            label="Templates",
+        )
+
+        v = View(
+            VGroup(
+                search_group,
+                stats_group,
+                UItem("filtered_library_entries", editor=library_table, height=200),
+                template_group,
+            ),
+            height=600,
+            resizable=True,
+        )
         return v
 
 

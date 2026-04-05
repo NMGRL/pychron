@@ -68,7 +68,7 @@ class ClientSwitchManager(SwitchManager):
             self.refresh_canvas_needed = True
             # elm.refresh_canvas()
 
-    def load_valve_lock_states(self, refresh=True, force=False):
+    def load_valve_lock_states(self, refresh: bool = True, force: bool = False) -> None:
         word = self.get_lock_word()
         if globalv.valve_debug:
             self.debug("valve lock word={}".format(word))
@@ -196,10 +196,10 @@ class ClientSwitchManager(SwitchManager):
     def _load_states(self):
         self.load_valve_states()
 
-    def _load_soft_lock_states(self):
+    def _load_soft_lock_states(self) -> None:
         self.load_valve_lock_states()
 
-    def _save_soft_lock_states(self):
+    def _save_soft_lock_states(self) -> None:
         self.debug("Client Mode. Not saving lock states")
 
     @property
@@ -216,9 +216,7 @@ class ClientSwitchManager(SwitchManager):
         if local == remote:
             return True
         else:
-            self.warning(
-                "State checksums do not match. Local:{} Remote:{}".format(local, remote)
-            )
+            self.warning("State checksums do not match. Local:{} Remote:{}".format(local, remote))
 
             # if remote is None:
             #     return

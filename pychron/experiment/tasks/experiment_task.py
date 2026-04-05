@@ -19,6 +19,7 @@ import time
 
 import xlrd
 from pyface.constant import CANCEL, NO
+from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
 from traits.api import on_trait_change, Bool, Instance, Event
@@ -46,6 +47,9 @@ from pychron.experiment.tasks.experiment_panes import (
     ExplanationPane,
     ConditionalsPane,
     TimeSeriesPane,
+)
+from pychron.extraction_line.tasks.extraction_line_actions import (
+    ToggleAutomatedValveConfirmationAction,
 )
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
@@ -100,6 +104,7 @@ class ExperimentEditorTask(EditorTask):
     dock_pane_factories = None
     activations = None
     deactivations = None
+    _layout_reset = False
 
     def save_as_current_experiment(self):
         self.debug("save as current experiment")
@@ -185,9 +190,7 @@ class ExperimentEditorTask(EditorTask):
                 self._open_editor(editor)
                 if self.loading_manager:
                     self.loading_manager.clear()
-                    self.manager.experiment_factory.loading_manager = (
-                        self.loading_manager
-                    )
+                    self.manager.experiment_factory.loading_manager = self.loading_manager
 
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
@@ -208,6 +211,10 @@ class ExperimentEditorTask(EditorTask):
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
 
+        if not self._layout_reset and self.window is not None:
+            self.window.reset_layout()
+            self._layout_reset = True
+
         self._do_callables(self.activations)
 
     def prepare_destroy(self):
@@ -227,9 +234,7 @@ class ExperimentEditorTask(EditorTask):
         ex = self.manager.executor
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
-        self.experiment_factory_pane = ExperimentFactoryPane(
-            model=self.manager.experiment_factory
-        )
+        self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
         wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         explanation_pane = ExplanationPane()
@@ -275,18 +280,14 @@ class ExperimentEditorTask(EditorTask):
     def _editor_factory(self, is_uv=False, **kw):
         klass = UVExperimentEditor if is_uv else ExperimentEditor
         editor = klass(
-            application=self.application,
-            automated_runs_editable=self.automated_runs_editable,
-            **kw
+            application=self.application, automated_runs_editable=self.automated_runs_editable, **kw
         )
 
         prefs = self.application.preferences
         prefid = "pychron.experiment"
         bgcolor = prefs.get("{}.bg_color".format(prefid))
         even_bgcolor = prefs.get("{}.even_bg_color".format(prefid))
-        use_analysis_type_colors = to_bool(
-            prefs.get("{}.use_analysis_type_colors".format(prefid))
-        )
+        use_analysis_type_colors = to_bool(prefs.get("{}.use_analysis_type_colors".format(prefid)))
 
         editor.setup_tabular_adapters(
             bgcolor,
@@ -300,9 +301,7 @@ class ExperimentEditorTask(EditorTask):
     def _assemble_analysis_type_colors(self):
         colors = {}
         for c in (BLANK, AIR, COCKTAIL):
-            v = self.application.preferences.get(
-                "pychron.experiment.{}_color".format(c)
-            )
+            v = self.application.preferences.get("pychron.experiment.{}_color".format(c))
             colors[c] = v or "#FFFFFF"
 
         return colors
@@ -319,9 +318,7 @@ class ExperimentEditorTask(EditorTask):
             END_AFTER,
             INVALID,
         ):
-            v = self.application.preferences.get(
-                "pychron.experiment.{}_color".format(c)
-            )
+            v = self.application.preferences.get("pychron.experiment.{}_color".format(c))
             colors[c] = v or "#FFFFFF"
 
         return colors
@@ -335,9 +332,7 @@ class ExperimentEditorTask(EditorTask):
                     import traceback
 
                     traceback.print_exc()
-                    self.debug(
-                        "Callable {} failed. exception={}".format(fi.__name__, str(e))
-                    )
+                    self.debug("Callable {} failed. exception={}".format(fi.__name__, str(e)))
             else:
                 self.debug("{} not callable".format(fi))
 
@@ -463,9 +458,7 @@ class ExperimentEditorTask(EditorTask):
             return True
 
     def _get_save_path(self, default_filename=None, **kw):
-        sd = ExperimentSaveDialog(
-            root=paths.experiment_dir, name=default_filename or "Untitled"
-        )
+        sd = ExperimentSaveDialog(root=paths.experiment_dir, name=default_filename or "Untitled")
         info = sd.edit_traits()
         if info.result:
             return sd.path
@@ -616,9 +609,7 @@ class ExperimentEditorTask(EditorTask):
                         self.laser_control_client_pane.model = man
 
         if new == FUSIONS_UV:
-            if self.active_editor and not isinstance(
-                self.active_editor, UVExperimentEditor
-            ):
+            if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):
                 editor = UVExperimentEditor()
 
                 ms = self.manager.experiment_factory.queue_factory.mass_spectrometer
@@ -631,9 +622,7 @@ class ExperimentEditorTask(EditorTask):
                 if ans:
                     if self.confirmation_dialog("Copy runs to the new UV Editor?"):
                         # editor.queue.executed_runs=self.active_editor.queue.executed_runs
-                        editor.queue.automated_runs = (
-                            self.active_editor.queue.automated_runs
-                        )
+                        editor.queue.automated_runs = self.active_editor.queue.automated_runs
 
                         # self.warning_dialog('Copying runs not yet implemented')
 
@@ -720,9 +709,7 @@ class ExperimentEditorTask(EditorTask):
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
 
-            qs = [
-                ei.queue for ei in self.editor_area.editors if ei != self.active_editor
-            ]
+            qs = [ei.queue for ei in self.editor_area.editors if ei != self.active_editor]
 
             if self.active_editor:
                 qs.insert(0, self.active_editor.queue)
@@ -851,9 +838,7 @@ class ExperimentEditorTask(EditorTask):
         return PatternMakerView()
 
     def _loading_manager_default(self):
-        lm = self.window.application.get_service(
-            "pychron.loading.loading_manager.LoadingManager"
-        )
+        lm = self.window.application.get_service("pychron.loading.loading_manager.LoadingManager")
         if lm:
             dvc = self.window.application.get_service(DVC_PROTOCOL)
             lm.trait_set(db=dvc.db, show_group_positions=True)
@@ -863,10 +848,10 @@ class ExperimentEditorTask(EditorTask):
     def _default_directory_default(self):
         return paths.experiment_dir
 
-    def _default_layout_default(self):
+    def _default_layout_default(self) -> TaskLayout:
         return TaskLayout(
             left=Splitter(
-                PaneItem("pychron.wait", height=120),
+                PaneItem("pychron.wait", height=150),
                 Tabbed(
                     PaneItem(
                         "pychron.experiment.factory",
@@ -877,18 +862,21 @@ class ExperimentEditorTask(EditorTask):
             ),
             right=Splitter(
                 Tabbed(
-                    PaneItem("pychron.experiment.stats", height=0.22),
+                    PaneItem("pychron.experiment.stats", height=220),
                     PaneItem("pychron.console"),
                     PaneItem("pychron.experiment.timeseries"),
                     PaneItem("pychron.experiment.conditionals"),
                     PaneItem("pychron.experiment.connection_status"),
                     PaneItem("pychron.experiment.explanation"),
                 ),
-                PaneItem("pychron.extraction_line.canvas_dock", height=0.78),
+                PaneItem("pychron.extraction_line.canvas_dock"),
                 orientation="vertical",
             ),
             top=PaneItem("pychron.experiment.controls"),
         )
+
+    def _tool_bars_default(self) -> list[SToolBar]:
+        return [SToolBar(ToggleAutomatedValveConfirmationAction())]
 
 
 # ============= EOF =============================================

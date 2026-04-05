@@ -30,6 +30,9 @@ from traits.api import Any, Instance, on_trait_change
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.tasks.editor_task import EditorTask
+from pychron.extraction_line.tasks.extraction_line_actions import (
+    ToggleAutomatedValveConfirmationAction,
+)
 from pychron.spectrometer.tasks.editor import (
     PeakCenterEditor,
     ScanEditor,
@@ -55,7 +58,8 @@ class SpectrometerTask(EditorTask):
     tool_bars = [
         SToolBar(
             StopScanAction(),
-        )
+        ),
+        SToolBar(ToggleAutomatedValveConfirmationAction()),
     ]
 
     def info(self, msg, *args, **kw):
@@ -174,9 +178,7 @@ class SpectrometerTask(EditorTask):
         dets = spec.detector_names
         isos = spec.isotopes
 
-        dpc = DefinePeakCenterView(
-            detectors=dets, isotopes=isos, detector=dets[0], isotope=isos[0]
-        )
+        dpc = DefinePeakCenterView(detectors=dets, isotopes=isos, detector=dets[0], isotope=isos[0])
         info = dpc.edit_traits()
         if info.result:
             det = dpc.detector
@@ -287,9 +289,7 @@ class SpectrometerTask(EditorTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=Splitter(
-                PaneItem("pychron.spectrometer.controls"), orientation="vertical"
-            ),
+            left=Splitter(PaneItem("pychron.spectrometer.controls"), orientation="vertical"),
             right=VSplitter(
                 PaneItem("pychron.spectrometer.intensities"),
                 # PaneItem("pychron.spectrometer.readout"),
@@ -313,9 +313,7 @@ class SpectrometerTask(EditorTask):
         sim = self.scan_manager.spectrometer.simulation
         name = "Magnet Scan (Simulation)" if sim else "Magnet Scan"
 
-        editor = next(
-            (e for e in self.editor_area.editors if e.id == "pychron.scanner"), None
-        )
+        editor = next((e for e in self.editor_area.editors if e.id == "pychron.scanner"), None)
         if editor is not None:
             scanner.reset()
         else:

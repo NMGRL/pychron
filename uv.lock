@@ -942,6 +942,7 @@ dev = [
     { name = "black" },
     { name = "mypy" },
     { name = "pre-commit" },
+    { name = "traits-stubs" },
     { name = "types-paramiko" },
     { name = "types-pymysql" },
     { name = "types-pytz" },
@@ -1000,6 +1001,7 @@ dev = [
     { name = "black" },
     { name = "mypy", specifier = ">=1.15.0,<2" },
     { name = "pre-commit", specifier = ">=4.2.0,<5" },
+    { name = "traits-stubs", specifier = ">=6.4.0" },
     { name = "types-paramiko" },
     { name = "types-pymysql" },
     { name = "types-pytz" },
@@ -1446,6 +1448,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f2/8b/0716f7b8f34e1b57b39f81472460f4e02491dde02fbc114bac42cf0acd85/traits-7.0.2-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:6932e5a784000368aa3948890bf55c4aba10494d4a45e9bb6c2b228644f2e67c", size = 5130509, upload-time = "2025-01-24T20:57:51.933Z" },
     { url = "https://files.pythonhosted.org/packages/c5/bf/e0135ce54d5604c57caad8866ac56a05265943a1b3a438277fb6ee10b0f6/traits-7.0.2-cp312-cp312-win32.whl", hash = "sha256:f434da460be8b3eb9f9f35143af116622cd313fa346c0df37b026d318c88ad29", size = 5034118, upload-time = "2025-01-24T21:01:14.04Z" },
     { url = "https://files.pythonhosted.org/packages/a7/2b/49423d5b269dfc095e09ecbb41b987b224f4154716d91da063cebaf963a0/traits-7.0.2-cp312-cp312-win_amd64.whl", hash = "sha256:497463a437cb8cd4bb2ed27ae4e4491a8ed3d4d8515803476c94ce952a17af54", size = 5036464, upload-time = "2025-01-24T21:01:16.256Z" },
+]
+
+[[package]]
+name = "traits-stubs"
+version = "6.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "traits" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/92/96/95f2b69428c0b88aad1f201ff29b486947c417beb25ac494e0d977d09b4a/traits-stubs-6.4.0.tar.gz", hash = "sha256:a0b17cc6c3c93ef0e868a93283cd1af88ff6cba04a0e70e84147aa73b7bca43d", size = 20051, upload-time = "2022-08-12T09:36:17.872Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/87/9a1769591c4f5254553ece9ed81c379885fdeefb07e6ea6598ece33eda34/traits_stubs-6.4.0-py3-none-any.whl", hash = "sha256:a97c4503cb9512a973896a7ed7757f71eed5dd2f6b3de0d4113c886a74d9da0d", size = 45606, upload-time = "2022-08-12T09:36:15.13Z" },
 ]
 
 [[package]]

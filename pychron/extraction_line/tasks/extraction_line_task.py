@@ -30,6 +30,7 @@ from pychron.envisage.tasks.wait_pane import WaitPane
 from pychron.extraction_line.tasks.extraction_line_actions import (
     SampleLoadingAction,
     AutoReloadAction,
+    ToggleAutomatedValveConfirmationAction,
 )
 from pychron.extraction_line.tasks.extraction_line_pane import (
     CanvasPane,
@@ -82,13 +83,14 @@ class ExtractionLineTask(BaseHardwareTask):
     def do_sample_loading(self):
         self.manager.do_sample_loading()
 
-    def enable_auto_reload(self):
-        self.manager.enable_auto_reload()
+    def toggle_auto_reload(self):
+        self.manager.toggle_auto_reload()
 
     # defaults
-    def _tool_bars_default(self):
+    def _tool_bars_default(self) -> list[SToolBar]:
         tb = SToolBar(
             SampleLoadingAction(),
+            ToggleAutomatedValveConfirmationAction(),
             # IsolateChamberAction(),
             # EvacuateChamberAction(),
             # FinishChamberChangeAction(),

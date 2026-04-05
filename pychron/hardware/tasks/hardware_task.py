@@ -28,6 +28,7 @@ from pychron.hardware.tasks.hardware_pane import (
     InfoPane,
     ConfigurationPane,
     TerminalPane,
+    LibraryPane,
 )
 
 # ============= standard library imports ========================
@@ -58,13 +59,18 @@ class HardwareTask(BaseHardwareTask):
             InfoPane(model=self.manager),
             ConfigurationPane(model=self.manager),
             TerminalPane(model=self.manager),
+            LibraryPane(model=self.manager),
         ]
 
     def _default_layout_default(self):
         l = TaskLayout(
             left=VSplitter(
                 PaneItem("hardware.devices"),
-                Tabbed(PaneItem("hardware.configuration"), PaneItem("hardware.info")),
+                Tabbed(
+                    PaneItem("hardware.configuration"),
+                    PaneItem("hardware.info"),
+                    PaneItem("hardware.library"),
+                ),
             )
         )
         return l

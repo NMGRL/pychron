@@ -144,6 +144,9 @@ class Line(QPrimitive):
             else:
                 self.primitives.append(self.end_point)
 
+            if self.canvas:
+                p1.set_canvas(self.canvas)
+
     def set_startpoint(self, p1, **kw):
         if isinstance(p1, tuple):
             p1 = Point(*p1, **kw)
@@ -160,6 +163,9 @@ class Line(QPrimitive):
                 self.primitives[0] = self.start_point
             else:
                 self.primitives.append(self.start_point)
+
+            if self.canvas:
+                p1.set_canvas(self.canvas)
 
     def _render(self, gc):
         gc.set_line_width(self.width)
@@ -222,9 +228,7 @@ class Triangle(QPrimitive):
                 gc.close_path()
                 gc.stroke_path()
             else:
-                f = color_map_name_dict["hot"](
-                    DataRange1D(low_setting=0, high_setting=300)
-                )
+                f = color_map_name_dict["hot"](DataRange1D(low_setting=0, high_setting=300))
                 for x, y, v in points:
                     x, y = func((x, y))
                     gc.set_fill_color(f.map_screen(array([v]))[0])
@@ -401,14 +405,7 @@ class LoadIndicator(Circle):
     def add_text(self, t, ox=0, oy=0, **kw):
         # x, y = self.get_xy()
         lb = Label(
-            0,
-            0,
-            text=t,
-            hjustify="center",
-            offset_y=oy,
-            font="modern 9",
-            use_border=False,
-            **kw
+            0, 0, text=t, hjustify="center", offset_y=oy, font="modern 9", use_border=False, **kw
         )
 
         self.primitives.append(lb)
@@ -417,6 +414,7 @@ class LoadIndicator(Circle):
     def _render(self, gc):
         c = (0, 0, 0)
         color = self.fill_color
+
         # Support PyfaceColor APIs that expose components as attributes vs callables.
         def _component(value):
             return value() if callable(value) else value
@@ -633,7 +631,7 @@ class PointIndicator(Indicator):
                 visible=self.identifier_visible,
                 font=self.font,
                 *args,
-                **kw
+                **kw,
             )
             self.primitives.append(self.label_item)
 
@@ -705,9 +703,7 @@ class PolyLine(QPrimitive):
         self.points.append(p2)
         self.primitives.append(p2)
 
-    def add_point(
-        self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0), **ptargs
-    ):
+    def add_point(self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0), **ptargs):
         p2 = Dot(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
 
@@ -848,9 +844,7 @@ class Image(QPrimitive):
             if self.scale:
                 gc.scale_ctm(*self.scale)
 
-            gc.draw_image(
-                self._cached_image, rect=(0, 0, self.canvas.width, self.canvas.height)
-            )
+            gc.draw_image(self._cached_image, rect=(0, 0, self.canvas.width, self.canvas.height))
 
     def _compute_cached_image(self):
         pic = PImage.open(self.path)
@@ -863,9 +857,7 @@ class Image(QPrimitive):
         elif data.shape[2] == 4:
             kiva_depth = "rgba32"
         else:
-            raise RuntimeError(
-                "Unknown colormap depth value: {}".format(data.value_depth)
-            )
+            raise RuntimeError("Unknown colormap depth value: {}".format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True

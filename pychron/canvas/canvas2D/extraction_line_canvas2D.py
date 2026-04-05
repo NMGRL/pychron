@@ -97,7 +97,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     display_volume = Bool
     volume_key = Str
-    confirm_open = Bool(True)
+    confirm_open = Bool(False)
 
     force_actuate_enabled = True
 
@@ -181,7 +181,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     if source_item is not None:
                         color_by_source[color_source] = source_item.default_color
 
-                obj.state = bool(payload.get("is_active"))
+                is_active = bool(payload.get("is_active"))
+                obj.state = is_active
                 if obj.state and color_source in color_by_source:
                     obj.active_color = color_by_source[color_source]
                 elif hasattr(obj, "default_color"):
@@ -192,9 +193,15 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if not isinstance(obj, (BaseValve, Switch)):
                 continue
 
-            if self.manager.network.inherit_state and getattr(obj, "state", None) not in (
-                "closed",
-                False,
+            if (
+                self.manager
+                and self.manager.network
+                and self.manager.network.inherit_state
+                and getattr(obj, "state", None)
+                not in (
+                    "closed",
+                    False,
+                )
             ):
                 source = valve_state.dominant_source_node
                 if source and source in color_by_source:
@@ -203,6 +210,135 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     obj.active_color = obj.oactive_color
             elif hasattr(obj, "oactive_color"):
                 obj.active_color = obj.oactive_color
+
+        self._propagate_connector_colors()
+
+    def _propagate_connector_colors(self) -> None:
+        """Propagate state/color to visual connectors not in the network graph."""
+        scene = self.scene
+        if scene is None:
+            return
+
+        for item in scene.get_items():
+            if not isinstance(item, (BorderLine, Connection, Elbow, Tee, Fork, Cross)):
+                continue
+
+            attached_items = self._connected_items_for_connector(item)
+            if not attached_items:
+                attached_items = self._fallback_connected_items(item)
+
+            color_item = self._preferred_connector_color_item(attached_items)
+            color = self._connector_color_for_item(color_item)
+            if color is not None:
+                item.active_color = color
+                item.state = True
+                continue
+
+            endpoint_states = [
+                bool(getattr(attached, "state", False)) for attached in attached_items
+            ]
+            if endpoint_states:
+                item.state = any(endpoint_states)
+                if hasattr(item, "default_color"):
+                    item.active_color = item.default_color
+
+    def _connector_color_for_item(self, item: object) -> object | None:
+        if item is None:
+            return None
+
+        source_item = item
+        if isinstance(item, BaseValve):
+            source_name = getattr(item, "network_dominant_source_node", "") or ""
+            if source_name:
+                candidate = self.scene.get_item(source_name)
+                if candidate is not None:
+                    source_item = candidate
+
+        if hasattr(source_item, "active_color"):
+            if bool(getattr(source_item, "state", False)):
+                return source_item.active_color
+            return source_item.default_color
+
+        if hasattr(source_item, "default_color"):
+            return source_item.default_color
+
+        return None
+
+    def _preferred_connector_color_item(self, attached_items: list[object]) -> object | None:
+        for attached in attached_items:
+            if not isinstance(attached, (BaseValve, Switch)):
+                return attached
+
+        for attached in attached_items:
+            if self._connector_color_for_item(attached) is not None:
+                return attached
+
+        if attached_items:
+            return attached_items[0]
+
+        return None
+
+    def _connected_items_for_connector(self, connector: object) -> list[object]:
+        scene = self.scene
+        if scene is None:
+            return []
+
+        attached = []
+        for item in scene.get_items():
+            if item is connector:
+                continue
+            if isinstance(item, (BorderLine, Connection, Elbow, Tee, Fork, Cross)):
+                continue
+            if not hasattr(item, "connections"):
+                continue
+
+            if any(c is connector for _, c in getattr(item, "connections", [])):
+                attached.append(item)
+
+        return attached
+
+    def _fallback_connected_items(self, connector: object) -> list[object]:
+        """Fallback to a geometric lookup if connection links are unavailable."""
+        points = []
+        for tag in ("start", "end", "left", "right", "mid", "top", "bottom"):
+            point = getattr(connector, f"{tag}_point", None)
+            if point is not None:
+                points.append(point.get_xy())
+
+        if not points:
+            return []
+
+        x = sum(px for px, _ in points) / len(points)
+        y = sum(py for _, py in points) / len(points)
+
+        scene = self.scene
+        if scene is None:
+            return []
+
+        candidates = []
+        for item in scene.get_items():
+            if item is connector:
+                continue
+            if isinstance(item, (BorderLine, Connection, Elbow, Tee, Fork, Cross)):
+                continue
+            if not hasattr(item, "connections"):
+                continue
+
+            bounds = item.get_bounds() if hasattr(item, "get_bounds") else None
+            if bounds is None:
+                continue
+
+            x1, y1, x2, y2 = bounds
+            if x1 <= x <= x2 and y1 <= y <= y2:
+                return [item]
+
+            dx = 0 if x1 <= x <= x2 else min(abs(x - x1), abs(x - x2))
+            dy = 0 if y1 <= y <= y2 else min(abs(y - y1), abs(y - y2))
+            candidates.append(((dx * dx) + (dy * dy), item))
+
+        if candidates:
+            return [min(candidates, key=lambda t: t[0])[1]]
+        return []
 
     def set_valve_visual_state(self, name, visual_state, refresh=True):
         switch = self._get_switch_by_name(name)
@@ -309,7 +445,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._show_menu(event, item)
         event.handled = True
 
-    def select_left_down(self, event):
+    def select_left_down(self, event) -> None:
         """ """
 
         def set_state(state):
@@ -331,6 +467,116 @@ class ExtractionLineCanvas2D(SceneCanvas):
             return ok, change
 
         event.handled = True
+
+        item = self.active_item
+        if item is None:
+            return
+
+        if self.manager and isinstance(item, (BaseValve, Switch)):
+            self.manager.set_selected_explanation_item(item)
+
+        if self.edit_mode:
+            if event.shift_down:
+                self._toggle_item_selection(item)
+                return
+
+            self.event_state = "drag"
+            event.window.set_pointer(self.drag_pointer)
+            return
+
+        if isinstance(item, Laser):
+            self._toggle_laser_state(item)
+            return
+
+        state = item.state
+        nstate = not state
+        if isinstance(item, Switch):
+            set_state(nstate)
+
+        else:
+            if not isinstance(item, BaseValve):
+                return
+
+            if item.soft_lock:
+                return
+
+            # Use preview API for structured confirmation
+            if self.manager and self.confirm_open and not isinstance(item, ManualSwitch):
+                action = "open" if nstate else "close"
+                preview_func = (
+                    self.manager.preview_open_valve if nstate else self.manager.preview_close_valve
+                )
+                preview = preview_func(item.name)
+
+                if not preview.allowed:
+                    self._show_preview_dialog(preview)
+                    return
+
+                if preview.requires_confirmation or self.confirm_open:
+                    if not self._show_preview_dialog(preview):
+                        return
+
+            ok, change = set_state(nstate)
+
+        if ok:
+            item.state = nstate
+
+        if change and ok:
+            self._select_hook(item)
+
+        if change:
+            self.invalidate_and_redraw()
+
+        event.handled = True
+
+    def _show_preview_dialog(self, preview):
+        """Show structured preview dialog. Returns True if user confirms."""
+        from pyface.api import confirm, YES
+
+        lines = []
+        action_label = "Open" if preview.requested_action == "open" else "Close"
+        lines.append("{} valve {}?".format(action_label, preview.valve_name))
+        lines.append("")
+
+        if preview.current_state is not None:
+            lines.append("Current state: {}".format("Open" if preview.current_state else "Closed"))
+
+        if preview.owner:
+            lines.append("Owner: {}".format(preview.owner))
+
+        if preview.is_soft_locked:
+            lines.append("WARNING: Software locked")
+
+        if preview.interlocks:
+            lines.append("Interlock present: {}".format(", ".join(preview.interlocks)))
+
+        if preview.affected_children:
+            lines.append("Also affects: {}".format(", ".join(preview.affected_children)))
+
+        if preview.network_region_changes:
+            for change in preview.network_region_changes:
+                lines.append(change)
+
+        if preview.reasons_blocking:
+            lines.append("")
+            lines.append("Blocked: {}".format("; ".join(preview.reasons_blocking)))
+
+        msg = "\n".join(lines)
+
+        if preview.warning_level == "error":
+            title = "Actuation Blocked"
+            from pyface.message_dialog import error
+
+            error(None, msg, title=title)
+            return False
+
+        if preview.warning_level == "warning":
+            title = "Actuation Warning"
+        else:
+            title = "Confirm Valve Action"
+
+        result = confirm(None, msg, title=title)
+        return result == YES
 
         item = self.active_item
         if item is None:

@@ -14,39 +14,39 @@
 # limitations under the License.
 # ===============================================================================
 
-import sys, os
+import sys
+import os
 import yaml
 
 root = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(root)
 
-from pychron.hardware.actuators import PACKAGES
-from pychron.hardware import HW_PACKAGE_MAP
+from pychron.hardware.library import get_library_entries
 
 
-def extract_doc(mod, cf):
-    classname = cf.__name__
-    name = classname
-    rdoc = cf.__doc__
-    doc = ""
-    description = ""
-    if rdoc:
-        active = False
-        lines = rdoc.split("\n")
-        for i, line in enumerate(lines):
-            if line.strip() == ":::":
-                active = True
-                break
+def extract_doc(entry):
+    """
+    Generate documentation block for a hardware device entry.
 
-        if active:
-            doc = "\n".join(lines[i + 1 :])
-            try:
-                ydoc = yaml.load(doc, Loader=yaml.SafeLoader)
-                description = ydoc.pop("description", description)
-                name = ydoc.pop("name", classname)
-                doc = yaml.dump(ydoc)
-            except yaml.YamlError as e:
-                print("asdf", e)
+    Uses the library entry metadata which is already parsed and validated.
+
+    Args:
+        entry: LibraryEntry instance
+
+    Returns:
+        Formatted documentation string with markdown sections
+    """
+    classname = entry.class_name
+    name = entry.name
+    description = entry.description
+    metadata = entry.metadata.copy()
+
+    # Remove already-used fields to avoid duplication
+    metadata.pop("name", None)
+    metadata.pop("description", None)
+
+    # Format remaining metadata as YAML
+    doc = yaml.dump(metadata) if metadata else ""
 
     return f"""{name}
 ==========================
@@ -55,7 +55,7 @@ def extract_doc(mod, cf):
 {description}
 </p>
 
-<b>Module:</b> {mod}<br>
+<b>Module:</b> {entry.package}<br>
 <b>Class:</b> {classname}
 
 ```yaml
@@ -65,33 +65,33 @@ def extract_doc(mod, cf):
 
 
 def assemble_docs():
+    """
+    Discover all hardware drivers and generate markdown documentation.
+
+    Uses the hardware library discovery to find drivers with valid metadata.
+    Generates a markdown file with all available hardware drivers.
+    """
+    entries = get_library_entries()
     contents = []
 
-    for klass, package in sorted(list(HW_PACKAGE_MAP.items()) + list(PACKAGES.items())):
-        print(klass, package)
+    for entry in entries:
+        print(f"Processing {entry.class_name} from {entry.package}")
 
-        # package = HW_PACKAGE_MAP[klass]
-        try:
-            m = __import__(package, globals(), locals(), [klass])
-        except ModuleNotFoundError as e:
-            print("No module", e)
+        if not entry.metadata:
+            print(f"  No metadata found")
             continue
 
-        try:
-            class_factory = getattr(m, klass)
-        except AttributeError as e:
-            print("No klass", e)
-            if klass == "Eurotherm":
-                print(dir(m))
-            continue
-        print("built", klass)
-        description_doc = extract_doc(package, class_factory)
+        description_doc = extract_doc(entry)
         contents.append(description_doc)
 
     content = "# Available Hardware Drivers\n".join(contents)
     pname = os.environ.get("PNAME", "hardwaredocs.md")
-    with open(os.path.join(root, "pychron", pname), "w") as wfile:
+    output_path = os.path.join(root, "pychron", pname)
+
+    with open(output_path, "w") as wfile:
         wfile.write(content)
+
+    print(f"Documentation written to {output_path}")
 
 
 if __name__ == "__main__":

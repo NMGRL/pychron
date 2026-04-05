@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import annotations
+
 import os
 import re
 
@@ -45,6 +47,7 @@ from pychron.core.pychron_traits import EmailStr
 from pychron.core.yaml import yload
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.providers.macrostrat import get_lithology_values
+from pychron.entry.tasks.sample.import_view import open_sample_import_dialog
 from pychron.entry.tasks.sample.sample_edit_view import (
     SampleEditModel,
     LatFloat,
@@ -355,26 +358,18 @@ class SampleEntry(DVCAble):
         self._backup()
         self.dvc.close_session()
 
-    def make_sample_template_file(self):
+    def make_sample_template_file(self) -> None:
         self._make_sample_template()
 
-    def import_sample_from_file(self):
+    def import_sample_from_file(self) -> None:
         from pyface.file_dialog import FileDialog
 
         path = self.open_file_dialog(
             default_directory=paths.root_dir,
-            wildcard=FileDialog.create_wildcard("Excel", ("*.xls", "*.xlsx", "*.csv")),
+            wildcard=FileDialog.create_wildcard("CSV", ("*.csv",)),
         )
         if path:
-            for d in self._sample_file_reader(path):
-                try:
-                    self._add_sample_from_dict(d)
-                except KeyError as e:
-                    self.warning_dialog("Required column missing.  {}".format(e))
-            # from pychron.entry.sample_loader import XLSSampleLoader
-            # sample_loader = XLSSampleLoader(dvc=self.dvc)
-            # sample_loader.load(path)
-            # sample_loader.do_import()
+            open_sample_import_dialog(self, path)
 
     def clear(self):
         if self.selected_principal_investigators:
@@ -390,8 +385,7 @@ class SampleEntry(DVCAble):
             self._samples = [
                 s
                 for s in self._samples
-                if s.project.principal_investigator
-                not in self.selected_principal_investigators
+                if s.project.principal_investigator not in self.selected_principal_investigators
             ]
 
             self.selected_principal_investigators = []
@@ -404,9 +398,7 @@ class SampleEntry(DVCAble):
                     except ValueError:
                         pass
 
-            self._samples = [
-                s for s in self._samples if s.project not in self.selected_projects
-            ]
+            self._samples = [s for s in self._samples if s.project not in self.selected_projects]
             self.selected_projects = []
 
         if self.selected_materials:
@@ -417,9 +409,7 @@ class SampleEntry(DVCAble):
                     except ValueError:
                         pass
 
-            self._samples = [
-                s for s in self._samples if s.material not in self.selected_materials
-            ]
+            self._samples = [s for s in self._samples if s.material not in self.selected_materials]
             self.selected_materials = []
 
         if self.selected_samples:
@@ -455,16 +445,12 @@ class SampleEntry(DVCAble):
         self._principal_investigators = ps = [
             PISpec.fromdump(p) for p in obj["principal_investigators"] if p is not None
         ]
-        self._materials = ms = [
-            MaterialSpec.fromdump(p) for p in obj["materials"] if p is not None
-        ]
+        self._materials = ms = [MaterialSpec.fromdump(p) for p in obj["materials"] if p is not None]
 
         self._projects = pps = [
             ProjectSpec.fromdump(p, ps) for p in obj["projects"] if p is not None
         ]
-        self._samples = [
-            SampleSpec.fromdump(p, pps, ms) for p in obj["samples"] if p is not None
-        ]
+        self._samples = [SampleSpec.fromdump(p, pps, ms) for p in obj["samples"] if p is not None]
 
     def dump(self, p):
         """
@@ -478,12 +464,12 @@ class SampleEntry(DVCAble):
                 yaml.dump(obj, wfile)
 
     # private
-    def _sample_file_reader(self, path):
+    def _sample_file_reader(self, path: str):
         p = CSVColumnParser()
         p.load(path)
         return p.values()
 
-    def _make_sample_template(self):
+    def _make_sample_template(self) -> None:
         p = self.save_file_dialog()
         if p:
             keys = (
@@ -498,6 +484,13 @@ class SampleEntry(DVCAble):
                 "northing",
                 "utm",
                 "unit",
+                "igsn",
+                "storage_location",
+                "lithology",
+                "location",
+                "approximate_age",
+                "elevation",
+                "note",
             )
             with open(p, "w") as wfile:
                 wfile.write(",".join(keys))
@@ -517,13 +510,9 @@ class SampleEntry(DVCAble):
 
         kw = {"name": d["sample"], "material": m, "project": p}
 
-        northing = extract_value(
-            d, ("n", "northing", "utm n", "utm_n", "n_utm", "n utm")
-        )
+        northing = extract_value(d, ("n", "northing", "utm n", "utm_n", "n_utm", "n utm"))
         easting = extract_value(d, ("e", "easting", "utm e", "utm_e", "e_utm", "e utm"))
-        zone = extract_value(
-            d, ("zone", "utm zone", "utm_zone", "zone_utm", "zone utm")
-        )
+        zone = extract_value(d, ("zone", "utm zone", "utm_zone", "zone_utm", "zone utm"))
         if northing and easting and zone:
             lat, lon = convert_utm(northing, easting, zone)
         else:
@@ -548,9 +537,7 @@ class SampleEntry(DVCAble):
         if self.sample_filter and self.sample_filter_attr:
             self.dvc.close_session()
             self.dvc.create_session()
-            sams = self.dvc.get_samples_filter(
-                self.sample_filter_attr, self.sample_filter
-            )
+            sams = self.dvc.get_samples_filter(self.sample_filter_attr, self.sample_filter)
             self.db_samples = sams
 
     def _load_lithologies(self):
@@ -579,7 +566,7 @@ class SampleEntry(DVCAble):
 
             return obj
 
-    def _save(self):
+    def _save(self) -> bool:
         if not any(
             (
                 getattr(self, attr)
@@ -591,70 +578,69 @@ class SampleEntry(DVCAble):
                 )
             )
         ):
-            return
+            return False
 
         self.debug("saving sample info")
+        self._save_specs(
+            self._principal_investigators, self._projects, self._materials, self._samples
+        )
+
+        self.refresh_table = True
+        return True
+
+    def _save_specs(
+        self,
+        principal_investigators: list[PISpec],
+        projects: list[ProjectSpec],
+        materials: list[MaterialSpec],
+        samples: list[SampleSpec],
+    ) -> int:
         dvc = self.dvc
+        created_samples = 0
         with dvc.session_ctx(use_parent_session=False):
-            for p in self._principal_investigators:
-                if dvc.add_principal_investigator(
-                    p.name, email=p.email, affiliation=p.affiliation
-                ):
+            for p in principal_investigators:
+                if dvc.add_principal_investigator(p.name, email=p.email, affiliation=p.affiliation):
                     p.added = True
                     dvc.commit()
 
-        for p in self._projects:
+        for p in projects:
             with dvc.session_ctx(use_parent_session=False):
                 if p.name.startswith("?"):
-                    if dvc.add_project(
-                        p.name, p.principal_investigator.name, **p.optionals
-                    ):
-                        dbproject = dvc.get_project(
-                            p.name, p.principal_investigator.name
-                        )
+                    if dvc.add_project(p.name, p.principal_investigator.name, **p.optionals):
+                        dbproject = dvc.get_project(p.name, p.principal_investigator.name)
                         p.added = True
                         dvc.commit()
 
-                        dbproject.name = p.name = "{}{}".format(
-                            p.name[1:-2], dbproject.id
-                        )
+                        dbproject.name = p.name = "{}{}".format(p.name[1:-2], dbproject.id)
                         if self.project.startswith("?"):
                             self.project = p.name
 
                         dvc.commit()
 
                 else:
-                    if dvc.add_project(
-                        p.name, p.principal_investigator.name, **p.optionals
-                    ):
+                    if dvc.add_project(p.name, p.principal_investigator.name, **p.optionals):
                         p.added = True
                         dvc.commit()
 
                 if self.auto_add_project_repository:
-                    dvc.add_repository(
-                        p.name, p.principal_investigator.name, inform=False
-                    )
+                    dvc.add_repository(p.name, p.principal_investigator.name, inform=False)
 
-        for m in self._materials:
+        for m in materials:
             with dvc.session_ctx(use_parent_session=False):
                 if dvc.add_material(m.name, m.grainsize or None):
                     m.added = True
                     dvc.commit()
 
-        for s in self._samples:
+        for s in samples:
             with dvc.session_ctx(use_parent_session=False):
                 if not s.name:
                     self.warning_dialog("A Sample name is required")
                     continue
                 if (s.project and not s.project.name) or not s.project:
-                    self.warning_dialog(
-                        "A project name is required. Skipping {}".format(s.name)
-                    )
+                    self.warning_dialog("A project name is required. Skipping {}".format(s.name))
                     continue
                 if (s.material and not s.material.name) or not s.material:
-                    self.warning_dialog(
-                        "A material is required. Skipping {}".format(s.name)
-                    )
+                    self.warning_dialog("A material is required. Skipping {}".format(s.name))
                     continue
 
                 if dvc.add_sample(
@@ -678,10 +664,108 @@ class SampleEntry(DVCAble):
                     note=s.note,
                 ):
                     s.added = True
+                    created_samples += 1
                     dvc.commit()
+        return created_samples
 
+    def commit_import_rows(self, rows: list) -> int:
+        pi_specs: dict[str, PISpec] = {}
+        project_specs: dict[tuple[str, str], ProjectSpec] = {}
+        material_specs: dict[tuple[str, str], MaterialSpec] = {}
+        sample_specs: list[SampleSpec] = []
+
+        for row in rows:
+            piname = row.principal_investigator
+            pispec = pi_specs.get(piname)
+            if pispec is None:
+                pispec = PISpec(name=piname)
+                pi_specs[piname] = pispec
+
+            material_key = (row.material, row.grainsize)
+            matspec = material_specs.get(material_key)
+            if matspec is None:
+                matspec = MaterialSpec(name=row.material, grainsize=row.grainsize)
+                material_specs[material_key] = matspec
+
+            project_key = (row.project, piname)
+            projectspec = project_specs.get(project_key)
+            if projectspec is None:
+                projectspec = ProjectSpec(name=row.project, principal_investigator=pispec)
+                project_specs[project_key] = projectspec
+
+            sample_specs.append(
+                SampleSpec(
+                    name=row.sample,
+                    project=projectspec,
+                    material=matspec,
+                    lat=row.latitude if row.latitude is not None else 0,
+                    lon=row.longitude if row.longitude is not None else 0,
+                    igsn=row.igsn,
+                    unit=row.unit,
+                    storage_location=row.storage_location,
+                    lithology=row.lithology,
+                    location=row.location,
+                    approximate_age=row.approximate_age if row.approximate_age is not None else 0,
+                    elevation=row.elevation if row.elevation is not None else 0,
+                    note=row.note,
+                )
+            )
+
+        created = self._save_specs(
+            list(pi_specs.values()),
+            list(project_specs.values()),
+            list(material_specs.values()),
+            sample_specs,
+        )
+        existing_pis = {spec.name for spec in self._principal_investigators}
+        existing_projects = {
+            (spec.name, spec.principal_investigator.name) for spec in self._projects
+        }
+        existing_materials = {(spec.name, spec.grainsize) for spec in self._materials}
+        existing_samples = {
+            (
+                spec.name,
+                spec.project.name,
+                spec.project.principal_investigator.name,
+                spec.material.name,
+                spec.material.grainsize,
+            )
+            for spec in self._samples
+        }
+
+        self._principal_investigators.extend(
+            [spec for spec in pi_specs.values() if spec.name not in existing_pis]
+        )
+        self._projects.extend(
+            [
+                spec
+                for spec in project_specs.values()
+                if (spec.name, spec.principal_investigator.name) not in existing_projects
+            ]
+        )
+        self._materials.extend(
+            [
+                spec
+                for spec in material_specs.values()
+                if (spec.name, spec.grainsize) not in existing_materials
+            ]
+        )
+        self._samples.extend(
+            [
+                spec
+                for spec in sample_specs
+                if (
+                    spec.name,
+                    spec.project.name,
+                    spec.project.principal_investigator.name,
+                    spec.material.name,
+                    spec.material.grainsize,
+                )
+                not in existing_samples
+            ]
+        )
         self.refresh_table = True
-        return True
+        return created
 
     def _check_for_similar_sample(self, s):
         dvc = self.dvc
@@ -714,10 +798,7 @@ class SampleEntry(DVCAble):
         if self.project:
             pspec = self._get_principal_investigator_spec()
             for p in self._projects:
-                if (
-                    p.name == self.project
-                    and p.principal_investigator.name == pspec.name
-                ):
+                if p.name == self.project and p.principal_investigator.name == pspec.name:
                     return p
             else:
                 p = self._new_project_spec(pspec)
@@ -823,9 +904,7 @@ class SampleEntry(DVCAble):
     def _get_igsn_button_fired(self):
         srv = self.application.get_service("pychron.igsn.igsn_service.IGSNService")
         if srv is None:
-            self.warning_dialog(
-                'IGSN Plugin is required. Enable used "Help>Edit Initialization"'
-            )
+            self.warning_dialog('IGSN Plugin is required. Enable used "Help>Edit Initialization"')
             return
 
         igsn = srv.get_new_igsn(self.sample, self.material)
@@ -890,10 +969,7 @@ class SampleEntry(DVCAble):
         if self.project:
             pispec = self._get_principal_investigator_spec()
             for p in self._projects:
-                if (
-                    p.name == self.project
-                    and p.principal_investigator.name == pispec.name
-                ):
+                if p.name == self.project and p.principal_investigator.name == pispec.name:
                     break
             else:
                 self._new_project_spec(pispec)
@@ -919,9 +995,7 @@ class SampleEntry(DVCAble):
                 if m.name == self.material and m.grainsize == self.grainsize:
                     break
             else:
-                self._materials.append(
-                    MaterialSpec(name=self.material, grainsize=self.grainsize)
-                )
+                self._materials.append(MaterialSpec(name=self.material, grainsize=self.grainsize))
                 self._backup()
 
     def _add_principal_investigator_button_fired(self):
@@ -963,11 +1037,7 @@ class SampleEntry(DVCAble):
 
     @cached_property
     def _get_sample_enabled(self):
-        return (
-            bool(self.material)
-            and bool(self.project)
-            and bool(self.principal_investigator)
-        )
+        return bool(self.material) and bool(self.project) and bool(self.principal_investigator)
 
     @cached_property
     def _get_principal_investigators(self):
