@@ -230,10 +230,7 @@ class Hardwarer(Loggable):
 
     # Library filtering (Phase 2.2)
     library_filter = Instance(LibraryFilter, ())
-    filtered_library_entries = Property(
-        List(LibraryEntry),
-        observe="library_entries,library_filter.search_text,library_filter.company_filter,library_filter.comm_type_filter,library_filter.completeness_filter",
-    )
+    filtered_library_entries = Property(List(LibraryEntry), observe="library_entries")
     available_companies = Property(List(Str), observe="library_entries")
     available_comm_types = Property(List(Str), observe="library_entries")
     library_stats = Property(Str, observe="filtered_library_entries")
