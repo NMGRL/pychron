@@ -93,6 +93,14 @@ class PrometheusEventPane(TraitsDockPane):
         if self.model:
             self.model.observe(self._on_model_events_changed, "events")
 
+    def trait_context(self):
+        """Provide pane traits to the view context.
+
+        This ensures TraitsUI resolves trait references (like 'event_type_filter',
+        'search_text', etc.) on the pane object, not on the model.
+        """
+        return {"object": self}
+
     def _get_filtered_events_count(self) -> int:
         """Get count of filtered events."""
         return len(self.filtered_events)
