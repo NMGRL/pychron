@@ -17,18 +17,16 @@
 """Preferences pane for Prometheus observability configuration."""
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import (
-    Bool,
-    Int,
-    Str,
-    HasTraits,
-    Range,
-)
-from traitsui.api import VGroup, Item, Label, HGroup
+from traits.api import Bool, Str, Range
+from traitsui.api import VGroup, Item, Label
+
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
-class PrometheusPreferences(HasTraits):
+class PrometheusPreferences(BasePreferencesHelper):
     """Preferences for Prometheus metrics export."""
+
+    preferences_path = "pychron.observability"
 
     enabled = Bool(
         False,
@@ -58,9 +56,7 @@ class PrometheusPreferencesPane(PreferencesPane):
     """Preferences pane for Prometheus configuration."""
 
     category = "Prometheus"
-    preferences_path = "pychron.observability"
-
-    model_class = PrometheusPreferences
+    model_factory = PrometheusPreferences
 
     def traits_view(self):
         """Build the preferences view."""

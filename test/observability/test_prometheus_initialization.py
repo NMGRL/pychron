@@ -79,12 +79,12 @@ class TestPrometheusInitialization(unittest.TestCase):
         pane = PrometheusPreferencesPane()
         self.assertIsNotNone(pane)
         self.assertEqual(pane.category, "Prometheus")
-        self.assertEqual(pane.preferences_path, "pychron.observability")
+        self.assertIsNotNone(pane.model_factory)
 
     def test_prometheus_preferences_pane_model(self):
-        """Test PrometheusPreferencesPane has correct model."""
+        """Test PrometheusPreferencesPane has correct model factory."""
         pane = PrometheusPreferencesPane()
-        self.assertEqual(pane.model_class, PrometheusPreferences)
+        self.assertEqual(pane.model_factory, PrometheusPreferences)
 
     def test_prometheus_preferences_pane_view(self):
         """Test PrometheusPreferencesPane creates a view."""
