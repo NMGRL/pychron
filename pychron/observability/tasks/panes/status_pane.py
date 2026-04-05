@@ -10,13 +10,13 @@ from datetime import datetime
 from pyface.action.api import Action
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import (
-    Button,
     Dict,
     HasTraits,
     Instance,
     Int,
     List as TraitsList,
     Str,
+    Button,
     observe,
 )
 from traitsui.api import (
@@ -92,7 +92,7 @@ class PrometheusStatusPane(TraitsTaskPane):
     id = "pychron.observability.status_pane"
     name = "Status"
 
-    # Button traits for control actions
+    # Proxy button traits - these forward to model buttons
     toggle_enabled_button = Button()
     export_button = Button()
     clear_button = Button()
@@ -152,13 +152,6 @@ class PrometheusStatusPane(TraitsTaskPane):
     def events(self):
         """Proxy to model.events."""
         return self.model.events if self.model else []
-
-    def create(self, parent):
-        """Override create to ensure proper context for TraitsUI."""
-        # Explicitly pass self as the context and call parent's edit_traits
-        view = self.traits_view()
-        self.ui = self.edit_traits(view=view, kind="subpanel", parent=parent, context=self)
-        self.control = self.ui.control
 
     def traits_view(self):
         """Build the view for the status pane."""
@@ -263,7 +256,7 @@ class PrometheusStatusPane(TraitsTaskPane):
     @observe("toggle_enabled_button")
     def _toggle_enabled_button_fired(self, event=None):
         """Toggle metrics collection."""
-        if self.model._plugin_ref:
+        if self.model and self.model._plugin_ref:
             self.model._plugin_ref.enabled = not self.model._plugin_ref.enabled
             logger.info(f"Toggled metrics enabled to {self.model.enabled}")
 

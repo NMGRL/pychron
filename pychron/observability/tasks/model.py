@@ -8,16 +8,19 @@ import json
 import logging
 import threading
 import time
+import webbrowser
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from traits.api import (
     Bool,
+    Button,
     HasTraits,
     Int,
     List as TraitsList,
     Property,
     Str,
+    observe,
 )
 
 from pychron.observability import event_capture
@@ -52,6 +55,12 @@ class PrometheusObservabilityModel(HasTraits):
     # Metrics summary
     last_event_time = Property(Str, observe="events")
     metrics_url = Property(Str, observe="host, port")
+
+    # Control buttons
+    toggle_enabled_button = Button()
+    export_button = Button()
+    clear_button = Button()
+    open_browser_button = Button()
 
     # Internal state
     _plugin_ref = None
@@ -273,6 +282,26 @@ class PrometheusObservabilityModel(HasTraits):
             metrics_by_type[event.event_type][event.metric_name] = event.value
 
         return metrics_by_type
+
+    @observe("toggle_enabled_button")
+    def _toggle_enabled_button_fired(self, event=None):
+        """Handle toggle enabled button (no-op, pane handles logic)."""
+        pass
+
+    @observe("export_button")
+    def _export_button_fired(self, event=None):
+        """Handle export button (no-op, pane handles logic)."""
+        pass
+
+    @observe("clear_button")
+    def _clear_button_fired(self, event=None):
+        """Handle clear button (no-op, pane handles logic)."""
+        pass
+
+    @observe("open_browser_button")
+    def _open_browser_button_fired(self, event=None):
+        """Handle open browser button (no-op, pane handles logic)."""
+        pass
 
     def destroy(self) -> None:
         """Clean up model resources."""
