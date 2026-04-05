@@ -31,6 +31,7 @@ from traitsui.api import (
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.observability.event_exporter import EventExporter
 from pychron.observability.tasks.model import PrometheusObservabilityModel
 
 logger = logging.getLogger(__name__)
@@ -262,9 +263,21 @@ class PrometheusStatusPane(TraitsTaskPane):
     @observe("export_button")
     def _export_button_fired(self, event=None):
         """Export events."""
-        # For now, just log that export was clicked
-        # Full export implementation will be in commit 6
-        logger.info(f"Export events: {self.model.event_count} events to export")
+        if not self.model.events:
+            logger.warning("No events to export")
+            return
+
+        # Try to export as JSON first
+        try:
+            events_data = self.model.export_events("json")
+            filepath = EventExporter.open_export_dialog(events_data, "json")
+            if filepath:
+                message = EventExporter.get_export_summary(self.model.event_count, filepath)
+                logger.info(message)
+            else:
+                logger.info("Export cancelled")
+        except Exception as e:
+            logger.error(f"Export failed: {e}")
 
     @observe("clear_button")
     def _clear_button_fired(self, event=None):

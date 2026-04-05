@@ -127,6 +127,8 @@ class TestPrometheusStatusPane(unittest.TestCase):
     def test_export_button_handler(self):
         """Test export button handler."""
         self.pane.model.event_count = 5
+        self.pane.model.events = [Mock()]  # At least one event
+        self.pane.model.export_events = Mock(return_value='{"events": []}')
         # Should not raise an exception
         self.pane._export_button_fired()
 
