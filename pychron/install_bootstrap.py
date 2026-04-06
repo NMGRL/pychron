@@ -150,13 +150,12 @@ def bootstrap_runtime_root(
         overwrite=overwrite_source_files,
     )
 
-    if merged.resolved or bundles or source_profiles:
-        save_bootstrap_state(
-            root,
-            merged,
-            bundles=bundles,
-            source_profiles=source_profiles,
-        )
+    save_bootstrap_state(
+        root,
+        merged,
+        bundles=bundles,
+        source_profiles=source_profiles,
+    )
 
     created = [
         paths.root_dir,
