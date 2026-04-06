@@ -227,16 +227,16 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if not attached_items:
                 attached_items = self._fallback_connected_items(item)
 
+            endpoint_states = [
+                bool(getattr(attached, "state", False)) for attached in attached_items
+            ]
             color_item = self._preferred_connector_color_item(attached_items)
             color = self._connector_color_for_item(color_item)
             if color is not None:
                 item.active_color = color
-                item.state = True
+                item.state = any(endpoint_states)
                 continue
 
-            endpoint_states = [
-                bool(getattr(attached, "state", False)) for attached in attached_items
-            ]
             if endpoint_states:
                 item.state = any(endpoint_states)
                 if hasattr(item, "default_color"):
@@ -244,6 +244,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _connector_color_for_item(self, item: object) -> object | None:
         if item is None:
+            return None
+
+        if isinstance(item, (BaseValve, Switch)) and not bool(getattr(item, "state", False)):
+            # Closed valves/switches should not paint nearby connectors from the opposite side.
             return None
 
         source_item = item

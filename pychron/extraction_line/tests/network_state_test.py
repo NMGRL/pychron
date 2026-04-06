@@ -6,16 +6,27 @@ import types
 import unittest
 
 if "yaml" not in sys.modules:
+
+    def _yaml_load(stream, Loader=None):
+        data = stream.read() if hasattr(stream, "read") else stream
+        return json.loads(data)
+
+    def _yaml_dump(obj, default_flow_style=False):
+        return json.dumps(obj)
+
     yaml_stub = types.SimpleNamespace(
         FullLoader=object,
         Loader=object,
         YAMLError=Exception,
-        load=lambda stream, Loader=None: json.loads(
-            stream.read() if hasattr(stream, "read") else stream
-        ),
+        load=_yaml_load,
+        dump=_yaml_dump,
+        safe_dump=_yaml_dump,
     )
     sys.modules["yaml"] = yaml_stub
 
+from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
+from pychron.canvas.canvas2D.scene.primitives.connections import Connection
+from pychron.canvas.canvas2D.scene.primitives.valves import Switch
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.extraction_line.graph.nodes import (
     Edge,
@@ -52,6 +63,51 @@ def make_graph() -> ExtractionLineGraph:
 
 
 class ExtractionLineNetworkStateTestCase(unittest.TestCase):
+    def test_closed_valve_connector_does_not_inherit_other_side_state(self) -> None:
+        class SceneStub:
+            def __init__(self, items: list[object], by_name: dict[str, object]) -> None:
+                self._items = items
+                self._by_name = by_name
+
+            def get_items(self) -> list[object]:
+                return self._items
+
+            def get_item(self, name: str) -> object | None:
+                return self._by_name.get(name)
+
+        class SourceStub:
+            state = True
+            default_color = (0.5, 0.5, 0.5)
+            active_color = (0.0, 1.0, 0.0)
+
+        connector = Connection((0, 0), (1, 0), name="C")
+        connector.default_color = (1.0, 0.0, 0.0)
+        connector.active_color = (0.0, 1.0, 0.0)
+        connector.state = False
+
+        valve = Switch(0, 0, name="V")
+        valve.state = False
+        valve.network_dominant_source_node = "SRC"
+        valve.connections = [("left", connector)]
+
+        source = SourceStub()
+        scene = SceneStub([connector, valve], {"C": connector, "V": valve, "SRC": source})
+
+        class CanvasStub:
+            _propagate_connector_colors = ExtractionLineCanvas2D._propagate_connector_colors
+            _connected_items_for_connector = ExtractionLineCanvas2D._connected_items_for_connector
+            _fallback_connected_items = ExtractionLineCanvas2D._fallback_connected_items
+            _preferred_connector_color_item = ExtractionLineCanvas2D._preferred_connector_color_item
+            _connector_color_for_item = ExtractionLineCanvas2D._connector_color_for_item
+
+        canvas = CanvasStub()
+        canvas.scene = scene
+
+        canvas._propagate_connector_colors()
+
+        self.assertFalse(connector.state)
+        self.assertEqual(connector.active_color, connector.default_color)
+
     def test_open_network_is_single_region(self) -> None:
         graph = make_graph()
         graph.set_valve_state("V1", True)
@@ -179,9 +235,7 @@ class ExtractionLineNetworkStateTestCase(unittest.TestCase):
             yaml_snapshot = yaml_graph.compute_state()
 
         self.assertEqual(xml_snapshot.region_count, yaml_snapshot.region_count)
-        self.assertEqual(
-            sorted(xml_snapshot.regions.keys()), sorted(yaml_snapshot.regions.keys())
-        )
+        self.assertEqual(sorted(xml_snapshot.regions.keys()), sorted(yaml_snapshot.regions.keys()))
         xml_volumes = sorted(region.volume for region in xml_snapshot.regions.values())
         yaml_volumes = sorted(region.volume for region in yaml_snapshot.regions.values())
         self.assertListEqual(xml_volumes, yaml_volumes)
