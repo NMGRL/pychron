@@ -145,12 +145,21 @@ class PrometheusObservabilityModel(HasTraits):
 
         try:
             with self._lock:
-                # Direct update is thread-safe with Traits' deque implementation
+                # Append to the list
                 self.events.append(event)
                 logger.debug(f"Event added to model. Total events: {len(self.events)}")
                 # Keep only recent events
                 if len(self.events) > 1000:
                     self.events = self.events[-1000:]
+
+                # Create a copy to trigger trait change notification
+                # This is necessary because list.append() doesn't trigger observers
+                events_copy = list(self.events)
+
+            # Reassign OUTSIDE the lock to avoid potential deadlocks
+            # This triggers the Traits observer system
+            self.events = events_copy
+            logger.debug("Event list reassigned to trigger observers")
         except Exception as e:
             logger.warning(f"Error capturing event: {e}")
 

@@ -113,6 +113,12 @@ class PrometheusStatusPane(TraitsTaskPane):
         # Listen for event changes to update metrics preview
         self.model.observe(self._on_model_events_changed, "events")
 
+        # Also register directly with event_capture to handle background thread updates
+        # The Traits observer doesn't work reliably from background threads
+        from pychron.observability import event_capture
+
+        event_capture.register_callback(self._on_event_capture_event)
+
     def trait_context(self):
         """Provide pane traits to the view context.
 
@@ -306,6 +312,16 @@ class PrometheusStatusPane(TraitsTaskPane):
         """Handle model events change - update metrics preview."""
         self._update_metrics_preview()
 
+    def _on_event_capture_event(self, event) -> None:
+        """Handle events from event_capture system directly.
+
+        Called from background thread when events are captured.
+        Updates metrics preview to display real-time events.
+        """
+        # Update metrics preview whenever an event is captured
+        # This provides real-time UI updates
+        self._update_metrics_preview()
+
     def _update_metrics_preview(self):
         """Update the metrics preview from model."""
         metrics_preview = self.model.get_metrics_preview()
@@ -323,6 +339,14 @@ class PrometheusStatusPane(TraitsTaskPane):
 
     def destroy(self):
         """Clean up pane resources."""
+        # Unregister event capture callback
+        try:
+            from pychron.observability import event_capture
+
+            event_capture.unregister_callback(self._on_event_capture_event)
+        except Exception as e:
+            logger.warning(f"Error unregistering event callback: {e}")
+
         if self.model:
             self.model.destroy()
         super().destroy()
