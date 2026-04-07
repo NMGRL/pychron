@@ -217,6 +217,20 @@ class StatsGroup(Loggable):
         self.nruns_finished += 1
         self.debug("finish run. runs completed={}".format(self.nruns_finished))
 
+    def _calculate_total_duration(self):
+        """Calculate total duration across all experiment queues."""
+        return sum(
+            [
+                ei.stats.calculate_duration(ei.cleaned_automated_runs)
+                for ei in self.experiment_queues
+            ]
+        )
+
+    def _clear_dirty_flags(self):
+        """Clear dirty flags on all experiment queue stats."""
+        for ei in self.experiment_queues:
+            ei.stats._dirty = False
+
     def calculate(self, force=False) -> None:
         """
         calculate the total duration
@@ -230,40 +244,33 @@ class StatsGroup(Loggable):
             or any(ei.stats._dirty for ei in self.experiment_queues)
         )
         if should_recalculate:
-            nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
-
-            self.debug("calculating experiment stats")
-            tt = sum(
-                [
-                    ei.stats.calculate_duration(ei.cleaned_automated_runs)
-                    for ei in self.experiment_queues
-                ]
+            nruns = sum(
+                [len(ei.cleaned_automated_runs) for ei in self.experiment_queues]
             )
 
-            for ei in self.experiment_queues:
-                ei.stats._dirty = False
-
+            self.debug("calculating experiment stats")
+            tt = self._calculate_total_duration()
+            self._clear_dirty_flags()
             self.debug("total_time={}".format(tt))
-            # Set nruns first to ensure UI updates
-            self.nruns = nruns
-            # Then set the other stats
-            self.trait_set(_total_time=tt, etf=self.format_duration(tt))
-            self._queue_sig = queue_sig
+
+            # Set nruns first to ensure UI updates, then set the other stats
+            self.trait_set(
+                nruns=nruns,
+                _total_time=tt,
+                etf=self.format_duration(tt),
+                _queue_sig=queue_sig,
+            )
 
     def recalculate_etf(self):
-        tt = sum(
-            [
-                ei.stats.calculate_duration(ei.cleaned_automated_runs)
-                for ei in self.experiment_queues
-            ]
+        """Recalculate estimated time to finish based on current elapsed time."""
+        tt = self._calculate_total_duration()
+        self._clear_dirty_flags()
+
+        self.trait_set(
+            _total_time=tt + self._elapsed,
+            etf=self.format_duration(tt, post=datetime.now()),
+            _queue_sig=self._make_queue_sig(),
         )
-
-        for ei in self.experiment_queues:
-            ei.stats._dirty = False
-
-        self._total_time = tt + self._elapsed
-        self.etf = self.format_duration(tt, post=datetime.now())
-        self._queue_sig = self._make_queue_sig()
 
     def refresh_on_queue_change(self):
         if self.experiment_queues:
@@ -357,10 +364,12 @@ class StatsGroup(Loggable):
         return tuple(sig)
 
     def _get_run_elapsed(self):
-        return str(timedelta(seconds=self._run_elapsed))
+        dur = timedelta(seconds=round(self._run_elapsed))
+        return str(dur)
 
     def _get_elapsed(self):
-        return str(timedelta(seconds=self._elapsed))
+        dur = timedelta(seconds=round(self._elapsed))
+        return str(dur)
 
     def _get_total_time(self):
         dur = timedelta(seconds=round(self._total_time))
