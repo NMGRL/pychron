@@ -1,17 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `d72e6eb48`  
-**Generated:** 2026-04-05 15:46 UTC  
-**Compare:** [`4bc93cd9929fd5b3999575e0aa751bc241ff7b9e...d72e6eb48`](../../compare/4bc93cd9929fd5b3999575e0aa751bc241ff7b9e...d72e6eb48)
-**Triggered by commit:** `4bc93cd99`  
-**Generated:** 2026-04-05 14:08 UTC  
-**Compare:** [`8c1efd864781da4125621d62641ed3444eeb5548...4bc93cd99`](../../compare/8c1efd864781da4125621d62641ed3444eeb5548...4bc93cd99)
+**Triggered by commit:** `ada697198`  
+**Generated:** 2026-04-06 14:05 UTC  
+**Compare:** [`fec120f0e747aa46b33e27b0c18471e05982808e...ada697198`](../../compare/fec120f0e747aa46b33e27b0c18471e05982808e...ada697198)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Hardware Compatibility Matrix](#hardware-matrix) | 19 files | ✅ Reviewed |
+| [Multi-Node Deployment Guide](#multi-node-deployment) | 2 files | ✅ Reviewed |
 | [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
@@ -20,32 +17,97 @@
 <summary>Click to expand</summary>
 
 ```
-HARDWARE_LIBRARY_ROADMAP.md
-pychron/hardware/config_import_export.py
-pychron/hardware/config_template.py
-pychron/hardware/config_template_manager.py
-pychron/hardware/device_lifecycle.py
-pychron/hardware/device_preset.py
-pychron/hardware/driver_generator.py
-pychron/hardware/library.py
-pychron/hardware/library_filter.py
-pychron/hardware/metadata_editor.py
-pychron/hardware/preset_manager.py
-pychron/hardware/registry_client.py
-pychron/hardware/tasks/hardware_pane.py
-pychron/hardware/tasks/hardwarer.py
-pychron/hardware/tests/test_phase2.py
-pychron/hardware/tests/test_phase3.py
-pychron/hardware/tests/test_phase4.py
-pychron/hardware/tests/test_phase5.py
-pychron/hardware/usage_analytics.py
-pychron/hardware/validation_reporter.py
-pychron/paths.py
+CODE_CLEANUP_REPORT.md
+DOCUMENTATION_REVIEW.md
+IMPLEMENTATION_SUMMARY.md
+OBSERVABILITY_GETTING_STARTED.md
+PREFERENCES_PANE_FIXES.md
+PROMETHEUS_ANALYSIS.md
+PROMETHEUS_EVENTS_GUIDE.md
+PROMETHEUS_IMPLEMENTATION.md
+PROMETHEUS_PLUGIN.md
+docs/observability.md
+docs/prometheus_initialization.md
+ops/grafana/dashboards/pychron-device-health.json
+ops/grafana/dashboards/pychron-overview.json
+ops/preferences/prometheus.ini
+ops/prometheus/prometheus.yml
+pychron/canvas/canvas2D/extraction_line_canvas2D.py
+pychron/envisage/initialization/utilities.py
+pychron/envisage/pychron_run.py
+pychron/experiment/executor_watchdog_integration.py
+pychron/experiment/instrumentation.py
+pychron/experiment/telemetry/device_io.py
+pychron/experiment/tests/test_device_io_metrics.py
+pychron/experiment/tests/test_executor_metrics.py
+pychron/extraction_line/extraction_line_manager.py
+pychron/extraction_line/tests/network_state_test.py
+pychron/observability/__init__.py
+pychron/observability/config.py
+pychron/observability/event_capture.py
+pychron/observability/event_exporter.py
+pychron/observability/exporter.py
+pychron/observability/metrics.py
+pychron/observability/registry.py
+pychron/observability/tasks/__init__.py
+pychron/observability/tasks/event.py
+pychron/observability/tasks/model.py
+pychron/observability/tasks/panes/__init__.py
+pychron/observability/tasks/panes/event_pane.py
+pychron/observability/tasks/panes/status_pane.py
+pychron/observability/tasks/plugin.py
+pychron/observability/tasks/preferences_pane.py
+pychron/observability/tasks/task.py
 pyproject.toml
+test/observability/__init__.py
+test/observability/test_event_capture.py
+test/observability/test_event_exporter.py
+test/observability/test_event_pane.py
+test/observability/test_exporter.py
+test/observability/test_integration_live_events.py
+test/observability/test_metrics.py
+test/observability/test_panes_integration.py
+test/observability/test_plugin_integration.py
+test/observability/test_prometheus_initialization.py
+test/observability/test_status_pane.py
+test/observability/test_task_model.py
+test/observability/test_valve_events.py
 uv.lock
 ```
 
 </details>
+
+---
+
+## Multi-Node Deployment Guide {#multi-node-deployment}
+
+**Doc file:** `docs/multi_node_deployment_guide.md`  
+**Matched prefixes:** `pychron/extraction_line/`
+
+### Changed Files
+
+- `pychron/extraction_line/extraction_line_manager.py`
+- `pychron/extraction_line/tests/network_state_test.py`
+
+### AI Review
+
+## Code Change Summary
+
+The code changes introduce Prometheus observability logging for valve operations in the extraction line manager and add comprehensive testing for canvas network state propagation with closed valves. The Prometheus integration adds a new optional dependency and monitoring capability for valve state changes, while the test improvements validate canvas connector color propagation behavior when valves are closed.
+
+## Documentation Updates Required
+
+- **Section/Topic:** Prerequisites/Dependencies
+  **Issue:** The new Prometheus observability integration introduces an optional dependency that isn't documented
+  **Suggested update:** Add information about the optional `pychron.observability` module for Prometheus monitoring, including installation requirements and configuration for multi-node deployments that want valve operation metrics
+
+- **Section/Topic:** Startup Tests/Validation
+  **Issue:** The enhanced network state testing capabilities, particularly for closed valve scenarios and canvas color propagation, are not covered in the startup test procedures
+  **Suggested update:** Include validation steps for testing closed valve connector behavior and canvas state propagation across nodes, especially for pyValve nodes that manage extraction line components
+
+- **Section/Topic:** Monitoring/Observability
+  **Issue:** The new Prometheus valve operation logging feature is not documented as an available monitoring option
+  **Suggested update:** Add a section describing how valve operations can be monitored via Prometheus metrics in multi-node setups, including the `valve_{action}` counter metrics with valve name labels, and how this integrates with distributed valve management across pyValve nodes
 
 ---
 
@@ -56,25 +118,6 @@ uv.lock
 
 ### Changed Files
 
-- `pychron/hardware/config_import_export.py`
-- `pychron/hardware/config_template.py`
-- `pychron/hardware/config_template_manager.py`
-- `pychron/hardware/device_lifecycle.py`
-- `pychron/hardware/device_preset.py`
-- `pychron/hardware/driver_generator.py`
-- `pychron/hardware/library.py`
-- `pychron/hardware/library_filter.py`
-- `pychron/hardware/metadata_editor.py`
-- `pychron/hardware/preset_manager.py`
-- `pychron/hardware/registry_client.py`
-- `pychron/hardware/tasks/hardware_pane.py`
-- `pychron/hardware/tasks/hardwarer.py`
-- `pychron/hardware/tests/test_phase2.py`
-- `pychron/hardware/tests/test_phase3.py`
-- `pychron/hardware/tests/test_phase4.py`
-- `pychron/hardware/tests/test_phase5.py`
-- `pychron/hardware/usage_analytics.py`
-- `pychron/hardware/validation_reporter.py`
 - `pyproject.toml`
 - `uv.lock`
 
@@ -82,44 +125,17 @@ uv.lock
 
 ## Code Change Summary
 
-The code changes introduce a comprehensive hardware device management system with new classes for configuration templates, device presets, metadata editing, import/export functionality, validation reporting, and driver generation. Most importantly, these changes enhance the existing `LibraryEntry` class with new properties and add extensive filtering and search capabilities, which directly impacts how hardware devices are cataloged and managed in the compatibility matrix.
+The code changes add `prometheus-client` as a new core dependency to Pychron, with a version constraint of `>=0.21.0,<1`. This dependency has been added to the main dependencies list in `pyproject.toml` and the lock file has been updated to reflect the inclusion of `prometheus-client` version 0.24.1. Since this is a new required dependency, the Installation Guide needs to be updated to reflect this change.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Device Class Implementation Details
-  **Issue:** The documentation needs to reflect new properties and methods added to `LibraryEntry` class
-  **Suggested update:** Add documentation for new properties: `formatted_specs` (returns metadata as formatted specifications table), `docs_links` (returns all documentation links as dictionary), and `has_url()` method (checks if entry has any URLs). These enhance how device metadata is presented and accessed.
+- **Section/Topic:** Dependencies section or requirements listing
+  **Issue:** The Installation Guide likely contains a list of core dependencies or system requirements that would now be incomplete without mentioning prometheus-client
+  **Suggested update:** Add `prometheus-client (>=0.21.0,<1)` to any comprehensive dependency lists or mention that prometheus-client is now included as a core dependency for metrics collection functionality
 
-- **Section/Topic:** Hardware Discovery and Cataloging
-  **Issue:** The addition of `LibraryFilter` and `LibrarySearcher` classes provides new filtering and search capabilities not documented
-  **Suggested update:** Document the advanced search and filtering system including: full-text search across metadata, filtering by company/communication type/completeness status, and statistical analysis capabilities (completion percentages, unique companies/comm types).
-
-- **Section/Topic:** Configuration Management
-  **Issue:** New configuration template and preset systems are not covered in the compatibility matrix
-  **Suggested update:** Add section describing `ConfigTemplate` class for device configuration templates, `ConfigTemplateManager` for template persistence, `DevicePreset` class for lab-specific configurations, and `PresetManager` for preset management. Include supported file formats (JSON) and template/preset directory structures.
-
-- **Section/Topic:** Import/Export Capabilities
-  **Issue:** New import/export functionality for device configurations is not documented
-  **Suggested update:** Document `ConfigExporter` and `ConfigImporter` classes that handle ZIP bundle export/import of device configurations and templates. Include supported bundle formats, metadata structure, and validation requirements.
-
-- **Section/Topic:** Validation and Quality Assurance
-  **Issue:** New validation and reporting systems for hardware metadata are not covered
-  **Suggested update:** Add documentation for `MetadataValidator` (validates device metadata completeness), `ValidationReport` (generates validation reports in multiple formats), and `MetadataEditor` (in-app metadata editing with validation). Include validation rules and required fields.
-
-- **Section/Topic:** Developer Tools
-  **Issue:** New driver generation wizard and development tools are not mentioned
-  **Suggested update:** Document `DriverGenerator` and `DriverWizard` classes that provide code generation for device drivers, including generated file types (driver class, config file, unit tests, README), supported communication types, and template system.
-The code changes add a new development dependency `traits-stubs>=6.4.0` to the `dev` optional dependency group in `pyproject.toml`. This is a type stubs package that provides type annotations for the `traits` library, which is used by static type checkers like mypy. The corresponding `uv.lock` file was updated to include the resolved dependency information.
-
-## Documentation Updates Required
-
-- **Section/Topic:** Optional dependency groups section
-  **Issue:** The documentation may list the contents of the `dev` dependency group but would now be missing the newly added `traits-stubs` package
-  **Suggested update:** Add `traits-stubs>=6.4.0` to any enumeration or description of packages included in the `dev` optional dependency group, noting that it provides type stubs for the traits library to support static type checking
-
-- **Section/Topic:** Development environment setup
-  **Issue:** If the documentation provides specific guidance on setting up a development environment or mentions what gets installed with `uv sync --extra dev`, it would now be incomplete
-  **Suggested update:** Include mention that `traits-stubs` will be installed as part of the development dependencies to support type checking workflows
+- **Section/Topic:** Installation troubleshooting or known issues section (if it exists)
+  **Issue:** Missing potential troubleshooting information for the new prometheus-client dependency
+  **Suggested update:** If there's a troubleshooting section, consider adding a note about prometheus-client installation issues if they're known to occur on specific platforms, or note that prometheus-client is automatically installed with the standard installation process
 
 ---
 
