@@ -80,6 +80,7 @@ TRANSITIONS: dict[str, dict[str, str]] = {
         REQUEST_ABORT: ABORTING,
     },
     RUNNING_QUEUE: {
+        QUEUE_SELECTED: RUNNING_QUEUE,
         QUEUE_FINISHED: FINALIZING,
         REQUEST_STOP_AT_BOUNDARY: STOPPING_AT_BOUNDARY,
         REQUEST_CANCEL: CANCELING,
@@ -136,7 +137,7 @@ class ExecutorStateMachine(BaseStateMachine):
 
     @property
     def is_alive(self) -> bool:
-        return self._observed_state not in {IDLE, COMPLETED, FAILED, CANCELED, ABORTED}
+        return self._observed_state not in {IDLE, COMPLETED, FAILED, CANCELED, ABORTED, CANCELING, ABORTING}
 
     @property
     def is_running(self) -> bool:
@@ -189,11 +190,12 @@ class ExecutorStateMachine(BaseStateMachine):
             "aborted": ABORTED,
         }
         target = target_map.get(result, COMPLETED)
+        reason = kwargs.pop("reason", result)
         self.transition(
             FINALIZE_COMPLETE,
             source="finalize_with_result",
-            reason=result,
+            reason=reason,
             **kwargs,
         )
         if self._observed_state == COMPLETED and target != COMPLETED:
-            self.set_observed_state(target, source="finalize_with_result", reason=result)
+            self.set_observed_state(target, source="finalize_with_result", reason=reason)

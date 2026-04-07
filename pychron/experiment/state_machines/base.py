@@ -47,6 +47,7 @@ class BaseStateMachine:
         self._states = states
         self._terminal_states = terminal_states
         self._transitions = transitions
+        self._initial_state = initial_state
         self._commanded_state: str = initial_state
         self._observed_state: str = initial_state
         self._subject_id = subject_id
@@ -175,11 +176,7 @@ class BaseStateMachine:
         return record
 
     def reset(self, state: str | None = None) -> None:
-        s = (
-            state
-            if state is not None
-            else self._transitions.get("__initial__", self._observed_state)
-        )
+        s = state if state is not None else self._initial_state
         self._commanded_state = s
         self._observed_state = s
         self.history.clear()

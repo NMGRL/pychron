@@ -33,6 +33,7 @@ from traits.api import (
 
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.timer import Timer
+from pychron.core.ui.gui import invoke_in_main_thread
 
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
@@ -157,38 +158,43 @@ class BaseExperimentQueue(RunBlock):
             self._stats_timer.stop()
         self._stats_timer = Timer(250, self._flush_stats)
 
-    def request_table_refresh(self, delay=75):
+    def request_table_refresh(self, delay=75) -> None:
         if self._table_refresh_timer:
             self._table_refresh_timer.stop()
         self._table_refresh_timer = Timer(delay, self._flush_table_refresh)
 
-    def request_info_refresh(self, delay=75, scroll_to_row=None):
+    def request_info_refresh(self, delay=75, scroll_to_row=None) -> None:
         if scroll_to_row is not None:
             self._pending_scroll_to_row = scroll_to_row
         if self._info_refresh_timer:
             self._info_refresh_timer.stop()
         self._info_refresh_timer = Timer(delay, self._flush_info_refresh)
 
-    def _flush_stats(self):
+    def _flush_stats(self) -> None:
         if self._stats_timer:
             self._stats_timer.stop()
             self._stats_timer = None
         self.request_info_refresh()
 
-    def _flush_table_refresh(self):
+    def _flush_table_refresh(self) -> None:
         if self._table_refresh_timer:
             self._table_refresh_timer.stop()
             self._table_refresh_timer = None
-        self.refresh_table_needed = True
+        invoke_in_main_thread(setattr, self, "refresh_table_needed", True)
 
-    def _flush_info_refresh(self):
+    def _flush_info_refresh(self) -> None:
         if self._info_refresh_timer:
             self._info_refresh_timer.stop()
             self._info_refresh_timer = None
         if self._pending_scroll_to_row is not None:
-            self.automated_runs_scroll_to_row = self._pending_scroll_to_row
+            invoke_in_main_thread(
+                setattr,
+                self,
+                "automated_runs_scroll_to_row",
+                self._pending_scroll_to_row,
+            )
             self._pending_scroll_to_row = None
-        self.refresh_info_needed = True
+        invoke_in_main_thread(setattr, self, "refresh_info_needed", True)
 
     # ===============================================================================
     # persistence

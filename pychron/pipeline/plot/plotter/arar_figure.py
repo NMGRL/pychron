@@ -148,6 +148,8 @@ class BaseArArFigure(SelectionFigure):
         layout = self.options.layout
         fw = layout.fixed_width
         fh = layout.fixed_height
+        
+        print(f"[arar_figure.make_plots] fw={fw}, fh={fh}")
 
         # stretch_vertical = layout.stretch_vertical
 

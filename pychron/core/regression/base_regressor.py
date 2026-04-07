@@ -18,7 +18,7 @@ import logging
 import math
 import re
 
-from numpy import where, delete, polyfit, percentile, array_equal
+from numpy import where, delete, polyfit, percentile, array_equal, array
 
 # ============= enthought library imports =======================
 from traits.api import (
@@ -212,14 +212,14 @@ class BaseRegressor(HasTraits):
         truncate=None,
         xserr=None,
         yserr=None,
-    ):
+    ) -> bool:
         updates = {}
         comparisons = (
             ("xs", xs),
             ("ys", ys),
-            ("xserr", xserr),
-            ("yserr", yserr),
-            ("truncate", truncate),
+            ("xserr", self._normalize_array_state(xserr)),
+            ("yserr", self._normalize_array_state(yserr)),
+            ("truncate", self._normalize_truncate_state(truncate)),
             ("user_excluded", sorted(user_excluded or [])),
             ("filter_outliers_dict", (filter_outliers_dict or {}).copy()),
         )
@@ -235,6 +235,16 @@ class BaseRegressor(HasTraits):
             return True
 
         return False
+
+    def _normalize_array_state(self, value):
+        if value is None:
+            return array([])
+        return value
+
+    def _normalize_truncate_state(self, value):
+        if value is None:
+            return ""
+        return value
 
     def determine_fit(self, *args, **kw):
         return self.fit

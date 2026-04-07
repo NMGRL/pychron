@@ -552,28 +552,28 @@ class StatsPane(TraitsDockPane):
         gen_grp = BorderVGroup(
             HGroup(UItem("pane.recalculate_button")),
             HGroup(
-                Readonly("nruns", width=150, label="Total Runs"),
-                UReadonly("total_time"),
+                Readonly("object.nruns", width=150, label="Total Runs"),
+                UReadonly("object.total_time"),
             ),
             HGroup(
-                Readonly("nruns_finished", width=150, label="Completed"),
-                UReadonly("elapsed"),
+                Readonly("object.nruns_finished", width=150, label="Completed"),
+                UReadonly("object.elapsed"),
             ),
-            Readonly("remaining", label="Remaining"),
-            Readonly("etf", label="Est. finish"),
+            Readonly("object.remaining", label="Remaining"),
+            Readonly("object.etf", label="Est. finish"),
             label="General",
         )
         cur_grp = BorderVGroup(
             Readonly(
-                "current_run_duration",
+                "object.current_run_duration",
             ),
-            Readonly("run_elapsed"),
+            Readonly("object.run_elapsed"),
             label="Current",
         )
         sel_grp = BorderVGroup(
-            Readonly("start_at"),
-            Readonly("end_at"),
-            Readonly("run_duration"),
+            Readonly("object.start_at"),
+            Readonly("object.end_at"),
+            Readonly("object.run_duration"),
             label="Selection",
         )
         v = View(VGroup(gen_grp, cur_grp, sel_grp))

@@ -17,8 +17,14 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+import time
+from _thread import LockType
+from threading import Lock, current_thread
+from typing import Optional
+
 from traits.api import Instance, List, on_trait_change, Bool, Event
 
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.factory import ExperimentFactory
@@ -52,7 +58,12 @@ class Experimentor(DVCIrradiationable):
     activate_editor_event = Event
     save_event = Event
 
-    def activate(self):
+    def __init__(self, *args, **kw) -> None:
+        super(Experimentor, self).__init__(*args, **kw)
+        self._update_lock: Optional[LockType] = Lock()
+        self._last_refresh_info_update_ts = 0.0
+
+    def activate(self) -> None:
         pass
 
     def prepare_destory(self):
@@ -76,25 +87,50 @@ class Experimentor(DVCIrradiationable):
             #             self.executor.queue_modified = True
             self.executor.set_queue_modified()
 
-    def refresh_executable(self, qs=None):
+    def refresh_executable(self, qs=None) -> None:
         if qs is None:
             qs = self.experiment_queues
 
         if self.executor.is_alive():
             qs = (self.executor.experiment_queue,)
 
-        self.executor.executable = all([ei.is_executable() for ei in qs])
-        self.debug("setting executable {}".format(self.executor.executable))
+        executable = all([ei.is_executable() for ei in qs])
+        self.executor.trait_setq(executable=executable)
+        self.debug("setting executable {}".format(executable))
 
     def update_queues(self):
         self._update_queues()
 
-    def update_info(self):
+    def update_info(self) -> None:
+        if current_thread().name != "MainThread":
+            self.debug(
+                "update_info requested from {}. skipping background refresh".format(
+                    current_thread().name
+                )
+            )
+            return
+
+        if self._update_lock is not None and not self._update_lock.acquire(False):
+            self.debug("update_info already running. skipping overlapping refresh")
+            return
+
         try:
+            self.debug("update_info starting on main thread")
             self._update()
+            self.debug("update_info completed _update")
         except BaseException as e:
             self.debug_exception()
-            self.warning_dialog("Failed updating info: Error={}".format(e))
+            msg = "Failed updating info: Error={}".format(e)
+            # This path can run in worker threads; avoid opening modal dialogs there.
+            if current_thread().name == "MainThread":
+                self.warning_dialog(msg)
+            else:
+                self.warning(msg)
+        finally:
+            if self._update_lock is not None:
+                self.debug("update_info releasing lock")
+                self._update_lock.release()
+                self.debug("update_info released lock")
 
     # ===============================================================================
     # info update
@@ -105,7 +141,7 @@ class Experimentor(DVCIrradiationable):
 
         return [ai for ei in qs for ai in ei.automated_runs if ai.executable]
 
-    def _update(self, queues=None):
+    def _update(self, queues=None) -> None:
         self.debug("update runs")
         if queues is None:
             queues = self.experiment_queues
@@ -118,16 +154,17 @@ class Experimentor(DVCIrradiationable):
         self.debug("updating stats, ")
         self.executor.stats.experiment_queues = queues
         self.executor.stats.calculate()
+        self.debug("stats calculated")
 
         self.refresh_executable(queues)
+        self.debug("executable refreshed")
 
         self._set_analysis_metadata()
+        self.debug("analysis metadata step finished")
 
         self.debug("info updated")
-        for qi in queues:
-            qi.refresh_table_needed = True
 
-    def _set_analysis_metadata(self):
+    def _set_analysis_metadata(self) -> None:
         cache = dict()
 
         db = self.get_database()
@@ -151,7 +188,11 @@ class Experimentor(DVCIrradiationable):
                         info["identifier_error"] = False
                         cache[ln] = info
 
-                ai.trait_set(**cache[ln])
+        self.debug(
+            "analysis metadata fetched for {} identifiers; skipping run trait updates".format(
+                len(cache)
+            )
+        )
 
     def execute_queues(self, queues):
         names = ",".join([e.name for e in queues])
@@ -160,6 +201,9 @@ class Experimentor(DVCIrradiationable):
         self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0])
 
         return self.executor.execute()
+
+    def _request_table_refresh(self, queue) -> None:
+        invoke_in_main_thread(setattr, queue, "refresh_table_needed", True)
 
     def verify_database_connection(self, inform=True):
         db = self.get_database()
@@ -260,9 +304,9 @@ class Experimentor(DVCIrradiationable):
             self.update_info()
 
     @on_trait_change("experiment_factory:run_factory:refresh_table_needed")
-    def _refresh4(self):
+    def _refresh4(self) -> None:
         for qi in self.experiment_queues:
-            qi.refresh_table_needed = True
+            self._request_table_refresh(qi)
 
     @on_trait_change("experiment_factory:save_button")
     def _save_update(self):
@@ -270,7 +314,17 @@ class Experimentor(DVCIrradiationable):
         self.update_info()
 
     @on_trait_change("experiment_queue:refresh_info_needed")
-    def _handle_refresh(self):
+    def _handle_refresh(self) -> None:
+        if self.executor and self.executor.is_alive():
+            self.debug("refresh_info_needed ignored while executor is running")
+            return
+
+        now = time.monotonic()
+        if now - self._last_refresh_info_update_ts < 0.25:
+            self.debug("refresh_info_needed throttled to avoid update loop")
+            return
+
+        self._last_refresh_info_update_ts = now
         self.update_info()
 
     @on_trait_change("experiment_queue:selected")

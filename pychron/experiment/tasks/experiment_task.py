@@ -646,14 +646,18 @@ class ExperimentEditorTask(EditorTask):
         self.manager.experiment_factory.run_factory.load_run_blocks()
 
     @on_trait_change("editor_area:editors[]")
-    def _update_editors(self, new):
+    def _update_editors(self, new) -> None:
+        self.debug("_update_editors start n={}".format(len(new)))
         qs = [ei.queue for ei in new]
         self.manager.experiment_queues = qs
+        self.debug("_update_editors set manager.experiment_queues")
         # Mirror open queues onto the executor so panes (e.g. StatsPane) can
         # recalculate even when the executor is idle.
         try:
             self.manager.executor.experiment_queues = qs
+            self.debug("_update_editors set executor.experiment_queues")
         except Exception:
+            self.debug_exception()
             pass
 
     @on_trait_change("manager:executor:measuring_run:plot_panel")

@@ -308,11 +308,11 @@ class IrradiationGeometry(BaseGeometry):
 
 
 class Cached(object):
-    def __init__(self, clear=None):
+    def __init__(self, clear=None) -> None:
         self.clear = clear
 
     def __call__(self, func):
-        def wrapper(obj, name, *args, **kw):
+        def wrapper(obj, *args, **kw):
             ret = None
             if not hasattr(obj, "__cache__") or obj.__cache__ is None:
                 obj.__cache__ = {}
@@ -322,13 +322,16 @@ class Cached(object):
                 if getattr(obj, self.clear):
                     cache = {}
 
-            key = (func, name)
+            cache_kw = tuple(
+                sorted((k, v) for k, v in kw.items() if k != "force")
+            )
+            key = (func, args, cache_kw)
             force = kw.get("force", None)
             if not force:
                 ret = cache.get(key)
 
             if ret is None:
-                ret = func(obj, name, *args, **kw)
+                ret = func(obj, *args, **kw)
 
             cache[key] = ret
             obj.__cache__[func] = cache

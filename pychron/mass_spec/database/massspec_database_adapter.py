@@ -19,7 +19,7 @@ import binascii
 import math
 
 from sqlalchemy.exc import InvalidRequestError
-from sqlalchemy.sql.expression import func, distinct
+from sqlalchemy.sql.expression import func, distinct, text
 from traits.api import provides
 from uncertainties import std_dev, nominal_value
 
@@ -308,7 +308,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                     labnumber, aliquot
                 )
             )
-            v = self.session.execute(sql)
+            v = self.session.execute(text(sql))
             if v is not None:
                 r = v.fetchone()
                 if r:
@@ -336,7 +336,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 "ORDER BY AnalysesTable.Aliquot_pychron DESC LIMIT 1".format(labnumber)
             )
 
-            v = self.session.execute(sql)
+            v = self.session.execute(text(sql))
             if v is not None:
                 r = v.fetchone()
                 if r:

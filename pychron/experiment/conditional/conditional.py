@@ -61,6 +61,10 @@ from pychron.pychron_constants import (
     POST_RUN_ACTION,
 )
 
+CONDITIONAL_CLASS_ALIASES = {
+    "ModificationConditional": "QueueModificationConditional",
+}
+
 
 def dictgetter(d, attrs, default=None):
     if not isinstance(attrs, tuple):
@@ -125,7 +129,8 @@ def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
 
 def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     if isinstance(klass, str):
-        klass = globals()[klass]
+        kname = CONDITIONAL_CLASS_ALIASES.get(klass, klass)
+        klass = globals()[kname]
 
     # try:
     # teststr = cd['teststr']

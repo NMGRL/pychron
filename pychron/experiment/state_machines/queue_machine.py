@@ -238,6 +238,7 @@ class QueueStateMachine(BaseStateMachine):
             "aborted": QUEUE_ABORTED,
         }
         target = target_map.get(result, QUEUE_COMPLETED)
+        reason = kwargs.pop("reason", result)
         current = self._observed_state
         if current in TERMINAL_STATES:
             return
@@ -245,10 +246,10 @@ class QueueStateMachine(BaseStateMachine):
             self.transition(
                 QUEUE_SHUTDOWN_COMPLETE,
                 source="finalize_with_result",
-                reason=result,
+                reason=reason,
                 **kwargs,
             )
             if self._observed_state == QUEUE_COMPLETED and target != QUEUE_COMPLETED:
-                self.set_observed_state(target, source="finalize_with_result", reason=result)
+                self.set_observed_state(target, source="finalize_with_result", reason=reason)
         else:
-            self.set_observed_state(target, source="finalize_with_result", reason=result)
+            self.set_observed_state(target, source="finalize_with_result", reason=reason)

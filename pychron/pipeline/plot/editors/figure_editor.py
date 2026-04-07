@@ -89,17 +89,23 @@ class FigureEditor(GraphEditor):
         self.request_refresh(force=force)
 
     def _component_factory(self) -> TypingAny:
+        logger.debug("FigureEditor._component_factory() start")
         model = self._figure_model_factory()
         force_refresh = self.consume_refresh_request()
+        logger.debug(f"Calling model.refresh(force={force_refresh})")
         panels_rebuilt = model.refresh(force=force_refresh)
+        logger.debug(f"model.refresh() complete, panels_rebuilt={panels_rebuilt}")
 
         if not self.figure_container:
             self.figure_container = FigureContainer()
+            logger.debug("Created new FigureContainer")
         #
         omodel = self.figure_container.model
         self.figure_container.model = model
         if model != omodel or panels_rebuilt:
+            logger.debug(f"Calling figure_container.model_changed(clear={panels_rebuilt}, refresh_panels=False)")
             self.figure_container.model_changed(clear=panels_rebuilt, refresh_panels=False)
+            logger.debug("figure_container.model_changed() complete")
 
         self.figure_container.component.padding = (
             self.plotter_options.get_page_margins()
@@ -112,6 +118,7 @@ class FigureEditor(GraphEditor):
             self.figure_container.component.resizable = ""
 
         self._get_component_hook(model)
+        logger.debug("FigureEditor._component_factory() returning component")
         return self.figure_container.component
 
     def _figure_model_factory(self) -> TypingAny:

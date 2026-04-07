@@ -23,6 +23,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from urllib.parse import urlsplit, urlunsplit
 
 import git
 from git import Repo
@@ -71,6 +72,22 @@ def isoformat_date(d):
 
     return d.strftime(DATE_FORMAT)
     # return time.mktime(time.gmtime(d))
+
+
+def sanitize_url_for_log(url):
+    url = str(url)
+    parts = urlsplit(url)
+    if parts.netloc and "@" in parts.netloc:
+        _, host = parts.netloc.rsplit("@", 1)
+        return urlunsplit(
+            (parts.scheme, "***@{}".format(host), parts.path, parts.query, parts.fragment)
+        )
+
+    # Handle SCP-like git remotes, e.g. git@github.com:org/repo.git
+    if "@" in url and "://" not in url:
+        return re.sub(r"^[^@]+@", "***@", url, count=1)
+
+    return url
 
 
 class StashCTX(object):
@@ -852,7 +869,7 @@ class GitRepoManager(Loggable):
             return
 
         if remote:
-            self.debug("pulling from url: {}".format(remote.url))
+            self.debug("pulling from url: {}".format(sanitize_url_for_log(remote.url)))
 
             branch = self._clean_master_branch(branch)
             if use_progress:

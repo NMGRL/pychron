@@ -292,7 +292,7 @@ class TestExecutorStateMachine(unittest.TestCase):
 
     def test_is_alive_derived(self):
         machine = ExecutorStateMachine()
-        self.assertTrue(machine.is_alive)
+        self.assertFalse(machine.is_alive)
         machine.transition(EXECUTE, source="test")
         self.assertTrue(machine.is_alive)
         machine.transition(PRECHECK_PASSED, source="test")
@@ -313,6 +313,26 @@ class TestExecutorStateMachine(unittest.TestCase):
         machine.transition(EXECUTE, source="test")
         machine.transition(REQUEST_ABORT, source="test")
         self.assertEqual(machine.observed_state, ABORTING)
+
+    def test_is_alive_false_in_canceling_state(self):
+        """is_alive should return False when canceling to stop queue immediately"""
+        machine = ExecutorStateMachine()
+        machine.transition(EXECUTE, source="test")
+        machine.transition(PRECHECK_PASSED, source="test")
+        self.assertTrue(machine.is_alive)
+        machine.transition(REQUEST_CANCEL, source="test")
+        self.assertEqual(machine.observed_state, CANCELING)
+        self.assertFalse(machine.is_alive)
+
+    def test_is_alive_false_in_aborting_state(self):
+        """is_alive should return False when aborting to stop queue immediately"""
+        machine = ExecutorStateMachine()
+        machine.transition(EXECUTE, source="test")
+        machine.transition(PRECHECK_PASSED, source="test")
+        self.assertTrue(machine.is_alive)
+        machine.transition(REQUEST_ABORT, source="test")
+        self.assertEqual(machine.observed_state, ABORTING)
+        self.assertFalse(machine.is_alive)
 
     def test_history_records_transitions(self):
         machine = ExecutorStateMachine()

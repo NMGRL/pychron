@@ -105,6 +105,7 @@ class StackedGraph(Graph):
         return c
 
     def new_plot(self, **kw):
+        print(f"[StackedGraph.new_plot] Called with kw={kw}")
         if "title" in kw:
             if self._has_title:
                 kw.pop("title")
@@ -120,6 +121,7 @@ class StackedGraph(Graph):
             kw["resizable"] = kw.get("resizable", "hv")
 
         p = super(StackedGraph, self).new_plot(**kw)
+        print(f"[StackedGraph.new_plot] Plot created with p.bounds={p.bounds}")
         # p.value_axis.ensure_labels_bounded = True
         # p.value_axis.title_spacing = 50
 
@@ -167,6 +169,11 @@ class StackedGraph(Graph):
         vertically resizes the stacked graph.
         the plots are sized equally
         """
+        # Skip updating bounds if the container is not yet sized
+        # (bounds of [0, 0] happen during initialization before layout)
+        if bounds[1] <= 0:
+            return
+            
         if self.vertical_resize:
             self._update_bounds(bounds, self.plotcontainer.components)
 
@@ -184,9 +191,32 @@ class StackedGraph(Graph):
             + padding_bottom
         )
         n = len(self.plotcontainer.components)
+        
+        # Check if any plots have explicit (non-default) heights set
+        # These represent fixed-height aux plots that should not be resized
+        explicit_heights = {}
+        for i, p in enumerate(self.plotcontainer.components):
+            if len(p.bounds) > 1 and p.bounds[1] > 0:
+                explicit_heights[i] = p.bounds[1]
+        
         if self.equi_stack:
-            for p in self.plotcontainer.components:
-                p.bounds[1] = (bounds[1] - pt) / n
+            if explicit_heights:
+                # Some plots have fixed heights - preserve them and let the first plot expand
+                fixed_height_total = sum(explicit_heights.values())
+                available_height = bounds[1] - pt - fixed_height_total
+                
+                if available_height > 1:
+                    # Give remaining space to the first (main) plot
+                    if 0 in explicit_heights:
+                        # First plot also has explicit height - keep it fixed
+                        pass
+                    else:
+                        # Resize first plot to fill remaining space
+                        self.plotcontainer.components[0].bounds[1] = available_height
+            else:
+                # No explicit heights - use equal sizing
+                for p in self.plotcontainer.components:
+                    p.bounds[1] = (bounds[1] - pt) / n
         else:
             try:
                 self.plots[0].bounds[1] = (bounds[1] - pt) / max(1, (n - 1))

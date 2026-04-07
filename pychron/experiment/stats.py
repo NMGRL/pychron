@@ -217,7 +217,7 @@ class StatsGroup(Loggable):
         self.nruns_finished += 1
         self.debug("finish run. runs completed={}".format(self.nruns_finished))
 
-    def calculate(self, force=False):
+    def calculate(self, force=False) -> None:
         """
         calculate the total duration
         calculate the estimated time of finish
@@ -230,9 +230,7 @@ class StatsGroup(Loggable):
             or any(ei.stats._dirty for ei in self.experiment_queues)
         )
         if should_recalculate:
-            self.nruns = sum(
-                [len(ei.cleaned_automated_runs) for ei in self.experiment_queues]
-            )
+            nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
 
             self.debug("calculating experiment stats")
             tt = sum(
@@ -246,8 +244,9 @@ class StatsGroup(Loggable):
                 ei.stats._dirty = False
 
             self.debug("total_time={}".format(tt))
-            self._total_time = tt
-            self.etf = self.format_duration(tt)
+            self.trait_setq(
+                nruns=nruns, _total_time=tt, etf=self.format_duration(tt)
+            )
             self._queue_sig = queue_sig
 
     def recalculate_etf(self):

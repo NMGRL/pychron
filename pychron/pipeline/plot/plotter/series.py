@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import annotations
 
+import logging
 import re
 import time
 from typing import Any, List, Optional
@@ -32,6 +33,8 @@ from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.plotter.ticks import TICKS
 from pychron.pychron_constants import PLUSMINUS, SIGMA
+
+logger = logging.getLogger(__name__)
 
 N = 500
 
@@ -125,19 +128,31 @@ class BaseSeries(BaseArArFigure):
         """
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 
+        logger.debug(f"Series.plot() called with {len(plots) if plots else 0} plots")
+        
+        # Guard: don't attempt to plot if graph isn't available yet
+        if self.graph is None:
+            logger.debug("Series.plot() skipping: graph not yet initialized")
+            return
+
         omits = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
             self.sorted_analyses[o].set_temp_status("omit")
 
         if plots:
+            logger.debug(f"Plotting {len(self.sorted_analyses)} analyses")
             self.xs = self._get_xs(plots, self.sorted_analyses)
             for i, po in enumerate(plots):
+                logger.debug(f"Plotting series {po.name} (index {i})")
                 self._plot_series(po, i, omits)
 
             self.xmi, self.xma = self.min_x(), self.max_x()
+        else:
+            logger.debug("No plots to render")
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph
+        logger.debug(f"_plot_series() called for {po.name}, graph is {'None' if graph is None else 'available'}")
         try:
             ys, yerr = self._get_ys(po)
             if po.name == ANALYSIS_TYPE:
@@ -241,7 +256,7 @@ class BaseSeries(BaseArArFigure):
                         graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError) as e:
-            self.debug("Series plot error: {}".format(e))
+            logger.debug("Series plot error: {}".format(e))
 
     def _get_xs(
         self, plots: List[Any], ans: List[Any], tzero: Optional[float] = None
@@ -287,6 +302,13 @@ class BaseSeries(BaseArArFigure):
             kw["xtitle"] = "Time (hrs)"
         else:
             kw["xtitle"] = "N"
+        
+        # Add bounds and resizable based on po.height (from AuxPlot)
+        # This ensures plots with height settings maintain their proportions
+        if hasattr(po, 'height') and po.height:
+            kw["bounds"] = [50, po.height]
+            kw["resizable"] = "h"
+        
         return ytitle, kw
 
     def _setup_plot(self, pid, pp, po, ytitle=None):

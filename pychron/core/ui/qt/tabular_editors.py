@@ -59,7 +59,7 @@ from pychron.envisage.resources import icon
 
 class _FilterTableView(_TableView):
     def __init__(self, editor, layout=None, *args, **kw):
-        super(_FilterTableView, self).__init__(editor, *args, **kw)
+        super(_FilterTableView, self).__init__(editor, layout=layout, *args, **kw)
 
         # vlayout = QVBoxLayout()
         # layout.setSpacing(2)
@@ -88,7 +88,8 @@ class _FilterTableView(_TableView):
         hl.addWidget(button)
         # vlayout.addLayout(hl)
 
-        layout.addLayout(hl)
+        if layout is not None:
+            layout.addLayout(hl)
         # layout.addWidget(self)
         # layout.addWidget(table)
         # self.setLayout(layout)
@@ -100,13 +101,10 @@ class _FilterTableView(_TableView):
     def get_text(self):
         return self.text.text()
 
-    def __getattr__(self, item):
-        return getattr(self.table, item)
-
 
 class _EnableFilterTableView(_FilterTableView):
     def __init__(self, editor, layout=None, *args, **kw):
-        super(_FilterTableView, self).__init__(editor, *args, **kw)
+        super(_EnableFilterTableView, self).__init__(editor, layout=layout, *args, **kw)
         # layout = QVBoxLayout()
         # layout.setSpacing(1)
         # self.table = table = _TableView(parent)
@@ -136,7 +134,8 @@ class _EnableFilterTableView(_FilterTableView):
         hl.addWidget(cb)
         hl.addWidget(text)
         hl.addWidget(button)
-        layout.addLayout(hl)
+        if layout is not None:
+            layout.addLayout(hl)
         # # hl.addStretch()
         # layout.addLayout(hl)
         # layout.addWidget(table)

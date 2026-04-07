@@ -308,6 +308,7 @@ class ExecutorController:
         return record
 
     def run_failure(self, reason: str | None = None, **kwargs: Any) -> TransitionRecord:
+        reason = kwargs.pop("reason", reason)
         self._failure_reason = reason
         record = self.executor_machine.transition(
             RUN_FAILURE, source="controller.run_failure", reason=reason, **kwargs
@@ -330,8 +331,9 @@ class ExecutorController:
         return record
 
     def finalize_complete(self, result: str = "completed", **kwargs: Any) -> TransitionRecord:
+        reason = kwargs.pop("reason", result)
         record = self.executor_machine.transition(
-            FINALIZE_COMPLETE, source="controller.finalize_complete", reason=result, **kwargs
+            FINALIZE_COMPLETE, source="controller.finalize_complete", reason=reason, **kwargs
         )
         self._notify("executor", record)
         return record

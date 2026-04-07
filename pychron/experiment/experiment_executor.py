@@ -581,6 +581,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.events.extend(events)
 
     def execute(self):
+        if self._controller.is_terminal:
+            self._controller.reset()
+            self._sync_compatibility_state()
         self._controller.execute()
         prog = open_progress(100, position=(100, 100))
 
@@ -595,8 +598,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.info("pre execute check successful")
             self._controller.precheck_passed()
             prog.close()
-            # reset executor
-            self._reset()
+            # reset executor runtime context but preserve state-machine progress
+            self._reset(reset_controller=False)
 
             t = Thread(name="Execute Queues", target=self._execute)
             t.start()
@@ -769,8 +772,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         }
         return ctx
 
-    def _reset(self):
-        self._controller.reset()
+    def _reset(self, reset_controller=True):
+        if reset_controller:
+            self._controller.reset()
         self.alive = True
         self._canceled = False
         self._aborted = False
@@ -1625,15 +1629,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         extraction step
         """
-        # Set up extraction phase span context
-        ctx: TelemetryContext | None = None
-        if self._controller.telemetry_context:
-            ctx = self._controller.telemetry_context
-
         with Span(
-            "extraction",
-            run_id=ctx.get_run_id() if ctx else None,
-            trace_id=ctx.get_trace_id() if ctx else None,
+            component="executor",
+            action="extraction",
         ):
             if self._pre_step_check(ai, "Extraction"):
                 self._failed_execution_step("Pre Extraction Check Failed")
@@ -1684,15 +1682,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         measurement step
         """
-        # Set up measurement phase span context
-        ctx: TelemetryContext | None = None
-        if self._controller.telemetry_context:
-            ctx = self._controller.telemetry_context
-
         with Span(
-            "measurement",
-            run_id=ctx.get_run_id() if ctx else None,
-            trace_id=ctx.get_trace_id() if ctx else None,
+            component="executor",
+            action="measurement",
         ):
             if self._pre_step_check(ai, "Measurement"):
                 self._failed_execution_step("Pre Measurement Check Failed")

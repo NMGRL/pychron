@@ -201,6 +201,19 @@ class RegressorStateTrackingTest(TestCase):
         self.assertTrue(changed)
         self.assertTrue(self.reg.is_dirty)
 
+    def test_regression_state_accepts_none_errors(self):
+        changed = self.reg.set_regression_state(
+            xs=self.xs,
+            ys=self.ys,
+            user_excluded=[],
+            filter_outliers_dict={},
+            truncate=None,
+            xserr=None,
+            yserr=None,
+        )
+        self.assertFalse(changed)
+        self.assertFalse(self.reg.is_dirty)
+
 
 class PearsonRegressionTest(RegressionTestCase):
     kind = ""
