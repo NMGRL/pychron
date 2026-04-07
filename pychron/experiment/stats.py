@@ -244,9 +244,10 @@ class StatsGroup(Loggable):
                 ei.stats._dirty = False
 
             self.debug("total_time={}".format(tt))
-            self.trait_setq(
-                nruns=nruns, _total_time=tt, etf=self.format_duration(tt)
-            )
+            # Set nruns first to ensure UI updates
+            self.nruns = nruns
+            # Then set the other stats
+            self.trait_set(_total_time=tt, etf=self.format_duration(tt))
             self._queue_sig = queue_sig
 
     def recalculate_etf(self):
