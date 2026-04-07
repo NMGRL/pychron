@@ -74,6 +74,7 @@ from pychron.experiment.experiment_status import ExperimentStatus
 from pychron.experiment.telemetry.span import Span
 from pychron.experiment.telemetry.context import TelemetryContext
 from pychron.experiment.telemetry.event import TelemetryEvent, EventType
+from pychron.observability import experiment_lifecycle
 from pychron.experiment.state_machines.executor_machine import (
     ABORTED as EXEC_ABORTED,
     CANCELED as EXEC_CANCELED,
@@ -987,6 +988,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         rgen, nruns = exp.new_runs_generator()
 
+        # Record queue start lifecycle event
+        experiment_lifecycle.record_queue_started(exp.name, num_runs=nruns)
+
         cnt = 0
         total_cnt = 0
         is_first_flag = True
@@ -1129,6 +1133,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._err_message = "User terminated"
 
         self._do_event(events.END_QUEUE)
+
+        # Record queue end lifecycle event
+        # Map qresult to status string (qresult is one of QUEUE_COMPLETED, QUEUE_FAILED, QUEUE_CANCELED, QUEUE_ABORTED)
+        status_map = {
+            QUEUE_COMPLETED: "success",
+            QUEUE_FAILED: "failed",
+            QUEUE_CANCELED: "canceled",
+            QUEUE_ABORTED: "aborted",
+        }
+        status = status_map.get(qresult, "unknown")
+        experiment_lifecycle.record_queue_completed(exp.name, status=status)
 
     def _get_group_emails(self, email):
         names, addrs = None, None
@@ -1372,6 +1387,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._write_rem_ex_experiment_queues()
                 elif action == "end_run_event":
                     self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
+                    # Record run completion lifecycle event
+                    status_map = {
+                        "success": "success",
+                        "failed": "failed",
+                        "canceled": "canceled",
+                        "invalid": "invalid",
+                    }
+                    run_status = status_map.get(run.spec.state.lower(), run.spec.state.lower())
+                    experiment_lifecycle.record_run_completed(
+                        self.experiment_queue.name,
+                        run_id,
+                        status=run_status,
+                    )
                 elif action == "remove_root_handler":
                     remove_root_handler(handler)
                 elif action == "post_finish":
@@ -1618,6 +1646,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 queue_name=self.experiment_queue.name,
             )
 
+            # Record run start lifecycle event
+            sample = getattr(run, "sample", None)
+            material = getattr(run, "material", None)
+            experiment_lifecycle.record_run_started(
+                self.experiment_queue.name,
+                self._get_run_subject_id(run),
+                sample=sample,
+                material=material,
+            )
+
         return ret
 
     def _extraction(self, ai):
@@ -1660,14 +1698,31 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             ret = True
             if ai.start_extraction():
                 self._controller.start_run_extraction(self._get_run_subject_id(ai))
+                # Record extraction start
+                experiment_lifecycle.record_extraction_started(
+                    self.experiment_queue.name,
+                    self._get_run_subject_id(ai),
+                )
                 self.extracting = True
                 if not ai.do_extraction(syn_extractor):
                     self._controller.complete_run_extraction(
                         self._get_run_subject_id(ai), failed=True, reason="Extraction Failed"
                     )
+                    # Record extraction failure
+                    experiment_lifecycle.record_extraction_completed(
+                        self.experiment_queue.name,
+                        self._get_run_subject_id(ai),
+                        status="failed",
+                    )
                     ret = self._failed_execution_step("Extraction Failed")
                 else:
                     self._controller.complete_run_extraction(self._get_run_subject_id(ai))
+                    # Record extraction success
+                    experiment_lifecycle.record_extraction_completed(
+                        self.experiment_queue.name,
+                        self._get_run_subject_id(ai),
+                        status="success",
+                    )
             else:
                 ret = ai.is_alive()
 
@@ -1726,6 +1781,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.measuring_run = ai
             if ai.start_measurement():
                 self._controller.start_run_measurement(self._get_run_subject_id(ai))
+                # Record measurement start
+                experiment_lifecycle.record_measurement_started(
+                    self.experiment_queue.name,
+                    self._get_run_subject_id(ai),
+                )
                 # only set to measuring (e.g switch to iso evo pane) if
                 # automated run has a measurement_script
                 self.measuring = True
@@ -1734,9 +1794,21 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._controller.complete_run_measurement(
                         self._get_run_subject_id(ai), failed=True, reason="Measurement Failed"
                     )
+                    # Record measurement failure
+                    experiment_lifecycle.record_measurement_completed(
+                        self.experiment_queue.name,
+                        self._get_run_subject_id(ai),
+                        status="failed",
+                    )
                     ret = self._failed_execution_step("Measurement Failed")
                 else:
                     self._controller.complete_run_measurement(self._get_run_subject_id(ai))
+                    # Record measurement success
+                    experiment_lifecycle.record_measurement_completed(
+                        self.experiment_queue.name,
+                        self._get_run_subject_id(ai),
+                        status="success",
+                    )
             else:
                 ret = ai.is_alive()
 
