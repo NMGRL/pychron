@@ -481,11 +481,21 @@ class DataCollector(Consoleable):
             return
 
         if isinstance(ypadding, str):
-            ypad = max(0.1, abs(ymax - ymin)) * float(ypadding)
+            ypad = abs(ymax - ymin) * float(ypadding)
         else:
             ypad = ypadding
 
-        if self.collection_kind in (SIGNAL, SNIFF) and ymin >= 0:
+        # Only anchor to 0 if ymin is small relative to the data range
+        # This prevents forcing data at 400±1 to plot from 0-401+
+        data_range = ymax - ymin
+        should_anchor_to_zero = (
+            self.collection_kind in (SIGNAL, SNIFF)
+            and ymin >= 0
+            and data_range > 0
+            and ymin <= 0.5 * data_range  # Only if ymin is < 50% of range
+        )
+        
+        if should_anchor_to_zero:
             ymin = 0
         else:
             ymin -= ypad

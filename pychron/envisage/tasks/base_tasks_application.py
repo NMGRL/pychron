@@ -232,13 +232,21 @@ class BaseTasksApplication(TasksApplication, Loggable):
     def _save_task_window_layouts(self):
         path = self._task_window_layouts_path()
         try:
+            # Ensure parent directory exists
+            os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "wb") as wfile:
                 pickle.dump(self._task_window_layouts, wfile)
         except BaseException:
             logger.exception("Saving task window layouts to %s", path)
 
+    def _save_state(self):
+        """Saves the application state, ensuring the directory exists first."""
+        # Ensure state_location directory exists before saving
+        os.makedirs(self.state_location, exist_ok=True)
+        # Call parent implementation
+        super()._save_state()
+
     # def _load_state(self):
-    #     """Loads saved application state, if possible."""
     #     state = TasksApplicationState()
     #     filename = os.path.join(self.state_location, "application_memento")
     #     if os.path.exists(filename):

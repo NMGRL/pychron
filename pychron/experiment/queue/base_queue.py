@@ -147,12 +147,18 @@ class BaseExperimentQueue(RunBlock):
     _table_refresh_timer = None
     _info_refresh_timer = None
     _pending_scroll_to_row = None
+    _pending_stats_invalidation = False
 
     @property
     def no_update(self):
         return self._no_update
 
     def invalidate_stats(self):
+        # If we're currently updating/refreshing, defer invalidation to avoid cascading updates
+        if self._no_update:
+            self._pending_stats_invalidation = True
+            return
+            
         self.stats.invalidate()
         if self._stats_timer:
             self._stats_timer.stop()

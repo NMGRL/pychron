@@ -25,6 +25,7 @@ from typing import Optional
 from traits.api import Instance, List, on_trait_change, Bool, Event
 
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.factory import ExperimentFactory
@@ -150,19 +151,32 @@ class Experimentor(DVCIrradiationable):
         if not queues:
             return
 
-        self.debug("executor executable {}".format(self.executor.executable))
-        self.debug("updating stats, ")
-        self.executor.stats.experiment_queues = queues
-        self.executor.stats.calculate()
-        self.debug("stats calculated")
+        # Suppress invalidate_stats() calls during update to prevent cascading refresh cycles
+        # Re-enable after update completes, then process any pending invalidations
+        try:
+            for queue in queues:
+                queue._no_update = True
+            
+            self.debug("executor executable {}".format(self.executor.executable))
+            self.debug("updating stats, ")
+            self.executor.stats.experiment_queues = queues
+            self.executor.stats.calculate()
+            self.debug("stats calculated")
 
-        self.refresh_executable(queues)
-        self.debug("executable refreshed")
+            self.refresh_executable(queues)
+            self.debug("executable refreshed")
 
-        self._set_analysis_metadata()
-        self.debug("analysis metadata step finished")
+            self._set_analysis_metadata()
+            self.debug("analysis metadata step finished")
 
-        self.debug("info updated")
+            self.debug("info updated")
+        finally:
+            # Re-enable updates and process any pending invalidations
+            for queue in queues:
+                queue._no_update = False
+                if queue._pending_stats_invalidation:
+                    queue._pending_stats_invalidation = False
+                    queue.invalidate_stats()
 
     def _set_analysis_metadata(self) -> None:
         cache = dict()

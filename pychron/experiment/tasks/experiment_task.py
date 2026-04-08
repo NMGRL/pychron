@@ -213,17 +213,111 @@ class ExperimentEditorTask(EditorTask):
 
         if not self._layout_reset and self.window is not None:
             self.window.reset_layout()
+            self.debug("Canvas split adjustment scheduled in 500ms")
+            
+            # Try to restore saved layout state first, otherwise adjust canvas split
+            if not self._restore_window_layout():
+                # If no saved layout, do the initial split adjustment
+                do_after(500, self._adjust_canvas_split)
+            
             self._layout_reset = True
 
         self._do_callables(self.activations)
+    
+    def _restore_window_layout(self):
+        """Restore a previously saved window layout state from preferences.
+        
+        Returns True if layout was restored, False otherwise.
+        """
+        try:
+            prefs = self.application.preferences
+            state_str = prefs.get('pychron.experiment.window_layout_state')
+            
+            if state_str:
+                # Parse the layout state string and restore it
+                layout_state = eval(state_str)
+                self.window.set_layout_state(layout_state)
+                self.debug("Window layout state restored from preferences")
+                return True
+        except Exception as e:
+            self.debug(f"Failed to restore window layout: {e}")
+            import traceback
+            self.debug(traceback.format_exc())
+        
+        return False
+    
+    def _adjust_canvas_split(self):
+        """Adjust the right splitter divider to give the canvas dock pane adequate space."""
+        self.debug("_adjust_canvas_split: Starting adjustment")
+        try:
+            # Get the task window's control (the Qt widget)
+            window_control = self.window.control
+            if not window_control:
+                self.debug("_adjust_canvas_split: window_control is None")
+                return
+            
+            # Find the right splitter widget in the hierarchy
+            from pyface.qt.QtWidgets import QSplitter
+            
+            def find_vertical_splitters(widget, splitters=None):
+                """Recursively find all vertical QSplitter widgets."""
+                if splitters is None:
+                    splitters = []
+                if isinstance(widget, QSplitter):
+                    if widget.orientation() == 2:  # Qt.Vertical
+                        splitters.append(widget)
+                for child in widget.findChildren(QSplitter):
+                    if isinstance(child, QSplitter) and child.orientation() == 2 and child not in splitters:
+                        splitters.append(child)
+                return splitters
+            
+            splitters = find_vertical_splitters(window_control)
+            self.debug(f"_adjust_canvas_split: Found {len(splitters)} vertical splitters")
+            
+            # The right splitter should be one with at least 2 children
+            for splitter in splitters:
+                count = splitter.count()
+                height = splitter.height()
+                self.debug(f"_adjust_canvas_split: Splitter with {count} children, height={height}")
+                
+                if count >= 2 and height > 100:
+                    # Set sizes: 50% for tabbed panes, 50% for canvas
+                    sizes = [int(height * 0.5), int(height * 0.5)]
+                    self.debug(f"_adjust_canvas_split: Setting splitter sizes to {sizes}")
+                    splitter.setSizes(sizes)
+                    break
+        except Exception as e:
+            self.debug(f"_adjust_canvas_split failed: {e}")
+            import traceback
+            self.debug(traceback.format_exc())
 
     def prepare_destroy(self):
+        # Save the current window layout state before destroying
+        self._save_window_layout()
+        
         super(ExperimentEditorTask, self).prepare_destroy()
 
         self.manager.experiment_factory.destroy()
         # self.manager.executor.notification_manager.parent = None
 
         self._do_callables(self.deactivations)
+    
+    def _save_window_layout(self):
+        """Save the current window layout state to preferences."""
+        if not self.window:
+            return
+        
+        try:
+            # Get the current layout state from the window
+            layout_state = self.window.get_layout_state()
+            if layout_state:
+                # Persist to preferences
+                prefs = self.application.preferences
+                state_str = repr(layout_state)
+                prefs.set('pychron.experiment.window_layout_state', state_str)
+                self.debug(f"Window layout state saved")
+        except Exception as e:
+            self.debug(f"Failed to save window layout: {e}")
 
     def create_dock_panes(self):
         name = "Isotope Evolutions"
@@ -873,7 +967,7 @@ class ExperimentEditorTask(EditorTask):
                     PaneItem("pychron.experiment.connection_status"),
                     PaneItem("pychron.experiment.explanation"),
                 ),
-                PaneItem("pychron.extraction_line.canvas_dock"),
+                PaneItem("pychron.extraction_line.canvas_dock", height=500, width=700),
                 orientation="vertical",
             ),
             top=PaneItem("pychron.experiment.controls"),

@@ -343,7 +343,7 @@ def make_graph(
     for i, iso in enumerate(isotopes):
         ymi, yma = inf, -inf
 
-        p = g.new_plot(padding=[80, 10, 10, 40], resizable=resizable)
+        p = g.new_plot(padding=[80, 10, 10, 30], resizable=resizable)
         g.add_limit_tool(p, "x")
         g.add_limit_tool(p, "y")
         g.add_axis_tool(p, p.x_axis)
