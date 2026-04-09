@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.head_ref }}
       - name: Cache EDM packages
@@ -44,7 +44,7 @@ jobs:
       - name: copy to temp
         run: cp pychron/pyscriptdocs.md /Users/runner/work/pyscriptdocs.md
       - name: fetch wiki
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           repository: NMGRL/pychron.wiki
           set-safe-directory: /Users/runner/work/pychron.wiki
