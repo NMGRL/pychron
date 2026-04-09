@@ -93,7 +93,7 @@ ngx = [
 
 valve = [
     "pyserial>=3.5,<4",
-    "twisted>=22.8.0,<25",
+    "twisted>=22.8.0,<26",
 ]
 
 [dependency-groups]

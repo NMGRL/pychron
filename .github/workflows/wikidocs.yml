@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.head_ref }}
       - name: Cache EDM packages
@@ -22,7 +22,7 @@ jobs:
           path: ~/.cache
           key: ${{ runner.os }}--${{ hashFiles('requirements.txt') }}
       - name: Setup EDM
-        uses: enthought/setup-edm-action@v1
+        uses: enthought/setup-edm-action@v4
         with:
           edm-version: 3.1.1
       - name: Install EDM dependencies
@@ -44,7 +44,7 @@ jobs:
       - name: copy to temp
         run: cp pychron/pyscriptdocs.md /Users/runner/work/pyscriptdocs.md
       - name: fetch wiki
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           repository: NMGRL/pychron.wiki
           set-safe-directory: /Users/runner/work/pychron.wiki
@@ -53,6 +53,6 @@ jobs:
       - name: copy pyscript to wiki
         run: cp /Users/runner/work/pyscriptdocs.md ./Pyscript-API.md
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        uses: stefanzweifel/git-auto-commit-action@v7.1.0
         with:
           commit_message: built wiki docs
