@@ -22,7 +22,7 @@ jobs:
           path: ~/.cache
           key: ${{ runner.os }}--${{ hashFiles('requirements.txt') }}
       - name: Setup EDM
-        uses: enthought/setup-edm-action@v1
+        uses: enthought/setup-edm-action@v4
         with:
           edm-version: 3.1.1
       - name: Install EDM dependencies
