@@ -30,7 +30,7 @@ jobs:
       # 1. Checkout with full history so we can diff against the previous commit
       # -----------------------------------------------------------------------
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
