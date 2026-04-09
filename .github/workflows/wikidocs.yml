@@ -53,6 +53,6 @@ jobs:
       - name: copy pyscript to wiki
         run: cp /Users/runner/work/pyscriptdocs.md ./Pyscript-API.md
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        uses: stefanzweifel/git-auto-commit-action@v7.1.0
         with:
           commit_message: built wiki docs
