@@ -1,15 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `2ede48cde`  
-**Generated:** 2026-04-07 20:49 UTC  
-**Compare:** [`00ce1f566816304f8718ecc777a61cc7ca48f247...2ede48cde`](../../compare/00ce1f566816304f8718ecc777a61cc7ca48f247...2ede48cde)
+**Triggered by commit:** `ffed81fad`  
+**Generated:** 2026-04-09 16:33 UTC  
+**Compare:** [`290eb902ec8d2fe4988421f0bbce8090848cc733...ffed81fad`](../../compare/290eb902ec8d2fe4988421f0bbce8090848cc733...ffed81fad)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [DVC Setup Guide](#dvc-setup-guide) | 1 file | ✅ Reviewed |
-| [MassSpec Migration Guide](#mass-spec-migration) | 1 file | ✅ Reviewed |
+| [Installation Guide](#installation-guide) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -17,79 +16,29 @@
 <summary>Click to expand</summary>
 
 ```
-pychron/core/helpers/formatting.py
-pychron/core/regression/base_regressor.py
-pychron/core/regression/tests/regression.py
-pychron/core/ui/qt/tabular_editors.py
-pychron/core/ui/table_configurer.py
-pychron/core/xml/xml_parser.py
-pychron/dvc/meta_object.py
-pychron/envisage/tasks/editor_task.py
-pychron/experiment/conditional/conditional.py
-pychron/experiment/experiment_executor.py
-pychron/experiment/experimentor.py
-pychron/experiment/queue/base_queue.py
-pychron/experiment/state_machines/base.py
-pychron/experiment/state_machines/controller.py
-pychron/experiment/state_machines/executor_machine.py
-pychron/experiment/state_machines/queue_machine.py
-pychron/experiment/stats.py
-pychron/experiment/tasks/experiment_panes.py
-pychron/experiment/tasks/experiment_task.py
-pychron/experiment/tests/test_state_machines.py
-pychron/git_archive/repo_manager.py
-pychron/graph/stacked_graph.py
-pychron/mass_spec/database/massspec_database_adapter.py
-pychron/pipeline/nodes/figure.py
-pychron/pipeline/plot/editors/figure_editor.py
-pychron/pipeline/plot/figure_container.py
-pychron/pipeline/plot/plotter/arar_figure.py
-pychron/pipeline/plot/plotter/series.py
+uv.lock
 ```
 
 </details>
 
 ---
 
-## DVC Setup Guide {#dvc-setup-guide}
+## Installation Guide {#installation-guide}
 
-**Doc file:** `docs/dvc_setup_guide.md`  
-**Matched prefixes:** `pychron/dvc/`
+**Doc file:** `docs/installation_guide.md`  
+**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
 
 ### Changed Files
 
-- `pychron/dvc/meta_object.py`
+- `uv.lock`
 
 ### AI Review
 
 ## Code Change Summary
-
-The `Cached` decorator class in `meta_object.py` was modified to improve its caching mechanism. The key changes include updating the cache key generation to use all function arguments and keyword arguments (excluding 'force') instead of just the function and name parameter, and adding type hints. This makes the caching more robust by considering the full parameter context when determining cache hits.
-
-## No Updates Required
-
-These changes are internal implementation improvements to the caching decorator that don't affect the DVC setup, configuration, or user-facing functionality covered in the DVC Setup Guide. The modifications enhance cache key specificity and add type hints, but don't change any configuration fields, preference paths, initialization sequences, storage layer behaviors, or failure modes that would be documented in a setup guide. Users setting up DVC will not need to take any different actions or be aware of these internal caching improvements.
-
----
-
-## MassSpec Migration Guide {#mass-spec-migration}
-
-**Doc file:** `docs/mass_spec_migration_guide.md`  
-**Matched prefixes:** `pychron/mass_spec/`, `pychron/data_mapper/`
-
-### Changed Files
-
-- `pychron/mass_spec/database/massspec_database_adapter.py`
-
-### AI Review
-
-## Code Change Summary
-
-The changes update the `MassSpecDatabaseAdapter` class to wrap raw SQL strings with SQLAlchemy's `text()` function when executing queries. This is a compatibility fix for newer versions of SQLAlchemy that require explicit text wrapping for raw SQL execution. The functionality remains the same, but the implementation now follows current SQLAlchemy best practices.
+The changes show routine dependency version updates in the `uv.lock` file, including updates to packages like GitPython (3.1.45→3.1.46), lxml (6.0.2→6.0.3), NumPy (2.3.4→2.4.4), SciPy (1.16.2→1.17.1), SQLAlchemy (2.0.44→2.0.49), and several other packages. Additionally, there's a consolidation in the PyQt5 dependency resolution where previously separate version markers for different platforms have been simplified to use a single PyQt5 version with conditional dependencies for PyQt5-Qt5.
 
 ## No Updates Required
-
-These changes are internal implementation details that maintain the same functionality while updating SQLAlchemy compatibility. The MassSpec Migration Guide documents the migration process, data schema, and workflow differences from a user perspective, not the internal technical implementation of database queries. Since the database adapter's external behavior and API remain unchanged, no updates to the migration guide documentation are necessary.
+These changes are automatic dependency version updates managed by the package manager and do not affect the installation instructions, Python version requirements, dependency groups, environment variables, or platform-specific installation procedures documented in the Installation Guide. The dependency versions are locked automatically by uv and users follow the same installation process regardless of these specific version numbers.
 
 ---
 
