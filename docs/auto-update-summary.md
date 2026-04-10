@@ -1,17 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `7e2b3203c`  
-**Generated:** 2026-04-09 16:11 UTC  
-**Compare:** [`9744ed388140689800a4d1d01a14adf27cc7a993...7e2b3203c`](../../compare/9744ed388140689800a4d1d01a14adf27cc7a993...7e2b3203c)
-**Triggered by commit:** `ffed81fad`  
-**Generated:** 2026-04-09 16:33 UTC  
-**Compare:** [`290eb902ec8d2fe4988421f0bbce8090848cc733...ffed81fad`](../../compare/290eb902ec8d2fe4988421f0bbce8090848cc733...ffed81fad)
+**Triggered by commit:** `db6aa4bd6`  
+**Generated:** 2026-04-10 01:52 UTC  
+**Compare:** [`295363a641255cf4a17c52786dbea8ae73bdfad4...db6aa4bd6`](../../compare/295363a641255cf4a17c52786dbea8ae73bdfad4...db6aa4bd6)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 1 file | ✅ Reviewed |
+| [Hardware Compatibility Matrix](#hardware-matrix) | 2 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -19,33 +16,49 @@
 <summary>Click to expand</summary>
 
 ```
-uv.lock
+pychron/experiment/experiment_executor.py
+pychron/experiment/telemetry/device_io.py
+pychron/experiment/telemetry/event.py
+pychron/experiment/telemetry/span.py
+pychron/experiment/telemetry/tests/test_device_io_telemetry.py
+pychron/experiment/tests/test_executor_diagnostics.py
+pychron/hardware/core/communicators/ethernet_communicator.py
+pychron/hardware/core/tests/ethernet_communicator_test.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## Hardware Compatibility Matrix {#hardware-matrix}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/hardware_compatibility_matrix.md`  
+**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
 
 ### Changed Files
 
-- `uv.lock`
+- `pychron/hardware/core/communicators/ethernet_communicator.py`
+- `pychron/hardware/core/tests/ethernet_communicator_test.py`
 
 ### AI Review
 
 ## Code Change Summary
-The changes show a routine dependency update in the uv.lock file, where the cryptography package was updated from version 46.0.6 to 46.0.7. This is a minor patch release that updates wheel URLs, file hashes, and upload timestamps, but doesn't change the API or installation requirements. Additionally, one wheel file for the s390x architecture was removed from the greenlet package.
 
-## No Updates Required
-These changes are routine dependency updates that don't affect the installation process, Python version requirements, dependency groups, environment variables, or platform-specific installation instructions covered in the Installation Guide. The cryptography version bump is a patch release that maintains compatibility, and the removal of a single wheel file for s390x architecture doesn't impact the supported platforms (macOS, Linux, Windows) documented in the guide.
-The changes show routine dependency version updates in the `uv.lock` file, including updates to packages like GitPython (3.1.45→3.1.46), lxml (6.0.2→6.0.3), NumPy (2.3.4→2.4.4), SciPy (1.16.2→1.17.1), SQLAlchemy (2.0.44→2.0.49), and several other packages. Additionally, there's a consolidation in the PyQt5 dependency resolution where previously separate version markers for different platforms have been simplified to use a single PyQt5 version with conditional dependencies for PyQt5-Qt5.
+The code changes add telemetry and device I/O event recording functionality to the EthernetCommunicator class. This includes importing telemetry modules, adding methods to track communication operations (ask, tell, read, readline), and recording start/end events with metadata like timing, success status, and error information. The changes also include comprehensive type hints for method parameters and return values.
 
-## No Updates Required
-These changes are automatic dependency version updates managed by the package manager and do not affect the installation instructions, Python version requirements, dependency groups, environment variables, or platform-specific installation procedures documented in the Installation Guide. The dependency versions are locked automatically by uv and users follow the same installation process regardless of these specific version numbers.
+## Documentation Updates Required
+
+- **Section/Topic:** EthernetCommunicator dependencies/imports
+  **Issue:** The Hardware Compatibility Matrix may need to reflect new dependencies on telemetry modules that are now required for the EthernetCommunicator to function properly.
+  **Suggested update:** Add note that EthernetCommunicator now depends on `pychron.experiment.telemetry.device_io` module for I/O event recording functionality.
+
+- **Section/Topic:** EthernetCommunicator configuration fields
+  **Issue:** The telemetry functionality may introduce new optional configuration parameters or behavioral changes that affect how the communicator operates.
+  **Suggested update:** Document that EthernetCommunicator now automatically records device I/O telemetry events when telemetry recording is enabled, which may affect logging and debugging capabilities.
+
+- **Section/Topic:** EthernetCommunicator implementation status
+  **Issue:** If the matrix previously flagged EthernetCommunicator as having partial implementation or missing features, the addition of comprehensive telemetry support represents enhanced functionality.
+  **Suggested update:** Update implementation status to reflect enhanced telemetry and monitoring capabilities for debugging and performance analysis of Ethernet-based device communications.
 
 ---
 
