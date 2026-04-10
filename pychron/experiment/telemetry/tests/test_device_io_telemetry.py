@@ -10,11 +10,14 @@ from unittest.mock import Mock
 from pychron.experiment.telemetry.context import TelemetryContext
 from pychron.experiment.telemetry.device_io import (
     TelemetryDeviceIOContext,
+    get_last_device_io_snapshot,
+    record_device_io_event,
     telemetry_device_io,
     telemetry_device_io_context,
 )
 from pychron.experiment.telemetry.event import TelemetryEvent
 from pychron.experiment.telemetry.recorder import TelemetryRecorder
+from pychron.experiment.telemetry.span import set_global_recorder
 
 
 class TestTelemetryDeviceIODecorator(unittest.TestCase):
@@ -36,6 +39,7 @@ class TestTelemetryDeviceIODecorator(unittest.TestCase):
         self.recorder.close()
         self.temp_dir.cleanup()
         TelemetryContext.clear()
+        set_global_recorder(None)
 
     def test_decorator_records_device_io_event(self):
         """Test that decorator records device I/O event."""
@@ -396,6 +400,57 @@ class TestTelemetryDeviceIOFactory(unittest.TestCase):
 
         event = TelemetryEvent(**json.loads(lines[0]))
         self.assertEqual(event.payload["reading"], 123.45)
+
+
+class TestDeviceIOTelemetryHelpers(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.log_path = Path(self.temp_dir.name) / "helpers.jsonl"
+        self.recorder = TelemetryRecorder(self.log_path)
+        TelemetryContext.clear()
+        TelemetryContext.set_queue_id("test_queue")
+        TelemetryContext.set_trace_id("trace_123")
+        TelemetryContext.set_run_id("run_123")
+        TelemetryContext.set_run_uuid("uuid_456")
+        set_global_recorder(self.recorder)
+
+    def tearDown(self):
+        self.recorder.close()
+        self.temp_dir.cleanup()
+        TelemetryContext.clear()
+        set_global_recorder(None)
+
+    def test_record_device_io_event_uses_global_recorder(self):
+        record_device_io_event(
+            "spectrometer",
+            "ask",
+            stage="start",
+            payload={"command": "GetData"},
+            flush=True,
+        )
+
+        with open(self.log_path) as rfile:
+            lines = rfile.readlines()
+
+        self.assertEqual(len(lines), 1)
+        event = TelemetryEvent(**json.loads(lines[0]))
+        self.assertEqual(event.payload["stage"], "start")
+        self.assertEqual(event.queue_id, "test_queue")
+        self.assertEqual(event.run_id, "run_123")
+
+    def test_get_last_device_io_snapshot_returns_latest_event(self):
+        record_device_io_event(
+            "spectrometer",
+            "read",
+            stage="start",
+            payload={"command": "ReadData"},
+        )
+
+        snapshot = get_last_device_io_snapshot("trace_123", "run_123")
+
+        self.assertIn("spectrometer", snapshot)
+        self.assertEqual(snapshot["spectrometer"]["operation"], "read")
+        self.assertEqual(snapshot["spectrometer"]["stage"], "start")
 
 
 if __name__ == "__main__":

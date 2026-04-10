@@ -21,6 +21,11 @@ def set_global_recorder(recorder: Optional[TelemetryRecorder]) -> None:
     _global_recorder = recorder
 
 
+def get_global_recorder() -> Optional[TelemetryRecorder]:
+    """Return the current global telemetry recorder."""
+    return _global_recorder
+
+
 class Span:
     """Context manager for timed operations with structured telemetry.
 

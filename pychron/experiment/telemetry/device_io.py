@@ -15,11 +15,17 @@ Usage:
 
 import time
 import functools
+from threading import Lock
 from typing import Optional, Dict, Any, Callable
 
 from .event import TelemetryEvent, EventType
 from .context import TelemetryContext
 from .recorder import TelemetryRecorder
+from .span import get_global_recorder
+
+
+_last_device_io_lock = Lock()
+_last_device_io_events: Dict[str, Dict[str, Any]] = {}
 
 
 def _record_prometheus_device_io_metrics(
@@ -82,6 +88,113 @@ def _record_prometheus_device_io_metrics(
         logger.debug(f"Failed to record Prometheus metrics for {device_name}.{operation_type}: {e}")
 
 
+def _device_snapshot_key(trace_id: Optional[str], run_id: Optional[str], device_name: str) -> str:
+    trace = trace_id or "no-trace"
+    run = run_id or "no-run"
+    return f"{trace}:{run}:{device_name}"
+
+
+def _remember_last_device_io(payload: Dict[str, Any]) -> None:
+    key = _device_snapshot_key(
+        payload.get("trace_id"),
+        payload.get("run_id"),
+        str(payload.get("device", "unknown_device")),
+    )
+    snapshot = payload.copy()
+    with _last_device_io_lock:
+        _last_device_io_events[key] = snapshot
+
+
+def get_last_device_io_snapshot(
+    trace_id: Optional[str] = None, run_id: Optional[str] = None
+) -> Dict[str, Dict[str, Any]]:
+    """Return last-known device I/O snapshots for the active telemetry context."""
+    with _last_device_io_lock:
+        snapshots = list(_last_device_io_events.values())
+
+    if trace_id is not None:
+        snapshots = [item for item in snapshots if item.get("trace_id") == trace_id]
+    if run_id is not None:
+        snapshots = [item for item in snapshots if item.get("run_id") == run_id]
+
+    return {str(item.get("device", f"device_{idx}")): item for idx, item in enumerate(snapshots)}
+
+
+def record_device_io_event(
+    device_name: str,
+    operation_type: str,
+    *,
+    success: Optional[bool] = None,
+    duration_seconds: Optional[float] = None,
+    payload: Optional[Dict[str, Any]] = None,
+    error: Optional[str] = None,
+    recorder: Optional[TelemetryRecorder] = None,
+    component: Optional[str] = None,
+    stage: str = "end",
+    level: Optional[str] = None,
+    flush: bool = False,
+    ts: Optional[float] = None,
+) -> Optional[TelemetryEvent]:
+    """Record a device I/O telemetry event and cache the latest snapshot."""
+    active_recorder = recorder or get_global_recorder()
+    event_ts = ts if ts is not None else time.time()
+    duration_ms = None if duration_seconds is None else duration_seconds * 1000.0
+
+    merged_payload = dict(payload or {})
+    merged_payload.update(
+        {
+            "device": device_name,
+            "operation": operation_type,
+            "stage": stage,
+        }
+    )
+    if duration_ms is not None:
+        merged_payload["duration_ms"] = duration_ms
+    if success is not None:
+        merged_payload["success"] = success
+    if error:
+        merged_payload["error"] = error
+
+    queue_id = TelemetryContext.get_queue_id()
+    run_id = TelemetryContext.get_run_id()
+    run_uuid = TelemetryContext.get_run_uuid()
+    trace_id = TelemetryContext.get_trace_id()
+    merged_payload.update(
+        {
+            "queue_id": queue_id,
+            "run_id": run_id,
+            "run_uuid": run_uuid,
+            "trace_id": trace_id,
+            "ts": event_ts,
+        }
+    )
+    _remember_last_device_io(merged_payload)
+
+    if not active_recorder:
+        return None
+
+    event = TelemetryEvent(
+        event_type=EventType.DEVICE_IO.value,
+        ts=event_ts,
+        level=level or ("debug" if success is not False else "error"),
+        queue_id=queue_id,
+        run_id=run_id,
+        run_uuid=run_uuid,
+        trace_id=trace_id,
+        span_id=TelemetryContext.get_current_span_id(),
+        component=component or device_name,
+        action=operation_type,
+        duration_ms=duration_ms,
+        success=success,
+        error=error,
+        payload=merged_payload,
+    )
+    active_recorder.record_event(event)
+    if flush:
+        active_recorder.flush()
+    return event
+
+
 def telemetry_device_io(
     device_name: str, operation_type: str, recorder: Optional[TelemetryRecorder] = None
 ) -> Callable:
@@ -107,7 +220,8 @@ def telemetry_device_io(
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
-            if not recorder:
+            active_recorder = recorder or get_global_recorder()
+            if not active_recorder:
                 # If no recorder provided, just call the function
                 return func(*args, **kwargs)
 
@@ -127,12 +241,7 @@ def telemetry_device_io(
                 # Record device I/O end event
                 duration_ms = (time.time() - start_time) * 1000
                 duration_seconds = duration_ms / 1000.0
-                payload = {
-                    "device": device_name,
-                    "operation": operation_type,
-                    "duration_ms": duration_ms,
-                    "success": success,
-                }
+                payload = {}
 
                 if error:
                     payload["error"] = error
@@ -140,22 +249,17 @@ def telemetry_device_io(
                 # Extract first arg as object context (typically self)
                 obj_context = args[0] if args else None
                 obj_name = type(obj_context).__name__ if obj_context else "unknown"
-
-                event = TelemetryEvent(
-                    event_type=EventType.DEVICE_IO.value,
-                    ts=start_time,
-                    level="debug" if success else "error",
-                    queue_id=TelemetryContext.get_queue_id(),
-                    run_id=TelemetryContext.get_run_id(),
-                    run_uuid=TelemetryContext.get_run_uuid(),
-                    trace_id=TelemetryContext.get_trace_id(),
-                    span_id=TelemetryContext.get_current_span_id(),
-                    component=f"{device_name}_{obj_name}",
-                    action=operation_type,
+                record_device_io_event(
+                    device_name,
+                    operation_type,
+                    success=success,
+                    duration_seconds=duration_seconds,
                     payload=payload,
+                    error=error,
+                    recorder=active_recorder,
+                    component=f"{device_name}_{obj_name}",
+                    ts=start_time,
                 )
-
-                recorder.record_event(event)
 
                 # Record Prometheus metrics
                 _record_prometheus_device_io_metrics(
@@ -209,7 +313,8 @@ class TelemetryDeviceIOContext:
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit context; record device I/O end with timing."""
-        if not self.recorder:
+        active_recorder = self.recorder or get_global_recorder()
+        if not active_recorder:
             return
 
         if exc_type is not None:
@@ -220,33 +325,21 @@ class TelemetryDeviceIOContext:
         duration_seconds = duration_ms / 1000.0
 
         payload = self.payload.copy()
-        payload.update(
-            {
-                "device": self.device_name,
-                "operation": self.operation_type,
-                "duration_ms": duration_ms,
-                "success": self.success,
-            }
-        )
 
         if self.error:
             payload["error"] = self.error
 
-        event = TelemetryEvent(
-            event_type=EventType.DEVICE_IO.value,
-            ts=self.start_time,
-            level="debug" if self.success else "error",
-            queue_id=TelemetryContext.get_queue_id(),
-            run_id=TelemetryContext.get_run_id(),
-            run_uuid=TelemetryContext.get_run_uuid(),
-            trace_id=TelemetryContext.get_trace_id(),
-            span_id=TelemetryContext.get_current_span_id(),
-            component=self.device_name,
-            action=self.operation_type,
+        record_device_io_event(
+            self.device_name,
+            self.operation_type,
+            success=self.success,
+            duration_seconds=duration_seconds,
             payload=payload,
+            error=self.error,
+            recorder=active_recorder,
+            component=self.device_name,
+            ts=self.start_time,
         )
-
-        self.recorder.record_event(event)
 
         # Record Prometheus metrics
         _record_prometheus_device_io_metrics(

@@ -18,6 +18,7 @@ import select
 # ============= standard library imports ========================
 import socket
 import time
+from typing import Any, Optional
 
 # ============= enthought library imports =======================
 from traits.api import Float
@@ -29,6 +30,7 @@ from pychron.hardware.core.communicators.communicator import (
     Communicator,
     process_response,
 )
+from pychron.experiment.telemetry.device_io import record_device_io_event
 from pychron.regex import IPREGEX
 
 
@@ -169,9 +171,7 @@ class Handler(object):
 
         inputs = [self.sock]
         outputs = []
-        readable, writable, exceptional = select.select(
-            inputs, outputs, inputs, timeout
-        )
+        readable, writable, exceptional = select.select(inputs, outputs, inputs, timeout)
 
         buff = bytearray(2**12)
         if readable:
@@ -349,6 +349,50 @@ class EthernetCommunicator(Communicator):
 
         return self.test_connection()
 
+    def _io_device_name(self) -> str:
+        return getattr(self, "name", None) or self.address or "ethernet_communicator"
+
+    def _io_payload(self, operation: str, **payload: Any) -> dict[str, Any]:
+        base = {
+            "address": self.address,
+            "kind": self.kind,
+            "backend": self.backend,
+            "operation_type": operation,
+        }
+        base.update(payload)
+        return base
+
+    def _command_preview(self, cmd: Any) -> Optional[str]:
+        if cmd is None:
+            return None
+        text = str(cmd).strip()
+        if len(text) > 96:
+            text = "{}...".format(text[:93])
+        return text
+
+    def _record_io_checkpoint(
+        self,
+        operation: str,
+        *,
+        stage: str,
+        success: Optional[bool] = None,
+        duration_seconds: Optional[float] = None,
+        error: Optional[str] = None,
+        flush: bool = False,
+        **payload: Any,
+    ) -> None:
+        record_device_io_event(
+            self._io_device_name(),
+            operation,
+            success=success,
+            duration_seconds=duration_seconds,
+            payload=self._io_payload(operation, **payload),
+            error=error,
+            component="ethernet_communicator",
+            stage=stage,
+            flush=flush,
+        )
+
     def test_connection(self):
         if self.transport_adapter is not None:
             self.simulation = True
@@ -386,9 +430,7 @@ class EthernetCommunicator(Communicator):
             if self.read_handler:
                 handler = self.read_handler
             else:
-                handler = self.get_handler(
-                    addrs=(self.host, self.read_port), bind=True, **kw
-                )
+                handler = self.get_handler(addrs=(self.host, self.read_port), bind=True, **kw)
                 self.read_handler = handler
 
         return handler
@@ -432,18 +474,18 @@ class EthernetCommunicator(Communicator):
 
     def ask(
         self,
-        cmd,
-        retries=3,
-        verbose=True,
-        quiet=False,
-        info=None,
-        timeout=None,
-        message_frame=None,
-        delay=None,
-        use_error_mode=True,
-        *args,
-        **kw
-    ):
+        cmd: Any,
+        retries: int = 3,
+        verbose: bool = True,
+        quiet: bool = False,
+        info: Any = None,
+        timeout: Any = None,
+        message_frame: Any = None,
+        delay: Any = None,
+        use_error_mode: bool = True,
+        *args: Any,
+        **kw: Any,
+    ) -> Any:
         """
         @param cmd: ASCII text to send
         @param retries: number of retries if command fails
@@ -455,6 +497,17 @@ class EthernetCommunicator(Communicator):
         @param delay: delay in seconds to wait before a `cmd` is sent
 
         """
+
+        operation_started_at = time.time()
+        command_preview = self._command_preview(cmd)
+        self._record_io_checkpoint(
+            "ask",
+            stage="start",
+            flush=True,
+            command=command_preview,
+            retries=retries,
+            timeout=timeout,
+        )
 
         if self.transport_adapter is not None:
             payload = "{}{}".format(cmd, self.write_terminator)
@@ -468,11 +521,28 @@ class EthernetCommunicator(Communicator):
                 re = process_response(r) if r is not None else "ERROR: replay returned no response"
                 if verbose or (self.verbose and not quiet):
                     self.log_response(payload, re, info)
+                self._record_io_checkpoint(
+                    "ask",
+                    stage="end",
+                    success=r is not None,
+                    duration_seconds=time.time() - operation_started_at,
+                    command=command_preview,
+                    timeout=timeout,
+                    response_preview=self._command_preview(re),
+                )
                 return r
 
         if self.simulation:
             if verbose:
                 self.info("no handle    {}".format(cmd.strip()))
+            self._record_io_checkpoint(
+                "ask",
+                stage="end",
+                success=True,
+                duration_seconds=time.time() - operation_started_at,
+                command=command_preview,
+                simulation=True,
+            )
             return
 
         cmd = "{}{}".format(cmd, self.write_terminator)
@@ -485,9 +555,7 @@ class EthernetCommunicator(Communicator):
             if timeout is None:
                 timeout = self.timeout
 
-            re = "ERROR: Connection refused: {}, timeout={}".format(
-                self.address, timeout
-            )
+            re = "ERROR: Connection refused: {}, timeout={}".format(self.address, timeout)
             for i in range(retries):
                 r = self._ask(
                     cmd,
@@ -515,6 +583,17 @@ class EthernetCommunicator(Communicator):
             if verbose or (self.verbose and not quiet):
                 self.log_response(cmd, re, info)
 
+        self._record_io_checkpoint(
+            "ask",
+            stage="end",
+            success=r is not None,
+            duration_seconds=time.time() - operation_started_at,
+            command=command_preview,
+            timeout=timeout,
+            retries=retries,
+            response_preview=self._command_preview(re),
+            error=None if r is not None else re,
+        )
         return r
 
     def reset(self):
@@ -527,7 +606,7 @@ class EthernetCommunicator(Communicator):
             self.read_handler.end()
         self._reset_connection()
 
-    def select_read(self, *args, **kw):
+    def select_read(self, *args: Any, **kw: Any) -> Any:
         if self.transport_adapter is not None:
             return self.transport_adapter.select_read(*args, **kw)
 
@@ -538,10 +617,15 @@ class EthernetCommunicator(Communicator):
 
         return handler.select_read(*args, **kw)
 
-    def readline(self, terminator=b"\r\n"):
+    def readline(self, terminator: Any = b"\r\n") -> Any:
         if self.transport_adapter is not None:
             return self.transport_adapter.readline(terminator=terminator)
 
+        operation_started_at = time.time()
+        terminator_preview = self._command_preview(terminator)
+        self._record_io_checkpoint(
+            "readline", stage="start", flush=True, terminator=terminator_preview
+        )
         timeout = self._reset_error_mode()
 
         handler = self.get_handler(timeout=timeout)
@@ -553,15 +637,34 @@ class EthernetCommunicator(Communicator):
                 terminator = terminator.encode("utf8")
 
             try:
-                return handler.readline(terminator)
+                response = handler.readline(terminator)
+                self._record_io_checkpoint(
+                    "readline",
+                    stage="end",
+                    success=True,
+                    duration_seconds=time.time() - operation_started_at,
+                    terminator=terminator_preview,
+                    response_preview=self._command_preview(response),
+                )
+                return response
             except socket.timeout as e:
                 self.warning("read. read packet. error: {}".format(e))
                 self.error_mode = True
+                self._record_io_checkpoint(
+                    "readline",
+                    stage="end",
+                    success=False,
+                    duration_seconds=time.time() - operation_started_at,
+                    terminator=terminator_preview,
+                    error=str(e),
+                )
 
-    def read(self, datasize=None, *args, **kw):
+    def read(self, datasize: Any = None, *args: Any, **kw: Any) -> Any:
         if self.transport_adapter is not None:
             return self.transport_adapter.read(datasize=datasize, *args, **kw)
 
+        operation_started_at = time.time()
+        self._record_io_checkpoint("read", stage="start", flush=True, datasize=datasize)
         for i in range(3):
             with self._lock:
                 timeout = self._reset_error_mode()
@@ -572,17 +675,45 @@ class EthernetCommunicator(Communicator):
 
                 if handler:
                     try:
-                        return handler.get_packet(datasize=datasize)
+                        response = handler.get_packet(datasize=datasize)
+                        self._record_io_checkpoint(
+                            "read",
+                            stage="end",
+                            success=True,
+                            duration_seconds=time.time() - operation_started_at,
+                            datasize=datasize,
+                            timeout=timeout,
+                            response_preview=self._command_preview(response),
+                        )
+                        return response
                     except socket.timeout as e:
                         self.warning("read. read packet. error: {}".format(e))
                         self.error_mode = True
+                        self._record_io_checkpoint(
+                            "read",
+                            stage="retry",
+                            success=False,
+                            duration_seconds=time.time() - operation_started_at,
+                            datasize=datasize,
+                            timeout=timeout,
+                            error=str(e),
+                            attempt=i + 1,
+                        )
 
             time.sleep(timeout)
 
         else:
+            self._record_io_checkpoint(
+                "read",
+                stage="end",
+                success=False,
+                duration_seconds=time.time() - operation_started_at,
+                datasize=datasize,
+                error="empty response after retries",
+            )
             return ""
 
-    def tell(self, cmd, verbose=True, quiet=False, info=None):
+    def tell(self, cmd: Any, verbose: bool = True, quiet: bool = False, info: Any = None) -> None:
         if self.transport_adapter is not None:
             payload = "{}{}".format(cmd, self.write_terminator)
             with self._lock:
@@ -591,6 +722,9 @@ class EthernetCommunicator(Communicator):
                     self.log_tell(payload, info)
             return
 
+        operation_started_at = time.time()
+        command_preview = self._command_preview(cmd)
+        self._record_io_checkpoint("tell", stage="start", flush=True, command=command_preview)
         with self._lock:
             handler = self.get_handler()
             if handler:
@@ -599,9 +733,24 @@ class EthernetCommunicator(Communicator):
                     handler.send_packet(cmd)
                     if verbose or self.verbose and not quiet:
                         self.log_tell(cmd, info)
+                    self._record_io_checkpoint(
+                        "tell",
+                        stage="end",
+                        success=True,
+                        duration_seconds=time.time() - operation_started_at,
+                        command=command_preview,
+                    )
                 except socket.error as e:
                     self.warning("tell. send packet. error: {}".format(e))
                     self.error_mode = True
+                    self._record_io_checkpoint(
+                        "tell",
+                        stage="end",
+                        success=False,
+                        duration_seconds=time.time() - operation_started_at,
+                        command=command_preview,
+                        error=str(e),
+                    )
 
     # private
     def _reset_connection(self):
@@ -628,9 +777,7 @@ class EthernetCommunicator(Communicator):
         self.error_mode = False
         return timeout
 
-    def _ask(
-        self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True
-    ):
+    def _ask(self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True):
         timeout = self._reset_error_mode(timeout, use_error_mode)
 
         handler = self.get_handler(timeout=timeout)
@@ -649,15 +796,11 @@ class EthernetCommunicator(Communicator):
             except socket.error as e:
                 self.debug_exception()
                 self.warning(
-                    "ask. get packet for {}. error: {} address: {}".format(
-                        cmd, e, handler.address
-                    )
+                    "ask. get packet for {}. error: {} address: {}".format(cmd, e, handler.address)
                 )
                 self.error_mode = True
         except socket.error as e:
-            self.warning(
-                "ask. send packet. error: {} address: {}".format(e, handler.address)
-            )
+            self.warning("ask. send packet. error: {} address: {}".format(e, handler.address))
             self.error_mode = True
 
 

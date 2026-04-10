@@ -1,4 +1,7 @@
 import unittest
+import json
+import tempfile
+from pathlib import Path
 
 try:
     from pychron.hardware.core.communicators.ethernet_communicator import (
@@ -15,6 +18,10 @@ except ModuleNotFoundError as exc:
     _IMPORT_ERROR = exc
 else:
     _IMPORT_ERROR = None
+
+from pychron.experiment.telemetry.context import TelemetryContext
+from pychron.experiment.telemetry.recorder import TelemetryRecorder
+from pychron.experiment.telemetry.span import set_global_recorder
 
 
 class _FakeSocket:
@@ -42,6 +49,22 @@ class _FakeSocket:
 
 @unittest.skipIf(_IMPORT_ERROR is not None, "Traits stack not available")
 class EthernetCommunicatorTestCase(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.log_path = Path(self.temp_dir.name) / "ethernet-io.jsonl"
+        self.recorder = TelemetryRecorder(self.log_path)
+        TelemetryContext.clear()
+        TelemetryContext.set_queue_id("queue_1")
+        TelemetryContext.set_trace_id("trace_1")
+        TelemetryContext.set_run_id("run_1")
+        set_global_recorder(self.recorder)
+
+    def tearDown(self):
+        self.recorder.close()
+        self.temp_dir.cleanup()
+        TelemetryContext.clear()
+        set_global_recorder(None)
+
     def test_tcp_handler_uses_sendall(self):
         handler = TCPHandler()
         handler.sock = _FakeSocket()
@@ -75,6 +98,28 @@ class EthernetCommunicatorTestCase(unittest.TestCase):
         self.assertTrue(read_sock.closed)
         self.assertIsNone(communicator.handler)
         self.assertIsNone(communicator.read_handler)
+
+    def test_ask_records_start_and_end_device_io_events(self):
+        communicator = EthernetCommunicator(name="spec_comm")
+        communicator.kind = "TCP"
+        communicator.host = "127.0.0.1"
+        communicator.port = 8000
+        communicator.simulation = False
+        communicator.write_terminator = "\r"
+        communicator.log_response = lambda *args, **kw: None
+        communicator._ask = lambda *args, **kw: "OK"
+
+        result = communicator.ask("GetData", verbose=False)
+
+        self.recorder.flush()
+        with open(self.log_path) as rfile:
+            events = [json.loads(line) for line in rfile.readlines()]
+
+        self.assertEqual(result, "OK")
+        self.assertEqual(len(events), 2)
+        self.assertEqual(events[0]["payload"]["stage"], "start")
+        self.assertEqual(events[1]["payload"]["stage"], "end")
+        self.assertEqual(events[1]["payload"]["success"], True)
 
 
 if __name__ == "__main__":

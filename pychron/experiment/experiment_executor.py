@@ -18,10 +18,12 @@
 
 import os
 import time
+from contextvars import copy_context
 from datetime import datetime
 from operator import itemgetter
 from queue import Queue, Empty
-from threading import Thread, Lock, currentThread, Event as TEvent
+from threading import Thread, Lock, current_thread, Event as TEvent
+from typing import Any, Callable, Optional
 
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
@@ -74,6 +76,8 @@ from pychron.experiment.experiment_status import ExperimentStatus
 from pychron.experiment.telemetry.span import Span
 from pychron.experiment.telemetry.context import TelemetryContext
 from pychron.experiment.telemetry.event import TelemetryEvent, EventType
+from pychron.experiment.telemetry.device_io import get_last_device_io_snapshot
+from pychron.experiment.telemetry.span import set_global_recorder
 from pychron.observability import experiment_lifecycle
 from pychron.experiment.state_machines.executor_machine import (
     ABORTED as EXEC_ABORTED,
@@ -308,6 +312,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _cached_runs = List
     _active_repository_identifier = Str
     show_conditionals_event = Event
+    diagnostic_stall_timeout = Float(120.0)
+    diagnostic_progress_interval = Float(15.0)
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
@@ -318,6 +324,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._controller.register_on_transition(self._handle_state_transition)
         # Watchdog integration (Phase 6: executor integration)
         self._watchdog_integration = None
+        self._last_progress_marker = ""
+        self._last_progress_timestamp = 0.0
+        self._last_stall_warning_timestamp = 0.0
+        self._loop_heartbeat_timestamps = {}
         # self.set_managers()
         # self.notification_manager = NotificationManager()
 
@@ -352,6 +362,215 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _should_cancel_execution(self) -> bool:
         return self._controller.should_cancel() and not self._controller.should_abort()
 
+    def _diagnostic_instrumentation_enabled(self) -> bool:
+        return bool(
+            self._controller.telemetry_recorder
+            or getattr(globalv, "telemetry_enabled", False)
+            or getattr(globalv, "experiment_debug", False)
+        )
+
+    def _current_run_ids(self) -> list[str]:
+        run_ids = []
+        for run in (self.extracting_run, self.measuring_run):
+            if run is not None:
+                run_ids.append(str(getattr(run, "runid", getattr(run, "uuid", "unknown-run"))))
+        return run_ids
+
+    def _controller_state_snapshot(self) -> dict[str, Any]:
+        queue_state = None
+        if self._controller.queue_machine is not None:
+            queue_state = self._controller.queue_machine.observed_state
+
+        active_run_states = {}
+        for run_id, machine in self._controller.active_run_machines:
+            active_run_states[run_id] = machine.observed_state
+
+        return {
+            "executor_state": self._controller.executor_machine.observed_state,
+            "queue_state": queue_state,
+            "active_run_states": active_run_states,
+        }
+
+    def _progress_payload(
+        self,
+        marker: str,
+        run: Any = None,
+        step: Optional[str] = None,
+        elapsed_s: Optional[float] = None,
+        extra: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        queue_name = getattr(self.experiment_queue, "name", None)
+        run_state = None
+        run_id = None
+        if run is not None:
+            run_id = getattr(run, "runid", None) or getattr(run, "uuid", None)
+            run_state = getattr(getattr(run, "spec", None), "state", None)
+
+        payload = {
+            "marker": marker,
+            "queue_name": queue_name,
+            "run_id": run_id,
+            "run_state": run_state,
+            "step": step,
+            "elapsed_s": elapsed_s,
+            "alive": self.alive,
+            "cancel_requested": self._should_cancel_execution(),
+            "abort_requested": self._should_abort_execution(),
+            "active_run_ids": self._current_run_ids(),
+        }
+        payload.update(self._controller_state_snapshot())
+        if extra:
+            payload.update(extra)
+        return payload
+
+    def _record_execution_event(
+        self,
+        marker: str,
+        *,
+        run: Any = None,
+        step: Optional[str] = None,
+        elapsed_s: Optional[float] = None,
+        level: str = "debug",
+        event_type: str = EventType.EXECUTION_PROGRESS.value,
+        extra: Optional[dict[str, Any]] = None,
+        flush: bool = False,
+    ) -> None:
+        payload = self._progress_payload(
+            marker, run=run, step=step, elapsed_s=elapsed_s, extra=extra
+        )
+        self.debug(
+            "executor progress marker={} queue={} run={} step={} elapsed_s={}".format(
+                marker,
+                payload.get("queue_name"),
+                payload.get("run_id"),
+                step,
+                elapsed_s,
+            )
+        )
+        recorder = self._controller.telemetry_recorder
+        if recorder is not None:
+            event = TelemetryEvent(
+                event_type=event_type,
+                ts=time.time(),
+                level=level,
+                queue_id=TelemetryContext.get_queue_id(),
+                run_id=TelemetryContext.get_run_id(),
+                run_uuid=TelemetryContext.get_run_uuid(),
+                trace_id=TelemetryContext.get_trace_id(),
+                span_id=TelemetryContext.get_current_span_id(),
+                component="executor",
+                action=marker,
+                payload=payload,
+            )
+            recorder.record_event(event)
+            if flush:
+                recorder.flush()
+
+    def _mark_progress(
+        self,
+        marker: str,
+        *,
+        run: Any = None,
+        step: Optional[str] = None,
+        elapsed_s: Optional[float] = None,
+        level: str = "debug",
+        extra: Optional[dict[str, Any]] = None,
+        flush: bool = False,
+    ) -> None:
+        if not self._diagnostic_instrumentation_enabled():
+            return
+
+        self._last_progress_marker = marker
+        self._last_progress_timestamp = time.time()
+        self._record_execution_event(
+            marker,
+            run=run,
+            step=step,
+            elapsed_s=elapsed_s,
+            level=level,
+            extra=extra,
+            flush=flush,
+        )
+
+    def _heartbeat_progress(
+        self,
+        label: str,
+        *,
+        started_at: float,
+        iteration: int,
+        run: Any = None,
+        extra: Optional[dict[str, Any]] = None,
+    ) -> None:
+        if not self._diagnostic_instrumentation_enabled():
+            return
+
+        now = time.time()
+        last_emit = self._loop_heartbeat_timestamps.get(label, 0.0)
+        if now - last_emit >= self.diagnostic_progress_interval:
+            payload = {"iteration": iteration, "wait_started_at": started_at}
+            if extra:
+                payload.update(extra)
+            self._mark_progress(
+                "{}.heartbeat".format(label),
+                run=run,
+                elapsed_s=now - started_at,
+                extra=payload,
+            )
+            self._loop_heartbeat_timestamps[label] = now
+
+        self._maybe_emit_stall_snapshot(
+            label,
+            run=run,
+            elapsed_s=now - started_at,
+            extra=extra,
+        )
+
+    def _maybe_emit_stall_snapshot(
+        self,
+        label: str,
+        *,
+        run: Any = None,
+        elapsed_s: Optional[float] = None,
+        extra: Optional[dict[str, Any]] = None,
+        force: bool = False,
+    ) -> None:
+        if not self._diagnostic_instrumentation_enabled():
+            return
+
+        now = time.time()
+        if not force:
+            if not self._last_progress_timestamp:
+                return
+            if now - self._last_progress_timestamp < self.diagnostic_stall_timeout:
+                return
+            if now - self._last_stall_warning_timestamp < self.diagnostic_progress_interval:
+                return
+
+        payload = {
+            "label": label,
+            "last_progress_marker": self._last_progress_marker,
+            "last_progress_age_s": (
+                now - self._last_progress_timestamp if self._last_progress_timestamp else None
+            ),
+            "thread_name": current_thread().name,
+            "last_device_io": get_last_device_io_snapshot(
+                TelemetryContext.get_trace_id(), TelemetryContext.get_run_id()
+            ),
+        }
+        if extra:
+            payload.update(extra)
+
+        self._last_stall_warning_timestamp = now
+        self._record_execution_event(
+            "{}.stall_snapshot".format(label),
+            run=run,
+            elapsed_s=elapsed_s,
+            level="warning",
+            event_type=EventType.STALL_SNAPSHOT.value,
+            extra=payload,
+            flush=True,
+        )
+
     def _should_overlap_run(self, run, spec) -> bool:
         overlap_enabled = bool(spec.overlap[0])
         return self._controller.should_queue_overlap(
@@ -368,7 +587,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             overlap_enabled=overlap_enabled,
         )
 
-    def _execute_run_overlap(self, exp, run, delay_after_previous_analysis, con) -> bool:
+    def _execute_run_overlap(
+        self, exp: Any, run: Any, delay_after_previous_analysis: Any, con: Any
+    ) -> bool:
         self._controller.mark_queue_overlap(True, queue_name=exp.name)
         t = None
         for action in self._controller.queue_overlap_launch_actions():
@@ -377,21 +598,27 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._wait_for(lambda x: self.extracting_run)
             elif action == "start_overlap_thread":
                 self.info("overlaping")
+                self._mark_progress("run.overlap_thread_start", run=run)
+                ctx = copy_context()
                 t = Thread(
-                    target=self._do_run,
-                    args=(run, delay_after_previous_analysis),
+                    target=ctx.run,
+                    args=(self._do_run, run, delay_after_previous_analysis),
                     name=run.runid,
                 )
                 t.start()
             elif action == "wait_overlap_signal":
+                self._mark_progress("run.overlap_signal_wait.start", run=run)
                 run.wait_for_overlap()
+                self._mark_progress("run.overlap_signal_wait.end", run=run)
                 self.debug("overlap finished. starting next run")
 
         if t is not None:
             con.add_consumable((t, run))
         return False
 
-    def _execute_run_serial(self, exp, spec, run, delay_after_previous_analysis) -> bool:
+    def _execute_run_serial(
+        self, exp: Any, spec: Any, run: Any, delay_after_previous_analysis: Any
+    ) -> bool:
         self._controller.mark_queue_overlap(False, queue_name=exp.name)
         self._join_run(spec, run, delay_after_previous_analysis)
         return True
@@ -405,7 +632,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             has_measuring_run=bool(self.measuring_run),
         )
         self.debug("settling active runs actions={}".format(actions))
+        self._mark_progress("queue.settle.start", extra={"actions": actions})
         for action in actions:
+            self._mark_progress("queue.settle.action", extra={"action": action})
             if action == "wait_extracting":
                 self._wait_for(lambda x: self.extracting_run)
             elif action == "cancel_special_extracting" and self.extracting_run:
@@ -414,6 +643,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._wait_for(lambda x: self.measuring_run)
             elif action == "wait_active_runs":
                 self._wait_for(lambda x: self.extracting_run or self.measuring_run)
+        self._mark_progress("queue.settle.end", extra={"actions": actions})
 
     def _get_run_subject_id(self, run: Any) -> str:
         subject_id = getattr(run, "uuid", None) or getattr(run, "runid", "unknown-run")
@@ -789,27 +1019,44 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.experiment_queue.automated_runs_scroll_to_row = 0
         self._sync_compatibility_state()
 
-    def _wait_for_dvc_save(self, spec):
+    def _wait_for_dvc_save(self, spec: Any) -> bool:
         if self.use_dvc_overlap_save and self._save_complete_evt and self.use_dvc_persistence:
             timeout = self.dvc_save_timeout_minutes
             self.debug("waiting for save event to clear. Timeout after {} minutes".format(timeout))
             timeoutseconds = timeout * 60
             st = time.time()
+            iteration = 0
+            self._mark_progress("run.save_wait.start", extra={"timeout_s": timeoutseconds})
             while self._save_complete_evt.is_set():
                 self._save_complete_evt.wait(1)
+                iteration += 1
+                self._heartbeat_progress(
+                    "run.save_wait",
+                    started_at=st,
+                    iteration=iteration,
+                    extra={"timeout_s": timeoutseconds},
+                )
 
                 if time.time() - st > timeoutseconds:
                     self.warning_dialog("Saving run failed to complete success fully")
                     self._save_complete_evt.set()
                     # run.cancel_run()
                     spec.transition("fail", force=True, source="wait_for_overlap_save")
+                    self._mark_progress(
+                        "run.save_wait.timeout",
+                        level="warning",
+                        elapsed_s=time.time() - st,
+                        extra={"timeout_s": timeoutseconds},
+                        flush=True,
+                    )
                     return
 
             self.debug("waiting complete")
+            self._mark_progress("run.save_wait.end", elapsed_s=time.time() - st)
 
         return True
 
-    def _wait_for_save(self):
+    def _wait_for_save(self) -> None:
         """
         wait for experiment queue to be saved.
 
@@ -826,15 +1073,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self.executable:
             self.info("Waiting for save")
             cnt = 0
+            self._mark_progress("queue.wait_for_save.start", extra={"auto_save_delay": delay})
 
             while not self.executable:
                 time.sleep(1)
+                cnt += 1
+                self._heartbeat_progress(
+                    "queue.wait_for_save",
+                    started_at=st,
+                    iteration=cnt,
+                    extra={"auto_save_delay": delay, "executable": self.executable},
+                )
                 if time.time() - st < delay and self.is_alive():
                     self.set_extract_state(
                         "Waiting for save. Autosave in {} s".format(delay - cnt),
                         flash=False,
                     )
-                    cnt += 1
                 else:
                     break
 
@@ -847,8 +1101,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 else:
                     self.info("canceling experiment queues")
                     self.cancel(confirm=False)
+            self._mark_progress(
+                "queue.wait_for_save.end",
+                elapsed_s=time.time() - st,
+                extra={"executable": self.executable},
+            )
 
-    def _execute(self):
+    def _execute(self) -> None:
         """
         execute opened experiment queues
         """
@@ -880,6 +1139,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # Record session start
         _session_id = None
         _recorder = self._controller.telemetry_recorder
+        set_global_recorder(_recorder)
         if _recorder is not None:
             _session_id = f"session_{int(time.time())}"
             _recorder.record_event(
@@ -897,6 +1157,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             )
 
         try:
+            self._mark_progress(
+                "executor.session.start", extra={"session_id": _session_id}, flush=True
+            )
             for i, exp in enumerate(self.experiment_queues):
                 self._controller.queue_selected(queue_name=exp.name)
                 self._set_thread_name(exp.name)
@@ -942,10 +1205,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             )
             self.alive = False
         finally:
+            self._maybe_emit_stall_snapshot("executor.session.end", force=True)
             # CRITICAL: Always close recorder on exit
+            set_global_recorder(None)
             self._controller.close_session()
 
-    def _execute_queue(self, i, exp):
+    def _execute_queue(self, i: int, exp: Any) -> None:
         """
         i: int
         exp: ExperimentQueue
@@ -964,6 +1229,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             TelemetryContext.set_trace_id(trace_id)
 
         self.info("Starting automated runs set={:02d} {}".format(i, exp.name))
+        self._mark_progress(
+            "queue.start", extra={"queue_index": i, "queue_name": exp.name}, flush=True
+        )
         self.debug("reset stats: {}".format(self.stats))
 
         self.stats.experiment_queues = self.experiment_queues
@@ -1132,6 +1400,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.info("Automated runs ended at {}, runs executed={}".format(last_runid, total_cnt))
 
         self.heading("experiment queue {} finished".format(exp.name))
+        self._mark_progress(
+            "queue.end",
+            level="info",
+            extra={"queue_name": exp.name, "result": qresult, "error": self._err_message or None},
+            flush=True,
+        )
 
         if not self._err_message and self._should_stop_at_boundary():
             self._err_message = "User terminated"
@@ -1163,7 +1437,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     names, addrs = list(zip(*items))
         return names, addrs
 
-    def _wait_for(self, predicate, period=1, invert=False):
+    def _wait_for(
+        self, predicate: Callable[[float], Any], period: float = 1, invert: bool = False
+    ) -> None:
         """
         predicate: callable. func(x)
         period: evaluate predicate every ``period`` seconds
@@ -1184,6 +1460,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if invert:
             predicate = finvert(predicate)
 
+        iteration = 0
         while 1:
             et = time.time() - st
             if not self._controller.is_alive:
@@ -1195,15 +1472,23 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if not v:
                 break
+            iteration += 1
+            self._heartbeat_progress(
+                "executor.wait_for",
+                started_at=st,
+                iteration=iteration,
+                extra={"invert": invert, "predicate_result": bool(v)},
+            )
             time.sleep(period)
 
-    def _set_thread_name(self, name):
+    def _set_thread_name(self, name: str) -> None:
         self.debug("Changing Thread name to {}".format(name))
-        ct = currentThread()
+        ct = current_thread()
         ct.name = name
 
-    def _join_run(self, spec, run, delay_after_run):
+    def _join_run(self, spec: Any, run: Any, delay_after_run: Any) -> None:
         self.debug("join run")
+        self._mark_progress("run.join.start", run=run)
         self._do_run(run, delay_after_run)
 
         self.debug("{} finished".format(run.runid))
@@ -1215,6 +1500,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.measuring_run = None
         self.debug("join run finished")
+        self._mark_progress("run.join.end", run=run)
 
     def _set_prev(self, run):
         if hasattr(run, "get_baseline_corrected_signal_dict"):
@@ -1235,7 +1521,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self._prev_baselines = run.get_baselines()
 
-    def _do_run(self, run, delay_after_run):
+    def _do_run(self, run: Any, delay_after_run: Any) -> None:
         self._set_thread_name(run.runid)
         run_id = self._get_run_subject_id(run)
         self._controller.begin_run(run_id, queue_name=self.experiment_queue.name)
@@ -1258,6 +1544,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         st = time.time()
 
         self.debug("do run")
+        self._mark_progress("run.start", run=run, flush=True)
 
         self.stats.start_run(run)
 
@@ -1288,22 +1575,44 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         try:
             for step in self._controller.run_step_sequence():
+                step_name = step[1:]
+                self._mark_progress(
+                    "run.step.enter",
+                    run=run,
+                    step=step_name,
+                    elapsed_s=time.time() - st,
+                )
                 run_status = self._controller.should_continue_run(
                     alive=self.is_alive(),
                     aborting=self._should_abort_execution(),
                     fatal_error=bool(self.monitor and self.monitor.has_fatal_error()),
                 )
                 if run_status == "stop":
+                    self._mark_progress(
+                        "run.step.stop", run=run, step=step_name, elapsed_s=time.time() - st
+                    )
                     break
 
                 if run_status == "abort":
                     self._controller.abort_run(run_id, reason="executor abort requested")
+                    self._mark_progress(
+                        "run.step.abort_requested",
+                        run=run,
+                        step=step_name,
+                        elapsed_s=time.time() - st,
+                    )
                     break
 
                 if run_status == "fatal":
                     run.cancel_run()
                     run.spec.transition("fail", force=True, source="execute_run")
                     self._transition_run_failure(run, "fatal monitor error")
+                    self._mark_progress(
+                        "run.step.fatal_monitor",
+                        run=run,
+                        step=step_name,
+                        elapsed_s=time.time() - st,
+                    )
                     break
 
                 if not getattr(self, step)(run):
@@ -1313,13 +1622,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     )
                     if step != "_post_measurement":  # save data even if post measurement fails
                         run.spec.transition("fail", force=True, source="execute_run")
+                    self._mark_progress(
+                        "run.step.exit",
+                        run=run,
+                        step=step_name,
+                        elapsed_s=time.time() - st,
+                        level="warning",
+                        extra={"completed": False},
+                    )
                     break
+                self._mark_progress(
+                    "run.step.exit",
+                    run=run,
+                    step=step_name,
+                    elapsed_s=time.time() - st,
+                    extra={"completed": True},
+                )
 
             else:
                 self.debug("$$$$$$$$$$$$$$$$$$$$ state at run end {}".format(run.spec.state))
                 if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
                     run.spec.transition("complete", source="execute_run")
 
+            self._mark_progress("run.save.enter", run=run, elapsed_s=time.time() - st)
             self._do_event(events.SAVE_RUN, run=run)
             self._controller.start_run_save(run_id, queue_name=self.experiment_queue.name)
 
@@ -1344,6 +1669,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self._save_complete_evt.set()
             self._controller.complete_run_save(run_id, queue_name=self.experiment_queue.name)
+            self._mark_progress("run.save.exit", run=run, elapsed_s=time.time() - st)
             t = time.time() - st
             for action in self._controller.run_post_save_actions(
                 run_state=str(run.spec.state),
@@ -1414,6 +1740,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._set_thread_name(self.experiment_queue.name)
                     self.experiment_queue.refresh_table_needed = True
         finally:
+            self._mark_progress(
+                "run.end",
+                run=run,
+                elapsed_s=time.time() - st,
+                level="info",
+                extra={"run_state": getattr(run.spec, "state", None)},
+                flush=True,
+            )
             # CRITICAL: Clear run context after run completes
             if ctx:
                 ctx.set_run_id(None)
@@ -1438,13 +1772,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             with open(path, "w") as wfile:
                 q.dump(wfile, runs=runs)
 
-    def _overlapped_run(self, v):
+    def _overlapped_run(self, v: Any) -> None:
         self._overlapping = True
         t, run = v
         # while t.is_alive():
         # time.sleep(1)
         self.debug("OVERLAPPING. waiting for run to finish")
-        t.join()
+        started_at = time.time()
+        iteration = 0
+        self._mark_progress("run.overlap_join.start", run=run)
+        while t.is_alive():
+            t.join(timeout=1.0)
+            iteration += 1
+            self._heartbeat_progress(
+                "run.overlap_join",
+                started_at=started_at,
+                iteration=iteration,
+                run=run,
+            )
 
         self.debug("{} finished".format(run.runid))
         self._set_prev(run)
@@ -1455,6 +1800,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         #         self._prev_blanks['blank'] = (run.spec.runid, pb)
 
         do_after(1000, run.teardown)
+        self._mark_progress("run.overlap_join.end", run=run, elapsed_s=time.time() - started_at)
 
     def _abort_run(self):
         self.debug("Abort Run")
@@ -1624,8 +1970,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # execution steps
     # ===============================================================================
-    def _start(self, run):
+    def _start(self, run: Any) -> bool:
         ret = True
+        self._mark_progress("run.start_phase.enter", run=run)
 
         if self.set_integration_time_on_start:
             dit = self.default_integration_time
@@ -1660,9 +2007,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 material=material,
             )
 
+        self._mark_progress("run.start_phase.exit", run=run, extra={"completed": ret})
         return ret
 
-    def _extraction(self, ai):
+    def _extraction(self, ai: Any) -> Any:
         """
         ai: AutomatedRun
         extraction step
@@ -1671,6 +2019,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             component="executor",
             action="extraction",
         ):
+            self._mark_progress("run.extraction.enter", run=ai)
             if self._pre_step_check(ai, "Extraction"):
                 self._failed_execution_step("Pre Extraction Check Failed")
                 return
@@ -1727,12 +2076,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.extracting = False
             self.experiment_status.reset()
             self.extracting_run = None
+            self._mark_progress("run.extraction.exit", run=ai, extra={"completed": ret})
             return ret
 
     def syn_measure(self, ai, script):
         return self._measurement(ai, script=script, use_post_on_fail=False)
 
-    def _measurement(self, ai, **measurement_kwargs):
+    def _measurement(self, ai: Any, **measurement_kwargs: Any) -> Any:
         """
         ai: AutomatedRun
         measurement step
@@ -1741,6 +2091,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             component="executor",
             action="measurement",
         ):
+            self._mark_progress("run.measurement.enter", run=ai)
             if self._pre_step_check(ai, "Measurement"):
                 self._failed_execution_step("Pre Measurement Check Failed")
                 return
@@ -1782,6 +2133,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 # automated run has a measurement_script
                 self.measuring = True
 
+                self._mark_progress("run.measurement.script.enter", run=ai)
                 if not ai.do_measurement(**measurement_kwargs):
                     self._controller.complete_run_measurement(
                         self._get_run_subject_id(ai), failed=True, reason="Measurement Failed"
@@ -1801,17 +2153,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         self._get_run_subject_id(ai),
                         status="success",
                     )
+                self._mark_progress("run.measurement.script.exit", run=ai, extra={"completed": ret})
             else:
                 ret = ai.is_alive()
 
             self.measuring = False
+            self._mark_progress("run.measurement.exit", run=ai, extra={"completed": ret})
             return ret
 
-    def _post_measurement(self, ai):
+    def _post_measurement(self, ai: Any) -> Optional[bool]:
         """
         ai: AutomatedRun
         post measurement step
         """
+        self._mark_progress("run.post_measurement.enter", run=ai)
         self._controller.start_run_post_measurement(self._get_run_subject_id(ai))
         if not ai.do_post_measurement():
             self._controller.complete_run_post_measurement(
@@ -1822,7 +2177,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._failed_execution_step("Post Measurement Failed")
         else:
             self._controller.complete_run_post_measurement(self._get_run_subject_id(ai))
+            self._mark_progress("run.post_measurement.exit", run=ai, extra={"completed": True})
             return True
+        self._mark_progress("run.post_measurement.exit", run=ai, extra={"completed": False})
+        return None
 
     def _failed_execution_step(self, msg):
         self.debug("failed execution step {}".format(msg))
@@ -2018,7 +2376,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         return ret
 
-    def _delay(self, delay, message="between"):
+    def _delay(self, delay: Any, message: str = "between") -> None:
         """
         delay: float
         message: str
@@ -2029,10 +2387,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.delaying_between_runs = True
             msg = "Delay {} runs {} sec".format(message, delay)
             self.info(msg)
+            self._mark_progress("executor.delay.start", extra={"delay": delay, "message": message})
             self._wait(delay, msg)
             self.delaying_between_runs = False
+            self._mark_progress("executor.delay.end", extra={"delay": delay, "message": message})
 
-    def _wait(self, delay, msg):
+    def _wait(self, delay: Any, msg: str) -> None:
         """
         delay: float
         message: str
@@ -2043,8 +2403,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         wc = self.get_wait_control()
 
         wc.message = msg
+        self._mark_progress("executor.wait.start", extra={"delay": delay, "message": msg})
         wc.start(duration=delay)
         wg.pop(wc)
+        self._mark_progress("executor.wait.end", extra={"delay": delay, "message": msg})
 
     def _set_extract_state(self, state, *args):
         """

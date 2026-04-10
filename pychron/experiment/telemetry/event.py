@@ -32,6 +32,8 @@ class EventType(Enum):
     COMMAND = "command"
     DEVICE_COMMAND = "device_command"
     DEVICE_IO = "device_io"
+    EXECUTION_PROGRESS = "execution_progress"
+    STALL_SNAPSHOT = "stall_snapshot"
 
     # Monitor and interlock
     MONITOR_CHECK = "monitor_check"
