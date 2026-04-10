@@ -6,10 +6,18 @@ try:
     from pychron.experiment.conditional.conditional import (
         conditionals_from_file,
         conditional_from_dict,
+        TerminationConditional,
+    )
+    from pychron.experiment.conditional.groups import (
+        ModificationGroup,
+        TruncationGroup,
     )
 except ModuleNotFoundError as exc:
     conditionals_from_file = None
     conditional_from_dict = None
+    TerminationConditional = None
+    ModificationGroup = None
+    TruncationGroup = None
     _IMPORT_ERROR = exc
 else:
     _IMPORT_ERROR = None
@@ -72,6 +80,22 @@ class ConditionalConfigurationTestCase(unittest.TestCase):
             )
         finally:
             os.remove(path)
+
+    def test_modification_group_ignores_selected_conditionals_without_action_fields(self):
+        group = ModificationGroup([], editable=True, available_attrs=[])
+        group.selected = TerminationConditional("Ar40>10")
+
+        group._selected_changed_hook()
+
+        self.assertEqual(group.action, "")
+
+    def test_truncation_group_ignores_selected_conditionals_without_abbrev_field(self):
+        group = TruncationGroup([], editable=True, available_attrs=[])
+        group.selected = TerminationConditional("Ar40>10")
+
+        group._selected_changed_hook()
+
+        self.assertEqual(group.abbreviated_count_ratio, 0.0)
 
 
 if __name__ == "__main__":

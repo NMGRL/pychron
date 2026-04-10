@@ -24,7 +24,7 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance, Float
 
 from pychron.envisage.consoleable import Consoleable
-from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
+from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF, FAILED
 
 
 class DataCollector(Consoleable):
@@ -210,7 +210,7 @@ class DataCollector(Consoleable):
     def _iter_hook(self, i):
         return self._iteration(i)
 
-    def _iteration(self, i, detectors=None):
+    def _iteration(self, i: int, detectors=None):
         try:
             data = self._get_data(detectors)
             if not data:
@@ -218,8 +218,7 @@ class DataCollector(Consoleable):
 
             k, s, t, inc = data
         except (AttributeError, TypeError, ValueError) as e:
-            self.debug("failed getting data {}".format(e))
-            self.debug_exception()
+            self._handle_iteration_exception(e)
             return
 
         if k is not None and s is not None:
@@ -228,6 +227,18 @@ class DataCollector(Consoleable):
             self._plot_data(i, x, k, s)
 
         return inc
+
+    def _handle_iteration_exception(self, exc: Exception) -> None:
+        message = "Measurement failed getting data: {}".format(exc)
+        self.err_message = message
+        self.warning(message)
+        self.debug_exception()
+        self.canceled = True
+
+        if self.automated_run is not None:
+            self.automated_run.cancel_run(
+                state=FAILED, do_post_equilibration=False
+            )
 
     def _get_time(self, t):
         if t is None:

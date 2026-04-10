@@ -17,6 +17,8 @@
 
 # =============enthought library imports=======================
 
+from typing import Sequence
+
 from chaco.api import ScatterPlot
 from numpy import inf
 from traits.api import Bool, on_trait_change, Event, Int
@@ -104,8 +106,7 @@ class StackedGraph(Graph):
         c.on_trait_change(self._bounds_changed, "bounds")
         return c
 
-    def new_plot(self, **kw):
-        print(f"[StackedGraph.new_plot] Called with kw={kw}")
+    def new_plot(self, **kw) -> object:
         if "title" in kw:
             if self._has_title:
                 kw.pop("title")
@@ -121,7 +122,6 @@ class StackedGraph(Graph):
             kw["resizable"] = kw.get("resizable", "hv")
 
         p = super(StackedGraph, self).new_plot(**kw)
-        print(f"[StackedGraph.new_plot] Plot created with p.bounds={p.bounds}")
         # p.value_axis.ensure_labels_bounded = True
         # p.value_axis.title_spacing = 50
 
@@ -164,7 +164,7 @@ class StackedGraph(Graph):
 
         return s, _p
 
-    def _bounds_changed(self, bounds):
+    def _bounds_changed(self, bounds: Sequence[float]) -> None:
         """
         vertically resizes the stacked graph.
         the plots are sized equally
@@ -177,49 +177,47 @@ class StackedGraph(Graph):
         if self.vertical_resize:
             self._update_bounds(bounds, self.plotcontainer.components)
 
-    def _update_bounds(self, bounds, comps):
+    def _update_bounds(self, bounds: Sequence[float], comps: Sequence) -> None:
         if self.fixed_bounds:
             return
 
         padding_top = sum([getattr(p, "padding_top") for p in comps])
         padding_bottom = sum([getattr(p, "padding_bottom") for p in comps])
-        #
+        spacing = max(0, len(comps) - 1) * getattr(self.plotcontainer, "spacing", 0)
         pt = (
             self.plotcontainer.padding_top
             + self.plotcontainer.padding_bottom
             + padding_top
             + padding_bottom
+            + spacing
         )
         n = len(self.plotcontainer.components)
-        
-        # Check if any plots have explicit (non-default) heights set
-        # These represent fixed-height aux plots that should not be resized
+
+        # Preserve only plots that are explicitly fixed in the vertical direction.
         explicit_heights = {}
         for i, p in enumerate(self.plotcontainer.components):
-            if len(p.bounds) > 1 and p.bounds[1] > 0:
+            resizable = getattr(p, "resizable", "")
+            if "v" not in resizable and len(p.bounds) > 1 and p.bounds[1] > 0:
                 explicit_heights[i] = p.bounds[1]
-        
+
         if self.equi_stack:
             if explicit_heights:
-                # Some plots have fixed heights - preserve them and let the first plot expand
+                # Preserve fixed-height aux plots and allow the first plot to absorb free space.
                 fixed_height_total = sum(explicit_heights.values())
                 available_height = bounds[1] - pt - fixed_height_total
-                
+
                 if available_height > 1:
-                    # Give remaining space to the first (main) plot
                     if 0 in explicit_heights:
-                        # First plot also has explicit height - keep it fixed
                         pass
                     else:
-                        # Resize first plot to fill remaining space
                         self.plotcontainer.components[0].bounds[1] = available_height
             else:
-                # No explicit heights - use equal sizing
+                plot_height = max(1, (bounds[1] - pt) / max(1, n))
                 for p in self.plotcontainer.components:
-                    p.bounds[1] = (bounds[1] - pt) / n
+                    p.bounds[1] = plot_height
         else:
             try:
-                self.plots[0].bounds[1] = (bounds[1] - pt) / max(1, (n - 1))
+                self.plots[0].bounds[1] = max(1, (bounds[1] - pt) / max(1, (n - 1)))
             except IndexError:
                 pass
 

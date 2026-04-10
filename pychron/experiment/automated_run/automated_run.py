@@ -2730,14 +2730,17 @@ anaylsis_type={}
                 self.warning(
                     "Canceling Run. Intensity from mass spectrometer not changing"
                 )
-
-                try:
-                    self.info("Saving run. Analysis did not complete successfully")
-                    self.save()
-                except BaseException:
-                    self.warning("Failed to save run")
-
-                self.cancel_run(state=FAILED)
+                self._cancel_measurement_on_intensity_failure(
+                    "Intensity from mass spectrometer not changing"
+                )
+                yield None
+            except Exception as e:
+                msg = "Exception getting intensity from mass spectrometer: {}".format(
+                    e
+                )
+                self.warning("Canceling Run. {}".format(msg))
+                self.debug_exception()
+                self._cancel_measurement_on_intensity_failure(msg)
                 yield None
 
             if not k:
@@ -2748,19 +2751,12 @@ anaylsis_type={}
                     )
                 )
                 if cnt >= fcnt:
-                    try:
-                        self.info("Saving run. Analysis did not complete successfully")
-                        self.save()
-                    except BaseException:
-                        self.warning("Failed to save run")
-
                     self.warning(
                         "Canceling Run. Failed getting intensity from mass spectrometer"
                     )
-
-                    # do we need to cancel the experiment or will the subsequent pre run
-                    # checks sufficient to catch spectrometer communication errors.
-                    self.cancel_run(state=FAILED)
+                    self._cancel_measurement_on_intensity_failure(
+                        "Failed getting intensity from mass spectrometer"
+                    )
                     yield None
                 else:
                     yield None, None, None, False
@@ -2772,8 +2768,19 @@ anaylsis_type={}
 
                 self._intensities["tags"] = k
                 self._intensities["signals"] = s
-
                 yield k, s, t, inc
+
+    def _cancel_measurement_on_intensity_failure(self, reason: str) -> None:
+        self.collector.err_message = reason
+
+        try:
+            self.info("Saving run. Analysis did not complete successfully")
+            self.save()
+        except BaseException:
+            self.warning("Failed to save run")
+
+        # A measurement-time spectrometer failure should end the run as FAILED.
+        self.cancel_run(state=FAILED, do_post_equilibration=False)
 
         # return gen()
 
@@ -2888,7 +2895,7 @@ anaylsis_type={}
         check_conditionals,
         color,
         script=None,
-    ):
+    ) -> bool:
         if script is None:
             script = self.measurement_script
 
@@ -2952,14 +2959,15 @@ anaylsis_type={}
             self.cancel_run(state="terminated")
         if m.canceled:
             self.debug("measurement collection canceled")
-            self.cancel_run()
+            if self.spec.state != FAILED:
+                self.cancel_run()
             self.executor_event = {
                 "kind": "cancel",
                 "confirm": False,
                 "err": m.err_message,
             }
 
-        return not m.canceled
+        return not m.canceled and self.spec.state != FAILED
 
     def _get_plot_id_by_ytitle(self, graph, pair, iso=None):
         """

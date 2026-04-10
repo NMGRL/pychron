@@ -547,7 +547,8 @@ class ModificationGroup(ConditionalGroup):
             "use_termination",
             "extraction_str",
         ):
-            setattr(self, a, getattr(self.selected, a))
+            if hasattr(self.selected, a):
+                setattr(self, a, getattr(self.selected, a))
 
     @on_trait_change("action, nskip, use_truncation, use_termination")
     def _update_selected2(self, name, new):
@@ -627,7 +628,8 @@ class TruncationGroup(EConditionalGroup):
 
     def _selected_changed_hook(self):
         for a in ("abbreviated_count_ratio",):
-            setattr(self, a, getattr(self.selected, a))
+            if hasattr(self.selected, a):
+                setattr(self, a, getattr(self.selected, a))
 
     def _get_cnt_grp(self):
         cnt_grp = BorderVGroup(
