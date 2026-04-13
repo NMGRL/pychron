@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `db6aa4bd6`  
-**Generated:** 2026-04-10 01:52 UTC  
-**Compare:** [`295363a641255cf4a17c52786dbea8ae73bdfad4...db6aa4bd6`](../../compare/295363a641255cf4a17c52786dbea8ae73bdfad4...db6aa4bd6)
+**Triggered by commit:** `1b718351e`  
+**Generated:** 2026-04-13 16:51 UTC  
+**Compare:** [`b0de8897f9e7657357a78321b0a8473f65f12852...1b718351e`](../../compare/b0de8897f9e7657357a78321b0a8473f65f12852...1b718351e)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Hardware Compatibility Matrix](#hardware-matrix) | 2 files | ✅ Reviewed |
+| [Installation Guide](#installation-guide) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,49 +16,27 @@
 <summary>Click to expand</summary>
 
 ```
-pychron/experiment/experiment_executor.py
-pychron/experiment/telemetry/device_io.py
-pychron/experiment/telemetry/event.py
-pychron/experiment/telemetry/span.py
-pychron/experiment/telemetry/tests/test_device_io_telemetry.py
-pychron/experiment/tests/test_executor_diagnostics.py
-pychron/hardware/core/communicators/ethernet_communicator.py
-pychron/hardware/core/tests/ethernet_communicator_test.py
+uv.lock
 ```
 
 </details>
 
 ---
 
-## Hardware Compatibility Matrix {#hardware-matrix}
+## Installation Guide {#installation-guide}
 
-**Doc file:** `docs/hardware_compatibility_matrix.md`  
-**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
+**Doc file:** `docs/installation_guide.md`  
+**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
 
 ### Changed Files
 
-- `pychron/hardware/core/communicators/ethernet_communicator.py`
-- `pychron/hardware/core/tests/ethernet_communicator_test.py`
+- `uv.lock`
 
 ### AI Review
 
-## Code Change Summary
+## No Updates Required
 
-The code changes add telemetry and device I/O event recording functionality to the EthernetCommunicator class. This includes importing telemetry modules, adding methods to track communication operations (ask, tell, read, readline), and recording start/end events with metadata like timing, success status, and error information. The changes also include comprehensive type hints for method parameters and return values.
-
-## Documentation Updates Required
-
-- **Section/Topic:** EthernetCommunicator dependencies/imports
-  **Issue:** The Hardware Compatibility Matrix may need to reflect new dependencies on telemetry modules that are now required for the EthernetCommunicator to function properly.
-  **Suggested update:** Add note that EthernetCommunicator now depends on `pychron.experiment.telemetry.device_io` module for I/O event recording functionality.
-
-- **Section/Topic:** EthernetCommunicator configuration fields
-  **Issue:** The telemetry functionality may introduce new optional configuration parameters or behavioral changes that affect how the communicator operates.
-  **Suggested update:** Document that EthernetCommunicator now automatically records device I/O telemetry events when telemetry recording is enabled, which may affect logging and debugging capabilities.
-
-- **Section/Topic:** EthernetCommunicator implementation status
-  **Issue:** If the matrix previously flagged EthernetCommunicator as having partial implementation or missing features, the addition of comprehensive telemetry support represents enhanced functionality.
-  **Suggested update:** Update implementation status to reflect enhanced telemetry and monitoring capabilities for debugging and performance analysis of Ethernet-based device communications.
+The changes shown are routine dependency version updates in the lock file (`uv.lock`) for type stub packages (`types-pyyaml`, `types-requests`, `types-simplejson`). These are automatic updates to typing information packages that don't affect the actual installation process, requirements, or user-facing functionality documented in the Installation Guide. Lock file updates are handled automatically by the package manager and don't require any changes to installation instructions or documentation.
 
 ---
 
