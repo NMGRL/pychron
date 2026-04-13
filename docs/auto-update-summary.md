@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `db6aa4bd6`  
-**Generated:** 2026-04-10 01:52 UTC  
-**Compare:** [`295363a641255cf4a17c52786dbea8ae73bdfad4...db6aa4bd6`](../../compare/295363a641255cf4a17c52786dbea8ae73bdfad4...db6aa4bd6)
+**Triggered by commit:** `b0de8897f`  
+**Generated:** 2026-04-13 16:46 UTC  
+**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Hardware Compatibility Matrix](#hardware-matrix) | 2 files | ✅ Reviewed |
+| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,49 +16,44 @@
 <summary>Click to expand</summary>
 
 ```
-pychron/experiment/experiment_executor.py
-pychron/experiment/telemetry/device_io.py
-pychron/experiment/telemetry/event.py
-pychron/experiment/telemetry/span.py
-pychron/experiment/telemetry/tests/test_device_io_telemetry.py
-pychron/experiment/tests/test_executor_diagnostics.py
-pychron/hardware/core/communicators/ethernet_communicator.py
-pychron/hardware/core/tests/ethernet_communicator_test.py
+.github/workflows/ci.yml
+.github/workflows/dependabot_automerge.yml
+.github/workflows/deploy-docs.yml
+.github/workflows/doc-maintenance.yml
+.github/workflows/wikidocs.yml
+pyproject.toml
+uv.lock
 ```
 
 </details>
 
 ---
 
-## Hardware Compatibility Matrix {#hardware-matrix}
+## Installation Guide {#installation-guide}
 
-**Doc file:** `docs/hardware_compatibility_matrix.md`  
-**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
+**Doc file:** `docs/installation_guide.md`  
+**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
 
 ### Changed Files
 
-- `pychron/hardware/core/communicators/ethernet_communicator.py`
-- `pychron/hardware/core/tests/ethernet_communicator_test.py`
+- `pyproject.toml`
+- `uv.lock`
 
 ### AI Review
 
 ## Code Change Summary
 
-The code changes add telemetry and device I/O event recording functionality to the EthernetCommunicator class. This includes importing telemetry modules, adding methods to track communication operations (ask, tell, read, readline), and recording start/end events with metadata like timing, success status, and error information. The changes also include comprehensive type hints for method parameters and return values.
+The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** EthernetCommunicator dependencies/imports
-  **Issue:** The Hardware Compatibility Matrix may need to reflect new dependencies on telemetry modules that are now required for the EthernetCommunicator to function properly.
-  **Suggested update:** Add note that EthernetCommunicator now depends on `pychron.experiment.telemetry.device_io` module for I/O event recording functionality.
+- **Section/Topic:** Python version requirements / Dependencies section
+  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
+  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
 
-- **Section/Topic:** EthernetCommunicator configuration fields
-  **Issue:** The telemetry functionality may introduce new optional configuration parameters or behavioral changes that affect how the communicator operates.
-  **Suggested update:** Document that EthernetCommunicator now automatically records device I/O telemetry events when telemetry recording is enabled, which may affect logging and debugging capabilities.
-
-- **Section/Topic:** EthernetCommunicator implementation status
-  **Issue:** If the matrix previously flagged EthernetCommunicator as having partial implementation or missing features, the addition of comprehensive telemetry support represents enhanced functionality.
-  **Suggested update:** Update implementation status to reflect enhanced telemetry and monitoring capabilities for debugging and performance analysis of Ethernet-based device communications.
+- **Section/Topic:** Development environment setup (if covered)
+  **Issue:** Development dependency version requirement for mypy is outdated
+  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
 
 ---
 
