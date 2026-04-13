@@ -43,7 +43,7 @@ jobs:
       # 2. Set up Node.js with npm cache keyed to the docs-site lockfile.
       # -----------------------------------------------------------------------
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
