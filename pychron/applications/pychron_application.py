@@ -18,6 +18,8 @@
 import os
 import sys
 from datetime import datetime
+from threading import current_thread, main_thread
+from typing import Optional
 
 from apptools.preferences.preference_binding import bind_preference
 from pyface.image_resource import ImageResource
@@ -25,6 +27,7 @@ from pyface.splash_screen import SplashScreen
 from traits.api import List, Str
 
 from pychron.applications.about_dialog import myAboutDialog
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.resources import splash_icon
 from pychron.envisage.tasks.base_tasks_application import BaseTasksApplication
 from pychron.paths import about_search_path
@@ -61,6 +64,7 @@ class PychronApplication(BaseTasksApplication):
 
     def __init__(self, *args, **kw):
         super(PychronApplication, self).__init__(*args, **kw)
+        self._stop_in_progress = False
 
         bind_preference(self, "environment", "pychron.general.environment")
 
@@ -86,7 +90,12 @@ class PychronApplication(BaseTasksApplication):
         self.report_logger_stats()
         super(PychronApplication, self).exit(**kw)
 
-    def stop(self):
+    def _stop_in_main_thread(self) -> Optional[bool]:
+        if self._stop_in_progress:
+            self.debug("stop already in progress. ignoring duplicate stop request")
+            return True
+
+        self._stop_in_progress = True
         # from pychron.envisage.user_login import set_last_login
         # self.debug('set last login. username={}'.format(globalv.username))
         # set_last_login(globalv.username)
@@ -102,6 +111,18 @@ class PychronApplication(BaseTasksApplication):
         self.debug("-----------------------------------------------------")
 
         return super(BaseTasksApplication, self).stop()
+
+    def stop(self) -> Optional[bool]:
+        if current_thread() is not main_thread():
+            self.debug(
+                "stop requested on non-main thread {}. scheduling shutdown on main thread".format(
+                    current_thread().name
+                )
+            )
+            invoke_in_main_thread(self._stop_in_main_thread)
+            return True
+
+        return self._stop_in_main_thread()
 
     def set_changes(self, changelist):
         self.about_dialog.changes = changelist

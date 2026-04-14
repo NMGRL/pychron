@@ -100,6 +100,12 @@ class _AnimatedPNGEditor(Editor):
     def update_editor(self):
         pass
 
+    def dispose(self):
+        if self._animation is not None:
+            self._animation.stop()
+            self._animation = None
+        super(_AnimatedPNGEditor, self).dispose()
+
     def _state_fired(self):
         if not self._state:
             anim = QtCore.QPropertyAnimation(self.control, "count")

@@ -16,6 +16,7 @@
 import os
 import shutil
 import time
+from typing import Optional
 
 import xlrd
 from pyface.constant import CANCEL, NO
@@ -105,6 +106,8 @@ class ExperimentEditorTask(EditorTask):
     activations = None
     deactivations = None
     _layout_reset = False
+    _adjust_extraction_canvas_split_timer = None
+    _update_info_timer = None
 
     def save_as_current_experiment(self):
         self.debug("save as current experiment")
@@ -213,12 +216,11 @@ class ExperimentEditorTask(EditorTask):
 
         if not self._layout_reset and self.window is not None:
             self.window.reset_layout()
-            self.debug("Canvas split adjustment scheduled in 500ms")
+            self.debug("Extraction canvas split adjustment scheduled in 500ms")
             
-            # Try to restore saved layout state first, otherwise adjust canvas split
+            # Try to restore saved layout state first, otherwise fix the extraction canvas split.
             if not self._restore_window_layout():
-                # If no saved layout, do the initial split adjustment
-                do_after(500, self._adjust_canvas_split)
+                self._schedule_extraction_canvas_split(500)
             
             self._layout_reset = True
 
@@ -246,54 +248,85 @@ class ExperimentEditorTask(EditorTask):
         
         return False
     
-    def _adjust_canvas_split(self):
-        """Adjust the right splitter divider to give the canvas dock pane adequate space."""
-        self.debug("_adjust_canvas_split: Starting adjustment")
+    def _find_host_splitter(self, control) -> tuple[Optional[object], int]:
+        from pyface.qt.QtWidgets import QSplitter
+
+        widget = control
+        while widget is not None:
+            parent = widget.parent()
+            if isinstance(parent, QSplitter):
+                idx = parent.indexOf(widget)
+                if idx != -1:
+                    return parent, idx
+            widget = parent
+
+        return None, -1
+
+    def _adjust_extraction_canvas_split(self) -> None:
+        """Restore the extraction canvas pane size after Qt rebuilds the dock layout.
+
+        Inference: after ``window.reset_layout()``, the Qt splitter does not reliably
+        preserve the ``PaneItem(height=...)`` hints from ``TaskLayout``, so the
+        extraction-line canvas dock can reopen collapsed.
+        """
+        self.debug("_adjust_extraction_canvas_split: Starting adjustment")
         try:
-            # Get the task window's control (the Qt widget)
-            window_control = self.window.control
-            if not window_control:
-                self.debug("_adjust_canvas_split: window_control is None")
+            pane = getattr(self, "canvas_pane", None)
+            if pane is None:
+                self.debug("_adjust_extraction_canvas_split: canvas_pane is None")
                 return
-            
-            # Find the right splitter widget in the hierarchy
-            from pyface.qt.QtWidgets import QSplitter
-            
-            def find_vertical_splitters(widget, splitters=None):
-                """Recursively find all vertical QSplitter widgets."""
-                if splitters is None:
-                    splitters = []
-                if isinstance(widget, QSplitter):
-                    if widget.orientation() == 2:  # Qt.Vertical
-                        splitters.append(widget)
-                for child in widget.findChildren(QSplitter):
-                    if isinstance(child, QSplitter) and child.orientation() == 2 and child not in splitters:
-                        splitters.append(child)
-                return splitters
-            
-            splitters = find_vertical_splitters(window_control)
-            self.debug(f"_adjust_canvas_split: Found {len(splitters)} vertical splitters")
-            
-            # The right splitter should be one with at least 2 children
-            for splitter in splitters:
-                count = splitter.count()
-                height = splitter.height()
-                self.debug(f"_adjust_canvas_split: Splitter with {count} children, height={height}")
-                
-                if count >= 2 and height > 100:
-                    # Set sizes: 50% for tabbed panes, 50% for canvas
-                    sizes = [int(height * 0.5), int(height * 0.5)]
-                    self.debug(f"_adjust_canvas_split: Setting splitter sizes to {sizes}")
-                    splitter.setSizes(sizes)
-                    break
+
+            control = getattr(pane, "control", None)
+            if control is None:
+                self.debug("_adjust_extraction_canvas_split: canvas pane has no control")
+                return
+
+            splitter, idx = self._find_host_splitter(control)
+            if splitter is None or idx < 0:
+                self.debug("_adjust_extraction_canvas_split: no host splitter found")
+                return
+
+            count = splitter.count()
+            if count < 2:
+                self.debug(
+                    "_adjust_extraction_canvas_split: splitter child count too small"
+                )
+                return
+
+            sizes = splitter.sizes()
+            total = max(sum(sizes), splitter.height(), count)
+            canvas_size = int(total * 0.7)
+            other_size = max(1, total - canvas_size)
+
+            if count == 2:
+                new_sizes = (
+                    [canvas_size, other_size]
+                    if idx == 0
+                    else [other_size, canvas_size]
+                )
+            else:
+                new_sizes = [1] * count
+                new_sizes[idx] = canvas_size
+                remaining = max(1, total - canvas_size)
+                for i in range(count):
+                    if i != idx:
+                        new_sizes[i] = max(1, int(remaining / max(1, count - 1)))
+
+            self.debug(
+                "_adjust_extraction_canvas_split: setting splitter sizes to {}".format(
+                    new_sizes
+                )
+            )
+            splitter.setSizes(new_sizes)
         except Exception as e:
-            self.debug(f"_adjust_canvas_split failed: {e}")
+            self.debug(f"_adjust_extraction_canvas_split failed: {e}")
             import traceback
             self.debug(traceback.format_exc())
 
     def prepare_destroy(self):
         # Save the current window layout state before destroying
         self._save_window_layout()
+        self._cancel_delayed_ui_work()
         
         super(ExperimentEditorTask, self).prepare_destroy()
 
@@ -301,6 +334,41 @@ class ExperimentEditorTask(EditorTask):
         # self.manager.executor.notification_manager.parent = None
 
         self._do_callables(self.deactivations)
+
+    def _cancel_timer(self, attr: str) -> None:
+        timer = getattr(self, attr, None)
+        if timer is None:
+            return
+
+        for method_name in ("cancel", "stop"):
+            method = getattr(timer, method_name, None)
+            if method is None:
+                continue
+            try:
+                method()
+            except BaseException as e:
+                self.debug(
+                    "failed canceling delayed ui work {} using {}: {}".format(
+                        attr, method_name, e
+                    )
+                )
+            break
+
+        setattr(self, attr, None)
+
+    def _cancel_delayed_ui_work(self) -> None:
+        self._cancel_timer("_adjust_extraction_canvas_split_timer")
+        self._cancel_timer("_update_info_timer")
+
+    def _schedule_extraction_canvas_split(self, delay: int) -> None:
+        self._cancel_timer("_adjust_extraction_canvas_split_timer")
+        self._adjust_extraction_canvas_split_timer = do_after(
+            delay, self._adjust_extraction_canvas_split
+        )
+
+    def _schedule_update_info(self, delay: int, manager) -> None:
+        self._cancel_timer("_update_info_timer")
+        self._update_info_timer = do_after(delay, manager.update_info)
     
     def _save_window_layout(self):
         """Save the current window layout state to preferences."""
@@ -445,7 +513,7 @@ class ExperimentEditorTask(EditorTask):
 
                 manager.path = path
                 # manager.update_info()
-                do_after(1000, manager.update_info)
+                self._schedule_update_info(1000, manager)
                 return True
 
     def _open_experiment(self, path):

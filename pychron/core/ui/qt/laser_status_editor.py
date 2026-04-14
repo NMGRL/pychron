@@ -72,6 +72,10 @@ class _LaserStatusEditor(Editor):
         else:
             self._stop_animation()
 
+    def dispose(self):
+        self._stop_animation()
+        super(_LaserStatusEditor, self).dispose()
+
     def _create_control(self):
         ctrl = QGraphicsView()
         ctrl.setRenderHints(QPainter.Antialiasing)
@@ -209,8 +213,9 @@ class _LaserStatusEditor(Editor):
         self.animation.start()
 
     def _stop_animation(self):
-        self.animation.setCurrentTime(0)
-        self.animation.stop()
+        if self.animation is not None:
+            self.animation.setCurrentTime(0)
+            self.animation.stop()
 
     def _add_bullet(self, scene, bounding_rect, ex, ey, cx, cy):
         pen = QPen()

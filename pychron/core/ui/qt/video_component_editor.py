@@ -74,6 +74,10 @@ class _VideoComponentEditor(_LaserComponentEditor):
         except RuntimeError:
             pass
 
+    def dispose(self):
+        self.stop()
+        super(_VideoComponentEditor, self).dispose()
+
     def update(self):
         if self.control and self._alive:
             self.value.request_redraw()

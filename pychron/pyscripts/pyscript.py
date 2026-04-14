@@ -808,7 +808,7 @@ class PyScript(Loggable):
         else:
             time.sleep(v)
 
-    def _setup_wait_control(self):
+    def _setup_wait_control(self) -> "WaitControl":
         from pychron.core.wait.wait_control import WaitControl
 
         wd = self._wait_control
@@ -822,9 +822,7 @@ class PyScript(Loggable):
         self._wait_control = wd
         if self.manager:
             try:
-                if wd not in self.manager.wait_group.controls:
-                    self.manager.wait_group.controls.append(wd)
-                self.manager.wait_group.active_control = wd
+                self.manager.wait_group.ensure_control(wd)
             except AttributeError:
                 pass
 

@@ -280,7 +280,7 @@ class PlotPanel(Loggable):
     #     self.selected_graph = g
 
     # private
-    def _new_plot(self, isotope_only=False, **kw):
+    def _new_plot(self, isotope_only: bool = False, **kw):
         # self.isotope_graph.clear()
         # self.sniff_graph.clear()
         # self.baseline_graph.clear()
@@ -292,7 +292,10 @@ class PlotPanel(Loggable):
         ):
             if e:
                 plot = g.new_plot(
-                    xtitle="time (s)", padding_left=70, padding_right=10, **kw
+                    xtitle="time (s)",
+                    padding_left=70,
+                    padding_right=10,
+                    **kw
                 )
 
                 plot.y_axis.title_spacing = 50
@@ -340,7 +343,7 @@ class PlotPanel(Loggable):
     def _get_display_counts(self):
         return "Current: {:03d}".format(self.counts)
 
-    def _graph_factory(self):
+    def _graph_factory(self) -> StackedRegressionGraph:
         return StackedRegressionGraph(
             container_dict=dict(
                 padding=5, bgcolor="gray", stack_order=self.stack_order, spacing=5
@@ -391,17 +394,17 @@ class PlotPanel(Loggable):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _peak_center_graph_default(self):
+    def _peak_center_graph_default(self) -> Graph:
         g = Graph()
         g.page_name = "Peak Center"
         return g
 
-    def _isotope_graph_default(self):
+    def _isotope_graph_default(self) -> StackedRegressionGraph:
         g = self._graph_factory()
         g.page_name = "Ar"
         return g
 
-    def _sniff_graph_default(self):
+    def _sniff_graph_default(self) -> StackedGraph:
         g = StackedGraph(
             container_dict=dict(
                 padding=5, bgcolor="gray", stack_order=self.stack_order, spacing=5
@@ -413,7 +416,7 @@ class PlotPanel(Loggable):
         g.page_name = "Equil."
         return g
 
-    def _baseline_graph_default(self):
+    def _baseline_graph_default(self) -> StackedRegressionGraph:
         g = self._graph_factory()
         g.page_name = "Baselines"
         return g

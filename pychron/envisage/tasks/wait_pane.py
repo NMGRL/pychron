@@ -59,7 +59,7 @@ class WaitPane(TraitsDockPane):
                     weight="bold",
                     border_style="2px solid orange",
                     border_radius="5px",
-                    width=400,
+                    width=450,
                 ),
                 HGroup(
                     Spring(width=-5, springy=False),

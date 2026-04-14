@@ -19,7 +19,7 @@ import os
 import time
 from socket import gethostbyname, gethostname, gaierror
 from threading import Thread
-from typing import Optional
+from typing import Any as TypingAny, Optional
 
 # =============enthought library imports=======================
 from apptools.preferences.preference_binding import bind_preference
@@ -134,6 +134,8 @@ class ExtractionLineManager(Manager, Consoleable):
     _active = False
     _update_status_flag = None
     _monitoring_valve_status = False
+    _hardware_update_timer = None
+    _initial_canvas_sync_timer = None
 
     canvas_editor = Instance(CanvasEditor, ())
     logging_level = Enum(LOG_LEVEL_NAMES)
@@ -169,6 +171,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.monitor:
             self.monitor.stop()
         self._active = False
+        self._cancel_delayed_updates()
         self._deactivate_hook()
 
     def bind_preferences(self):
@@ -892,7 +895,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.switch_manager.load_valve_lock_states(force=True)
             self.switch_manager.load_valve_owners()
 
-        do_after(0, self._sync_initial_canvas_state)
+        self._schedule_initial_canvas_sync(0)
 
         return c
 
@@ -974,7 +977,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 man.start_scans()
 
         if self.switch_manager and self.use_hardware_update:
-            do_after(1000, self._update)
+            self._schedule_hardware_update(1000)
 
     def _update(self):
         if self.use_hardware_update and self._active:
@@ -991,7 +994,53 @@ class ExtractionLineManager(Manager, Consoleable):
             if rc:
                 self.refresh_canvas()
 
-            do_after(self.hardware_update_period * 1000, self._update)
+            self._schedule_hardware_update(self.hardware_update_period * 1000)
+
+    def _cancel_delayed_updates(self) -> None:
+        for attr in ("_hardware_update_timer", "_initial_canvas_sync_timer"):
+            timer = getattr(self, attr, None)
+            if timer is None:
+                continue
+
+            for method_name in ("cancel", "stop"):
+                method = getattr(timer, method_name, None)
+                if method is None:
+                    continue
+                try:
+                    method()
+                except BaseException as e:
+                    self.debug(
+                        "failed canceling delayed update {} using {}: {}".format(
+                            attr, method_name, e
+                        )
+                    )
+                break
+
+            setattr(self, attr, None)
+
+    def _schedule_do_after(
+        self, attr: str, delay: TypingAny, func: TypingAny
+    ) -> TypingAny:
+        timer = getattr(self, attr, None)
+        if timer is not None:
+            cancel = getattr(timer, "cancel", None)
+            if cancel is not None:
+                try:
+                    cancel()
+                except BaseException:
+                    pass
+
+        timer = do_after(delay, func)
+        setattr(self, attr, timer)
+        return timer
+
+    def _schedule_hardware_update(self, delay: TypingAny) -> None:
+        self._schedule_do_after("_hardware_update_timer", delay, self._update)
+
+    def _schedule_initial_canvas_sync(self, delay: TypingAny) -> None:
+        self._schedule_do_after(
+            "_initial_canvas_sync_timer", delay, self._sync_initial_canvas_state
+        )
 
     def _deactivate_hook(self):
         pass
@@ -1269,7 +1318,9 @@ class ExtractionLineManager(Manager, Consoleable):
     @on_trait_change("use_hardware_update")
     def _update_use_hardware_update(self):
         if self.use_hardware_update:
-            do_after(1000, self._update)
+            self._schedule_hardware_update(1000)
+        else:
+            self._cancel_delayed_updates()
 
     # @on_trait_change('switch_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
@@ -1277,9 +1328,10 @@ class ExtractionLineManager(Manager, Consoleable):
 
     @on_trait_change("use_network,network:inherit_state")
     def _sync_initial_canvas_state(self) -> None:
+        self._initial_canvas_sync_timer = None
         for c in self.canvases:
             if getattr(c.canvas2D, "control", None) is None:
-                do_after(100, self._sync_initial_canvas_state)
+                self._schedule_initial_canvas_sync(100)
                 return
 
         for c in self.canvases:

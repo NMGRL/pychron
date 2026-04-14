@@ -22,7 +22,7 @@ from contextvars import copy_context
 from datetime import datetime
 from operator import itemgetter
 from queue import Queue, Empty
-from threading import Thread, Lock, current_thread, Event as TEvent
+from threading import Thread, Lock, current_thread, main_thread, Event as TEvent
 from typing import Any, Callable, Optional
 
 from pyface.constant import CANCEL, YES, NO
@@ -340,11 +340,38 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
             )
 
+    def _set_ui_traits(self, wait: bool = False, **traits: Any) -> None:
+        if not traits:
+            return
+
+        if current_thread() is main_thread():
+            self.trait_set(**traits)
+            return
+
+        if wait:
+            done = TEvent()
+
+            def runner() -> None:
+                try:
+                    self.trait_set(**traits)
+                finally:
+                    done.set()
+
+            invoke_in_main_thread(runner)
+            done.wait()
+        else:
+            invoke_in_main_thread(self.trait_set, **traits)
+
+    def _set_ui_event(self, name: str, value: Any = True) -> None:
+        self._set_ui_traits(**{name: value})
+
     def _sync_compatibility_state(self) -> None:
-        self.alive = self._controller.is_alive
-        self.measuring = self._controller.measuring
-        self.extracting = self._controller.extracting
-        self.end_at_run_completion = self._controller.end_at_run_completion
+        self._set_ui_traits(
+            alive=self._controller.is_alive,
+            measuring=self._controller.measuring,
+            extracting=self._controller.extracting,
+            end_at_run_completion=self._controller.end_at_run_completion,
+        )
 
     def _set_executor_terminal_result(self, result: str, reason: str | None = None) -> None:
         self._controller.finalize_with_result(result, reason=reason)
@@ -1342,7 +1369,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._controller.run_failure(reason="failed to make run")
                     break
 
-                self.wait_group.active_control.page_name = run.runid
+                self.wait_group.set_active_page_name(run.runid)
                 run.is_first = is_first_flag
 
                 delay_after_previous_analysis = run.spec.get_delay_after(
@@ -1671,7 +1698,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 experiment_type=str(self.experiment_type),
             ):
                 if action == "set_run_completed":
-                    self.run_completed = run
+                    self._set_ui_event("run_completed", run)
                 elif action == "remove_backup":
                     remove_backup(run.uuid)
                 elif action == "post_run_check":
@@ -1698,7 +1725,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     run.spec.uage = run.isotope_group.uage
                     run.spec.k39 = run.isotope_group.get_computed_value("k39")
                 elif action == "publish_autoplot":
-                    self.autoplot_event = run
+                    self._set_ui_event("autoplot_event", run)
                 elif action == "pop_wait_group":
                     self.wait_group.pop()
                 elif action == "finish_stats_run":
@@ -1793,7 +1820,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         #         self._prev_blanks[run.spec.analysis_type] = (run.spec.runid, pb)
         #         self._prev_blanks['blank'] = (run.spec.runid, pb)
 
-        do_after(1000, run.teardown)
+        invoke_in_main_thread(do_after, 1000, run.teardown)
         self._mark_progress("run.overlap_join.end", run=run, elapsed_s=time.time() - started_at)
 
     def _abort_run(self):
@@ -1949,7 +1976,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self.conditionals_view = v
 
-            self.show_conditionals_event = True
+            self._set_ui_event("show_conditionals_event")
             # self._close_cv()
 
             # self._cv_info = open_view(v, kind=kind)
@@ -2036,7 +2063,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.experiment_queue.name,
                     self._get_run_subject_id(ai),
                 )
-                self.extracting = True
+                self._set_ui_traits(extracting=True)
                 if not ai.do_extraction(syn_extractor):
                     self._controller.complete_run_extraction(
                         self._get_run_subject_id(ai), failed=True, reason="Extraction Failed"
@@ -2059,7 +2086,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             else:
                 ret = ai.is_alive()
 
-            self.extracting = False
+            self._set_ui_traits(extracting=False)
             self.experiment_status.reset()
             self.extracting_run = None
             self._mark_progress("run.extraction.exit", run=ai, extra={"completed": ret})
@@ -2109,7 +2136,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
                 # only set to measuring (e.g switch to iso evo pane) if
                 # automated run has a measurement_script
-                self.measuring = True
+                self._set_ui_traits(measuring=True)
 
                 self._mark_progress("run.measurement.script.enter", run=ai)
                 if not ai.do_measurement(**measurement_kwargs):
@@ -2135,7 +2162,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             else:
                 ret = ai.is_alive()
 
-            self.measuring = False
+            self._set_ui_traits(measuring=False)
             self._mark_progress("run.measurement.exit", run=ai, extra={"completed": ret})
             return ret
 
@@ -3259,7 +3286,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._do_action(ci)
 
                     if self._cv_info:
-                        do_after(2000, self._cv_info.control.close)
+                        invoke_in_main_thread(
+                            do_after, 2000, self._cv_info.control.close
+                        )
 
                     return True
 

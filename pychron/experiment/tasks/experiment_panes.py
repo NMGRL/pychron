@@ -799,7 +799,7 @@ class IsotopeEvolutionPane(TraitsDockPane):
     def traits_view(self):
         v = View(
             VSplit(
-                UItem("object.plot_panel.graph_container", style="custom", height=0.75),
+                UItem("object.plot_panel.graph_container", style="custom", height=0.8),
                 VGroup(
                     HGroup(
                         Spring(springy=False, width=-5),
@@ -840,7 +840,7 @@ class IsotopeEvolutionPane(TraitsDockPane):
                         Spring(springy=False, width=-5),
                     ),
                     UItem(
-                        "object.plot_panel.analysis_view", style="custom", height=0.25
+                        "object.plot_panel.analysis_view", style="custom", height=0.2
                     ),
                 ),
             )

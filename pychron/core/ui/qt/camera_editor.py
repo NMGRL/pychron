@@ -41,6 +41,8 @@ class _CameraEditor(Editor):
     def dispose(self):
         if self.timer:
             self.timer.stop()
+            self.timer = None
+        super(_CameraEditor, self).dispose()
 
     def _setup_loop(self):
         # if self.value is not None:

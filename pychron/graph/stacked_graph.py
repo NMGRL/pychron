@@ -44,6 +44,8 @@ class StackedGraph(Graph):
     _has_title = False
     # padding_bottom = 40
     fixed_bounds = Bool(False)
+    max_top_padding = Int(10)
+    max_bottom_padding = Int(40)
 
     metadata_updated = Event
     vertical_resize = Bool(True)
@@ -107,6 +109,7 @@ class StackedGraph(Graph):
         return c
 
     def new_plot(self, **kw) -> object:
+        has_explicit_bounds = "bounds" in kw
         if "title" in kw:
             if self._has_title:
                 kw.pop("title")
@@ -122,6 +125,7 @@ class StackedGraph(Graph):
             kw["resizable"] = kw.get("resizable", "hv")
 
         p = super(StackedGraph, self).new_plot(**kw)
+        p._explicit_vertical_bounds = has_explicit_bounds
         # p.value_axis.ensure_labels_bounded = True
         # p.value_axis.title_spacing = 50
 
@@ -140,9 +144,9 @@ class StackedGraph(Graph):
         pc = self.plotcontainer
         n = len(pc.components)
         bottom = pc.stack_order == "bottom_to_top"
-        comps = pc.components
+        comps = list(pc.components)
         if not bottom:
-            comps = reversed(comps)
+            comps = list(reversed(comps))
         if n > 1:
             for i, pi in enumerate(comps):
                 if i < n - 1:
@@ -150,9 +154,14 @@ class StackedGraph(Graph):
 
                 if i == 0:
                     pi.index_axis.visible = True
+                    pi.padding_bottom = min(
+                        pi.padding_bottom, self.max_bottom_padding
+                    )
                 else:
                     pi.index_axis.visible = False
                     pi.padding_bottom = 0
+
+            comps[-1].padding_top = min(comps[-1].padding_top, self.max_top_padding)
 
     def new_series(self, *args, **kw):
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
@@ -197,7 +206,12 @@ class StackedGraph(Graph):
         explicit_heights = {}
         for i, p in enumerate(self.plotcontainer.components):
             resizable = getattr(p, "resizable", "")
-            if "v" not in resizable and len(p.bounds) > 1 and p.bounds[1] > 0:
+            if (
+                getattr(p, "_explicit_vertical_bounds", False)
+                and "v" not in resizable
+                and len(p.bounds) > 1
+                and p.bounds[1] > 0
+            ):
                 explicit_heights[i] = p.bounds[1]
 
         if self.equi_stack:
