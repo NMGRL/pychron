@@ -20,7 +20,7 @@ This module provides executor integration for the watchdog system, enabling:
 - Pre-phase device health verification via DeviceQuorumChecker
 - Service health monitoring for DVC, database, dashboard via ServiceQuorumChecker
 - Automatic initialization of heartbeat instances
-- Graceful degradation when health checks fail (logs warnings but continues)
+- Graceful degradation for degraded health and fail-stop on unavailable devices
 
 Usage:
     executor_watchdog = ExecutorWatchdogIntegration(executor)
@@ -32,13 +32,14 @@ Design:
     - Non-invasive: All watchdog logic is external to ExperimentExecutor
     - Optional: Only active when PYCHRON_WATCHDOG_ENABLED=true
     - Callback-based: Hooks into executor via public methods
-    - Graceful: Failures log warnings but don't block execution
+    - Graceful until unavailable: degraded devices warn, unavailable devices halt execution
 """
 
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, Optional, Any, Tuple
 import time
 from pychron.globals import globalv
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.hardware.core.watchdog import HeartbeatState
 
 
 class ExecutorWatchdogIntegration:
@@ -158,8 +159,8 @@ class ExecutorWatchdogIntegration:
     ) -> Tuple[bool, str]:
         """Check device health before experiment phase.
 
-        Verifies that required devices for the phase are healthy.
-        Logs warnings on failure but continues gracefully.
+        Verifies that required devices for the phase are healthy enough to continue.
+        Degraded devices warn. Unavailable devices fail the phase and should stop execution.
         Emits telemetry event for monitoring.
 
         Args:
@@ -167,7 +168,7 @@ class ExecutorWatchdogIntegration:
             devices: Dict mapping device name to device object (uses executor defaults if None)
 
         Returns:
-            (passed: bool, status_msg: str) - Always returns (True, msg) for graceful degradation
+            Tuple of (should_continue, status_msg).
         """
         if not self.enabled:
             return True, "Device health check disabled"
@@ -176,7 +177,25 @@ class ExecutorWatchdogIntegration:
             devices = self._get_default_devices()
 
         try:
-            passed, msg = self.device_quorum_checker.verify_phase_quorum(phase_name, devices)
+            phase_status = self.device_quorum_checker.get_phase_status(phase_name, devices)
+            device_statuses = phase_status.get("device_statuses", {})
+            unavailable = [
+                device_name
+                for device_name, state in device_statuses.items()
+                if state == HeartbeatState.UNAVAILABLE.value
+            ]
+            degraded = [
+                device_name
+                for device_name, state in device_statuses.items()
+                if state in (HeartbeatState.DEGRADED.value, HeartbeatState.RECOVERING.value)
+            ]
+            passed = not unavailable
+            msg = self._format_device_health_message(
+                phase_name,
+                unavailable=unavailable,
+                degraded=degraded,
+                device_statuses=device_statuses,
+            )
 
             # Emit telemetry event for device health check
             if self.recorder:
@@ -185,9 +204,12 @@ class ExecutorWatchdogIntegration:
             # Record Prometheus metrics
             self._record_device_health_metrics(phase_name, passed)
 
-            if not passed:
+            if unavailable:
                 self.logger.warning(f"Device health check failed for {phase_name}: {msg}")
-                # Graceful degradation: log warning but continue execution
+                return False, msg
+
+            if degraded:
+                self.logger.warning(f"Device health degraded for {phase_name}: {msg}")
             return True, msg
         except Exception as e:
             self.logger.warning(f"Error during device health check for {phase_name}: {e}")
@@ -199,7 +221,7 @@ class ExecutorWatchdogIntegration:
             # Record Prometheus metrics
             self._record_device_health_metrics(phase_name, False)
 
-            # Graceful degradation: continue on error
+            # Fail open on instrumentation errors; real device heartbeat failures still surface.
             return True, f"Device health check error: {str(e)}"
 
     def check_phase_service_health(
@@ -373,14 +395,26 @@ class ExecutorWatchdogIntegration:
         """
         devices = {}
 
-        if self.executor.spectrometer_manager:
-            devices["spectrometer"] = self.executor.spectrometer_manager
+        spectrometer_device = self._resolve_health_device(self.executor.spectrometer_manager)
+        if spectrometer_device:
+            devices["spectrometer"] = spectrometer_device
+            devices["detector"] = spectrometer_device
+            devices["MS"] = spectrometer_device
 
-        if self.executor.extraction_line_manager:
-            devices["extraction_line"] = self.executor.extraction_line_manager
+        extraction_device = self._resolve_health_device(self.executor.extraction_line_manager)
+        if extraction_device:
+            devices["extraction_line"] = extraction_device
+            devices["EL"] = extraction_device
 
-        if self.executor.ion_optics_manager:
-            devices["ion_optics"] = self.executor.ion_optics_manager
+        pump_device = self._resolve_health_device(
+            getattr(self.executor.extraction_line_manager, "pump_manager", None)
+        )
+        if pump_device:
+            devices["pump"] = pump_device
+
+        ion_optics_device = self._resolve_health_device(self.executor.ion_optics_manager)
+        if ion_optics_device:
+            devices["ion_optics"] = ion_optics_device
 
         return devices
 
@@ -474,6 +508,61 @@ class ExecutorWatchdogIntegration:
                 )
         except Exception:
             pass
+
+    def _format_device_health_message(
+        self,
+        phase_name: str,
+        *,
+        unavailable: list[str],
+        degraded: list[str],
+        device_statuses: Dict[str, str],
+    ) -> str:
+        if unavailable:
+            devices = ", ".join(unavailable)
+            return f"Communication failure: {devices} unavailable during {phase_name}"
+        if degraded:
+            devices = ", ".join(degraded)
+            return f"Device health degraded during {phase_name}: {devices}"
+        if device_statuses:
+            return f"Device health healthy for {phase_name}"
+        return f"No device health requirements for {phase_name}"
+
+    def _resolve_health_device(
+        self,
+        obj: Any,
+        *,
+        _depth: int = 0,
+        _visited: Optional[set[int]] = None,
+    ) -> Any:
+        if obj is None or _depth > 3:
+            return None
+
+        if _visited is None:
+            _visited = set()
+
+        obj_id = id(obj)
+        if obj_id in _visited:
+            return None
+        _visited.add(obj_id)
+
+        if hasattr(obj, "get_device_health"):
+            return obj
+
+        for attr in (
+            "microcontroller",
+            "controller",
+            "spectrometer",
+            "laser_controller",
+            "temperature_controller",
+            "switch_manager",
+            "pump_manager",
+        ):
+            candidate = getattr(obj, attr, None)
+            resolved = self._resolve_health_device(candidate, _depth=_depth + 1, _visited=_visited)
+            if resolved is not None:
+                return resolved
+
+        return None
 
     @staticmethod
     def _get_device_state(device: object) -> str:

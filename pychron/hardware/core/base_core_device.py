@@ -26,6 +26,7 @@ import inspect
 # =============standard library imports ========================
 import random
 import time
+from typing import Any, Optional
 
 from traits.api import provides
 
@@ -112,6 +113,32 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         if self._heartbeat:
             self._heartbeat.reset()
 
+    def _wire_communicator_health(self) -> None:
+        """Attach communicator callbacks to the device heartbeat."""
+        comm = self.communicator
+        if comm is None:
+            return
+
+        setattr(comm, "health_success_callback", self._handle_communication_success)
+        setattr(comm, "health_failure_callback", self._handle_communication_failure)
+        setattr(comm, "health_device_name", self.name or "unknown_device")
+
+    def _handle_communication_success(self, operation: str, **_: Any) -> None:
+        """Record a successful communication on the device heartbeat."""
+        if self._heartbeat:
+            self._heartbeat.record_success()
+
+    def _handle_communication_failure(
+        self,
+        operation: str,
+        error: Optional[str] = None,
+        **_: Any,
+    ) -> None:
+        """Record a failed communication on the device heartbeat."""
+        if self._heartbeat:
+            exc = Exception(error) if error else None
+            self._heartbeat.record_failure(exc=exc)
+
     def test_connection(self):
         comm = self.require_communicator("test connection")
         if comm:
@@ -122,7 +149,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         if comm:
             comm.simulation = tf
 
-    def load(self, *args, **kw):
+    def load(self, *args: Any, **kw: Any) -> Any:
         """
         Load a configuration file.
         Get Communications info to make a new communicator
@@ -155,7 +182,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 self._loaded = True
             return r
 
-    def open(self, *args, **kw):
+    def open(self, *args: Any, **kw: Any) -> Any:
         self.debug("open device")
         return HasCommunicator.open(self, **kw)
 
@@ -250,10 +277,11 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     #                                   id_query=self.id_query,
     #                                   id_response=self.id_response
     #                                )
-    def post_initialize(self, *args, **kw):
+    def post_initialize(self, *args: Any, **kw: Any) -> None:
         # Initialize heartbeat if watchdog enabled
         if globalv.watchdog_enabled:
             self._heartbeat = DeviceHeartbeat(self.name or "unknown_device")
+        self._wire_communicator_health()
 
         if self.graph_ytitle:
             self.graph.set_y_title(self.graph_ytitle)

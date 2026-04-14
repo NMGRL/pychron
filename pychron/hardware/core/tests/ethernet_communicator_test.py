@@ -121,6 +121,41 @@ class EthernetCommunicatorTestCase(unittest.TestCase):
         self.assertEqual(events[1]["payload"]["stage"], "end")
         self.assertEqual(events[1]["payload"]["success"], True)
 
+    def test_repeated_failures_call_health_failure_callback(self):
+        communicator = EthernetCommunicator(name="spec_comm")
+        failures = []
+        communicator.health_failure_callback = lambda operation, **kw: failures.append(
+            (operation, kw.get("error"))
+        )
+        communicator._ask = lambda *args, **kw: None
+        communicator.kind = "TCP"
+        communicator.host = "127.0.0.1"
+        communicator.port = 8000
+        communicator.simulation = False
+        communicator.write_terminator = "\r"
+        communicator.log_response = lambda *args, **kw: None
+
+        communicator.ask("GetData", verbose=False)
+
+        self.assertEqual(failures[-1][0], "ask")
+        self.assertIn("Connection refused", failures[-1][1])
+
+    def test_successful_write_calls_health_success_callback(self):
+        communicator = EthernetCommunicator(name="spec_comm")
+        successes = []
+        communicator.health_success_callback = lambda operation, **kw: successes.append(operation)
+        communicator.kind = "TCP"
+        communicator.host = "127.0.0.1"
+        communicator.port = 8000
+        communicator.handler = TCPHandler()
+        communicator.handler.sock = _FakeSocket()
+        communicator.handler.address = ("127.0.0.1", 8000)
+        communicator.log_tell = lambda *args, **kw: None
+
+        communicator.tell("PING", verbose=False)
+
+        self.assertEqual(successes[-1], "tell")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1648,15 +1648,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._do_event(events.SAVE_RUN, run=run)
             self._controller.start_run_save(run_id, queue_name=self.experiment_queue.name)
 
-            # Phase 6: Watchdog service health checks before save
-            if self.watchdog and self.watchdog.enabled:
-                try:
-                    _, msg = self.watchdog.check_phase_service_health("save")
-                    if msg and "failed" in msg.lower():
-                        self.warning(f"Service health check before save: {msg}")
-                except Exception as e:
-                    self.debug(f"Watchdog health check error before save (continuing): {e}")
-                    self.debug_exception()
+            if not self._check_device_health_or_fail("measurement", run=run, context="before save"):
+                return
+            self._warn_on_service_health("save")
 
             if self._controller.should_save_run(run.spec.state, self.save_all_runs):
                 kw = {}
@@ -2024,18 +2018,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._failed_execution_step("Pre Extraction Check Failed")
                 return
 
-            # Phase 6: Watchdog device and service health checks
-            if self.watchdog and self.watchdog.enabled:
-                try:
-                    _, msg = self.watchdog.check_phase_device_health("extraction")
-                    if msg and "failed" in msg.lower():
-                        self.warning(f"Device health check: {msg}")
-                    _, msg = self.watchdog.check_phase_service_health("extraction")
-                    if msg and "failed" in msg.lower():
-                        self.warning(f"Service health check: {msg}")
-                except Exception as e:
-                    self.debug(f"Watchdog health check error (continuing): {e}")
-                    self.debug_exception()
+            if not self._check_device_health_or_fail("extraction", run=ai):
+                self._mark_progress("run.extraction.exit", run=ai, extra={"completed": False})
+                return False
+            self._warn_on_service_health("extraction")
 
             # make sure status monitor is running a
             self.extraction_line_manager.setup_status_monitor()
@@ -2096,18 +2082,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._failed_execution_step("Pre Measurement Check Failed")
                 return
 
-            # Phase 6: Watchdog device and service health checks
-            if self.watchdog and self.watchdog.enabled:
-                try:
-                    _, msg = self.watchdog.check_phase_device_health("measurement")
-                    if msg and "failed" in msg.lower():
-                        self.warning(f"Device health check: {msg}")
-                    _, msg = self.watchdog.check_phase_service_health("measurement")
-                    if msg and "failed" in msg.lower():
-                        self.warning(f"Service health check: {msg}")
-                except Exception as e:
-                    self.debug(f"Watchdog health check error (continuing): {e}")
-                    self.debug_exception()
+            if not self._check_device_health_or_fail("measurement", run=ai):
+                self._mark_progress("run.measurement.exit", run=ai, extra={"completed": False})
+                return False
+            self._warn_on_service_health("measurement")
 
             if self.send_config_before_run:
                 self.info("Sending spectrometer configuration")
@@ -2182,7 +2160,57 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._mark_progress("run.post_measurement.exit", run=ai, extra={"completed": False})
         return None
 
-    def _failed_execution_step(self, msg):
+    def _check_device_health_or_fail(
+        self,
+        phase_name: str,
+        run: Any | None = None,
+        context: str | None = None,
+    ) -> bool:
+        if not (self.watchdog and self.watchdog.enabled):
+            return True
+
+        try:
+            passed, msg = self.watchdog.check_phase_device_health(phase_name)
+            if not passed:
+                prefix = context or phase_name
+                return self._handle_device_communication_failure(f"{msg} ({prefix})", run=run)
+            if msg and "degraded" in msg.lower():
+                self.warning(f"Device health check: {msg}")
+        except Exception as e:
+            self.debug(f"Watchdog device health check error (continuing): {e}")
+            self.debug_exception()
+
+        return True
+
+    def _warn_on_service_health(self, phase_name: str) -> None:
+        if not (self.watchdog and self.watchdog.enabled):
+            return
+
+        try:
+            _, msg = self.watchdog.check_phase_service_health(phase_name)
+            if msg and "failed" in msg.lower():
+                self.warning(f"Service health check before {phase_name}: {msg}")
+        except Exception as e:
+            self.debug(f"Watchdog service health check error before {phase_name} (continuing): {e}")
+            self.debug_exception()
+
+    def _handle_device_communication_failure(
+        self,
+        msg: str,
+        run: Any | None = None,
+    ) -> bool:
+        self.warning(msg)
+        self._err_message = msg
+        self.set_extract_state(False)
+        self.wait_group.stop()
+        if run is not None:
+            run.spec.transition("fail", force=True, source="device_communication_failure")
+            self._transition_run_failure(run, msg)
+        self._controller.run_failure(reason=msg)
+        self.alive = False
+        return False
+
+    def _failed_execution_step(self, msg: str) -> bool:
         self.debug("failed execution step {}".format(msg))
         if not self._should_cancel_execution():
             self.heading(msg)

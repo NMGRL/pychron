@@ -123,6 +123,12 @@ class ExecutorControllerTestCase(unittest.TestCase):
 
     def test_queue_terminal_result_comes_from_controller_state(self):
         self.assertEqual(self.controller.queue_terminal_result(), "completed")
+        self.assertEqual(
+            self.controller.queue_terminal_result(
+                "Communication failure: spectrometer unavailable"
+            ),
+            "failed",
+        )
         self.assertTrue(self.controller.should_save_run("success", False))
         self.assertTrue(self.controller.should_save_run("truncated", False))
         self.assertFalse(self.controller.should_save_run("failed", False))

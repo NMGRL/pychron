@@ -131,31 +131,28 @@ class TestExecutorWatchdogIntegration(unittest.TestCase):
 
             # Mock the quorum checker
             watchdog._device_quorum_checker = Mock()
-            watchdog._device_quorum_checker.verify_phase_quorum.return_value = (
-                True,
-                "Devices healthy",
-            )
+            watchdog._device_quorum_checker.get_phase_status.return_value = {
+                "device_statuses": {"spectrometer": "healthy"},
+            }
 
             passed, msg = watchdog.check_phase_device_health("extraction")
             self.assertTrue(passed)
 
-    def test_check_phase_device_health_failure_graceful(self):
-        """Test device health check failure is graceful."""
+    def test_check_phase_device_health_failure_when_unavailable(self):
+        """Unavailable device should fail the health check."""
         with patch("pychron.experiment.executor_watchdog_integration.globalv") as mock_globalv:
             mock_globalv.watchdog_enabled = True
             watchdog = ExecutorWatchdogIntegration(self.executor)
 
-            # Mock the quorum checker to return failure
+            # Mock the quorum checker to return unavailable device
             watchdog._device_quorum_checker = Mock()
-            watchdog._device_quorum_checker.verify_phase_quorum.return_value = (
-                False,
-                "Device health check failed",
-            )
+            watchdog._device_quorum_checker.get_phase_status.return_value = {
+                "device_statuses": {"spectrometer": "unavailable"},
+            }
 
-            # Should still return True (graceful degradation)
             passed, msg = watchdog.check_phase_device_health("extraction")
-            self.assertTrue(passed)
-            self.assertIn("failed", msg.lower())
+            self.assertFalse(passed)
+            self.assertIn("unavailable", msg.lower())
 
     def test_check_phase_service_health_disabled(self):
         """Test service health check when watchdog disabled."""
@@ -220,7 +217,10 @@ class TestExecutorWatchdogIntegration(unittest.TestCase):
 
             # Heartbeat should record success
             hb = watchdog.service_heartbeats["dvc"]
-            self.assertEqual(hb._successes, 1)
+            stats = hb.get_stats()
+            self.assertEqual(stats["soft_failures"], 0)
+            self.assertEqual(stats["hard_failures"], 0)
+            self.assertIsNone(stats["last_error"])
 
     def test_record_service_operation_failure(self):
         """Test recording failed service operation."""
@@ -339,18 +339,14 @@ class TestExecutorWatchdogPropertyAccess(unittest.TestCase):
         self.executor.datahub.mainstore = Mock()
         self.executor.datahub.stores = {}
 
-    def test_watchdog_property_returns_same_instance(self):
-        """Test watchdog property returns same instance on multiple accesses."""
+    def test_resolve_health_device_returns_none_for_unknown(self):
+        """Unknown objects should not resolve to heartbeat-capable devices."""
         with patch("pychron.experiment.executor_watchdog_integration.globalv") as mock_globalv:
             mock_globalv.watchdog_enabled = True
             watchdog = ExecutorWatchdogIntegration(self.executor)
-            watchdog._watchdog_integration = Mock()
+            device = object()
 
-            result1 = watchdog.watchdog
-            result2 = watchdog.watchdog
-
-            # Should be the same instance (identity check)
-            # Note: This test assumes watchdog property exists, which we may need to add
+            self.assertIsNone(watchdog._resolve_health_device(device))
 
     def test_check_with_custom_devices(self):
         """Test health check with custom device mapping."""
@@ -358,16 +354,14 @@ class TestExecutorWatchdogPropertyAccess(unittest.TestCase):
             mock_globalv.watchdog_enabled = True
             watchdog = ExecutorWatchdogIntegration(self.executor)
             watchdog._device_quorum_checker = Mock()
-            watchdog._device_quorum_checker.verify_phase_quorum.return_value = (
-                True,
-                "All good",
-            )
+            watchdog._device_quorum_checker.get_phase_status.return_value = {
+                "device_statuses": {"custom_device": "healthy"},
+            }
 
             custom_devices = {"custom_device": Mock()}
             passed, msg = watchdog.check_phase_device_health("extraction", devices=custom_devices)
 
-            # Verify custom devices were used
-            watchdog._device_quorum_checker.verify_phase_quorum.assert_called_once_with(
+            watchdog._device_quorum_checker.get_phase_status.assert_called_once_with(
                 "extraction", custom_devices
             )
 

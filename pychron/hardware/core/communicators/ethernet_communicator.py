@@ -393,7 +393,25 @@ class EthernetCommunicator(Communicator):
             flush=flush,
         )
 
-    def test_connection(self):
+    def _notify_health(
+        self,
+        success: bool,
+        operation: str,
+        *,
+        error: Optional[str] = None,
+        duration_seconds: Optional[float] = None,
+    ) -> None:
+        callback_name = "health_success_callback" if success else "health_failure_callback"
+        callback = getattr(self, callback_name, None)
+        if callable(callback):
+            callback(
+                operation,
+                error=error,
+                duration_seconds=duration_seconds,
+                device_name=getattr(self, "health_device_name", self._io_device_name()),
+            )
+
+    def test_connection(self) -> bool:
         if self.transport_adapter is not None:
             self.simulation = True
             return self.transport_adapter.connected or self.transport_adapter.open()
@@ -423,6 +441,7 @@ class EthernetCommunicator(Communicator):
                 #     self.simulation = True
         # ret = not self.simulation and handler is not None
         ret = not self.simulation
+        self._notify_health(ret, "test_connection", error=None if ret else "test connection failed")
         return ret
 
     def get_read_handler(self, handler, **kw):
@@ -530,6 +549,12 @@ class EthernetCommunicator(Communicator):
                     timeout=timeout,
                     response_preview=self._command_preview(re),
                 )
+                self._notify_health(
+                    r is not None,
+                    "ask",
+                    error=None if r is not None else re,
+                    duration_seconds=time.time() - operation_started_at,
+                )
                 return r
 
         if self.simulation:
@@ -594,6 +619,12 @@ class EthernetCommunicator(Communicator):
             response_preview=self._command_preview(re),
             error=None if r is not None else re,
         )
+        self._notify_health(
+            r is not None,
+            "ask",
+            error=None if r is not None else re,
+            duration_seconds=time.time() - operation_started_at,
+        )
         return r
 
     def reset(self):
@@ -646,6 +677,9 @@ class EthernetCommunicator(Communicator):
                     terminator=terminator_preview,
                     response_preview=self._command_preview(response),
                 )
+                self._notify_health(
+                    True, "readline", duration_seconds=time.time() - operation_started_at
+                )
                 return response
             except socket.timeout as e:
                 self.warning("read. read packet. error: {}".format(e))
@@ -657,6 +691,12 @@ class EthernetCommunicator(Communicator):
                     duration_seconds=time.time() - operation_started_at,
                     terminator=terminator_preview,
                     error=str(e),
+                )
+                self._notify_health(
+                    False,
+                    "readline",
+                    error=str(e),
+                    duration_seconds=time.time() - operation_started_at,
                 )
 
     def read(self, datasize: Any = None, *args: Any, **kw: Any) -> Any:
@@ -685,6 +725,9 @@ class EthernetCommunicator(Communicator):
                             timeout=timeout,
                             response_preview=self._command_preview(response),
                         )
+                        self._notify_health(
+                            True, "read", duration_seconds=time.time() - operation_started_at
+                        )
                         return response
                     except socket.timeout as e:
                         self.warning("read. read packet. error: {}".format(e))
@@ -699,6 +742,12 @@ class EthernetCommunicator(Communicator):
                             error=str(e),
                             attempt=i + 1,
                         )
+                        self._notify_health(
+                            False,
+                            "read",
+                            error=str(e),
+                            duration_seconds=time.time() - operation_started_at,
+                        )
 
             time.sleep(timeout)
 
@@ -710,6 +759,12 @@ class EthernetCommunicator(Communicator):
                 duration_seconds=time.time() - operation_started_at,
                 datasize=datasize,
                 error="empty response after retries",
+            )
+            self._notify_health(
+                False,
+                "read",
+                error="empty response after retries",
+                duration_seconds=time.time() - operation_started_at,
             )
             return ""
 
@@ -740,6 +795,9 @@ class EthernetCommunicator(Communicator):
                         duration_seconds=time.time() - operation_started_at,
                         command=command_preview,
                     )
+                    self._notify_health(
+                        True, "tell", duration_seconds=time.time() - operation_started_at
+                    )
                 except socket.error as e:
                     self.warning("tell. send packet. error: {}".format(e))
                     self.error_mode = True
@@ -750,6 +808,12 @@ class EthernetCommunicator(Communicator):
                         duration_seconds=time.time() - operation_started_at,
                         command=command_preview,
                         error=str(e),
+                    )
+                    self._notify_health(
+                        False,
+                        "tell",
+                        error=str(e),
+                        duration_seconds=time.time() - operation_started_at,
                     )
 
     # private
