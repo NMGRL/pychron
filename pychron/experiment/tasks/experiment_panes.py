@@ -548,35 +548,44 @@ class StatsPane(TraitsDockPane):
         self.model.active_queue = active_queue
         self.model.reset()
 
-    def traits_view(self):
-        gen_grp = BorderVGroup(
-            HGroup(UItem("pane.recalculate_button")),
+    def traits_view(self) -> View:
+        queue_grp = BorderVGroup(
+            HGroup(UItem("pane.recalculate_button"), spring),
             HGroup(
-                Readonly("object.nruns", width=150, label="Total Runs"),
-                UReadonly("object.total_time"),
+                Readonly("object.nruns", width=-150, label="Total Runs"),
+                Readonly("object.nruns_finished", label="Completed"),
+                spring,
             ),
             HGroup(
-                Readonly("object.nruns_finished", width=150, label="Completed"),
-                UReadonly("object.elapsed"),
+                Readonly("object.elapsed", width=-150, label="Elapsed"),
+                Readonly("object.remaining", label="Remaining"),
+                spring,
             ),
-            Readonly("object.remaining", label="Remaining"),
-            Readonly("object.etf", label="Est. finish"),
-            label="General",
+            HGroup(
+                Readonly("object.total_time", width=-150, label="Total Time"),
+                Readonly("object.etf", label="Estimated Finish"),
+                spring,
+            ),
+            label="Queue",
         )
         cur_grp = BorderVGroup(
-            Readonly(
-                "object.current_run_duration",
+            HGroup(
+                Readonly("object.current_run_duration", width=-150, label="Expected Duration"),
+                Readonly("object.run_elapsed", label="Elapsed"),
+                spring,
             ),
-            Readonly("object.run_elapsed"),
-            label="Current",
+            label="Current Run",
         )
         sel_grp = BorderVGroup(
-            Readonly("object.start_at"),
-            Readonly("object.end_at"),
-            Readonly("object.run_duration"),
-            label="Selection",
+            HGroup(
+                Readonly("object.start_at", width=-150, label="Start At"),
+                Readonly("object.end_at", label="End At"),
+                spring,
+            ),
+            Readonly("object.run_duration", label="Selected Duration"),
+            label="Selected Run",
         )
-        v = View(VGroup(gen_grp, cur_grp, sel_grp))
+        v = View(VGroup(queue_grp, cur_grp, sel_grp))
         return v
 
 

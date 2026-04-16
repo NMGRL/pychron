@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from traits.api import Property, String, Float, Any, Int, List, Instance
 
 from pychron.core.helpers.timer import Timer
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
@@ -169,21 +170,21 @@ class StatsGroup(Loggable):
 
     # ====================================
 
-    def start_timer(self):
+    def start_timer(self) -> None:
         st = time.time()
         self._post = datetime.now()
 
-        def update_time():
+        def update_time() -> None:
             e = round(time.time() - st)
             d = {"_elapsed": e}
             if self._run_start:
                 re = round(time.time() - self._run_start)
                 d["_run_elapsed"] = re
-            self.trait_set(**d)
+            invoke_in_main_thread(self.trait_set, **d)
 
         self._timer = Timer(900, update_time)
 
-    def stop_timer(self):
+    def stop_timer(self) -> None:
         self.debug("Stop timer. self._timer: {}".format(self._timer))
         if self._timer:
             tt = self._total_time

@@ -846,6 +846,12 @@ class ExecutorController:
     def is_terminal(self) -> bool:
         return self.executor_machine.is_terminal
 
+    def can_execute(self) -> bool:
+        return self.executor_machine.can_execute()
+
+    def should_reset_before_execute(self) -> bool:
+        return self.is_terminal or (not self.can_execute() and not self.is_running)
+
     @property
     def extracting(self) -> bool:
         for _, rm in self.active_run_machines:

@@ -213,6 +213,14 @@ class ExperimentEditorTask(EditorTask):
     def activated(self):
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
+        self.debug(
+            "experiment_task activated window_present={} layout_reset={} editors={} active_editor={} ".format(
+                self.window is not None,
+                self._layout_reset,
+                len(self.editor_area.editors) if self.editor_area else 0,
+                type(self.active_editor).__name__ if self.active_editor is not None else None,
+            )
+        )
 
         if not self._layout_reset and self.window is not None:
             self.window.reset_layout()
@@ -830,6 +838,14 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change("manager:executor:run_completed")
     def _update_run_completed(self, new):
         # self._publish_notification(new)
+        self.debug(
+            "experiment_task run_completed run={} identifier={} active_editor={} editors={}".format(
+                getattr(new, "runid", None),
+                getattr(new, "identifier", None),
+                type(self.active_editor).__name__ if self.active_editor is not None else None,
+                len(self.editor_area.editors) if self.editor_area else 0,
+            )
+        )
 
         load_name = self.manager.executor.experiment_queue.load_name
         if load_name:
@@ -895,17 +911,43 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change("manager:executor:autoplot_event")
     def _handle_autoplot(self, new):
         if new:
+            self.debug(
+                "experiment_task autoplot_event run={} identifier={} editors_before={}".format(
+                    getattr(new, "runid", None),
+                    getattr(new, "identifier", None),
+                    len(self.editor_area.editors) if self.editor_area else 0,
+                )
+            )
             editor = self._new_autoplot_editor(new)
             ans = self._get_autoplot_analyses(new)
+            self.debug(
+                "experiment_task autoplot analyses_loaded={} editor_type={} editor_id={}".format(
+                    len(ans) if ans is not None else None,
+                    type(editor).__name__ if editor is not None else None,
+                    id(editor) if editor is not None else None,
+                )
+            )
             editor.set_items(ans)
 
             self._open_editor(editor)
+            self.debug(
+                "experiment_task autoplot editor_opened editor_type={} editors_after={}".format(
+                    type(editor).__name__ if editor is not None else None,
+                    len(self.editor_area.editors) if self.editor_area else 0,
+                )
+            )
 
             fs = [e for e in self.iter_editors(FigureEditor)]
 
             # close the oldest editor
             if len(fs) > 5:
                 fs = sorted(fs, key=lambda x: x.last_update)
+                self.debug(
+                    "experiment_task autoplot closing_oldest editor_type={} editor_id={}".format(
+                        type(fs[0]).__name__ if fs else None,
+                        id(fs[0]) if fs else None,
+                    )
+                )
                 self.close_editor(fs[0])
 
     def _get_autoplot_analyses(self, new):
@@ -920,6 +962,11 @@ class ExperimentEditorTask(EditorTask):
         for editor in self.editor_area.editors:
             if isinstance(editor, FigureEditor):
                 if new.identifier == editor.identifier:
+                    self.debug(
+                        "experiment_task autoplot reusing_editor editor_type={} editor_id={} identifier={}".format(
+                            type(editor).__name__, id(editor), new.identifier
+                        )
+                    )
                     break
         else:
             if is_special(new.identifier):
@@ -936,6 +983,11 @@ class ExperimentEditorTask(EditorTask):
                 editor = IdeogramEditor()
 
             editor.identifier = new.identifier
+            self.debug(
+                "experiment_task autoplot created_editor editor_type={} editor_id={} identifier={}".format(
+                    type(editor).__name__, id(editor), new.identifier
+                )
+            )
 
         editor.last_update = time.time()
         return editor

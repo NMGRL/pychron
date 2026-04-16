@@ -226,6 +226,37 @@ class ExecutorControllerTestCase(unittest.TestCase):
 
         self.assertEqual(self.controller.executor_machine.observed_state, "aborted")
 
+    def test_execute_can_reset_from_canceled_state(self):
+        self.controller.execute()
+        self.controller.precheck_passed()
+        self.controller.request_cancel()
+        self.controller.queue_finished()
+        self.controller.finalize_with_result("canceled")
+
+        self.assertTrue(self.controller.should_reset_before_execute())
+        self.controller.reset()
+
+        self.assertTrue(self.controller.can_execute())
+        self.assertFalse(self.controller.should_reset_before_execute())
+
+    def test_execute_can_reset_from_canceling_state(self):
+        self.controller.execute()
+        self.controller.precheck_passed()
+        self.controller.request_cancel()
+
+        self.assertTrue(self.controller.should_reset_before_execute())
+        self.controller.reset()
+
+        self.assertTrue(self.controller.can_execute())
+        self.assertFalse(self.controller.should_reset_before_execute())
+
+    def test_execute_does_not_reset_while_running(self):
+        self.controller.execute()
+        self.controller.precheck_passed()
+
+        self.assertFalse(self.controller.should_reset_before_execute())
+        self.assertFalse(self.controller.can_execute())
+
     def test_run_overlap_and_save_flow_reaches_success(self):
         run_id = "run-1"
         self.controller.begin_run(run_id, queue_name="queue-1")

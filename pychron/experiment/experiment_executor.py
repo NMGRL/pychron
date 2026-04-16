@@ -839,9 +839,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.events.extend(events)
 
     def execute(self):
-        if self._controller.is_terminal:
+        if self._controller.should_reset_before_execute():
             self._controller.reset()
             self._sync_compatibility_state()
+        elif not self._controller.can_execute():
+            self.debug(
+                "execute ignored because controller is not ready. state={}".format(
+                    self._controller.executor_machine.observed_state
+                )
+            )
+            return None
+
         self._controller.execute()
         prog = open_progress(100, position=(100, 100))
 
@@ -934,9 +942,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def get_wait_control(self):
         with self.wait_control_lock:
-            wd = self.wait_group.active_control
-            if wd.is_active():
-                wd = self.wait_group.add_control()
+            wd = self.wait_group.get_wait_control()
         return wd
 
     def stop(self):
@@ -2457,9 +2463,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         wg = self.wait_group
         wc = self.get_wait_control()
 
-        wc.message = msg
+        self.debug(
+            "executor wait boundary run={} delay={} message={} wait_page={} controls={} thread={}".format(
+                getattr(getattr(self, "measuring_run", None), "runid", None)
+                or getattr(getattr(self, "extracting_run", None), "runid", None),
+                delay,
+                msg,
+                getattr(wc, "page_name", None),
+                len(getattr(wg, "controls", [])),
+                current_thread().name,
+            )
+        )
         self._mark_progress("executor.wait.start", extra={"delay": delay, "message": msg})
-        wc.start(duration=delay)
+        wg.start_wait(wc, duration=delay, message=msg)
         wg.pop(wc)
         self._mark_progress("executor.wait.end", extra={"delay": delay, "message": msg})
 
@@ -3286,9 +3302,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self._do_action(ci)
 
                     if self._cv_info:
-                        invoke_in_main_thread(
-                            do_after, 2000, self._cv_info.control.close
-                        )
+                        invoke_in_main_thread(do_after, 2000, self._close_cv)
 
                     return True
 

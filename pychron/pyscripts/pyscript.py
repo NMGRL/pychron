@@ -26,6 +26,7 @@ from threading import Event, Thread, Lock
 import yaml
 from traits.api import Str, Any, Bool, Int, Dict
 
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -397,7 +398,7 @@ class PyScript(Loggable):
                 self.parent_script.abort()
 
         if self._wait_control:
-            self._wait_control.stop()
+            invoke_in_main_thread(self._wait_control.stop)
         self._abort_hook()
 
     @command_register
@@ -418,7 +419,7 @@ class PyScript(Loggable):
                 self.parent_script.cancel(**kw)
 
         if self._wait_control:
-            self._wait_control.stop()
+            invoke_in_main_thread(self._wait_control.stop)
 
         self._cancel_hook(**kw)
 
@@ -850,8 +851,33 @@ class PyScript(Loggable):
 
             self.debug(msg)
 
-            wd.start(duration=timeout, message=msg, paused=paused)
-            # wd.join()
+            if self.manager:
+                try:
+                    self.manager.wait_group.start_wait(
+                        wd, duration=timeout, message=msg, paused=paused
+                    )
+                except AttributeError:
+                    done = Event()
+                    invoke_in_main_thread(
+                        wd.start,
+                        block=False,
+                        duration=timeout,
+                        message=msg,
+                        paused=paused,
+                        on_finished=done.set,
+                    )
+                    done.wait()
+            else:
+                done = Event()
+                invoke_in_main_thread(
+                    wd.start,
+                    block=False,
+                    duration=timeout,
+                    message=msg,
+                    paused=paused,
+                    on_finished=done.set,
+                )
+                done.wait()
 
             if self.manager:
                 try:

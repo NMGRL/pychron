@@ -124,5 +124,74 @@ class WaitGroup(HasTraits):
         self._invoke_on_main_thread(self._ensure_control, w, wait=True)
         return w
 
+    def get_wait_control(self, **kw: TypingAny) -> WaitControl:
+        return self._invoke_on_main_thread(self._get_wait_control, wait=True, **kw)
+
+    def _get_wait_control(self, **kw: TypingAny) -> WaitControl:
+        control = self.active_control
+        if control is None or control.is_active():
+            control = self.add_control(**kw)
+        return control
+
+    def start_wait(
+        self,
+        control: WaitControl,
+        *,
+        duration: float | None = None,
+        message: str | None = None,
+        paused: bool = False,
+        block: bool = True,
+    ) -> None:
+        done = Event()
+
+        def on_finished() -> None:
+            control.debug(
+                "wait_group on_finished page={} status={} current_time={} thread={}".format(
+                    control.page_name,
+                    control.status,
+                    control.current_time,
+                    current_thread().name,
+                )
+            )
+            done.set()
+
+        control.debug(
+            "wait_group start_wait page={} duration={} message={} paused={} block={} active_control={} controls={} thread={}".format(
+                control.page_name,
+                duration,
+                message,
+                paused,
+                block,
+                getattr(self.active_control, "page_name", None),
+                len(self.controls),
+                current_thread().name,
+            )
+        )
+        self._invoke_on_main_thread(
+            control.start,
+            block=False,
+            duration=duration,
+            message=message,
+            paused=paused,
+            on_finished=on_finished,
+            wait=True,
+        )
+
+        if block:
+            control.debug(
+                "wait_group waiting page={} thread={}".format(
+                    control.page_name, current_thread().name
+                )
+            )
+            done.wait()
+            control.debug(
+                "wait_group wait complete page={} status={} current_time={} thread={}".format(
+                    control.page_name,
+                    control.status,
+                    control.current_time,
+                    current_thread().name,
+                )
+            )
+
 
 # ============= EOF =============================================

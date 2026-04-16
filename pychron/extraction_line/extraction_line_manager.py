@@ -900,10 +900,7 @@ class ExtractionLineManager(Manager, Consoleable):
         return c
 
     def get_wait_control(self):
-        wd = self.wait_group.active_control
-        if wd.is_active():
-            wd = self.wait_group.add_control()
-        return wd
+        return self.wait_group.get_wait_control()
 
     def set_experiment_type(self, v):
         self.debug("setting experiment type={}".format(v))
