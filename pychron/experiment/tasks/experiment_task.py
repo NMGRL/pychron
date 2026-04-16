@@ -939,16 +939,19 @@ class ExperimentEditorTask(EditorTask):
 
             fs = [e for e in self.iter_editors(FigureEditor)]
 
-            # close the oldest editor
+            # Conservative reliability guard:
+            # repeated figure-editor disposal appears to line up with intermittent
+            # post-run Qt crashes on hover/focus, so leave older autoplot editors
+            # open while we stabilize the lifecycle.
             if len(fs) > 5:
                 fs = sorted(fs, key=lambda x: x.last_update)
                 self.debug(
-                    "experiment_task autoplot closing_oldest editor_type={} editor_id={}".format(
+                    "experiment_task autoplot retaining_old_editors count={} oldest_type={} oldest_id={}".format(
+                        len(fs),
                         type(fs[0]).__name__ if fs else None,
                         id(fs[0]) if fs else None,
                     )
                 )
-                self.close_editor(fs[0])
 
     def _get_autoplot_analyses(self, new):
         dvc = self.window.application.get_service(DVC_PROTOCOL)
