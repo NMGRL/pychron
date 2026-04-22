@@ -918,6 +918,13 @@ class ExperimentEditorTask(EditorTask):
                     len(self.editor_area.editors) if self.editor_area else 0,
                 )
             )
+            self.debug(
+                "experiment_task autoplot suppressed_for_stability run={} identifier={}".format(
+                    getattr(new, "runid", None), getattr(new, "identifier", None)
+                )
+            )
+            return
+
             editor = self._new_autoplot_editor(new)
             ans = self._get_autoplot_analyses(new)
             self.debug(
