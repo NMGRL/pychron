@@ -2,7 +2,8 @@ Pychron
 =======
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3237834.svg)](https://doi.org/10.5281/zenodo.3237834)
-[![CI](https://github.com/NMGRL/pychron/actions/workflows/ci.yml/badge.svg)](https://github.com/NMGRL/pychron/actions/workflows/ci.yml)
+[![Format code](https://github.com/PychronLabsLLC/pychron/actions/workflows/format_code.yml/badge.svg)](https://github.com/PychronLabsLLC/pychron/actions/workflows/format_code.yml)
+[![CI](https://github.com/PychronLabsLLC/pychron/actions/workflows/ci.yml/badge.svg)](https://github.com/PychronLabsLLC/pychron/actions/workflows/ci.yml)
 
 [Documentation](https://pychron.readthedocs.io/)
 |
