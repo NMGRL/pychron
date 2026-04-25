@@ -18,6 +18,7 @@
 
 import os
 import pprint
+import json
 
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum, List
 
@@ -41,17 +42,28 @@ from pychron.experiment.conditional.utilities import (
     extract_attr,
 )
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
+from pychron.experiment.utilities.identifier import convert_special_name
+from pychron.experiment.utilities.repository_identifier import (
+    get_curtag,
+    make_references_repository_identifier,
+)
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import (
     TRUNCATION,
     ACTION,
+    EQUILIBRATION,
     TERMINATION,
     PRE_RUN_TERMINATION,
     POST_RUN_TERMINATION,
     CANCELATION,
+    MODIFICATION,
     POST_RUN_ACTION,
 )
+
+CONDITIONAL_CLASS_ALIASES = {
+    "ModificationConditional": "QueueModificationConditional",
+}
 
 
 def dictgetter(d, attrs, default=None):
@@ -69,8 +81,13 @@ def dictgetter(d, attrs, default=None):
 
 def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
     yd = yload(p)
+    if not yd:
+        return {} if not name else None
+
     cs = (
+        (MODIFICATION, ps(MODIFICATION)),
         (TRUNCATION, ps(TRUNCATION)),
+        (TRUNCATION, ps(EQUILIBRATION)),
         (ACTION, ps(ACTION)),
         (ACTION, ps(POST_RUN_ACTION)),
         (TERMINATION, ps(TERMINATION)),
@@ -112,7 +129,8 @@ def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
 
 def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     if isinstance(klass, str):
-        klass = globals()[klass]
+        kname = CONDITIONAL_CLASS_ALIASES.get(klass, klass)
+        klass = globals()[kname]
 
     # try:
     # teststr = cd['teststr']
@@ -256,7 +274,6 @@ class AutomatedRunConditional(BaseConditional):
     _analysis_types_logged = False
 
     def __init__(self, teststr, start_count=0, frequency=1, *args, **kw):
-
         self.active = True
         # self.attr = attr
         self.teststr = teststr
@@ -310,23 +327,18 @@ class AutomatedRunConditional(BaseConditional):
                     )
                     self._analysis_types_logged = True
 
-                should = False
-                for target_type in self.analysis_types:
-                    if target_type.lower() == "blank":
-                        if atype.startswith("blank"):
-                            should = True
-                            break
+                should = atype in self.analysis_types
+                if not should and "blank" in self.analysis_types and atype.startswith(
+                    "blank"
+                ):
+                    should = True
 
                 if not should:
-                    return
-
-                if atype not in self.analysis_types:
                     return
 
             if isinstance(cnt, bool):
                 return cnt
             else:
-
                 ocnt = cnt - self.start_count
 
                 b = ocnt > 0
@@ -410,17 +422,46 @@ class AutomatedRunConditional(BaseConditional):
         return nts
 
 
+class StatefullConditional(AutomatedRunConditional):
+    _state = None
+
+    def check(self, run, data, cnt):
+        self._load_state()
+        ret = super(StatefullConditional, self).check(run, data, cnt)
+        self._dump_state()
+        return ret
+
+    def _load_state(self):
+        p = self.persistence_path
+        if os.path.isfile(p):
+            self.debug("dump state from {}".format(p))
+            with open(p, "r") as rfile:
+                self._state = json.load(rfile)
+
+    def _dump_state(self):
+        p = self.persistence_path
+        self.debug("dump state to {}".format(p))
+        with open(p, "w") as wfile:
+            json.dump(self._state, wfile)
+
+    @property
+    def persistence_path(self):
+        return os.path.join(
+            paths.appdata_dir, "{}.conditional.json".format(self._hash_id())
+        )
+
+
 class TruncationConditional(AutomatedRunConditional):
     """
     stops the current measurement and continues to next step in pyscript.
-    If more measure calls are main use abbreviated_count_ratio to reduce
+    If more measure calls are made use abbreviated_count_ratio to reduce
     the number of counts. for example of abbreviated_count_ratio = 0.5 and
     the original baseline counts = 100, only 50 counts will be made for a truncated
     run.
 
     """
 
-    abbreviated_count_ratio = 1.0
+    abbreviated_count_ratio = Float(1.0)
 
     def _from_dict_hook(self, cd):
         for tag in ("abbreviated_count_ratio",):
@@ -492,6 +533,7 @@ MODIFICATION_ACTIONS = (
     "Skip to Last in Aliquot",
     "Set Extract",
     "Repeat Run",
+    "Run Blank",
 )
 
 
@@ -529,51 +571,65 @@ class QueueModificationConditional(AutomatedRunConditional):
 
     use_truncation = Bool
     use_termination = Bool
+    abbreviated_count_ratio = Float(1.0)
     nskip = Int
     action = Enum(MODIFICATION_ACTIONS)
     extraction_str = ExtractionStr
 
     def do_modifications(self, current_run, executor, queue):
         runs = queue.cleaned_automated_runs
-        func = getattr(self, self.action.lower().replace(" ", "_"))
-        if func(queue, runs, current_run):
-            executor.queue_modified = True
-        queue.refresh_table_needed = True
+        func = getattr(self, _normalize_action_name(self.action), None)
+        if func and func(queue, runs, current_run):
+            _mark_queue_modified(executor, queue)
 
     def _from_dict_hook(self, cd):
-        for tag in ("action", "nskip", "use_truncation", "use_termination"):
+        for tag in (
+            "action",
+            "nskip",
+            "use_truncation",
+            "use_termination",
+            "abbreviated_count_ratio",
+        ):
             if tag in cd:
                 setattr(self, tag, cd[tag])
 
     def _repeat_run(self, queue, runs, current_run):
         spec = current_run.spec.tocopy()
-        queue.automated_runs.insert(spec, 0)
-        return True
+        return _insert_after_current(queue, current_run, spec)
+
+    def _run_blank(self, queue, runs, current_run):
+        spec = _make_blank_run_spec(current_run, queue)
+        return _insert_after_current(queue, current_run, spec)
 
     def _skip_n_runs(self, queue, runs, current_run, n=None):
         if n is None:
             n = self.nskip
 
-        for i in range(n):
-            r = runs[i]
+        changed = False
+        for r in runs[:n]:
             r.skip = True
+            changed = True
+        return changed
 
     def _skip_next_run(self, queue, runs, current_run):
-        self._skip_n_runs(runs, current_run, 1)
+        return self._skip_n_runs(queue, runs, current_run, 1)
 
     def _skip_aliquot(self, queue, runs, current_run):
-
         identifier = current_run.spec.identifier
         aliquot = current_run.spec.aliquot
+        changed = False
         for r in runs:
             if r.is_special():
                 continue
 
             if r.identifier == identifier and r.aliquot == aliquot:
                 r.skip = True
+                changed = True
+        return changed
 
     def _skip_to_last_in_aliquot(self, queue, runs, current_run):
         identifier = current_run.spec.identifier
+        changed = False
         for i, r in enumerate(runs):
             if r.is_special():
                 continue
@@ -584,18 +640,20 @@ class QueueModificationConditional(AutomatedRunConditional):
                     break
                 else:
                     r.skip = True
+                    changed = True
 
             except IndexError:
                 pass
+        return changed
 
     def _set_extract(self, queue, runs, current_run):
-
         es = self.extraction_str
 
         identifier = current_run.spec.identifier
         aliquot = current_run.spec.aliquot
 
         steps_gen, use_percent = get_extraction_steps(es)
+        changed = False
         for r in runs:
             if r.is_special():
                 continue
@@ -609,8 +667,65 @@ class QueueModificationConditional(AutomatedRunConditional):
                     r.extract_value *= 1 + nstep / 100.0
                 else:
                     r.extract_value += nstep
+                changed = True
             except StopIteration:
                 break
+        return changed
+
+
+def _normalize_action_name(action):
+    return action.strip().lower().replace(" ", "_")
+
+
+def _mark_queue_modified(executor, queue):
+    if hasattr(executor, "set_queue_modified"):
+        executor.set_queue_modified(queue)
+    else:
+        executor.queue_modified = True
+
+    if hasattr(queue, "invalidate_stats"):
+        queue.invalidate_stats()
+    queue.refresh_table_needed = True
+
+
+def _insert_after_current(queue, current_run, spec):
+    current_spec = getattr(current_run, "spec", current_run)
+    try:
+        idx = queue.automated_runs.index(current_spec)
+    except ValueError:
+        return False
+
+    queue.sync_queue_meta(runs=[spec])
+    queue.automated_runs.insert(idx + 1, spec)
+    return True
+
+
+def _blank_analysis_type(current_run):
+    atype = current_run.spec.analysis_type
+    if atype in ("air", "blank_air"):
+        return "blank_air"
+    if atype in ("cocktail", "blank_cocktail"):
+        return "blank_cocktail"
+    if atype == "blank_extractionline":
+        return "blank_extractionline"
+    return "blank_unknown"
+
+
+def _make_blank_run_spec(current_run, queue):
+    spec = current_run.spec.tocopy()
+    blank_type = _blank_analysis_type(current_run)
+    spec.labnumber = convert_special_name(blank_type, output="labnumber")
+    spec.apply_queue_metadata(queue, force=True)
+
+    ms = spec.mass_spectrometer or getattr(queue, "mass_spectrometer", "")
+    if ms:
+        spec.repository_identifier = make_references_repository_identifier(
+            blank_type, ms, get_curtag()
+        )
+    else:
+        spec.repository_identifier = ""
+
+    return spec
 
 
 # ============= EOF =============================================

@@ -21,6 +21,8 @@ from traitsui.view import View
 from pychron.core.helpers.strtools import ps
 from pychron.experiment.conditional.conditional import (
     ActionConditional,
+    EquilibrationConditional,
+    QueueModificationConditional,
     TruncationConditional,
     TerminationConditional,
     CancelationConditional,
@@ -29,11 +31,25 @@ from pychron.experiment.conditional.conditionals_edit_view import (
     ConditionalsViewable,
     ConditionalGroup,
 )
-from pychron.experiment.conditional.groups import PostRunGroup, PreRunGroup
-from pychron.pychron_constants import ACTION, TERMINATION, CANCELATION, TRUNCATION
+from pychron.experiment.conditional.groups import (
+    EConditionalGroup,
+    ModificationGroup,
+    PostRunGroup,
+    PreRunGroup,
+)
+from pychron.pychron_constants import (
+    ACTION,
+    CANCELATION,
+    EQUILIBRATION,
+    MODIFICATION,
+    TERMINATION,
+    TRUNCATION,
+)
 
 ADD_CONDITIONALS = (
+    (ps(MODIFICATION), ModificationGroup, QueueModificationConditional),
     (ps(ACTION), ConditionalGroup, ActionConditional),
+    (ps(EQUILIBRATION), EConditionalGroup, EquilibrationConditional),
     (ps(TRUNCATION), ConditionalGroup, TruncationConditional),
     (ps(CANCELATION), ConditionalGroup, CancelationConditional),
     (ps(TERMINATION), ConditionalGroup, TerminationConditional),

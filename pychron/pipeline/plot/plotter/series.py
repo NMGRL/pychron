@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
 
+import logging
 import re
 import time
+from typing import Any, List, Optional
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import array, Inf, arange
+from numpy import array, inf, arange, ndarray
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
@@ -30,6 +33,8 @@ from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.plotter.ticks import TICKS
 from pychron.pychron_constants import PLUSMINUS, SIGMA
+
+logger = logging.getLogger(__name__)
 
 N = 500
 
@@ -43,6 +48,7 @@ AGE = "Age"
 EXTRACT_VALUE = "Extract Value"
 EXTRACT_DURATION = "Extract Duration"
 CLEANUP = "Cleanup"
+F = "F"
 
 ATTR_MAPPING = {
     PEAK_CENTER: "peak_center",
@@ -54,6 +60,7 @@ ATTR_MAPPING = {
     EXTRACT_VALUE: "extract_value",
     EXTRACT_DURATION: "extract_duration",
     CLEANUP: "cleanup",
+    F: "uF",
 }
 
 AR4039 = "Ar40/Ar39"
@@ -91,12 +98,12 @@ class BaseSeries(BaseArArFigure):
     def max_x(self, *args):
         if len(self.xs):
             return max(self.xs)
-        return -Inf
+        return -inf
 
     def min_x(self, *args):
         if len(self.xs):
             return min(self.xs)
-        return Inf
+        return inf
 
     def mean_x(self, *args):
         if len(self.xs):
@@ -121,19 +128,31 @@ class BaseSeries(BaseArArFigure):
         """
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 
+        logger.debug(f"Series.plot() called with {len(plots) if plots else 0} plots")
+        
+        # Guard: don't attempt to plot if graph isn't available yet
+        if self.graph is None:
+            logger.debug("Series.plot() skipping: graph not yet initialized")
+            return
+
         omits = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
             self.sorted_analyses[o].set_temp_status("omit")
 
         if plots:
+            logger.debug(f"Plotting {len(self.sorted_analyses)} analyses")
             self.xs = self._get_xs(plots, self.sorted_analyses)
             for i, po in enumerate(plots):
+                logger.debug(f"Plotting series {po.name} (index {i})")
                 self._plot_series(po, i, omits)
 
             self.xmi, self.xma = self.min_x(), self.max_x()
+        else:
+            logger.debug("No plots to render")
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph
+        logger.debug(f"_plot_series() called for {po.name}, graph is {'None' if graph is None else 'available'}")
         try:
             ys, yerr = self._get_ys(po)
             if po.name == ANALYSIS_TYPE:
@@ -225,20 +244,23 @@ class BaseSeries(BaseArArFigure):
             if po.y_error and yerr is not None:
                 s = self.options.error_bar_nsigma
                 ec = self.options.end_caps
-                self._add_error_bars(scatter, yerr, "y", s, ec, visible=True)
+                self._add_error_bars(scatter, yerr, "y", s, end_caps=ec, visible=True)
 
             # if set_ylimits and not po.has_ylimits():
             #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
             #     graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
+            if self.options.guides:
+                for gi in self.options.guides:
+                    if gi.visible and gi.should_plot(pid):
+                        graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
         except (KeyError, ZeroDivisionError, AttributeError) as e:
-            import traceback
+            logger.debug("Series plot error: {}".format(e))
 
-            traceback.print_exc()
-            print("Series", e)
-
-    def _get_xs(self, plots, ans, tzero=None):
-
+    def _get_xs(
+        self, plots: List[Any], ans: List[Any], tzero: Optional[float] = None
+    ) -> ndarray:
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]
@@ -280,6 +302,13 @@ class BaseSeries(BaseArArFigure):
             kw["xtitle"] = "Time (hrs)"
         else:
             kw["xtitle"] = "N"
+        
+        # Add bounds and resizable based on po.height (from AuxPlot)
+        # This ensures plots with height settings maintain their proportions
+        if hasattr(po, 'height') and po.height:
+            kw["bounds"] = [50, po.height]
+            kw["resizable"] = "h"
+        
         return ytitle, kw
 
     def _setup_plot(self, pid, pp, po, ytitle=None):
@@ -311,7 +340,7 @@ class BaseSeries(BaseArArFigure):
         if self.group_id == 0:
             if self.options.show_info:
                 ts = [
-                    u"Data {}{}{}".format(
+                    "Data {}{}{}".format(
                         PLUSMINUS, self.options.error_bar_nsigma, SIGMA
                     )
                 ]
@@ -343,7 +372,7 @@ class Series(BaseSeries):
     #             ai = self.sorted_analyses[0]
     #             a = bool(ai.get_value(name))
     #     return a
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 

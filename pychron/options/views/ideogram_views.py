@@ -24,6 +24,7 @@ from pychron.options.options import (
     GroupSubOptions,
     MainOptions,
     TitleSubOptions,
+    GuidesOptions,
 )
 from pychron.processing.j_error_mixin import J_ERROR_GROUP
 from pychron.pychron_constants import (
@@ -31,6 +32,8 @@ from pychron.pychron_constants import (
     APPEARANCE,
     SCHAEN2020_3,
     SCHAEN2020_3youngest,
+    GROUPS,
+    GUIDES,
 )
 
 
@@ -348,6 +351,7 @@ class IdeogramAppearance(AppearanceSubOptions):
             subgroup,
             self._get_nominal_group(),
             self._get_layout_group(),
+            self._get_margin_group(),
             self._get_padding_group(),
             fgrp,
         )
@@ -382,7 +386,7 @@ Additional examples
         )
 
         v = View(
-            BorderVGroup(
+            VGroup(
                 self._get_name_grp(),
                 self._get_yticks_grp(),
                 self._get_ylimits_group(),
@@ -401,7 +405,8 @@ VIEWS = {
     APPEARANCE.lower(): IdeogramAppearance,
     "calculations": CalculationSubOptions,
     "display": DisplaySubOptions,
-    "groups": GroupSubOptions,
+    GROUPS.lower(): GroupSubOptions,
+    GUIDES.lower(): GuidesOptions,
 }
 
 # ===============================================================

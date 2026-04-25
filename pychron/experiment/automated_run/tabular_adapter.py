@@ -178,7 +178,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ("T_o Offset", "collection_time_zero_offset"),
         ("Measurement", "measurement_script"),
         ("Conditionals", "conditionals"),
-        ("SynExtraction", "syn_extraction"),
+        ("SynExtraction", "syn_extraction_script"),
         ("CDDWarm", USE_CDD_WARMING),
         ("Post Eq.", "post_equilibration_script"),
         ("Post Meas.", "post_measurement_script"),
@@ -260,6 +260,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     AutomatedRunSpec_tooltip = Property
     AutomatedRunSpec_bg_color = Property
     AutomatedRunSpec_menu = Property
+    _bg_color_cache = Dict
+    _text_cache = Dict
 
     def get_row_label(self, section, obj=None):
         return section + 1
@@ -275,35 +277,45 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
 
     def _get_AutomatedRunSpec_bg_color(self):
         item = self.item
+        atype = item.analysis_type
+        if atype.startswith("blank"):
+            atype = "blank"
+
+        key = (
+            id(item),
+            item.executable,
+            item.skip,
+            item.state,
+            item.end_after,
+            atype,
+            self.row % 2,
+            self.use_analysis_type_colors,
+        )
+        if key in self._bg_color_cache:
+            return self._bg_color_cache[key]
+
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
         else:
             color = None
             if item.skip:
-                color = SKIP_COLOR  # '#33CCFF'  # light blue
+                color = SKIP_COLOR
             elif item.state in self.colors:
                 color = self.colors[item.state]
             elif item.end_after:
                 color = END_AFTER_COLOR
             elif self.use_analysis_type_colors:
-
-                atype = item.analysis_type
-                if atype.startswith("blank"):
-                    atype = "blank"
                 color = self.analysis_type_colors.get(atype)
 
             if color is None:
-                if self.row % 2 == 0:
-                    color = self.even_bg_color
-                else:
-                    color = self.odd_bg_color  # '#E6F2FF'  # light gray blue
+                color = self.even_bg_color if self.row % 2 == 0 else self.odd_bg_color
 
+        self._bg_color_cache[key] = color
         return color
 
     def _get_AutomatedRunSpec_menu(self):
         item = self.item
         if item.state in ("success", "truncated"):
-
             evo_actions = [
                 Action(name="Show All", action="show_evolutions"),
                 Action(name="Show All w/Equilibration", action="show_evolutions_w_eq"),
@@ -348,25 +360,25 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         at = self.item.analysis_type
         p = self.item.position
 
-        if at == BLANK_UNKNOWN:
-            if "," not in p:
-                p = ""
-
-        elif at not in (UNKNOWN, DEGAS):
+        # if at == BLANK_UNKNOWN:
+        #     if "," not in p:
+        #         p = ""
+        #
+        if at not in (UNKNOWN, DEGAS, BLANK_UNKNOWN):
             p = ""
 
-        return p
+        return self._cached_text("position", p if at in (UNKNOWN, DEGAS, BLANK_UNKNOWN) else "")
 
     # ============================================
 
     def _get_overlap_text(self):
         o, m = self.item.overlap
         if m:
-            return "{},{}".format(o, m)
+            return self._cached_text("overlap", "{},{}".format(o, m))
         else:
             if int(o):
-                return "{}".format(o)
-        return ""
+                return self._cached_text("overlap", "{}".format(o))
+        return self._cached_text("overlap", "")
 
     def _get_aliquot_text(self):
         al = ""
@@ -374,7 +386,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         if it.aliquot != 0:
             al = make_aliquot_step(it.aliquot, it.step)
 
-        return al
+        return self._cached_text("aliquot", al)
 
     def _get_ramp_duration_text(self):
         return self._get_number(RAMP_DURATION, fmt="{:n}")
@@ -404,7 +416,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         return self._get_number(WEIGHT)
 
     def _get_use_cdd_warming_text(self):
-        return "Yes" if self.item.use_cdd_warming else "No"
+        return self._cached_text(
+            "use_cdd_warming", "Yes" if self.item.use_cdd_warming else "No"
+        )
 
     def _get_number(self, attr, fmt="{:0.2f}"):
         """
@@ -415,9 +429,17 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             if isinstance(v, str):
                 v = float(v)
 
-            return fmt.format(v)
+            return self._cached_text(attr, fmt.format(v))
         else:
-            return ""
+            return self._cached_text(attr, "")
+
+    def _cached_text(self, attr, value):
+        key = (id(self.item), attr, value)
+        cached = self._text_cache.get(key)
+        if cached is None:
+            self._text_cache[key] = value
+            return value
+        return cached
 
 
 class AutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):

@@ -18,7 +18,7 @@ import logging
 import math
 import re
 
-from numpy import where, delete, polyfit, percentile
+from numpy import where, delete, polyfit, percentile, array_equal, array
 
 # ============= enthought library imports =======================
 from traits.api import (
@@ -94,6 +94,7 @@ class BaseRegressor(HasTraits):
     degrees_of_freedom = Property
     integrity_warning = False
     filter_bound_value = 0
+    _dirty_state = Bool(True)
 
     @property
     def min(self):
@@ -159,7 +160,7 @@ class BaseRegressor(HasTraits):
             # n = len(ys) - self.ddof
             n = ys.shape[0]
             if n > 0:
-                return self.std * n ** -0.5
+                return self.std * n**-0.5
             else:
                 return 0
         else:
@@ -192,7 +193,60 @@ class BaseRegressor(HasTraits):
     def get_fit_dict(self):
         return {"fit": self.fit, "error_type": self.error_calc_type}
 
-    def determine_fit(self):
+    @property
+    def is_dirty(self):
+        return self._dirty_state
+
+    def _dirty_fired(self):
+        self._dirty_state = True
+
+    def clear_dirty(self):
+        self._dirty_state = False
+
+    def set_regression_state(
+        self,
+        xs,
+        ys,
+        user_excluded=None,
+        filter_outliers_dict=None,
+        truncate=None,
+        xserr=None,
+        yserr=None,
+    ) -> bool:
+        updates = {}
+        comparisons = (
+            ("xs", xs),
+            ("ys", ys),
+            ("xserr", self._normalize_array_state(xserr)),
+            ("yserr", self._normalize_array_state(yserr)),
+            ("truncate", self._normalize_truncate_state(truncate)),
+            ("user_excluded", sorted(user_excluded or [])),
+            ("filter_outliers_dict", (filter_outliers_dict or {}).copy()),
+        )
+
+        for attr, new_value in comparisons:
+            old_value = getattr(self, attr)
+            if not self._values_equal(old_value, new_value):
+                updates[attr] = new_value
+
+        if updates:
+            self.trait_setq(**updates)
+            self.dirty = True
+            return True
+
+        return False
+
+    def _normalize_array_state(self, value):
+        if value is None:
+            return array([])
+        return value
+
+    def _normalize_truncate_state(self, value):
+        if value is None:
+            return ""
+        return value
+
+    def determine_fit(self, *args, **kw):
         return self.fit
 
     def get_xsquared_coefficient(self):
@@ -241,8 +295,13 @@ class BaseRegressor(HasTraits):
             m = re.match(r"[A-Za-z]+", self.truncate)
             if m:
                 k = m.group(0)
-                exclude = eval(self.truncate, {k: self.xs})
-                excludes = list(exclude.nonzero()[0])
+                if k.lower() == "n":
+                    excludes = [
+                        i for i, _ in enumerate(self.xs) if eval(self.truncate, {k: i})
+                    ]
+                else:
+                    exclude = eval(self.truncate, {k: self.xs})
+                    excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
                 self.dirty = True
             else:
@@ -271,7 +330,6 @@ class BaseRegressor(HasTraits):
         raise NotImplementedError
 
     def calculate_pearsons_r(self, X, Y):
-
         Xbar = X.mean()
         Ybar = Y.mean()
 
@@ -340,7 +398,7 @@ class BaseRegressor(HasTraits):
 
         s = 0
         if residuals is not None:
-            ss_res = (residuals ** 2).sum()
+            ss_res = (residuals**2).sum()
 
             n = residuals.shape[0]
             q = len(self.coefficients)
@@ -396,7 +454,6 @@ class BaseRegressor(HasTraits):
         return ((x - xm) ** 2).sum()
 
     def tostring(self, sig_figs=5):
-
         cs = self.coefficients[::-1]
         ce = self.coefficient_errors[::-1]
 
@@ -409,10 +466,10 @@ class BaseRegressor(HasTraits):
             fmt = "{{:0.{}e}}" if abs(ei) < math.pow(10, -sig_figs) else "{{:0.{}f}}"
             ei = fmt.format(sig_figs).format(ei)
 
-            vfmt = u"{{}}= {{}} {} {{}} {{}}".format(PLUSMINUS)
+            vfmt = "{{}}= {{}} {} {{}} {{}}".format(PLUSMINUS)
             coeffs.append(vfmt.format(alphas(i), ci, ei, pp))
 
-        s = u", ".join(coeffs)
+        s = ", ".join(coeffs)
         return s
 
     def make_equation(self):
@@ -460,7 +517,6 @@ class BaseRegressor(HasTraits):
         return cors
 
     def _calculate_confidence_interval(self, x, observations, rx, confidence=95):
-
         alpha = 1.0 - confidence / 100.0
 
         n = len(observations)
@@ -470,8 +526,8 @@ class BaseRegressor(HasTraits):
             ti = tinv(alpha, n - 1)
             syx = self.get_syx()
             ssx = self.get_ssx(xm)
-            d = n ** -1 + (rx - xm) ** 2 / ssx
-            cors = ti * syx * d ** 0.5
+            d = n**-1 + (rx - xm) ** 2 / ssx
+            cors = ti * syx * d**0.5
 
             return cors / 2.0
 
@@ -514,6 +570,18 @@ class BaseRegressor(HasTraits):
             return delete(v, list(exc), 0)
         except IndexError:
             return v
+
+    def _values_equal(self, old, new):
+        if old is None or new is None:
+            return old is new
+
+        if hasattr(old, "shape") or hasattr(new, "shape"):
+            try:
+                return array_equal(old, new)
+            except TypeError:
+                return False
+
+        return old == new
 
     def _check_integrity(self, x, y, verbose=False):
         nx, ny = len(x), len(y)

@@ -41,7 +41,6 @@ class SeriesPanel(FigurePanel):
         dmi = None
         dma = None
         for fig in self.figures:
-
             mi = fig.min_x()
             ma = fig.max_x()
             if dmi is None:

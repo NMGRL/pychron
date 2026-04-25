@@ -46,6 +46,11 @@ class Laser(RoundedRectangle):
     #     super(Laser, self).set_canvas(canvas)
     # self._img.set_canvas(canvas)
 
+    def toyaml(self):
+        yd = super(Laser, self).toyaml()
+        yd["use_symbol"] = self.use_symbol
+        return yd
+
     def _get_name_xy(self, x, y, w, h):
         return x, y + (0.25 * h)
 

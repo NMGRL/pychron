@@ -76,7 +76,6 @@ class Initializer(Loggable):
         return ok
 
     def info(self, msg, **kw):
-
         pd = self._pd
         if pd is not None:
             offset = pd.get_value()
@@ -89,7 +88,6 @@ class Initializer(Loggable):
         super(Initializer, self).info(msg, **kw)
 
     def _run(self, name=None, manager=None, plugin_name=None):
-
         parser = self._parser
         if manager is not None:
             self.info("Manager loading {}".format(name))
@@ -180,12 +178,10 @@ class Initializer(Loggable):
         plugin_name,
     ):
         """ """
-        devs = []
         if manager is None:
             return
 
         for device in devices:
-
             if not device:
                 continue
 
@@ -213,41 +209,14 @@ class Initializer(Loggable):
                 continue
 
             self.info("loading {}".format(dev.name))
-
             dev.application = self.application
-            if dev.load():
-                # register the device
-                if self.application is not None:
-                    # display with the HardwareManager
-                    self.info("Register device name={}, {}".format(dev.name, dev))
-                    self.application.register_service(
-                        ICoreDevice, dev, {"display": True}
-                    )
-
-                devs.append(dev)
-                self.info("opening {}".format(dev.name))
-                if not dev.open(prefs=self.device_prefs):
-                    self.info("failed connecting to {}".format(dev.name))
-            else:
-                self.info("failed loading {}".format(dev.name))
-
-        for od in devs:
-            self.info("Initializing {}".format(od.name))
-            result = od.initialize(progress=self._pd)
-            if result is not True:
-                self.warning("Failed setting up communications to {}".format(od.name))
-                od.set_simulation(True)
-
-            elif result is None:
-                self.debug(
-                    "{} initialize function does not return a boolean".format(od.name)
-                )
-                raise NotImplementedError
-
-            od.application = self.application
-            od.post_initialize()
-
-            manager.devices.append(od)
+            result = dev.bootstrap_result(
+                prefs=self.device_prefs,
+                progress=self._pd,
+                run_post_initialize=True,
+            )
+            self._register_loaded_device(dev, result)
+            self._finalize_device_bootstrap(manager, dev, result)
 
     def _load_managers(self, manager, managers, plugin_name):
         for mi in managers:
@@ -288,6 +257,42 @@ class Initializer(Loggable):
 
             self.info("finish {} loading".format(mi))
             man.finish_loading()
+
+    def _register_loaded_device(self, dev, result):
+        if not result.loaded or self.application is None:
+            return
+
+        self.info("Register device name={}, {}".format(dev.name, dev))
+        self.application.register_service(ICoreDevice, dev, {"display": True})
+
+    def _finalize_device_bootstrap(self, manager, dev, result):
+        if not result.loaded:
+            self.info("failed loading {}".format(dev.name))
+            return
+
+        if not result.opened:
+            self.info("failed connecting to {}".format(dev.name))
+
+        if result.initialized is None:
+            self.debug(
+                "{} initialize function does not return a boolean".format(dev.name)
+            )
+            raise NotImplementedError
+
+        if result.initialized is not True:
+            self.warning("Failed setting up communications to {}".format(dev.name))
+            if hasattr(dev, "set_simulation"):
+                dev.set_simulation(True)
+
+        if not result.post_initialized:
+            self.warning("Failed post initialization for {}".format(dev.name))
+
+        if result.failed_phase:
+            self.debug(
+                "bootstrap {} incomplete. {}".format(dev.name, result.summary())
+            )
+
+        manager.devices.append(dev)
 
     # helpers
     def _setup_progress(self, n):

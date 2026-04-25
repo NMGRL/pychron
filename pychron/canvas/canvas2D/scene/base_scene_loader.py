@@ -57,9 +57,13 @@ SWITCH_TAGS = ("switch", "valve", "rough_valve", "manual_valve")
 
 
 def get_offset(elem, default=None):
-    offset = elem.get("offset")
     if default is None:
         default = 0, 0
+
+    if isinstance(elem, (str, int)):
+        offset = None
+    else:
+        offset = elem.get("offset")
 
     txt = ""
     if offset:
@@ -81,24 +85,40 @@ def colorify(a):
     if not isinstance(a, str):
         a = a.text.strip()
 
-    if a.startswith("0x"):
+    if ',' in a:
+        c = a.split(',')
+        a = tuple(map(float, c))
+        if any((ci>1 for ci in a)):
+            a = tuple(map(lambda x: x/255., a))
+
+        if len(a) == 3:
+            a = a + (1,)
+
+    elif a.startswith("0x"):
         a = int(a, 16)
     return a
 
 
 def make_color(c):
     if not isinstance(c, str):
-        c = ",".join(map(str, list(map(int, c))))
-        c = "({})".format(c)
+        if any((ci>1 for ci in c)):
+            c = tuple(map(lambda x: x/255., c))
+
+        if len(c) == 3:
+            c = c + (1,)
+        # c = ",".join(map(str, list(map(float, c))))
+        # c = "{})".format(c)
+
     return c
 
 
 class BaseLoader:
-    def __init__(self, path, origin, color_dict, valve_dimension):
+    def __init__(self, path, origin, color_dict, valve_dimension, connection_dimension):
         self._path = path
         self._origin = origin
         self._color_dict = color_dict
         self._valve_dimension = valve_dimension
+        self._connection_dimension = connection_dimension
 
     def _get_items(self, key):
         raise NotImplementedError
@@ -119,7 +139,7 @@ class BaseLoader:
     def load_rects(self, scene):
         for key in RECT_TAGS:
             for b in self._get_items(key):
-                c = self._color_dict.get(key, (204, 204, 204))
+                c = self._color_dict.get(key, (0.8, 0.8, 0.8, 1))
                 klass = KLASS_MAP.get(key, RoundedRectangle)
                 self._new_rectangle(
                     scene, b, c, bw=5, origin=self._origin, klass=klass, type_tag=key
@@ -139,7 +159,7 @@ class BaseLoader:
             klass = Label
 
         # tran = label_dict['translation']
-        x, y = self._get_translation(label_dict["translation"])
+        x, y = self._get_translation(label_dict)
         # x, y = 0, 0
         # trans = label.find('translation')
         # if trans is not None:

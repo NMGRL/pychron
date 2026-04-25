@@ -29,7 +29,7 @@ from pychron.tx.protocols.service import ServiceProtocol
 
 
 class BaseValveProtocol(ServiceProtocol):
-    manager_protocol = None
+    manager_protocol: str | None = None
 
     def __init__(self, application, addr, logger):
         ServiceProtocol.__init__(self, logger=logger)
@@ -65,10 +65,22 @@ class BaseValveProtocol(ServiceProtocol):
             ("GetValveLockStates", "_get_valve_lock_states"),
             ("GetValveLockState", "_get_valve_lock_state"),
             ("GetValveOwners", "_get_valve_owners"),
+            ("GetPipetteCount", "_get_pipette_count"),
+            ("GetPipetteCounts", "_get_pipette_counts"),
         )
         self._register_services(services)
 
     # command handlers
+    def _get_pipette_counts(self, data):
+        result = self._manager.get_pipette_counts()
+        return result
+
+    def _get_pipette_count(self, data):
+        if isinstance(data, dict):
+            data = data["value"]
+        result = self._manager.get_pipette_count(data)
+        return result
+
     def _get_indicator_state(self, data):
         if isinstance(data, dict):
             data = data["value"]

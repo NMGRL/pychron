@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from traits.api import List, Dict
+from traits.api import List, Dict, Str
 
 from pychron.core.templater.base_templater import BaseTemplater
 
@@ -28,7 +28,7 @@ class CommentTemplater(BaseTemplater):
 
     base_predefined_labels = List(["", "irrad_level : irrad_hole"])
 
-    label = "irrad_level : irrad_hole"
+    label = Str("irrad_level : irrad_hole")
     persistence_name = "comment"
 
     def render(self, obj):

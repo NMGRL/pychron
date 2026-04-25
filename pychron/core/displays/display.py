@@ -21,11 +21,14 @@ from __future__ import absolute_import
 from threading import Lock
 
 from pyface.qt.QtGui import QColor
+from pyface.ui_traits import PyfaceColor
 from six.moves.queue import Queue
-from traits.api import HasTraits, Int, Color, Str, Event, Bool
+from traits.api import HasTraits, Int, Str, Event, Bool
+from pyface.color import Color
 from traitsui.api import View, UItem, Controller
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.color_utils import coerce_qcolor, contrast_color
 from pychron.core.ui.display_editor import DisplayEditor
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -60,9 +63,9 @@ class DisplayController(Controller):
     height = Int(500)
     title = Str
 
-    default_color = Color("black")
+    default_color = PyfaceColor
     # default_size = Int
-    bgcolor = Color
+    bgcolor = PyfaceColor
     font_name = Str
     font_size = Int(12)
     max_blocks = Int(0)
@@ -83,7 +86,7 @@ class DisplayController(Controller):
 
     def init(self, info):
         self.opened = True
-        super(DisplayController, self).init(info)
+        return super(DisplayController, self).init(info)
 
     #        print 'rrrrr', info
     #        info.object.ui = info.ui
@@ -111,10 +114,11 @@ class DisplayController(Controller):
         if "color" not in kw or kw["color"] is None:
             kw["color"] = self.default_color
 
-        tol = 5
-        if isinstance(kw["color"], str):
-            q = QColor(kw["color"])
-            kw["color"] = q
+        qcolor = coerce_qcolor(kw["color"], qcolor_class=QColor)
+        if qcolor is None:
+            fallback = contrast_color(self.bgcolor)
+            qcolor = coerce_qcolor(fallback, qcolor_class=QColor, default="black")
+        kw["color"] = qcolor
 
         # rgba = kw['color'].toTuple()
         # b_rgba = self.bgcolor.toTuple()

@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
+
 import datetime
 import re
 from operator import attrgetter
+from typing import Any, Callable, Dict, Optional
 
 from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool, Float, Range
 from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor, Item, VGroup
@@ -60,14 +63,11 @@ class PipelineFilter(HasTraits):
         if txt:
             self.parse_string(txt)
 
-    def generate_evaluate_func(self):
-        def func(edict):
+    def generate_evaluate_func(self) -> Callable[[Dict[str, Any]], bool]:
+        def func(edict: Dict[str, Any]) -> bool:
             attr = self.attribute
             comp = self.comparator
             crit = self.criterion
-
-            # val = self._get_value(item, attr)
-            # edict = {attr: val}
 
             attr = attr.replace(" ", "_")
 
@@ -75,7 +75,6 @@ class PipelineFilter(HasTraits):
                 comp = "=="
 
             if comp in ("between", "not between"):
-
                 try:
                     low, high = crit.split(",")
                 except ValueError:
@@ -112,7 +111,7 @@ class PipelineFilter(HasTraits):
             try:
                 result = eval(test, edict)
             except (AttributeError, ValueError, TypeError) as e:
-                print(
+                self.debug(
                     "filter evaluation failed e={} test={}, dict={}".format(
                         e, test, edict
                     )
@@ -123,7 +122,7 @@ class PipelineFilter(HasTraits):
 
         self._eval_func = func
 
-    def evaluate(self, item):
+    def evaluate(self, item: Any) -> bool:
         attr = self.attribute
         comp = self.comparator
         crit = self.criterion
@@ -136,7 +135,7 @@ class PipelineFilter(HasTraits):
 
         return ret
 
-    def _convert_date(self, d):
+    def _convert_date(self, d: str) -> str:
         for s in (
             "%B",
             "%b",
@@ -151,6 +150,7 @@ class PipelineFilter(HasTraits):
                 return datetime.datetime.strptime(d, s)
             except ValueError:
                 pass
+        return d
 
     def _get_value(self, item, attr):
         val = None

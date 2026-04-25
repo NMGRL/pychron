@@ -13,13 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import annotations
+
+from typing import Any, List, Optional
 
 from numpy import inf, hstack, invert
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 
 # ============= enthought library imports =======================
-from traits.api import Bool, List
+from traits.api import Bool, List, Instance
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
@@ -110,7 +113,6 @@ class FitReferencesNode(FitNode):
 
         # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
-
             for i, (gid, refs) in enumerate(groupby_group_id(state.references)):
                 if i == 0:
                     editor = self.editor
@@ -127,10 +129,9 @@ class FitReferencesNode(FitNode):
 
                 editor.set_references(list(refs))
 
-        self._set_saveable(state)
         self._set_additional_options(state)
-
         self.editor.force_update(force=True)
+        self._set_saveable(state)
 
     def _get_reference_analysis_types(self):
         return []
@@ -212,12 +213,25 @@ class FitICFactorNode(FitReferencesNode):
     def _set_additional_options(self, state):
         state.delete_existing_icfactors = self.plotter_options.delete_existing
         state.use_source_correction = self.plotter_options.use_source_correction
+        state.use_discrimination = self.plotter_options.use_discrimination
 
     def _set_saveable(self, state):
         super(FitICFactorNode, self)._set_saveable(state)
         ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.denominator for p in ps]
         state.standard_ratios = [p.standard_ratio for p in ps]
+
+        rd = {}
+        for p in ps:
+            ans, xs, vs, es = (
+                self.editor.figure_model.panels[0].figures[0].reference_data(p)
+            )
+            rd[p.denominator] = {
+                "xs": [ai.timestamp for ai in ans],
+                "vs": vs.tolist(),
+                "es": es.tolist(),
+            }
+        state.reference_data = rd
 
     def _check_refit(self, ai):
         for k in self._keys:
@@ -236,7 +250,6 @@ class FitICFactorNode(FitReferencesNode):
                 raise RefitException()
 
     def load(self, nodedict):
-
         pom = self.plotter_options_manager
         if pom.selected_options.name == "Default":
             try:
@@ -269,19 +282,21 @@ class FitIsotopeEvolutionNode(FitNode):
     use_plotting = False
     _refit_message = "The selected Isotope Evolutions have already been fit. Would you like to skip refitting?"
 
-    def _check_refit(self, analysis):
-        for k in self._keys:
+    classifier = Instance("pychron.classifier.isotope_classifier.IsotopeClassifier")
 
+    def _check_refit(self, analysis: Any) -> Optional[bool]:
+        for k in self._keys:
             i = analysis.get_isotope(k)
             if i is None:
                 i = analysis.get_isotope(detector=k)
 
             if i is None:
-                print('invalid isotope "{}"'.format(k), analysis.isotope_keys)
+                self.debug('invalid isotope "{}"'.format(k), analysis.isotope_keys)
                 continue
 
             if not i.reviewed:
                 return True
+        return None
 
     def _options_view_default(self):
         return view("Iso Evo Options")
@@ -349,9 +364,12 @@ class FitIsotopeEvolutionNode(FitNode):
                     pe = inf
 
                 smart_filter_coefficients = f.get_filter_coefficients()
+                smart_filter_goodness = None
+                smart_filter_threshold = None
+                smart_filter = e
                 if smart_filter_coefficients:
                     smart_filter_threshold = f.smart_filter_values(i)
-                    smart_filter_goodness = e < f.smart_filter_values(i)
+                    smart_filter_goodness = smart_filter < f.smart_filter_values(i)
 
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
@@ -366,7 +384,11 @@ class FitIsotopeEvolutionNode(FitNode):
                 signal_to_baseline = 0
                 if hasattr(iso, "baseline"):
                     bs = iso.baseline.error
-                    signal_to_baseline = abs(bs / i * 100)
+                    try:
+                        signal_to_baseline = abs(bs / i * 100)
+                    except ZeroDivisionError:
+                        signal_to_baseline = 0
+
                     if (
                         signal_to_baseline_threshold
                         and signal_to_baseline_percent_threshold
@@ -411,7 +433,10 @@ class FitIsotopeEvolutionNode(FitNode):
                     rsquared_goodness = rsquared > rsquared_threshold
 
                 if hasattr(iso, "blank"):
-                    signal_to_blank = iso.blank.value / iso.value * 100
+                    try:
+                        signal_to_blank = iso.blank.value / iso.value * 100
+                    except ZeroDivisionError:
+                        signal_to_blank = 0
                 else:
                     signal_to_blank = 0
 
@@ -422,14 +447,18 @@ class FitIsotopeEvolutionNode(FitNode):
                     signal_to_blank_goodness = (
                         signal_to_blank < signal_to_blank_threshold
                     )
+                klass = 1
+                if self.classifier:
+                    klass, prob = self.classifier.classify_isotope(iso)
 
                 yield IsoEvoResult(
                     analysis=xi,
                     isotope_obj=iso,
+                    klass=klass,
                     nstr=nstr,
                     intercept_value=i,
                     intercept_error=e,
-                    normalized_error=e * iso.n ** 0.5,
+                    normalized_error=e * iso.n**0.5,
                     percent_error=pe,
                     int_err=pe,
                     int_err_threshold=goodness_threshold,
@@ -455,7 +484,7 @@ class FitIsotopeEvolutionNode(FitNode):
                     signal_to_baseline_percent_threshold=signal_to_baseline_percent_threshold,
                     smart_filter_goodness=smart_filter_goodness,
                     smart_filter_threshold=smart_filter_threshold,
-                    smart_filter=e,
+                    smart_filter=smart_filter,
                     regression_str=iso.regressor.tostring(),
                     fit=iso.fit,
                     isotope=k,
@@ -552,7 +581,6 @@ class FitFluxNode(FitNode):
         else:
             klass = FluxResultsEditor
         editor = klass()
-
         editor.plotter_options = self.plotter_options
         return editor
 

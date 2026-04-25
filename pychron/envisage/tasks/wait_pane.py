@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.qt.QtGui import QSizePolicy
 from traitsui.api import (
     View,
     UItem,
@@ -37,12 +38,28 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 class WaitPane(TraitsDockPane):
     id = "pychron.wait"
     name = "Wait"
+    movable = False
+    closable = False
+    floatable = False
+
+    def create_contents(self, parent):
+        control = super().create_contents(parent)
+        control.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum))
+        control.setMaximumHeight(135)
+        return control
 
     def traits_view(self):
         cview = View(
             VGroup(
                 CustomLabel(
-                    "message", size=14, weight="bold", color_name="message_color"
+                    "message",
+                    size=14,
+                    color_name="message_color",
+                    bgcolor_name="message_bgcolor",
+                    weight="bold",
+                    border_style="2px solid orange",
+                    border_radius="5px",
+                    width=450,
                 ),
                 HGroup(
                     Spring(width=-5, springy=False),
@@ -56,7 +73,9 @@ class WaitPane(TraitsDockPane):
                     ),
                     UItem("continue_button"),
                 ),
-            )
+                show_border=True,
+            ),
+            resizable=True,
         )
 
         # HGroup(Spring(width=-5, springy=False),
@@ -81,6 +100,7 @@ class WaitPane(TraitsDockPane):
                 style="custom",
                 visible_when="not single",
             ),
+            resizable=True,
         )
         return v
 

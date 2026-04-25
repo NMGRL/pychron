@@ -31,9 +31,8 @@ from traits.api import (
     Str,
     HasTraits,
     Event,
-    Long,
 )
-from traits.trait_types import Date
+from traits.trait_types import Datetime
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
@@ -51,7 +50,6 @@ from pychron.experiment.utilities.runid import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
-from pychron.stage.maps.laser_stage_map import LaserStageMap
 
 
 class RepeatRunBlockView(HasTraits):
@@ -78,13 +76,13 @@ class NewRunBlockView(HasTraits):
 class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_selected = Any
     dclicked = Any
-    database_identifier = Long
+    database_identifier = Int
     display_executed_runs = Property(depends_on="executed_runs[]")
     n_executed_display = Int(5)
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
-    start_timestamp = Date
+    start_timestamp = Datetime
     auto_save_detector_ic = Bool
     patterns = List
 
@@ -148,6 +146,8 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         open_view(ve)
 
     def motion_saver(self):
+        from pychron.stage.maps.laser_stage_map import LaserStageMap
+
         stage_map_klass = LaserStageMap
 
         t = self.tray
@@ -177,7 +177,6 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         p = self.open_file_dialog()
         if p is not None:
             with open(p, "r") as rfile:
-
                 positions = reversed(rfile.readlines())
                 for cpos in positions:
                     arun = next(
@@ -430,7 +429,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         nans = []
         # for ei in reversed(ens):
         for ei in ens:
-            ei.state = "not run"
+            ei.transition("reset", force=True, source="reset")
             if not ei.is_step_heat():
                 ei.aliquot = 0
             elif finished and ei.user_defined_aliquot:
@@ -455,7 +454,6 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
         self._no_update = True
         if run is not None:
-
             self.automated_runs.remove(run)
             self.executed_runs.append(run)
 
@@ -474,9 +472,8 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         return ci
 
     def paste_function(self, obj):
-
         ci = obj.clone_traits()
-        ci.state = "not run"
+        ci.transition("reset", force=True, source="paste")
         ci.aliquot = 0
         ci.step = -1
         ci.conflicts_checked = False
@@ -590,13 +587,12 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         if new and not self._no_update:
             idx = self.automated_runs.index(new[-1])
             self.debug("SSSSSSSSSSSSSS set AR scroll to {}".format(idx))
-            self.refresh_info_needed = True
-            self.automated_runs_scroll_to_row = idx
+            self.request_info_refresh(scroll_to_row=idx)
             # invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
 
     @on_trait_change("automated_runs:state")
     def _refresh_table1(self):
-        self.refresh_table_needed = True
+        self.request_table_refresh()
 
 
 # ============= EOF =============================================

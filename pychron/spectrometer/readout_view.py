@@ -221,7 +221,6 @@ class ReadoutView(PersistenceLoggable):
         self._load_configuration()
 
     def _load_configuration(self):
-
         ypath = os.path.join(paths.spectrometer_dir, "readout.yaml")
         if not os.path.isfile(ypath):
             path = os.path.join(paths.spectrometer_dir, "readout.cfg")
@@ -337,6 +336,8 @@ class ReadoutView(PersistenceLoggable):
             for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
                     cv = spec.get_configuration_value(r.id)
+                    if cv is None:
+                        continue
                     r.config_value = cv
                     if r.compare:
                         args = r.config_compare()

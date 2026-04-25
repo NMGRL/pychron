@@ -32,9 +32,9 @@ from traits.api import (
     Enum,
     List,
     Range,
-    Color,
     Button,
     Instance,
+    Any,
 )
 from traits.trait_errors import TraitError
 from traitsui.api import (
@@ -43,6 +43,7 @@ from traitsui.api import (
     HGroup,
     VGroup,
     EnumEditor,
+    TableEditor,
     Spring,
     Group,
     spring,
@@ -51,6 +52,7 @@ from traitsui.api import (
     InstanceEditor,
     CheckListEditor,
     TextEditor,
+    Color
 )
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
@@ -65,6 +67,7 @@ from pychron.core.utils import alphas
 from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
+from pychron.options.guide import Guide, RangeGuide
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, SIG_FIGS
@@ -178,8 +181,26 @@ class AppearanceSubOptions(SubOptions):
         )
         return hg
 
+    def _get_margin_group(self):
+        return BorderVGroup(
+            HGroup(
+                Spring(springy=False, width=100),
+                Item("margin_top", label="Top"),
+                spring,
+            ),
+            HGroup(
+                Item("margin_left", label="Left"), Item("margin_right", label="Right")
+            ),
+            HGroup(
+                Spring(springy=False, width=100),
+                Item("margin_bottom", label="Bottom"),
+                spring,
+            ),
+            label="Page Margins",
+        )
+
     def _get_padding_group(self):
-        return VGroup(
+        return BorderVGroup(
             HGroup(
                 Spring(springy=False, width=100),
                 Item("padding_top", label="Top"),
@@ -198,7 +219,6 @@ class AppearanceSubOptions(SubOptions):
             ),
             enabled_when="not formatting_options",
             label="Padding/Spacing",
-            show_border=True,
         )
 
     def _get_bg_group(self):
@@ -215,6 +235,11 @@ class AppearanceSubOptions(SubOptions):
         grid_grp = VGroup(
             Item("use_xgrid", label="XGrid Visible"),
             Item("use_ygrid", label="YGrid Visible"),
+            Item(
+                "show_all_grid_axes",
+                label="Show All Grid Axes",
+                tooltip="Keep axis titles and tick labels visible on every subplot in a grid",
+            ),
             show_border=True,
             label="Grid",
         )
@@ -231,6 +256,7 @@ class AppearanceSubOptions(SubOptions):
         g = VGroup(
             self._get_bg_group(),
             self._get_layout_group(),
+            self._get_margin_group(),
             self._get_padding_group(),
             self._get_grid_group(),
         )
@@ -242,7 +268,7 @@ class MainOptions(SubOptions):
     def _get_columns(self):
         cols = [
             checkbox_column(name="plot_enabled", label="Use"),
-            object_column(name="name", width=130, editor=EnumEditor(name="names")),
+            object_column(name="name", editor=EnumEditor(name="names")),
             object_column(name="scale"),
             object_column(name="height", format_func=lambda x: str(x) if x else ""),
             checkbox_column(name="show_labels", label="Labels"),
@@ -258,7 +284,7 @@ class MainOptions(SubOptions):
                 label="Multiplier",
                 format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True),
             ),
-            checkbox_column(name="has_filter", label="Filter", editable=False)
+            checkbox_column(name="has_filter", label="Filter", editable=False),
             # object_column(name='filter_str', label='Filter')
         ]
 
@@ -314,7 +340,7 @@ class MainOptions(SubOptions):
 
     def _get_edit_view(self):
         v = View(
-            BorderVGroup(
+            VGroup(
                 self._get_name_grp(),
                 self._get_yticks_grp(),
                 self._get_ylimits_group(),
@@ -367,6 +393,56 @@ class MainOptions(SubOptions):
 # ===============================================================
 
 
+def convert_color(ss):
+    from pyface.qt.QtGui import QColor
+    try:
+        from pyface.color import Color as ColorClass
+    except Exception:
+        ColorClass = None
+
+    def convert_value(v):
+        if isinstance(v, QColor):
+            return v.rgba()
+        if ColorClass is not None and isinstance(v, ColorClass):
+            return v.rgba
+        if isinstance(v, dict):
+            convert_color(v)
+            return v
+        if isinstance(v, list):
+            return [convert_value(i) for i in v]
+        if isinstance(v, tuple):
+            return tuple(convert_value(i) for i in v)
+        return v
+
+    for k, v in list(ss.items()):
+        ss[k] = convert_value(v)
+
+
+def _coerce_color_value(value):
+    if isinstance(value, dict):
+        _coerce_color_dict(value)
+        return value
+    if isinstance(value, list):
+        return [_coerce_color_value(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_coerce_color_value(v) for v in value)
+    if isinstance(value, (list, tuple)):
+        return value
+    return value
+
+
+def _coerce_color_dict(d):
+    for k, v in list(d.items()):
+        if "color" in k and isinstance(v, (list, tuple)) and v:
+            if all(isinstance(c, (int, float)) for c in v):
+                if max(v) <= 1:
+                    d[k] = tuple(int(round(c * 255)) for c in v)
+                else:
+                    d[k] = tuple(int(round(c)) for c in v)
+                continue
+        d[k] = _coerce_color_value(v)
+
+
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
@@ -375,15 +451,6 @@ class BaseOptions(HasTraits):
     _subview_cache = None
 
     def make_state(self):
-        def convert_color(ss):
-            from pyface.qt.QtGui import QColor
-
-            nd = {}
-            for k, v in ss.items():
-                if isinstance(v, QColor):
-                    nd[k] = v.rgba()
-            ss.update(**nd)
-
         state = self.__getstate__()
         state["klass"] = str(self.__class__)
 
@@ -394,7 +461,7 @@ class BaseOptions(HasTraits):
         except KeyError:
             pass
 
-        tags = ("groups", "aux_plots", "selected")
+        tags = ("groups", "aux_plots", "selected", "guides", "ranges")
         atags = self._get_tags()
         if atags:
             tags += atags
@@ -416,6 +483,8 @@ class BaseOptions(HasTraits):
 
         convert_color(state)
         self._get_state_hook(state)
+        convert_color(state)
+
         return state
 
     def dump(self, wfile):
@@ -437,6 +506,9 @@ class BaseOptions(HasTraits):
             if key == "aux_plots":
                 if "_plot_names" in ctx:
                     ctx.pop("_plot_names")
+                elif "error_types" in ctx:
+                    ctx.pop("error_types")
+            _coerce_color_dict(ctx)
 
             return cls(**ctx)
 
@@ -448,7 +520,7 @@ class BaseOptions(HasTraits):
             except ValueError:
                 pass
 
-        tags = ("aux_plots", "groups", "selected")
+        tags = ("aux_plots", "groups", "selected", "guides", "ranges")
         atags = self._get_tags()
         if atags:
             tags += atags
@@ -473,7 +545,6 @@ class BaseOptions(HasTraits):
         return None
 
     def _setstate(self, state):
-
         # see self.__setstate___
 
         self._init_trait_listeners()
@@ -513,7 +584,15 @@ class BaseOptions(HasTraits):
     def formatted_attr(self, key):
         obj = getattr(self, key)
         if "color" in key:
-            obj = obj.red(), obj.green(), obj.blue(), obj.alpha()
+            def _component(value):
+                return value() if callable(value) else value
+
+            obj = (
+                _component(getattr(obj, "red", 0)),
+                _component(getattr(obj, "green", 0)),
+                _component(getattr(obj, "blue", 0)),
+                _component(getattr(obj, "alpha", 1)),
+            )
         return obj
 
     def to_dict_test(self, k):
@@ -607,11 +686,18 @@ class GroupMixin(HasTraits):
 class FigureOptions(BaseOptions, GroupMixin):
     bgcolor = Color
     plot_bgcolor = Color
+    show_all_grid_axes = Bool(False)
     plot_spacing = Range(0, 50)
     padding_left = Int(100)
     padding_right = Int(100)
     padding_top = Int(100)
     padding_bottom = Int(100)
+
+    margin_left = Int(10)
+    margin_right = Int(10)
+    margin_top = Int(10)
+    margin_bottom = Int(10)
+
     auto_generate_title = Bool
     include_legend = Bool(False)
     include_sample_in_legend = Bool
@@ -640,6 +726,7 @@ class FigureOptions(BaseOptions, GroupMixin):
     xtitle_font = Property
     xtitle_fontsize = Enum(*SIZES)
     xtitle_fontname = Enum(*FONTS)
+    xtitle = Str
 
     ytick_font = Property
     ytick_fontsize = Enum(*SIZES)
@@ -654,12 +741,13 @@ class FigureOptions(BaseOptions, GroupMixin):
     ytitle_fontname = Enum(*FONTS)
 
     layout = Instance(FigureLayout, ())
-
+    guides = List
+    ranges = List
     # group = Property
     # group_editor_klass = None
 
     # refresh_colors = Event
-
+    stretch_vertical = Bool
     xpadding = Property
     xpad = Float
     xpad_as_percent = Bool
@@ -670,6 +758,13 @@ class FigureOptions(BaseOptions, GroupMixin):
     # def initialize(self):
     #     if not self.groups:
     #         self.groups = self._groups_default()
+    def get_page_size(self):
+        fw, fh = self.layout.fixed_width, self.layout.fixed_height
+        if fw or fh:
+            return fw, fh
+
+    def get_page_margins(self):
+        return self.margin_left, self.margin_right, self.margin_top, self.margin_bottom
 
     def get_paddings(self):
         return (
@@ -837,7 +932,6 @@ class AuxPlotFigureOptions(FigureOptions):
     def setup(self):
         super(AuxPlotFigureOptions, self).setup()
         while len(self.aux_plots) > self.naux_plots:
-
             p = next(
                 (pp for pp in self.aux_plots if not pp.name or not pp.plot_enabled),
                 None,
@@ -865,6 +959,8 @@ class AuxPlotFigureOptions(FigureOptions):
     # def get_loadable_aux_plots(self):
     #     return reversed([pi for pi in self.aux_plots
     #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+    def get_aux_plot_names(self):
+        return [pi.get_keyname() for pi in self.get_plotable_aux_plots()]
 
     def get_saveable_aux_plots(self):
         return list(
@@ -971,6 +1067,132 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
             self.analysis_label_format = lm.formatter
             self.analysis_label_display = lm.label
             # self.refresh_plot_needed = True
+
+
+class GuidesOptions(SubOptions):
+    add_guide_button = Button
+    delete_guide_button = Button
+    add_range_button = Button
+    delete_range_button = Button
+    selected = Any
+    selected_range = Any
+
+    def __init__(self, *args, **kw):
+        super(GuidesOptions, self).__init__(*args, **kw)
+        names = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
+        for g in self.model.guides:
+            g.plotnames = names
+        for g in self.model.ranges:
+            g.plotnames = names
+
+    def _add_guide_button_fired(self):
+        if self.selected:
+            g = Guide(**self.selected.to_kwargs())
+        else:
+            g = Guide()
+
+        g.plotnames = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
+        self.model.guides.append(g)
+
+    def _delete_guide_button_fired(self):
+        if self.selected:
+            self.model.guides.remove(self.selected)
+
+    def _add_range_button_fired(self):
+        if self.selected_range:
+            g = RangeGuide(**self.selected_range.to_kwargs())
+        else:
+            g = RangeGuide()
+
+        g.plotnames = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
+        self.model.ranges.append(g)
+
+    def _delete_range_button_fired(self):
+        if self.selected_range:
+            self.model.ranges.remove(self.selected_range)
+
+    def traits_view(self):
+        cols = [
+            CheckboxColumn(name="visible", label="Visible"),
+            ObjectColumn(name="value", label="Value", width=200),
+            ObjectColumn(name="minvalue", label="Min", width=200),
+            ObjectColumn(name="maxvalue", label="Max", width=200),
+            ObjectColumn(name="orientation", label="Orientation"),
+            ObjectColumn(
+                name="plotname", editor=EnumEditor(name="plotnames"), label="Plot"
+            ),
+            # ObjectColumn(name="alpha", label="Opacity"),
+            # ObjectColumn(name="color", label="Color"),
+            # ObjectColumn(name="line_style", label='Style'),
+            # ObjectColumn(name="line_width", label='Width'),
+        ]
+        edit_view = View(
+            Item("label", label="Label"),
+            Item("alpha", label="Opacity"),
+            UItem("color"),
+            UItem("line_style", label="Style"),
+            UItem("line_width", label="Width"),
+        )
+
+        rangecols = [
+            CheckboxColumn(name="visible", label="Visible"),
+            ObjectColumn(name="minvalue", label="Min", width=200),
+            ObjectColumn(name="maxvalue", label="Max", width=200),
+            ObjectColumn(name="orientation", label="Orientation"),
+            ObjectColumn(
+                name="plotname", editor=EnumEditor(name="plotnames"), label="Plot"
+            ),
+            # ObjectColumn(name="alpha", label="Opacity"),
+            # ObjectColumn(name="color", label="Color"),
+            # ObjectColumn(name="line_style", label='Style'),
+            # ObjectColumn(name="line_width", label='Width'),
+        ]
+        return self._make_view(
+            VGroup(
+                BorderVGroup(
+                    HGroup(
+                        icon_button_editor("controller.add_guide_button", "add"),
+                        icon_button_editor(
+                            "controller.delete_guide_button",
+                            "delete",
+                            enabled_when="controller.selected",
+                        ),
+                    ),
+                    UItem(
+                        "guides",
+                        editor=TableEditor(
+                            columns=cols,
+                            sortable=False,
+                            edit_view=edit_view,
+                            orientation="vertical",
+                            selected="controller.selected",
+                        ),
+                    ),
+                    label="Guides",
+                ),
+                BorderVGroup(
+                    HGroup(
+                        icon_button_editor("controller.add_range_button", "add"),
+                        icon_button_editor(
+                            "controller.delete_range_button",
+                            "delete",
+                            enabled_when="controller.selected",
+                        ),
+                    ),
+                    UItem(
+                        "ranges",
+                        editor=TableEditor(
+                            columns=rangecols,
+                            sortable=False,
+                            edit_view=edit_view,
+                            orientation="vertical",
+                            selected="controller.selected_range",
+                        ),
+                    ),
+                    label="Ranges",
+                ),
+            )
+        )
 
 
 # ============= EOF =============================================

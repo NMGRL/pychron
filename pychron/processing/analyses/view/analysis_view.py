@@ -16,10 +16,6 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-
-from numpy.ma import arange
-from pyface.timer.do_later import do_later, do_after
 from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
 from traitsui.api import (
     View,
@@ -34,9 +30,7 @@ from traitsui.api import (
 )
 
 from pychron.core.helpers.binpack import unpack
-from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.view_util import open_view
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.processing.analyses.view.adapters import (
     IsotopeTabularAdapter,
@@ -45,14 +39,19 @@ from pychron.processing.analyses.view.adapters import (
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.dvc_commit_view import HistoryView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
+from pychron.processing.analyses.view.icfactor_view import ICFactorView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.regression_view import RegressionView
+from pychron.processing.analyses.view.sample_view import SampleView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, MeasurementView
 from pychron.pychron_constants import DETECTOR_IC, COCKTAIL, UNKNOWN
+from pychron.core.helpers.logger_setup import new_logger
+
+logger = new_logger("AnalysisView")
 
 
 class AnalysisViewHandler(Handler):
@@ -70,6 +69,9 @@ class AnalysisViewHandler(Handler):
 
     def show_residuals(self, uiinfo, obj):
         obj.updated = {"show_residuals": True}
+
+    def show_equilibration_inspector(self, uiinfo, obj):
+        obj.updated = {"show_equilibration_inspector": True}
 
     def show_inspection(self, uiinfo, obj):
         obj.updated = {"show_inspection": True}
@@ -95,6 +97,12 @@ class MetaView(HasTraits):
     name = "Meta"
     spectrometer = Instance(SpectrometerView)
     interference = Instance(InterferencesView)
+    sample = Instance(SampleView)
+
+    def load(self, an):
+        self.interference = InterferencesView(an)
+        self.spectrometer = SpectrometerView(an)
+        self.sample = SampleView(an)
 
     def traits_view(self):
         v = View(
@@ -108,6 +116,11 @@ class MetaView(HasTraits):
                     UItem("interference", style="custom"),
                     show_border=True,
                     label="Reactor",
+                ),
+                VGroup(
+                    UItem("sample", style="custom"),
+                    show_border=True,
+                    label="Sample",
                 ),
             )
         )
@@ -222,6 +235,10 @@ class AnalysisView(HasTraits):
     measurement_view = Instance(MeasurementView)
     extraction_view = Instance(ExtractionView)
     isotope_view = Instance(IsotopeView, ())
+    _evolution_graph = Any
+    _history_view = Instance(HistoryView)
+    _meta_view = Instance(MetaView)
+    _regression_view = Instance(RegressionView)
 
     groups = List
 
@@ -232,6 +249,7 @@ class AnalysisView(HasTraits):
         show_baseline=False,
         show_inspection=False,
         show_residuals=False,
+        show_equilibration_inspector=False,
     ):
         isotopes = self.isotope_view.selected
         return self.model.show_isotope_evolutions(
@@ -241,6 +259,7 @@ class AnalysisView(HasTraits):
             show_baseline=show_baseline,
             show_inspection=show_inspection,
             show_residuals=show_residuals,
+            show_equilibration_inspector=show_equilibration_inspector,
         )
 
     def update_fontsize(self, view, size):
@@ -255,11 +274,9 @@ class AnalysisView(HasTraits):
                 v.fontsize = size
 
     def load(self, an, quick=False):
-        self.groups = []
         self.model = an
         analysis_type = an.analysis_type
-        analysis_id = an.record_id
-        self.analysis_id = analysis_id
+        self.analysis_id = analysis_id = "{}({})".format(an.record_id, an.sample)
 
         # main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
         self.main_view.trait_set(analysis_type=analysis_type, analysis_id=analysis_id)
@@ -269,7 +286,8 @@ class AnalysisView(HasTraits):
 
         isos = [an.isotopes[k] for k in an.isotope_keys]
         # iso_view = IsotopeView(isotopes=isos)
-        self.isotope_view.isotopes = isos
+        if self.isotope_view.isotopes != isos:
+            self.isotope_view.isotopes = isos
         # self.groups.append(self.isotope_view)
 
         gs = [self.main_view, self.isotope_view]
@@ -277,17 +295,18 @@ class AnalysisView(HasTraits):
             self._make_subviews(an, gs)
 
         # self.selected_tab = self.main_view
-        self.groups = gs
+        if self.groups != gs:
+            self.groups = gs
         # do_after(50, self.trait_set, selected_tab=self.main_view)
 
     def refresh(self):
         an = self.model
-        self.isotope_view.isotopes = []
         isos = [an.isotopes[k] for k in an.isotope_keys]
-        self.isotope_view.isotopes = isos
+        if self.isotope_view.isotopes != isos:
+            self.isotope_view.isotopes = isos
         self.isotope_view.refresh_needed = True
 
-        self.main_view.load_computed(self.model, new_list=False)
+        self.main_view.load(self.model)
         self.main_view.refresh_needed = True
 
         for g in self.groups:
@@ -297,32 +316,46 @@ class AnalysisView(HasTraits):
     @on_trait_change("isotope_view:updated")
     def show_iso_evo(self, new):
         g = self.show_iso_evolutions(**new)
+        if g is None:
+            return
+
+        if self._evolution_graph is not None and self._evolution_graph is not g:
+            self._evolution_graph.on_trait_change(self.refresh, "grouping", remove=True)
+
+        self._evolution_graph = g
         g.on_trait_change(self.refresh, "grouping")
 
     def _selected_tab_changed(self, new):
         if isinstance(new, HistoryView):
             new.initialize(self.model)
+            new.dvc = self.dvc
         elif isinstance(new, RegressionView):
             new.initialize(self.model)
+        elif isinstance(new, ICFactorView):
+            new.dvc = self.dvc
+            new.activate()
 
     def _make_subviews(self, an, gs):
-        view = HistoryView()
-        gs.append(view)
+        if self._history_view is None:
+            self._history_view = HistoryView()
+        if self._meta_view is None:
+            self._meta_view = MetaView()
+        if self._regression_view is None:
+            self._regression_view = RegressionView()
 
-        view = MetaView(
-            interference=InterferencesView(an), spectrometer=SpectrometerView(an)
-        )
-        gs.append(view)
+        self._meta_view.load(an)
 
-        view = RegressionView()
-        gs.append(view)
+        gs.append(self._history_view)
+        gs.append(self._meta_view)
+        gs.append(self._regression_view)
         if an.measured_response_stream:
-            ev = ExtractionView()
+            ev = self.extraction_view or ExtractionView()
             if ev.setup_graph(
                 an.measured_response_stream,
                 an.requested_output_stream,
                 an.setpoint_stream,
             ):
+                self.extraction_view = ev
                 gs.append(ev)
 
         if an.snapshots:
@@ -336,6 +369,9 @@ class AnalysisView(HasTraits):
         if an.analysis_type in (UNKNOWN, COCKTAIL):
             ecv = ErrorComponentsView(an)
             gs.append(ecv)
+
+            icv = ICFactorView(analysis=an)
+            gs.append(icv)
 
         pch = PeakCenterView()
         if pch.load(an):

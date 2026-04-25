@@ -28,8 +28,13 @@ def get_display_size():
     size = namedtuple("Size", "width height")
     from pyface.qt.QtGui import QApplication
 
-    desktop = QApplication.desktop()
-    rect = desktop.screenGeometry()
+    try:
+        desktop = QApplication.desktop()
+        rect = desktop.screenGeometry()
+    except AttributeError:
+        screen = QApplication.primaryScreen()
+        rect = screen.availableGeometry()
+
     w, h = rect.width(), rect.height()
 
     return size(w, h)
@@ -88,7 +93,7 @@ def alpha_to_int(l):
         return int(l) - 1
 
     s = sum(
-        (ord(li) - A_UPPERCASE + 1) * BASE ** i
+        (ord(li) - A_UPPERCASE + 1) * BASE**i
         for i, li in enumerate(reversed(l.upper()))
     )
 

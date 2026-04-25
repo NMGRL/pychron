@@ -1,0 +1,115 @@
+name: Deploy Docusaurus to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # Rebuild when site source or content changes
+      - 'docs-site/**'
+      - 'docs/doc-map.json'
+  # Allow manual re-deploys from the Actions tab
+  workflow_dispatch:
+
+# Only one deployment can run at a time; cancel any in-progress run
+# so a rapid succession of pushes doesn't queue stale deployments.
+concurrency:
+  group: deploy-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write   # needed to push to gh-pages
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Docusaurus
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: docs-site
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Checkout full history so Docusaurus can use git timestamps for
+      #    "last updated" metadata on doc pages.
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # 2. Set up Node.js with npm cache keyed to the docs-site lockfile.
+      # -----------------------------------------------------------------------
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      # -----------------------------------------------------------------------
+      # 3. Install dependencies (ci = clean install from lockfile, no audits).
+      # -----------------------------------------------------------------------
+      - name: Install dependencies
+        run: npm ci
+
+      # -----------------------------------------------------------------------
+      # 4. Build the static site.
+      #    OUTPUT_DIR is docs-site/build/ — passed explicitly to the deploy
+      #    step to avoid ambiguity.
+      # -----------------------------------------------------------------------
+      - name: Build Docusaurus site
+        run: npm run build
+        env:
+          # Treat broken links as errors so a bad doc page never ships.
+          CI: true
+
+      # -----------------------------------------------------------------------
+      # 5. Deploy to gh-pages branch using the peaceiris action.
+      #
+      #    - publish_dir: the built static output
+      #    - destination_dir: site is served from /pychron/ (matches baseUrl)
+      #    - keep_files: false — full replacement on every deploy
+      #    - cname: leave unset (GitHub handles the nmgrl.github.io/pychron/
+      #      path via organizationName/projectName, no custom domain needed)
+      #
+      #    The GITHUB_TOKEN has `contents: write` from the top-level
+      #    permissions block; no PAT or deploy key required.
+      # -----------------------------------------------------------------------
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs-site/build
+          publish_branch: gh-pages
+          commit_message: |
+            deploy: Docusaurus build from ${{ github.sha }}
+
+            Triggered by push to main by @${{ github.actor }}
+          # Write a .nojekyll file so GitHub doesn't run Jekyll on the output.
+          enable_jekyll: false
+          # Force-push so the gh-pages branch stays a clean deployment history.
+          force_orphan: true
+
+      # -----------------------------------------------------------------------
+      # 6. Write a job summary with the deployed URL.
+      # -----------------------------------------------------------------------
+      - name: Write deployment summary
+        if: always()
+        run: |
+          {
+            echo "## Docusaurus Deployment"
+            echo ""
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "✅ Deployed successfully."
+              echo ""
+              echo "**URL:** https://nmgrl.github.io/pychron/"
+              echo "**Commit:** \`${{ github.sha }}\`"
+              echo "**Triggered by:** @${{ github.actor }}"
+            else
+              echo "❌ Deployment failed. Check the build step for errors."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+        working-directory: ${{ github.workspace }}

@@ -12,11 +12,17 @@ Pychron Develop Guide
 .. image:: ../images/NMT_logo.png
   :width: 33%
 
+This guide covers day-to-day development tasks, repository workflow, hardware and
+database integration, and subsystem-specific notes for the active codebase.
+
 
 .. toctree::
   :maxdepth: 1
 
+  installation
   running_pychron
+  git_workflow
+  repository_settings
   hardware
   database
   dvc/index

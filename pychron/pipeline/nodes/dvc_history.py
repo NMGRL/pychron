@@ -100,28 +100,41 @@ class DVCHistoryNode(BaseDVCNode):
 
     def run(self, state):
         unks = state.unknowns
-
         for repo, ans in groupby_repo(unks):
             repo = self.dvc.get_repository(repo)
-            abranch = repo.get_current_branch()
-            branchname = "history"
-            repo.create_branch(
-                branchname, state.selected_commits[repo.name], inform=False
-            )
+            # abranch = repo.get_current_branch()
 
-            pans = self.dvc.make_analyses(list(ans), reload=True)
+            try:
+                # repo.create_branch(
+                #     branchname, state.selected_commits[repo.name], inform=False
+                # )
 
-            # only allow one history group for right now.
-            # in the future add a history_group_id
-            # analyses are then partitioned by group_id then history_group_id
-            for unk in pans:
-                unk.group_id = 1
-                unk.history_id = 1
+                ps = [an.make_path(p) for an in ans for p in HISTORY_PATHS]
 
-            branch = repo.get_branch(abranch)
-            branch.checkout()
-            repo.delete_branch(branchname)
-            unks.extend(pans)
+                repo.checkout(state.selected_commits[repo.name], "--", ps)
+                pans = self.dvc.make_analyses(
+                    list(ans),
+                    reload=True,
+                    use_cached=False,
+                    sync_repo=False,
+                    use_flux_histories=False,
+                )
+                if pans:
+                    # only allow one history group for right now.
+                    # in the future add a history_group_id
+                    # analyses are then partitioned by group_id then history_group_id
+                    for unk in pans:
+                        unk.group_id = 1
+                        unk.history_id = 1
+
+                    unks.extend(pans)
+            except BaseException:
+                pass
+            finally:
+                repo.restore_branch(ps)
+                # branch = repo.get_branch(abranch)
+                # branch.checkout()
+                # repo.delete_branch(branchname)
 
 
 # ============= EOF =============================================

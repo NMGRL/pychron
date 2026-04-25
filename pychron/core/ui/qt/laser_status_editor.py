@@ -20,7 +20,7 @@ from __future__ import absolute_import
 import math
 from traits.api import HasTraits, Property, Int, Callable, Any, Str, Dict
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 # ============= standard library imports ========================
 from pyface.qt.QtGui import (
@@ -71,6 +71,10 @@ class _LaserStatusEditor(Editor):
             self._start_animation()
         else:
             self._stop_animation()
+
+    def dispose(self):
+        self._stop_animation()
+        super(_LaserStatusEditor, self).dispose()
 
     def _create_control(self):
         ctrl = QGraphicsView()
@@ -209,8 +213,9 @@ class _LaserStatusEditor(Editor):
         self.animation.start()
 
     def _stop_animation(self):
-        self.animation.setCurrentTime(0)
-        self.animation.stop()
+        if self.animation is not None:
+            self.animation.setCurrentTime(0)
+            self.animation.stop()
 
     def _add_bullet(self, scene, bounding_rect, ex, ey, cx, cy):
         pen = QPen()

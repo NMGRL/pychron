@@ -64,7 +64,6 @@ class LoaderLogic(Loggable):
         self.switches = yd["switches"]
 
     def _convert_switch_name(self, name):
-
         return next((k for k, v in six.iteritems(self.switches) if v == name), None)
 
     def _check_rule(self, key, rule):

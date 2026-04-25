@@ -20,8 +20,8 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from traits.api import HasTraits, Instance, Str, Event, on_trait_change, Float, Range
 from traitsui.api import View, Item, HGroup, VGroup
 from traitsui.item import UReadonly, UItem
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.basic_editor_factory import BasicEditorFactory
+from traitsui.qt.editor import Editor
 
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.pipeline.plot.editors.base_editor import BaseEditor
@@ -38,7 +38,6 @@ class _WebViewEditor(Editor):
     def _create_control(self):
         q = QWebEngineView()
         # q.resize(self.item.width, self.item.height)
-        print(self.item.width, self.item.height)
         return q
 
     def update_editor(self):
@@ -147,9 +146,4 @@ class MapFigureEditor(BaseEditor):
         )
         return v
 
-
-if __name__ == "__main__":
-    m = MapFigureEditor()
-    m.load()
-    m.configure_traits()
 # ============= EOF =============================================

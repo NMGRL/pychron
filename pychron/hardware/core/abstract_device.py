@@ -76,6 +76,7 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
                 return factory
         except ImportError as e:
             self.warning(e)
+            self.debug_exception()
 
     def close(self):
         if self._cdevice:

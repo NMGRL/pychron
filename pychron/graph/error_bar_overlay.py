@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+
 from chaco.api import AbstractOverlay
-from enable.colors import color_table
+from enable.colors import color_table, QtGui
 
 # ============= standard library imports ========================
 from numpy import column_stack
@@ -24,6 +25,7 @@ from traits.api import Enum, Bool, Float, on_trait_change
 
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.color_utils import to_rgba_float
 
 
 class ErrorBarOverlay(AbstractOverlay):
@@ -54,7 +56,6 @@ class ErrorBarOverlay(AbstractOverlay):
                 y = comp.value.get_data()
 
             if self.orientation == "x":
-
                 err = self.error
                 if self.use_component:
                     err = comp.xerror.get_data()
@@ -125,9 +126,18 @@ class ErrorBarOverlay(AbstractOverlay):
                     component.x, component.y, component.width, component.height
                 )
                 # draw normal
-                color = component.color
-                if isinstance(color, str):
+                color = component.color_
+                normalized = to_rgba_float(color)
+                if normalized is not None:
+                    color = normalized[:3] if normalized[3] >= 1 else normalized
+                elif isinstance(color, str):
                     color = color_table[color]
+                elif isinstance(color, QtGui.QColor):
+                    color = (
+                        color.red() / 255.0,
+                        color.green() / 255.0,
+                        color.blue() / 255.0,
+                    )
 
                 gc.set_line_width(self.line_width)
                 gc.set_stroke_color(color)

@@ -428,7 +428,7 @@ class HopEditorModel(Loggable):
 
 
 class HopEditorView(Controller):
-    model = HopEditorModel
+    model = Instance(HopEditorModel)
     title = Str("Peak Hops Editor")
 
     def close(self, info, is_ok):

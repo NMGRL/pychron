@@ -119,7 +119,6 @@ class ScanableDevice(ViewableDevice):
 
     def _scan_(self, *args):
         if self.scan_func:
-
             try:
                 v = getattr(self, self.scan_func)()
             except AttributeError as e:
@@ -138,7 +137,6 @@ class ScanableDevice(ViewableDevice):
                         x = self.graph.record_multiple(v)
                     elif isinstance(v, PlotRecord):
                         for pi, d in zip(v.plotids, v.data):
-
                             if isinstance(d, tuple):
                                 x = self.graph.record_multiple(d, plotid=pi)
                             else:

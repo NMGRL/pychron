@@ -17,8 +17,10 @@
 
 # =============enthought library imports=======================
 
-from chaco.scatterplot import ScatterPlot
-from numpy import Inf
+from typing import Sequence
+
+from chaco.api import ScatterPlot
+from numpy import inf
 from traits.api import Bool, on_trait_change, Event, Int
 
 # =============local library imports  ==========================
@@ -42,6 +44,8 @@ class StackedGraph(Graph):
     _has_title = False
     # padding_bottom = 40
     fixed_bounds = Bool(False)
+    max_top_padding = Int(10)
+    max_bottom_padding = Int(40)
 
     metadata_updated = Event
     vertical_resize = Bool(True)
@@ -50,8 +54,8 @@ class StackedGraph(Graph):
         return [("Rescale All Y", "rescale_all_y", {})]
 
     def rescale_all_y(self):
-        ymi = Inf
-        yma = -Inf
+        ymi = inf
+        yma = -inf
         for plot in self.plots:
             yma = max(yma, plot.value_range.high)
             ymi = min(ymi, plot.value_range.low)
@@ -104,22 +108,24 @@ class StackedGraph(Graph):
         c.on_trait_change(self._bounds_changed, "bounds")
         return c
 
-    def new_plot(self, **kw):
-
+    def new_plot(self, **kw) -> object:
+        has_explicit_bounds = "bounds" in kw
         if "title" in kw:
             if self._has_title:
                 kw.pop("title")
             self._has_title = True
 
         n = len(self.plotcontainer.components)
-        if n > 0:
-            if "resizable" not in kw:
-                kw["resizable"] = "h"
-            # kw['resizable'] = 'h'
-            if "bounds" not in kw:
-                kw["bounds"] = (1, self.panel_height)
+        # if n > 0:
+        if "resizable" not in kw:
+            kw["resizable"] = "h"
+        # kw['resizable'] = 'h'
+        if "bounds" not in kw:
+            # kw["bounds"] = (1, self.panel_height)
+            kw["resizable"] = kw.get("resizable", "hv")
 
         p = super(StackedGraph, self).new_plot(**kw)
+        p._explicit_vertical_bounds = has_explicit_bounds
         # p.value_axis.ensure_labels_bounded = True
         # p.value_axis.title_spacing = 50
 
@@ -131,17 +137,16 @@ class StackedGraph(Graph):
 
         self.set_paddings()
         self._bounds_changed(self.plotcontainer.bounds)
-        # p.fill_padding=True
-        # p.bgcolor='green'
+
         return p
 
     def set_paddings(self):
         pc = self.plotcontainer
         n = len(pc.components)
         bottom = pc.stack_order == "bottom_to_top"
-        comps = pc.components
+        comps = list(pc.components)
         if not bottom:
-            comps = reversed(comps)
+            comps = list(reversed(comps))
         if n > 1:
             for i, pi in enumerate(comps):
                 if i < n - 1:
@@ -149,9 +154,14 @@ class StackedGraph(Graph):
 
                 if i == 0:
                     pi.index_axis.visible = True
+                    pi.padding_bottom = min(
+                        pi.padding_bottom, self.max_bottom_padding
+                    )
                 else:
                     pi.index_axis.visible = False
                     pi.padding_bottom = 0
+
+            comps[-1].padding_top = min(comps[-1].padding_top, self.max_top_padding)
 
     def new_series(self, *args, **kw):
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
@@ -163,34 +173,65 @@ class StackedGraph(Graph):
 
         return s, _p
 
-    def _bounds_changed(self, bounds):
+    def _bounds_changed(self, bounds: Sequence[float]) -> None:
         """
         vertically resizes the stacked graph.
         the plots are sized equally
         """
+        # Skip updating bounds if the container is not yet sized
+        # (bounds of [0, 0] happen during initialization before layout)
+        if bounds[1] <= 0:
+            return
+            
         if self.vertical_resize:
             self._update_bounds(bounds, self.plotcontainer.components)
 
-    def _update_bounds(self, bounds, comps):
+    def _update_bounds(self, bounds: Sequence[float], comps: Sequence) -> None:
         if self.fixed_bounds:
             return
 
         padding_top = sum([getattr(p, "padding_top") for p in comps])
         padding_bottom = sum([getattr(p, "padding_bottom") for p in comps])
-        #
+        spacing = max(0, len(comps) - 1) * getattr(self.plotcontainer, "spacing", 0)
         pt = (
             self.plotcontainer.padding_top
             + self.plotcontainer.padding_bottom
             + padding_top
             + padding_bottom
+            + spacing
         )
         n = len(self.plotcontainer.components)
+
+        # Preserve only plots that are explicitly fixed in the vertical direction.
+        explicit_heights = {}
+        for i, p in enumerate(self.plotcontainer.components):
+            resizable = getattr(p, "resizable", "")
+            if (
+                getattr(p, "_explicit_vertical_bounds", False)
+                and "v" not in resizable
+                and len(p.bounds) > 1
+                and p.bounds[1] > 0
+            ):
+                explicit_heights[i] = p.bounds[1]
+
         if self.equi_stack:
-            for p in self.plotcontainer.components:
-                p.bounds[1] = (bounds[1] - pt) / n
+            if explicit_heights:
+                # Preserve fixed-height aux plots and allow the first plot to absorb free space.
+                fixed_height_total = sum(explicit_heights.values())
+                available_height = bounds[1] - pt - fixed_height_total
+
+                if available_height > 1:
+                    if 0 in explicit_heights:
+                        pass
+                    else:
+                        self.plotcontainer.components[0].bounds[1] = available_height
+            else:
+                plot_height = max(1, (bounds[1] - pt) / max(1, n))
+                for p in self.plotcontainer.components:
+                    p.bounds[1] = plot_height
         else:
             try:
-                self.plots[0].bounds[1] = (bounds[1] - pt) / max(1, (n - 1))
+                self.plots[0].bounds[1] = max(1, (bounds[1] - pt) / max(1, (n - 1)))
             except IndexError:
                 pass
 
@@ -208,7 +249,7 @@ class StackedGraph(Graph):
 
                 if si.index is not obj:
                     if hasattr(si, "bind_id"):
-                        if si.bind_id == bind_id:
+                        if si.bind_id is not None and si.bind_id == bind_id:
                             si.index.suppress_update = True
                             si.index.metadata = obj.metadata
                             si.index.suppress_update = False

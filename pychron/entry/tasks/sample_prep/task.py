@@ -41,9 +41,6 @@ class SamplePrepTask(BaseManagerTask):
 
     tool_bars = [SToolBar(LocateSampleAction())]
 
-    def activated(self):
-        self.manager.activated()
-
     def prepare_destroy(self):
         self.manager.prepare_destroy()
 

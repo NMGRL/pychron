@@ -64,7 +64,6 @@ class DataWarehouse(Loggable):
 
         dirs = []
         if not os.path.isdir(r):
-
             head, tail = os.path.split(r)
             #            print head, tail
             dirs.append(tail)
@@ -82,7 +81,6 @@ class DataWarehouse(Loggable):
         self._current_dir = self._create_subdirectories()
 
     def _create_subdirectories(self):
-
         today = datetime.today()
         m = MONTH_NAMES[today.month - 1]
         y = today.year

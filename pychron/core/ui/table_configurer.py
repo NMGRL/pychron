@@ -176,7 +176,7 @@ class TableConfigurer(HasTraits):
             try:
                 with open(p, "rb") as rfile:
                     state = pickle.load(rfile)
-            except (pickle.PickleError, OSError, EOFError, TraitError):
+            except (pickle.PickleError, OSError, EOFError, TraitError, AttributeError):
                 return
         elif os.path.isfile("{}.yaml".format(p)):
             state = yload("{}.yaml".format(p))

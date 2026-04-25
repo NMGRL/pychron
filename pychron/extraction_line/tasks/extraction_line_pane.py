@@ -18,7 +18,14 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Any, Int
-from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor, VGroup
+from traitsui.api import (
+    View,
+    UItem,
+    InstanceEditor,
+    ListEditor,
+    TabularEditor,
+    VGroup,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -39,12 +46,20 @@ class CanvasPane(TraitsTaskPane):
                 defined_when="not plugin_canvases",
                 editor=InstanceEditor(),
                 style="custom",
+                height=700,
+                width=900,
             ),
             UItem(
                 "canvases",
                 defined_when="plugin_canvases",
-                editor=ListEditor(page_name=".display_name", use_notebook=True),
+                editor=ListEditor(
+                    page_name=".display_name",
+                    use_notebook=True,
+                    editor=InstanceEditor(),
+                ),
                 style="custom",
+                height=700,
+                width=900,
             ),
         )
         return v
@@ -55,9 +70,8 @@ class CanvasDockPane(TraitsDockPane):
     name = "Extraction Line Canvas"
     canvas = Any
 
-    def traits_view(self):
-        v = View(UItem("canvas", editor=InstanceEditor(), style="custom", width=500))
-        return v
+    def traits_view(self) -> View:
+        return View(UItem("canvas", editor=InstanceEditor(), style="custom"), resizable=True)
 
 
 class HeaterPane(TraitsDockPane):
@@ -135,6 +149,14 @@ class ExplanationPane(TraitsDockPane):
         return v
 
 
+class InspectorPane(TraitsDockPane):
+    name = "Inspector"
+    id = "pychron.extraction_line.inspector"
+
+    def traits_view(self):
+        return View(UItem("canvas_view_model", style="custom", editor=InstanceEditor()))
+
+
 class ReadbackAdapter(TabularAdapter):
     columns = [
         ("Name", "name"),
@@ -156,9 +178,7 @@ class ReadbackPane(TraitsDockPane):
         v = View(
             UItem(
                 "devices",
-                editor=TabularEditor(
-                    adapter=ReadbackAdapter(), auto_update=True, editable=False
-                ),
+                editor=TabularEditor(adapter=ReadbackAdapter(), auto_update=True, editable=False),
             )
         )
         return v
@@ -217,9 +237,7 @@ class EditorPane(TraitsDockPane):
             )
         )
 
-        v = View(
-            VGroup(UItem("edit_mode"), VGroup(g, agrp, egrp, enabled_when="edit_mode"))
-        )
+        v = View(VGroup(UItem("edit_mode"), VGroup(g, agrp, egrp, enabled_when="edit_mode")))
         return v
 
 

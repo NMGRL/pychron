@@ -74,13 +74,13 @@ class BaseExtractionLinePreferences(BasePreferencesHelper):
     display_volume = Bool
     volume_key = Str
 
-    gauge_update_period = Int
+    gauge_update_period = Float
     gauge_update_enabled = Bool
 
-    pump_update_period = Int
+    pump_update_period = Float
     pump_update_enabled = Bool
 
-    heater_update_period = Int
+    heater_update_period = Float
     heater_update_enabled = Bool
 
     canvas_path = Str

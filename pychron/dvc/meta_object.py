@@ -20,6 +20,7 @@ from datetime import datetime
 
 from uncertainties import ufloat, std_dev
 
+from pychron.core.helpers.strtools import to_bool
 from pychron.dvc import dvc_dump
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DATE_FORMAT
 
@@ -263,8 +264,14 @@ class BaseGeometry(MetaObject):
         holes = []
 
         line = next(rfile)
-        _, radius = line.split(",")
-        radius = float(radius)
+        args = line.split(",")
+        radius = float(args[1])
+        has_hole_number = False
+        if len(args) == 3:
+            has_hole_number = to_bool(args[2])
+
+        # shape, radius = line.split(",")
+        # radius = float(radius)
 
         for c, line in enumerate(rfile):
             # skip blank lines
@@ -275,14 +282,19 @@ class BaseGeometry(MetaObject):
             if line.strip().startswith("#"):
                 continue
 
+            holeid = str(c + 1)
             args = line.split(",")
             if len(args) == 2:
                 x, y = args
                 r = radius
             else:
-                x, y, r = args
+                if has_hole_number:
+                    holeid, x, y = args
+                    r = radius
+                else:
+                    x, y, r = args
 
-            holes.append((float(x), float(y), float(r), str(c + 1)))
+            holes.append((float(x), float(y), float(r), holeid))
 
         self.holes = holes
 
@@ -296,11 +308,11 @@ class IrradiationGeometry(BaseGeometry):
 
 
 class Cached(object):
-    def __init__(self, clear=None):
+    def __init__(self, clear=None) -> None:
         self.clear = clear
 
     def __call__(self, func):
-        def wrapper(obj, name, *args, **kw):
+        def wrapper(obj, *args, **kw):
             ret = None
             if not hasattr(obj, "__cache__") or obj.__cache__ is None:
                 obj.__cache__ = {}
@@ -310,13 +322,16 @@ class Cached(object):
                 if getattr(obj, self.clear):
                     cache = {}
 
-            key = (func, name)
+            cache_kw = tuple(
+                sorted((k, v) for k, v in kw.items() if k != "force")
+            )
+            key = (func, args, cache_kw)
             force = kw.get("force", None)
             if not force:
                 ret = cache.get(key)
 
             if ret is None:
-                ret = func(obj, name, *args, **kw)
+                ret = func(obj, *args, **kw)
 
             cache[key] = ret
             obj.__cache__[func] = cache

@@ -66,7 +66,7 @@ def interpolate2(y, t, e, yp):
 
     a = dyp / dy
     b = 1 - a
-    c = dt * dyp / (dy ** 2)
+    c = dt * dyp / (dy**2)
     d = dt / dy
     sy = 0.1 * dy
     syp = 0.1 * dyp
@@ -76,7 +76,7 @@ def interpolate2(y, t, e, yp):
     dy = y[0] - y[1]
     ee = dyp / dy
     f = 1 - ee
-    g = dt * dyp / (dy ** 2)
+    g = dt * dyp / (dy**2)
     e2 = ((ee * e[1]) ** 2 + (f * e[0] ** 2) + (g * sy) ** 2 + (d * syp) ** 2) ** 0.5
     return tp, e1, e2
 
@@ -98,7 +98,7 @@ def interpolate(y, t, e, yp):
 
     ee = dyp / dy
     f = 1 - ee
-    g = dt * dyp / dy ** 2
+    g = dt * dyp / dy**2
     # sy = 0.1 * dy
     # syp = 0.1 * dyp
     ep = ((ee * e[1]) ** 2 + (f * e[0]) ** 2 + (g * sy) ** 2 + (d * syp) ** 2) ** 0.5
@@ -106,41 +106,36 @@ def interpolate(y, t, e, yp):
     #
     a = dyp / dy
     b = 1 - a
-    c = dt * dyp / dy ** 2
+    c = dt * dyp / dy**2
     ep2 = ((a * e[0]) ** 2 + (b * e[1]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
     ep4 = ((a * e[1]) ** 2 + (b * e[0]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
     return tp, ep, ep3, ep2, ep4
 
 
-y, t, e = get_data_test()
-# print interpolate(y, t, e, .75)
-# print interpolate(y, t, e, .5)
-# print interpolate(y, t, e, .25)
-print("from above")
-print("height=0", end=" ")
-print(interpolate(y, t, e, 0))
-print("height=10", end=" ")
-print(interpolate(y, t, e, 10))
-print("height=20", end=" ")
-print(interpolate(y, t, e, 20))
+def _demo():
+    y, t, e = get_data_test()
+    print("from above")
+    print("height=0", end=" ")
+    print(interpolate(y, t, e, 0))
+    print("height=10", end=" ")
+    print(interpolate(y, t, e, 10))
+    print("height=20", end=" ")
+    print(interpolate(y, t, e, 20))
 
-print("from below")
-print("height=0", end=" ")
-print(interpolate2(y, t, e, 0))
-print("height=10", end=" ")
-print(interpolate2(y, t, e, 10))
-print("height=20", end=" ")
-print(interpolate2(y, t, e, 20))
+    print("from below")
+    print("height=0", end=" ")
+    print(interpolate2(y, t, e, 0))
+    print("height=10", end=" ")
+    print(interpolate2(y, t, e, 10))
+    print("height=20", end=" ")
+    print(interpolate2(y, t, e, 20))
 
-# y, t, e = get_data1()
-# print interpolate(y, t, e, 147)
-# #
-y, t, e = get_data2()
-print(interpolate(y, t, e, 56))
-y, t, e = get_data2()
-print(interpolate2(y, t, e, 56))
-# print interpolate(y, t, e, 35)
-#
-# y, t, e = get_data3()
-# print interpolate2(y, t, e, 147)
+    y, t, e = get_data2()
+    print(interpolate(y, t, e, 56))
+    y, t, e = get_data2()
+    print(interpolate2(y, t, e, 56))
+
+
+if __name__ == "__main__":
+    _demo()
 # ============= EOF =============================================

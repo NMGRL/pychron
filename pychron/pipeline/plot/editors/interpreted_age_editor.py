@@ -35,9 +35,9 @@ class InterpretedAgeEditor(FigureEditor):
             pk = "Plateau"
 
             additional["include_j_error_in_plateau"] = po.include_j_error_in_plateau
-            additional[
-                "include_j_error_in_integrated"
-            ] = po.include_j_error_in_integrated
+            additional["include_j_error_in_integrated"] = (
+                po.include_j_error_in_integrated
+            )
             additional["plateau_nsteps"] = po.pc_nsteps
             additional["plateau_gas_fraction"] = po.pc_gas_fraction
             additional["plateau_method"] = po.plateau_method

@@ -145,7 +145,6 @@ class FieldTable(Loggable):
                 )
 
     def map_mass_to_dac(self, mass, detname):
-
         if isinstance(mass, str):
             mass = self.molweights[mass]
 
@@ -336,7 +335,7 @@ class FieldTable(Loggable):
         self._set_mftable_hash(path)
         items = []
 
-        with open(path, "U") as f:
+        with open(path, "r") as f:
             reader = csv.reader(f)
             table = []
 

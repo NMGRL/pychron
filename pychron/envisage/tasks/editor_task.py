@@ -166,10 +166,17 @@ class BaseEditorTask(BaseManagerTask):
 
     def _open_editor(self, editor, activate=True, **kw):
         if self.editor_area:
+            self.debug(
+                "_open_editor start editor={} activate={}".format(
+                    getattr(editor, "path", None), activate
+                )
+            )
             if editor not in self.editor_area.editors:
                 self.editor_area.add_editor(editor)
+                self.debug("_open_editor added editor")
                 if activate:
                     self.editor_area.activate_editor(editor)
+                    self.debug("_open_editor activated editor")
 
     def _get_active_editor(self):
         if self.editor_area is not None:

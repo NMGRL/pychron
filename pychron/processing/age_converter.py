@@ -124,7 +124,7 @@ class AgeConverter(object):
 
         # partial derivatives
         pd_el = -(1.0 / lambda_total) * (
-            age + (b * f * r / ((el ** 2) * umath.exp(lambda_total * age)))
+            age + (b * f * r / ((el**2) * umath.exp(lambda_total * age)))
         )
         pd_b = (1 / lambda_total) * (
             (f * r / (el * umath.exp(lambda_total * age))) - age
@@ -159,7 +159,7 @@ class AgeConverter(object):
         ss = sum_pd + sum_cov
 
         # uncertainty in age
-        st = ss ** 0.5
+        st = ss**0.5
         return nominal_value(st)
 
 

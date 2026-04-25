@@ -120,6 +120,7 @@ class GetterNode(RootNode):
 
 class PumpNode(RootNode):
     tag = "pump"
+    precedence = 120
 
 
 class SpectrometerNode(RootNode):

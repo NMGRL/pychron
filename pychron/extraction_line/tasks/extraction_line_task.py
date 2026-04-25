@@ -30,11 +30,13 @@ from pychron.envisage.tasks.wait_pane import WaitPane
 from pychron.extraction_line.tasks.extraction_line_actions import (
     SampleLoadingAction,
     AutoReloadAction,
+    ToggleAutomatedValveConfirmationAction,
 )
 from pychron.extraction_line.tasks.extraction_line_pane import (
     CanvasPane,
     GaugePane,
     ExplanationPane,
+    InspectorPane,
     CryoPane,
     ReadbackPane,
     EditorPane,
@@ -60,12 +62,13 @@ class ExtractionLineTask(BaseHardwareTask):
         return g
 
     def create_dock_panes(self):
-        self.wait_pane = WaitPane(model=self.manager.wait_group)
+        self.wait_pane = WaitPane(model=self.manager.wait_group, closable=True)
         panes = [
             GaugePane(model=self.manager),
             CryoPane(model=self.manager),
             PumpPane(model=self.manager),
             ExplanationPane(model=self.manager),
+            InspectorPane(model=self.manager),
             ConsolePane(model=self.manager),
             ReadbackPane(model=self.manager),
             HeaterPane(model=self.manager),
@@ -80,13 +83,14 @@ class ExtractionLineTask(BaseHardwareTask):
     def do_sample_loading(self):
         self.manager.do_sample_loading()
 
-    def enable_auto_reload(self):
-        self.manager.enable_auto_reload()
+    def toggle_auto_reload(self):
+        self.manager.toggle_auto_reload()
 
     # defaults
-    def _tool_bars_default(self):
+    def _tool_bars_default(self) -> list[SToolBar]:
         tb = SToolBar(
             SampleLoadingAction(),
+            ToggleAutomatedValveConfirmationAction(),
             # IsolateChamberAction(),
             # EvacuateChamberAction(),
             # FinishChamberChangeAction(),

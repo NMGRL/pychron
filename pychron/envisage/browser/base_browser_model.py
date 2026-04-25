@@ -16,7 +16,7 @@
 
 import os
 import re
-from datetime import timedelta, datetime
+from datetime import date as date_cls, datetime, timedelta
 
 import six.moves.cPickle as pickle
 
@@ -32,13 +32,12 @@ from traits.api import (
     Property,
     cached_property,
     DelegatesTo,
-    Date,
     Instance,
     HasTraits,
     Event,
     Float,
 )
-from traits.trait_types import BaseStr
+from traits.trait_types import BaseStr, Datetime
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -190,12 +189,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     named_date_range = Enum("this month", "this week", "yesterday")
     low_post = Property(
-        Date,
+        Datetime(allow_none=True),
         depends_on="date_enabled, _low_post, use_low_post, use_named_date_range, "
         "named_date_range",
     )
     high_post = Property(
-        Date,
+        Datetime(allow_none=True),
         depends_on="date_enabled, _high_post, use_high_post, use_named_date_range, "
         "named_date_range",
     )
@@ -204,8 +203,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     use_high_post = Bool
     use_named_date_range = Bool
     date_enabled = Bool
-    _low_post = Date
-    _high_post = Date
+    _low_post = Datetime(allow_none=True)
+    _high_post = Datetime(allow_none=True)
     _recent_low_post = None
     _recent_mass_spectrometers = None
     _previous_recent_name = ""
@@ -714,7 +713,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self._load_associated_labnumbers()
 
     def _selected_projects_changed(self, old, new):
-
         if new and self.project_enabled:
             # self._recent_low_post = None
             # self._recent_mass_spectrometers = None
@@ -782,10 +780,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     # property get/set
     def _set_low_post(self, v):
         if not self._suppress_post_update:
+            if isinstance(v, date_cls) and not isinstance(v, datetime):
+                v = datetime.combine(v, datetime.min.time())
             self._low_post = v
 
     def _set_high_post(self, v):
         if not self._suppress_post_update:
+            if isinstance(v, date_cls) and not isinstance(v, datetime):
+                v = datetime.combine(v, datetime.min.time())
             self._high_post = v
 
     @cached_property

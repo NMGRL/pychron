@@ -24,12 +24,13 @@ from binascii import hexlify
 from math import isnan, isinf
 
 import six
-from numpy import array, Inf, polyfit, gradient, array_split, mean, isfinite
+from numpy import array, inf, polyfit, gradient, array_split, mean, isfinite
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
 from pychron.core.helpers.binpack import unpack
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.regression.least_squares_regressor import (
     ExponentialRegressor,
     FitError,
@@ -38,6 +39,8 @@ from pychron.core.regression.least_squares_regressor import (
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.pychron_constants import AUTO_N
+
+logger = new_logger("Isotope")
 
 
 def fit_abbreviation(
@@ -83,10 +86,13 @@ class BaseMeasurement(object):
         self.xs, self.ys = array([]), array([])
         self.mass = 0
         self.time_zero_offset = 0
+        self._regression_state = None
 
     def set_grouping(self, n):
+        if self.group_data == n:
+            return
         self.group_data = n
-        self._regressor = None
+        self._invalidate_regressor()
         # if self._regressor:
         #     self._regressor.dirty = True
 
@@ -142,7 +148,7 @@ class BaseMeasurement(object):
                 return x, y
 
         except struct.error as e:
-            print("unpack_blob", e)
+            logger.warning("Unpack blob failed for %s: %s", self.name, e)
 
     def get_slope(self, n=-1):
         if (
@@ -160,8 +166,8 @@ class BaseMeasurement(object):
             ys = ys[isfinite(ys)]
             try:
                 return polyfit(xs, ys, 1)[0]
-            except BaseException as e:
-                print("get slope exception", e)
+            except Exception as e:
+                logger.debug("Get slope failed for %s: %s", self.name, e)
                 return 0
         else:
             return 0
@@ -192,6 +198,7 @@ class IsotopicMeasurement(BaseMeasurement):
     use_stored_value = False
     reviewed = False
     ic_factor_reviewed = False
+    ic_factor_fit = None
 
     _value = 0
     _error = 0
@@ -275,7 +282,11 @@ class IsotopicMeasurement(BaseMeasurement):
             reg.ouser_excluded = ue
 
     def set_filtering(self, d):
-        self.filter_outliers_dict = d.copy()
+        d = d.copy()
+        if self.filter_outliers_dict == d:
+            return
+
+        self.filter_outliers_dict = d
         if self._regressor:
             self._regressor.dirty = True
 
@@ -299,13 +310,13 @@ class IsotopicMeasurement(BaseMeasurement):
                 a = m.group(0)
                 a = a[1:-1]
                 s, e, f = (ai.strip() for ai in a.split(","))
-                if s is "":
+                if s == "":
                     s = -1
                 else:
                     s = int(s)
 
-                if e is "":
-                    e = Inf
+                if e == "":
+                    e = inf
                 else:
                     e = int(e)
 
@@ -339,7 +350,6 @@ class IsotopicMeasurement(BaseMeasurement):
         use_standard_deviation_filtering=False,
         use_iqr_filtering=False,
     ):
-
         self.filter_outliers_dict = {
             "filter_outliers": filter_outliers,
             "iterations": iterations,
@@ -369,7 +379,6 @@ class IsotopicMeasurement(BaseMeasurement):
             elif isinstance(fit, dict):
                 self.attr_set(**fit)
             else:
-
                 fitname = fit.fit
                 if fitname == AUTO_N:
                     fitname = fit.auto_fit(self.n)
@@ -392,7 +401,7 @@ class IsotopicMeasurement(BaseMeasurement):
                 )
                 self.truncate = fit.truncate
 
-            self._regressor = None
+            self._invalidate_regressor()
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -495,25 +504,43 @@ class IsotopicMeasurement(BaseMeasurement):
             reg.set_degree(fit, refresh=False)
 
         xs, ys = self.get_data()
-        reg.trait_set(
+        state_changed = reg.set_regression_state(
             xs=xs,
             ys=ys,
-            error_calc_type=self.error_type or "SEM",
             filter_outliers_dict=self.filter_outliers_dict,
-            tag=self.name,
+            truncate=self.truncate,
         )
+        reg.trait_setq(error_calc_type=self.error_type or "SEM", tag=self.name)
 
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
-            fit = reg.determine_fit()
+            fit = reg.determine_fit(lfit)
             self.fit = fit
-            reg.calculate()
-        except FitError as e:
+            if state_changed or reg.is_dirty or getattr(reg, "_result", None) is None:
+                reg.calculate()
+        except FitError:
             reg = self._regressor_factory("average")
 
         self._regressor = reg
+        self._regression_state = self._make_regression_state(xs, ys)
         return reg
+
+    def _invalidate_regressor(self):
+        self._regressor = None
+        self._regression_state = None
+
+    def _make_regression_state(self, xs, ys):
+        return (
+            tuple(xs.tolist()) if hasattr(xs, "tolist") else tuple(xs),
+            tuple(ys.tolist()) if hasattr(ys, "tolist") else tuple(ys),
+            self.fit,
+            self.error_type or "SEM",
+            tuple(sorted(self.filter_outliers_dict.items())),
+            self.truncate,
+            self.group_data,
+            self.time_zero_offset,
+        )
 
     # @cached_property
     @property
@@ -639,17 +666,31 @@ class BaseIsotope(IsotopicMeasurement):
         IsotopicMeasurement.__init__(self, name, detector)
         self.baseline = Baseline("{} bs".format(name), detector)
 
-    def get_baseline_corrected_value(self, include_baseline_error=None):
+    def get_baseline_corrected_value(
+        self, include_baseline_error=None, window=None, count=None
+    ):
         if include_baseline_error is None:
             include_baseline_error = self.include_baseline_error
 
         b = self.baseline.uvalue
+        if window:
+            ys = self.sniff.ys[-window:]
+            v = ys.mean()
+            e = ys.std()
+            uv = ufloat(v, e, tag=self.name)
+        elif count:
+            v = self.sniff.ys[count]
+            e = 0
+            uv = ufloat(v, e, tag=self.name)
+        else:
+            uv = self.uvalue
+
         if not include_baseline_error:
             b = nominal_value(b)
-            nv = self.uvalue - b
+            nv = uv - b
             return ufloat(nominal_value(nv), std_dev(nv), tag=self.name)
         else:
-            return self.uvalue - b
+            return uv - b
 
     def _get_baseline_fit_abbreviation(self):
         return self.baseline.fit_abbreviation
@@ -678,6 +719,8 @@ class Isotope(BaseIsotope):
     discrimination = None
     interference_corrected_value = None
     blank_source = ""
+
+    klass = 1
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)
@@ -731,11 +774,11 @@ class Isotope(BaseIsotope):
         else:
             return ufloat(0, 0, tag=self.name)
 
-    def get_intensity(self):
+    def get_intensity(self, **kw):
         """
         return the discrimination and ic_factor corrected value
         """
-        v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
+        v = self.get_disc_corrected_value(**kw) * (self.ic_factor or 1.0)
 
         # this is a temporary hack for handling Minna bluff data
         if self.detector.lower() == "faraday":
@@ -744,12 +787,12 @@ class Isotope(BaseIsotope):
         #     print 'get intensity {}{} regressor={}'.format(self.name, self.detector, id(self._regressor))
         return v
 
-    def get_disc_corrected_value(self):
+    def get_disc_corrected_value(self, **kw):
         disc = self.discrimination
         if disc is None:
             disc = 1
 
-        return self.get_non_detector_corrected_value() * disc
+        return self.get_non_detector_corrected_value(**kw) * disc
 
     def get_ic_corrected_value(self):
         return self.get_non_detector_corrected_value() * (self.ic_factor or 1.0)
@@ -761,8 +804,8 @@ class Isotope(BaseIsotope):
             v = v - self.blank.value
         return v
 
-    def get_non_detector_corrected_value(self):
-        v = self.get_baseline_corrected_value()
+    def get_non_detector_corrected_value(self, **kw):
+        v = self.get_baseline_corrected_value(**kw)
 
         # this is a temporary hack for handling Minna bluff data
         if self.correct_for_blank and self.detector.lower() != "faraday":

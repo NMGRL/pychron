@@ -66,7 +66,9 @@ class GPActuator(CoreDevice):
 
     def actuate(self, obj, action):
         if self._lock:
+            self.debug(f"{self._lock} lock acquire")
             self._lock.acquire()
+            self.debug("lock acquired")
 
         if self._actuate(obj, action):
             ret = self._check_actuate(obj, action)

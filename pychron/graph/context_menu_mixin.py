@@ -134,8 +134,8 @@ class RegressionContextMenuMixin(ContextMenuMixin):
             ("quartic", "cm_quartic"),
             (EXPONENTIAL, "cm_exponential"),
             ("auto_linear_parabolic", "cm_auto_linear_parabolic"),
-            (u"average {}SD".format(PLUSMINUS), "cm_average_std"),
-            (u"average {}SEM".format(PLUSMINUS), "cm_average_sem"),
+            ("average {}SD".format(PLUSMINUS), "cm_average_std"),
+            ("average {}SEM".format(PLUSMINUS), "cm_average_sem"),
         ]
 
         menu = MenuManager(

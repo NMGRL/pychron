@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
+from traits.api import Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import (
     View,
     Item,
@@ -31,6 +31,7 @@ from traitsui.api import (
     UReadonly,
     ListEditor,
     Readonly,
+    Color
 )
 from traitsui.editors.api import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
@@ -216,6 +217,9 @@ class ExperimentFactoryPane(TraitsDockPane):
             queue_factory_item("delay_between_analyses", label="Between Analyses (s)"),
             queue_factory_item("delay_after_blank", label="After Blank (s)"),
             queue_factory_item("delay_after_air", label="After Air (s)"),
+            queue_factory_item(
+                "delay_after_conditional", label="Conditional Delay (s)"
+            ),
             label="Delays",
         )
 
@@ -289,18 +293,18 @@ class ExperimentFactoryPane(TraitsDockPane):
                 tooltip="Enter a Identifier, aka L#",
                 width=-200,
                 label="Identifier",
-                enabled_when='{} == "{}"'.format(
-                    run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
-                ),
+                # enabled_when='{} == "{}"'.format(
+                #     run_factory_name("special_labnumber"), SPECIAL_IDENTIFIER
+                # ),
                 editor=myEnumEditor(name=run_factory_name("display_labnumbers")),
             ),
         )
         grp = BorderVGroup(
             a,
             HGroup(
-                run_factory_uitem(
-                    "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
-                ),
+                # run_factory_uitem(
+                #     "special_labnumber", editor=myEnumEditor(values=SPECIAL_NAMES)
+                # ),
                 run_factory_uitem(
                     "run_block",
                     editor=myEnumEditor(name=run_factory_name("run_blocks")),
@@ -342,9 +346,14 @@ class ExperimentFactoryPane(TraitsDockPane):
                     run_factory_name("clear_repository_identifier_button"), "clear"
                 ),
                 UItem(
-                    run_factory_name("use_project_based_repository_identifier"),
-                    tooltip="Use repository identifier based on project name",
+                    run_factory_name("repository_identifier_model"),
+                    tooltip='None: You must specify repository\nLoad: repository based on "load" name\nProject: '
+                    'repository based on "project" name',
                 ),
+                # UItem(
+                #     run_factory_name("use_project_based_repository_identifier"),
+                #     tooltip="Use repository identifier based on project name",
+                # )
             ),
             HGroup(
                 run_factory_item(
@@ -375,7 +384,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             ),
             HGroup(
                 run_factory_item("flux", format_str="%0.4E"),
-                Label(u"\u00b1"),
+                Label("\u00b1"),
                 run_factory_uitem("flux_error", format_str="%0.4E"),
                 icon_button_editor(
                     run_factory_name("save_flux_button"),
@@ -445,6 +454,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             run_factory_uitem("measurement_script", style="custom"),
             run_factory_uitem("post_equilibration_script", style="custom"),
             run_factory_uitem("post_measurement_script", style="custom"),
+            run_factory_uitem("syn_extraction_script", style="custom"),
             run_factory_uitem("script_options", style="custom"),
             HGroup(
                 spring,
@@ -489,6 +499,31 @@ class ConnectionStatusPane(TraitsDockPane):
         return v
 
 
+class TimeSeriesPane(TraitsDockPane):
+    id = "pychron.experiment.timeseries"
+    name = "TimeSeries"
+    executor = Any
+
+    def traits_view(self):
+        ggrp = VGroup(
+            HGroup(
+                Item("timeseries_n_recall", label="N. Analyses"),
+                spring,
+                icon_button_editor(
+                    "timeseries_refresh_button",
+                    "arrow_refresh",
+                    tooltip="Refresh Timeseries",
+                ),
+                icon_button_editor(
+                    "timeseries_reset_button", "arrow_right", tooltip="Reset Timeseries"
+                ),
+                # icon_button_editor("configure_timeseries_editor_button", "cog"),
+            ),
+            UItem("timeseries_editor", style="custom"),
+        )
+        return View(ggrp)
+
+
 class StatsPane(TraitsDockPane):
     id = "pychron.experiment.stats"
     name = "Stats"
@@ -496,38 +531,61 @@ class StatsPane(TraitsDockPane):
     executor = Any
 
     def _recalculate_button_fired(self):
-        self.model.experiment_queues = self.executor.experiment_queues
+        queues = list(getattr(self.executor, "experiment_queues", []) or [])
+
+        active_queue = None
+        active_editor = getattr(self.executor, "active_editor", None)
+        if active_editor is not None:
+            active_queue = getattr(active_editor, "queue", None)
+
+        if active_queue is None:
+            active_queue = getattr(self.executor, "experiment_queue", None)
+
+        if active_queue is not None and active_queue not in queues:
+            queues.insert(0, active_queue)
+
+        self.model.experiment_queues = queues
+        self.model.active_queue = active_queue
         self.model.reset()
 
-    def traits_view(self):
-        gen_grp = BorderVGroup(
-            HGroup(UItem("pane.recalculate_button")),
+    def traits_view(self) -> View:
+        queue_grp = BorderVGroup(
+            HGroup(UItem("pane.recalculate_button"), spring),
             HGroup(
-                Readonly("nruns", width=150, label="Total Runs"),
-                UReadonly("total_time"),
+                Readonly("object.nruns", width=-150, label="Total Runs"),
+                Readonly("object.nruns_finished", label="Completed"),
+                spring,
             ),
             HGroup(
-                Readonly("nruns_finished", width=150, label="Completed"),
-                UReadonly("elapsed"),
+                Readonly("object.elapsed", width=-150, label="Elapsed"),
+                Readonly("object.remaining", label="Remaining"),
+                spring,
             ),
-            Readonly("remaining", label="Remaining"),
-            Readonly("etf", label="Est. finish"),
-            label="General",
+            HGroup(
+                Readonly("object.total_time", width=-150, label="Total Time"),
+                Readonly("object.etf", label="Estimated Finish"),
+                spring,
+            ),
+            label="Queue",
         )
         cur_grp = BorderVGroup(
-            Readonly(
-                "current_run_duration",
+            HGroup(
+                Readonly("object.current_run_duration", width=-150, label="Expected Duration"),
+                Readonly("object.run_elapsed", label="Elapsed"),
+                spring,
             ),
-            Readonly("run_elapsed"),
-            label="Current",
+            label="Current Run",
         )
         sel_grp = BorderVGroup(
-            Readonly("start_at"),
-            Readonly("end_at"),
-            Readonly("run_duration"),
-            label="Selection",
+            HGroup(
+                Readonly("object.start_at", width=-150, label="Start At"),
+                Readonly("object.end_at", label="End At"),
+                spring,
+            ),
+            Readonly("object.run_duration", label="Selected Duration"),
+            label="Selected Run",
         )
-        v = View(VGroup(gen_grp, cur_grp, sel_grp))
+        v = View(VGroup(queue_grp, cur_grp, sel_grp))
         return v
 
 
@@ -750,7 +808,7 @@ class IsotopeEvolutionPane(TraitsDockPane):
     def traits_view(self):
         v = View(
             VSplit(
-                UItem("object.plot_panel.graph_container", style="custom", height=0.75),
+                UItem("object.plot_panel.graph_container", style="custom", height=0.8),
                 VGroup(
                     HGroup(
                         Spring(springy=False, width=-5),
@@ -791,7 +849,7 @@ class IsotopeEvolutionPane(TraitsDockPane):
                         Spring(springy=False, width=-5),
                     ),
                     UItem(
-                        "object.plot_panel.analysis_view", style="custom", height=0.25
+                        "object.plot_panel.analysis_view", style="custom", height=0.2
                     ),
                 ),
             )

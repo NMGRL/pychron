@@ -27,7 +27,7 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
 class XYScatter(BaseArArFigure):
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         opt = self.options
         padding = opt.get_paddings()

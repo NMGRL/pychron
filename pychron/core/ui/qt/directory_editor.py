@@ -22,8 +22,8 @@ from pyface.qt import QtCore, QtGui
 from traits.api import Str, Bool, Int, File, Event
 from traitsui.api import View, Group
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.directory_editor import CustomEditor
-from traitsui.qt4.file_editor import _TreeView, filter_trait
+from traitsui.qt.directory_editor import CustomEditor
+from traitsui.qt.file_editor import _TreeView, filter_trait
 
 
 # ============= local library imports  ==========================

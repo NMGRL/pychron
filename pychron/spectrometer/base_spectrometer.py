@@ -42,6 +42,7 @@ class NoIntensityChange(BaseException):
 class BaseSpectrometer(SpectrometerDevice):
     integration_time = Any
     default_integration_time = 1
+    reset_scan_timer_on_integration = False
     magnet = Any
     source = Any
     magnet_klass = Any
@@ -80,7 +81,7 @@ class BaseSpectrometer(SpectrometerDevice):
     def halted(self):
         pass
 
-    def sink_data(self, writer, n):
+    def sink_data(self, *args, **kw):
         pass
 
     def cancel(self):
@@ -175,6 +176,8 @@ class BaseSpectrometer(SpectrometerDevice):
     def get_update_period(self, it=None, *args, **kw):
         if it is None:
             it = self.integration_time
+
+        self.debug(f'update period {it}')
         return it
 
     def correct_dac(self, det, dac, current=True):
@@ -468,6 +471,8 @@ class BaseSpectrometer(SpectrometerDevice):
         p = get_spectrometer_config_path(name)
         config = self.get_configuration_writer(p)
 
+        self.magnet.load_beam_blank(config)
+
         return config
 
     def load_molecular_weights(self):
@@ -481,11 +486,23 @@ class BaseSpectrometer(SpectrometerDevice):
         if os.path.isfile(p):
             self.info('loading "molecular_weights.csv" file. {}'.format(p))
             with open(p, "r") as f:
-                reader = csv.reader(f, delimiter="\t")
+
+                sample = f.read(10)
+        
+                # Use the Sniffer to analyze the sample
                 try:
-                    mws = {l[0]: float(l[1]) for l in reader}
-                except BaseException:
-                    mws = None
+                    dialect = csv.Sniffer().sniff(sample, delimiters=[',', ';', '|', '\\t'])
+                    delimiter = dialect.delimiter
+                    f.seek(0)
+                    reader = csv.reader(f, delimiter=delimiter)
+                    try:
+                        mws = {l[0]: float(l[1]) for l in reader}
+                    except BaseException:
+                        self.debug_exception()
+                        mws = None
+                except csv.Error:
+                    print("Could not determine delimiter, defaulting to comma.")
+                    
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
             try:
@@ -527,6 +544,9 @@ class BaseSpectrometer(SpectrometerDevice):
         else:
             self._load_detectors_yaml(ypath)
 
+    def set_position_hook(self):
+        pass
+
     def _dump_detectors_yaml(self, ypath):
         self.information_dialog(
             'Automatically migrating "detectors.cfg" to "detectors.yaml"'
@@ -535,13 +555,21 @@ class BaseSpectrometer(SpectrometerDevice):
             dets = [di.toyaml() for di in self.detectors]
             yaml.dump(dets, wfile)
 
+    def _normalize_detector_color(self, color):
+        if isinstance(color, int):
+            return "#{:06X}".format(color & 0xFFFFFF)
+        if isinstance(color, str) and color.startswith("0x"):
+            return "#{}".format(color[2:].zfill(6))
+        return color
+
     def _load_detectors_yaml(self, ypath):
+        self.debug("loading detectors yaml {}".format(ypath))
         with open(ypath, "r") as rfile:
             for i, det in enumerate(yaml.load(rfile, Loader=SafeLoader)):
                 name = det.get("name")
                 software_gain = float(det.get("software_gain", 1.0))
 
-                color = det.get("color", "black")
+                color = self._normalize_detector_color(det.get("color", "black"))
                 default_state = bool(det.get("default_state", True))
                 isotope = det.get("isotope", "")
                 kind = det.get("kind", "Faraday")
@@ -695,6 +723,9 @@ class BaseSpectrometer(SpectrometerDevice):
 
         return keys, array(gsignals), t, inc
 
+    def _handle_no_intensity_change(self):
+        pass
+
     def _check_intensity_no_change(self, signals):
         if self.simulation:
             return
@@ -706,6 +737,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
         if signals is None:
             self._no_intensity_change_cnt += 1
+            self._handle_no_intensity_change()
+
         elif self._prev_signals is not None:
             try:
                 test = (signals == self._prev_signals).all()
@@ -778,7 +811,13 @@ class BaseSpectrometer(SpectrometerDevice):
     def read_intensities(self):
         raise NotImplementedError
 
-    def read_deflection_word(self):
+    def read_deflection_word(self, *args, **kw):
+        return []
+
+    def get_configuration_value(self, *args, **kw):
+        pass
+
+    def get_hardware_name(self, *args, **kw):
         pass
 
     def read_parameter_word(self):

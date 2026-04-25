@@ -1,0 +1,354 @@
+version: 1
+description: >
+  Compact module-level map for agents. Prefer these summaries before opening
+  large packages. Risk levels are relative to regression blast radius.
+modules:
+  - path: launchers/
+    responsibility: Application entrypoints that select a Pychron app/task mix and start bootstrap.
+    important_classes_functions:
+      - entry_point
+      - launch
+      - app_factory
+    upstream_dependencies:
+      - pychron/envisage/
+      - pychron/applications/
+      - pychron/paths.py
+    downstream_dependencies:
+      - pychron plugin registry
+      - concrete PychronApplication instances
+    domain_tags:
+      - bootstrap
+      - launcher
+      - plugin-wiring
+    risk: high-risk
+    edit_guidance: Edit only for startup or app-selection work; small changes can break every app.
+
+  - path: pychron/applications/pychron_application.py
+    responsibility: Concrete Envisage tasks application used by the main GUI apps.
+    important_classes_functions:
+      - PychronApplication
+      - revision_str
+    upstream_dependencies:
+      - pychron/envisage/tasks/base_tasks_application.py
+      - preferences
+    downstream_dependencies:
+      - about dialog
+      - splash screen
+      - service lookup by tasks and plugins
+    domain_tags:
+      - application
+      - gui
+      - startup
+    risk: high-risk
+    edit_guidance: Safe for narrow app metadata changes; risky for lifecycle, exit, and environment behavior.
+
+  - path: pychron/envisage/tasks/base_task_plugin.py
+    responsibility: Shared base class for task plugins, service offers, preferences panes, and task factories.
+    important_classes_functions:
+      - BaseTaskPlugin
+      - service_offer_factory
+    upstream_dependencies:
+      - Envisage plugin system
+      - pyface tasks
+    downstream_dependencies:
+      - ExperimentPlugin
+      - ExtractionLinePlugin
+      - HardwarePlugin
+      - PipelinePlugin
+      - DVCPlugin
+    domain_tags:
+      - plugin
+      - task
+      - infrastructure
+    risk: high-risk
+    edit_guidance: Avoid broad changes; this is shared by most user-facing plugins.
+
+  - path: pychron/extraction_line/extraction_line_manager.py
+    responsibility: Top-level extraction-line service coordinating canvas, network state, switch manager, and related managers.
+    important_classes_functions:
+      - ExtractionLineManager
+      - activate
+      - deactivate
+      - bind_preferences
+    upstream_dependencies:
+      - pychron/extraction_line/tasks/extraction_line_plugin.py
+      - preferences
+      - application service registry
+    downstream_dependencies:
+      - SwitchManager
+      - ExtractionLineTask
+      - experiment execution
+      - extraction-line scripts
+    domain_tags:
+      - extraction-line
+      - manager
+      - hardware-ui
+    risk: high-risk
+    edit_guidance: High concurrency and hardware coupling; instrument with care before changing behavior.
+
+  - path: pychron/extraction_line/switch_manager.py
+    responsibility: Valve/switch state management, interlocks, actuator dispatch, ownership, and persisted state recovery.
+    important_classes_functions:
+      - SwitchManager
+      - actuate_children
+      - finish_loading
+      - get_owners
+    upstream_dependencies:
+      - ExtractionLineManager
+      - valve configuration files
+    downstream_dependencies:
+      - hardware actuators
+      - canvas refresh events
+      - procedure logic
+    domain_tags:
+      - extraction-line
+      - valves
+      - interlocks
+    risk: high-risk
+    edit_guidance: Runtime behavior depends on config and cached state; validate ownership and interlock paths.
+
+  - path: pychron/experiment/experimentor.py
+    responsibility: Task-facing coordinator that bridges queue editing, metadata refresh, and executor startup.
+    important_classes_functions:
+      - Experimentor
+      - refresh_executable
+      - execute_queues
+      - sync_queue
+    upstream_dependencies:
+      - ExperimentEditorTask
+      - ExperimentFactory
+    downstream_dependencies:
+      - ExperimentExecutor
+      - ExperimentQueue
+      - DVC/database lookups
+    domain_tags:
+      - experiment
+      - task-coordinator
+      - queue
+    risk: medium
+    edit_guidance: Usually safe for queue/task coordination changes if executor semantics stay unchanged.
+
+  - path: pychron/experiment/experiment_executor.py
+    responsibility: Runtime executor adapter for automated queues, coordinating instrument services, conditionals, persistence, recovery, and concrete execution side effects.
+    important_classes_functions:
+      - ExperimentExecutor
+      - execute
+      - set_queue_modified
+      - stats
+    upstream_dependencies:
+      - Experimentor
+      - experiment queues
+      - preferences
+    downstream_dependencies:
+      - AutomatedRun
+      - extraction line
+      - spectrometer
+      - DVC/datahub
+      - dashboard
+    domain_tags:
+      - experiment
+      - execution
+      - runtime
+    risk: high-risk
+    edit_guidance: Large asynchronous coordinator; keep lifecycle policy in state_machines/controller.py when possible and reserve this file for side effects, Traits compatibility, and service integration.
+
+  - path: pychron/experiment/state_machines/
+    responsibility: Explicit executor, queue, and run lifecycle models plus the controller that owns transition sequencing and execution policy.
+    important_classes_functions:
+      - ExecutorController
+      - ExecutorStateMachine
+      - QueueStateMachine
+      - RunStateMachine
+      - TransitionRecord
+    upstream_dependencies:
+      - pychron/experiment/experiment_executor.py
+      - automated run semantics
+    downstream_dependencies:
+      - executor compatibility state
+      - queue/run execution policy
+      - focused experiment lifecycle tests
+    domain_tags:
+      - experiment
+      - state-machine
+      - execution-policy
+    risk: high-risk
+    edit_guidance: Preferred home for lifecycle rules, overlap policy, settle policy, and terminal result selection; add focused tests when transitions or helpers change.
+
+  - path: pychron/experiment/automated_run/
+    responsibility: Automated run spec/runtime logic, persistence, state machine, and run-level behavior.
+    important_classes_functions:
+      - AutomatedRun
+      - AutomatedRunSpec
+      - AutomatedRunStateMachine
+      - AutomatedRunPersister
+    upstream_dependencies:
+      - experiment executor
+      - queue factory
+    downstream_dependencies:
+      - scripts
+      - persistence backends
+      - run result models
+    domain_tags:
+      - experiment
+      - automated-run
+      - persistence
+    risk: high-risk
+    edit_guidance: High-value area for bugs; small sequencing changes can affect data integrity.
+
+  - path: pychron/hardware/core/base_core_device.py
+    responsibility: Shared core-device base for communicator lifecycle, ask/tell/read/write flow, scanning, and scheduler setup.
+    important_classes_functions:
+      - BaseCoreDevice
+      - load
+      - open
+      - ask
+      - tell
+      - post_initialize
+    upstream_dependencies:
+      - HasCommunicator
+      - communicator classes
+    downstream_dependencies:
+      - most concrete hardware devices
+      - extraction line
+      - lasers
+      - furnace
+      - spectrometer adapters
+    domain_tags:
+      - hardware
+      - device
+      - communication
+    risk: high-risk
+    edit_guidance: Shared transport and scan behavior; regression blast radius is wide.
+
+  - path: pychron/hardware/core/abstract_device.py
+    responsibility: Wrapper device abstraction for derived/proxy devices that delegate transport to a contained core device.
+    important_classes_functions:
+      - AbstractDevice
+      - AddressableAbstractDevice
+      - load_additional_args
+      - initialize
+    upstream_dependencies:
+      - ConfigLoadable
+      - CoreDevice
+    downstream_dependencies:
+      - composed hardware families
+      - analog/channel-backed devices
+    domain_tags:
+      - hardware
+      - abstraction
+      - composition
+    risk: medium
+    edit_guidance: Safer than transport code, but dynamic class loading makes refactors brittle.
+
+  - path: pychron/hardware/tasks/hardware_plugin.py
+    responsibility: Hardware bootstrap plugin that initializes managers, starts proxy services, and exposes shared hardware UI.
+    important_classes_functions:
+      - HardwarePlugin
+      - start
+      - stop
+      - _service_offers_default
+    upstream_dependencies:
+      - BaseTaskPlugin
+      - initialization preferences
+    downstream_dependencies:
+      - Initializer
+      - FlagManager
+      - remote hardware server
+      - hardware managers extension point
+    domain_tags:
+      - hardware
+      - plugin
+      - bootstrap
+    risk: high-risk
+    edit_guidance: Startup-sensitive; changes here affect manager initialization order and shutdown.
+
+  - path: pychron/dvc/dvc.py
+    responsibility: Primary DVC service for repository-backed persistence, metadata access, and analysis retrieval.
+    important_classes_functions:
+      - DVC
+      - initialize
+      - session_ctx
+      - open_meta_repo
+    upstream_dependencies:
+      - DVCPlugin
+      - database config
+      - git repositories
+    downstream_dependencies:
+      - PipelineTask
+      - ExperimentExecutor
+      - DVCPersister
+      - repo tasks
+    domain_tags:
+      - dvc
+      - persistence
+      - repository
+    risk: high-risk
+    edit_guidance: Shared by experiment and reduction workflows; validate online/offline and repo states.
+
+  - path: pychron/pipeline/engine.py
+    responsibility: Pipeline orchestration, node sequencing, templates, and execution state for data reduction workflows.
+    important_classes_functions:
+      - PipelineEngine
+      - Pipeline
+      - NodeGroup
+      - load_predefined_templates
+    upstream_dependencies:
+      - PipelineTask
+      - DVC service
+      - browser models
+    downstream_dependencies:
+      - pipeline nodes
+      - figure editors
+      - exports
+    domain_tags:
+      - pipeline
+      - data-reduction
+      - orchestration
+    risk: high-risk
+    edit_guidance: Node ordering assumptions are subtle; keep changes local to one workflow when possible.
+
+  - path: pychron/pipeline/nodes/
+    responsibility: Composable data-reduction, plotting, fitting, review, and persistence steps.
+    important_classes_functions:
+      - BaseNode
+      - UnknownNode
+      - IdeogramNode
+      - SpectrumNode
+      - SeriesNode
+      - FitBlanksNode
+      - PDFFigureNode
+    upstream_dependencies:
+      - PipelineEngine
+      - DVCAnalysis
+      - processing models
+    downstream_dependencies:
+      - editors
+      - reports
+      - persisted outputs
+    domain_tags:
+      - pipeline
+      - nodes
+      - figures
+      - exports
+    risk: medium
+    edit_guidance: Usually safe to add or adjust a single node if `EngineState` contracts remain intact.
+
+  - path: pychron/processing/analyses/analysis_group.py
+    responsibility: Core reduction/grouping model for weighted means, plateau logic, and derived Ar-Ar group metrics.
+    important_classes_functions:
+      - AnalysisGroup
+      - calculate_weighted_mean
+      - calculate_mswd
+      - calculate_plateau_age
+    upstream_dependencies:
+      - DVCAnalysis
+      - processing calculations
+    downstream_dependencies:
+      - pipeline figure nodes
+      - interpreted age workflows
+    domain_tags:
+      - processing
+      - arar
+      - statistics
+    risk: high-risk
+    edit_guidance: Numerical behavior changes are scientifically sensitive; require explicit validation.

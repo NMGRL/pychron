@@ -18,7 +18,8 @@
 from numpy import array, hstack
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Float, Property, Color, Array
+from traits.api import HasTraits, Str, Int, Bool, Float, Property, Array
+from pyface.ui_traits import PyfaceColor
 
 
 # ============= local library imports  ==========================
@@ -36,7 +37,7 @@ class BaseDetector(HasTraits):
     gain = Float
     software_gain = Float(1.0)
 
-    color = Color
+    color = PyfaceColor
     series_id = Int
     isotope = Str
     mass = Float

@@ -49,12 +49,12 @@ from pychron.envisage.tasks.actions import (
     ResetLayoutAction,
     PositionAction,
     IssueAction,
-    NoteAction,
     AboutAction,
     DocumentationAction,
     ChangeLogAction,
     RestartAction,
     StartupTestsAction,
+    ManageSettingsAction,
 )
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.base_task import WindowGroup
@@ -91,7 +91,6 @@ class PychronTasksPlugin(BasePlugin):
         self._start_background_processes()
 
     def _start_background_processes(self):
-
         self.info("starting background processes disabled")
         return
 
@@ -206,6 +205,7 @@ class myTasksPlugin(TasksPlugin):
             return SMenu(
                 ShareSettingsAction(),
                 ApplySettingsAction(),
+                ManageSettingsAction(),
                 id="tools.menu",
                 name="Tools",
             )
@@ -225,7 +225,7 @@ class myTasksPlugin(TasksPlugin):
         def help_menu():
             return SMenu(
                 IssueAction(),
-                NoteAction(),
+                # NoteAction(),
                 AboutAction(),
                 DocumentationAction(),
                 ChangeLogAction(),

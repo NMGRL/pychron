@@ -15,6 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import annotations
+
+from typing import Any, Dict as TypingDict
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Bool, Instance, Dict
@@ -72,22 +75,21 @@ class FigureNode(SortableNode):
     # editors = List
     auto_set_items = True
     use_plotting = True
-    editors = Dict
+    editors = Dict()
 
-    def bind_preferences(self):
+    def bind_preferences(self) -> None:
         bind_preference(self, "skip_meaning", "pychron.pipeline.skip_meaning")
 
-    def reset(self):
+    def reset(self) -> None:
         super(FigureNode, self).reset()
-        self.editors = {}
+        self.editors: TypingDict[str, Any] = {}
         self.editor = None
 
-    def refresh(self):
+    def refresh(self) -> None:
         for e in self.editors.values():
-            print("figure not refresh needed")
-            e.refresh_needed = True
+            e.request_rebuild()
 
-    def run(self, state):
+    def run(self, state) -> None:
         self.plotter_options = self.plotter_options_manager.selected_options
         po = self.plotter_options
         if not po:
@@ -123,7 +125,7 @@ class FigureNode(SortableNode):
                         unks = [u for u in unks if u.tag.lower() != "skip"]
 
                     editor.set_items(list(unks))
-                    editor.refresh_needed = True
+                    editor.request_refresh()
 
         for name, es in groupby_key(state.editors, "name"):
             for i, ei in enumerate(es):
@@ -293,47 +295,13 @@ class SeriesNode(FigureNode):
         pom = self.plotter_options_manager
         if self.unknowns:
             unk = self.unknowns[0]
-            names = []
             iso_keys = unk.isotope_keys
-            if iso_keys:
-                names.extend(iso_keys)
-                names.extend(["{}bs".format(ki) for ki in iso_keys])
-                names.extend(["{}ic".format(ki) for ki in iso_keys])
+            isotopes = unk.isotopes
+            dets = sort_detectors(list({i.detector for i in isotopes.values()}))
 
-                names.extend(ratio(iso_keys))
-                names.extend(ratio(iso_keys, invert=True))
-
-                if unk.analysis_type in (UNKNOWN, COCKTAIL):
-                    names.append(AGE)
-                    names.append(RADIOGENIC_YIELD)
-
-                if unk.analysis_type in (DETECTOR_IC,):
-                    isotopes = unk.isotopes
-                    dets = sort_detectors(list({i.detector for i in isotopes.values()}))
-
-                    for i, di in enumerate(dets):
-                        for j, dj in enumerate(dets):
-                            if j < i:
-                                continue
-
-                            if di == dj:
-                                continue
-
-                            names.append("{}/{} DetIC".format(di, dj))
-
-            names.extend(
-                [
-                    PEAK_CENTER,
-                    ANALYSIS_TYPE,
-                    LAB_TEMP,
-                    LAB_HUM,
-                    EXTRACT_VALUE,
-                    EXTRACT_DURATION,
-                    CLEANUP,
-                ]
+            pom.set_names_via_keys(
+                iso_keys, analysis_type=unk.analysis_type, detectors=dets
             )
-
-            pom.set_names(names)
 
 
 class RegressionSeriesNode(SeriesNode):

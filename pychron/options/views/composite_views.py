@@ -17,6 +17,7 @@ from pychron.options.options import SubOptions, TitleSubOptions, GroupSubOptions
 from pychron.options.views.isochron_views import (
     InverseIsochronMainOptions,
     InverseIsochronAppearance,
+    InverseIsochronCalculationOptions,
 )
 from pychron.options.views.spectrum_views import (
     SpectrumMainOptions,
@@ -47,6 +48,7 @@ VIEWS = {
     "calculations(spec.)": CalculationSubOptions,
     "appearance(spec.)": SpectrumAppearance,
     "appearance(iso.)": InverseIsochronAppearance,
+    "calculations(iso.)": InverseIsochronCalculationOptions,
     "layout": LayoutSubOptions,
     "title": TitleSubOptions,
     GROUPS.lower(): GroupSubOptions,

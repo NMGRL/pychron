@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Str, Int, Bool, Password, Color, Property, Float, Enum
-from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
+from traits.api import Str, Int, Bool, Password, Property, Float, Enum
+from traitsui.api import View, Item, Group, VGroup, HGroup, UItem, Color
 
 from pychron.core.pychron_traits import PositiveInteger, PositiveFloat
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -108,6 +108,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     plot_panel_update_period = PositiveInteger(1)
     execute_open_queues = Bool
     save_all_runs = Bool
+
+    use_data_collection_branch = Bool(False)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -280,6 +282,7 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item("use_xls_persistence", label="Save analyses to Excel workbook"),
             Item("use_db_persistence", label="Save analyses to Database"),
             Item("use_uuid_path_name", label="Use UUID Path Names"),
+            Item("use_data_collection_branch", label="Use data_collection branch"),
             Item(
                 "save_all_runs",
                 label="Save All analyses",

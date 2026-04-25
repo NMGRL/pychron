@@ -17,10 +17,10 @@
 
 # =============enthought library imports=======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Str, Float, List, Any, Color, Property
+from traits.api import HasTraits, Str, Float, List, Any, Property
 from traitsui.api import View, Item, Group, HGroup, TableEditor, Handler, RangeEditor
 from traitsui.table_column import ObjectColumn
-
+from pyface.ui_traits import PyfaceColor
 # =============standard library imports ========================
 import os
 import glob
@@ -80,7 +80,7 @@ class UserView(HasTraits):
     name = Str
     key = Str
 
-    background_color = Color
+    background_color = PyfaceColor
 
     def _get_zoom(self):
         return self._zoom / 0.02

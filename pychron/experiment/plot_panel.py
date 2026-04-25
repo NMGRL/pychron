@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     Instance,
     Property,
@@ -26,7 +27,6 @@ from traits.api import (
     Str,
     CInt,
     Tuple,
-    Color,
     HasTraits,
     Any,
     Int,
@@ -55,22 +55,22 @@ class SignalAdapter(MultiTextTableAdapter):
             ("Det.", "detector", str, 5),
             ("Fit", "fit", str, 4),
             ("Intercept", "intercept_value", None, VALUE_WIDTH),
-            (u"{}1s".format(PLUSMINUS), "intercept_error", None, ERROR_WIDTH),
-            (u"{}%".format(PLUSMINUS), "intercept_error_percent", str, ERROR_WIDTH - 1),
+            ("{}1s".format(PLUSMINUS), "intercept_error", None, ERROR_WIDTH),
+            ("{}%".format(PLUSMINUS), "intercept_error_percent", str, ERROR_WIDTH - 1),
             ("Raw(fA)", "raw_value", None, VALUE_WIDTH),
-            (u"{}1s".format(PLUSMINUS), "raw_error", None, ERROR_WIDTH),
-            (u"{}%".format(PLUSMINUS), "raw_error_percent", str, ERROR_WIDTH - 1),
+            ("{}1s".format(PLUSMINUS), "raw_error", None, ERROR_WIDTH),
+            ("{}%".format(PLUSMINUS), "raw_error_percent", str, ERROR_WIDTH - 1),
         ],
         [
             ("Iso.", "isotope", str, 6),
             ("Det.", "detector", str, 5),
             ("Fit", "baseline_fit", str, 4),
             ("Baseline", "baseline_value", None, VALUE_WIDTH),
-            (u"{}1s".format(PLUSMINUS), "baseline_error", None, ERROR_WIDTH),
-            (u"{}%".format(PLUSMINUS), "baseline_error_percent", str, ERROR_WIDTH - 1),
+            ("{}1s".format(PLUSMINUS), "baseline_error", None, ERROR_WIDTH),
+            ("{}%".format(PLUSMINUS), "baseline_error_percent", str, ERROR_WIDTH - 1),
             ("Blank", "blank_value", None, VALUE_WIDTH),
-            (u"{}1s".format(PLUSMINUS), "blank_error", None, ERROR_WIDTH),
-            (u"{}%".format(PLUSMINUS), "blank_error_percent", str, ERROR_WIDTH - 1),
+            ("{}1s".format(PLUSMINUS), "blank_error", None, ERROR_WIDTH),
+            ("{}%".format(PLUSMINUS), "blank_error_percent", str, ERROR_WIDTH - 1),
         ],
     ]
 
@@ -134,7 +134,7 @@ class PlotPanel(Loggable):
     _ncycles = CInt
 
     current_cycle = Str
-    current_color = Color
+    current_color = PyfaceColor
 
     detectors = List
 
@@ -209,6 +209,8 @@ class PlotPanel(Loggable):
         for det in self.detectors:
             self._new_plot(ytitle=det.name)
 
+        self._reset_live_limits()
+
     def update(self):
         if self.is_baseline:
             self.baseline_graph.refresh()
@@ -278,7 +280,7 @@ class PlotPanel(Loggable):
     #     self.selected_graph = g
 
     # private
-    def _new_plot(self, isotope_only=False, **kw):
+    def _new_plot(self, isotope_only: bool = False, **kw):
         # self.isotope_graph.clear()
         # self.sniff_graph.clear()
         # self.baseline_graph.clear()
@@ -290,7 +292,10 @@ class PlotPanel(Loggable):
         ):
             if e:
                 plot = g.new_plot(
-                    xtitle="time (s)", padding_left=70, padding_right=10, **kw
+                    xtitle="time (s)",
+                    padding_left=70,
+                    padding_right=10,
+                    **kw
                 )
 
                 plot.y_axis.title_spacing = 50
@@ -309,19 +314,14 @@ class PlotPanel(Loggable):
         self.total_counts += v
 
     def _set_ncounts(self, v):
-
         o = self._ncounts
 
         self.info("{} set to terminate after {} counts".format(self.plot_title, v))
         self._ncounts = v
 
-        xmi, xma = self.isotope_graph.get_x_limits()
-        xm = max(xma, xma + (v - o) * self.integration_time)
-        self.isotope_graph.set_x_limits(max_=xm)
-
-        xmi, xma = self.baseline_graph.get_x_limits()
-        xm = max(xma, xma + (v - o) * self.integration_time)
-        self.baseline_graph.set_x_limits(max_=xm)
+        delta = (v - o) * self.integration_time
+        self._expand_time_axis(self.isotope_graph, delta)
+        self._expand_time_axis(self.baseline_graph, delta)
 
     def _get_ncycles(self):
         return self._ncycles
@@ -343,7 +343,7 @@ class PlotPanel(Loggable):
     def _get_display_counts(self):
         return "Current: {:03d}".format(self.counts)
 
-    def _graph_factory(self):
+    def _graph_factory(self) -> StackedRegressionGraph:
         return StackedRegressionGraph(
             container_dict=dict(
                 padding=5, bgcolor="gray", stack_order=self.stack_order, spacing=5
@@ -352,6 +352,21 @@ class PlotPanel(Loggable):
             use_data_tool=False,
             padding_bottom=35,
         )
+
+    def _expand_time_axis(self, graph, delta):
+        xmi, xma = graph.get_x_limits()
+        xm = max(xma, xma + delta)
+        graph.set_x_limits(max_=xm, force=False)
+
+    def _expected_duration(self):
+        duration = self._ncounts * self.integration_time
+        return max(duration, 10)
+
+    def _reset_live_limits(self):
+        duration = self._expected_duration()
+        for graph in (self.sniff_graph, self.isotope_graph, self.baseline_graph):
+            if graph.plots:
+                graph.set_x_limits(min_=0, max_=duration, force=False)
 
     # ===============================================================================
     # handlers
@@ -379,17 +394,17 @@ class PlotPanel(Loggable):
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _peak_center_graph_default(self):
+    def _peak_center_graph_default(self) -> Graph:
         g = Graph()
         g.page_name = "Peak Center"
         return g
 
-    def _isotope_graph_default(self):
+    def _isotope_graph_default(self) -> StackedRegressionGraph:
         g = self._graph_factory()
         g.page_name = "Ar"
         return g
 
-    def _sniff_graph_default(self):
+    def _sniff_graph_default(self) -> StackedGraph:
         g = StackedGraph(
             container_dict=dict(
                 padding=5, bgcolor="gray", stack_order=self.stack_order, spacing=5
@@ -401,7 +416,7 @@ class PlotPanel(Loggable):
         g.page_name = "Equil."
         return g
 
-    def _baseline_graph_default(self):
+    def _baseline_graph_default(self) -> StackedRegressionGraph:
         g = self._graph_factory()
         g.page_name = "Baselines"
         return g

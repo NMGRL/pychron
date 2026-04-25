@@ -61,7 +61,15 @@ def convert_color(color, output="rgbF"):
     from pyface.qt.QtGui import QColor
 
     if isinstance(color, QColor):
-        rgb = color.red(), color.green(), color.blue()
+        def _component(value):
+            return value() if callable(value) else value
+
+        rgb = (
+            _component(getattr(color, "red", 0)),
+            _component(getattr(color, "green", 0)),
+            _component(getattr(color, "blue", 0)),
+            _component(getattr(color, "alpha", 255)),
+        )
 
     if output == "rgbF":
         args = rgb[:3]

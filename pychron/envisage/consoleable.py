@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from datetime import datetime
 
 from traits.trait_types import Bool, Instance, Int
-from traits.traits import Color
+from pyface.ui_traits import PyfaceColor
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -32,9 +32,9 @@ class Consoleable(Loggable):
     use_message_colormapping = Bool
     console_display = Instance("pychron.core.displays.display.DisplayController")
     # console_updated = Event
-    console_bgcolor = LIGHT_YELLOW
+    console_bgcolor = PyfaceColor(LIGHT_YELLOW)
     console_fontsize = Int(11)
-    console_default_color = Color("black")
+    console_default_color = PyfaceColor("black")
 
     def console_bind_preferences(self, prefid):
         from pychron.core.ui.preference_binding import (

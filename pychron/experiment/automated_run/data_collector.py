@@ -17,13 +17,14 @@
 import time
 from datetime import datetime
 from threading import Event
+from math import isfinite
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
+from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance, Float
 
 from pychron.envisage.consoleable import Consoleable
-from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
+from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF, FAILED
 
 
 class DataCollector(Consoleable):
@@ -65,12 +66,16 @@ class DataCollector(Consoleable):
     _temp_conds = None
     _result = None
     _queue = None
+    _plot_data_buffers = None
+    _last_plot_panel_update = 0
+    _live_plot_limits = None
 
     err_message = Str
     no_intensity_threshold = 100
     not_intensity_count = 0
     trigger = None
     plot_panel_update_period = Int(1)
+    plot_panel_update_min_period = Float(0.25)
 
     def __init__(self, *args, **kw):
         super(DataCollector, self).__init__(*args, **kw)
@@ -111,6 +116,9 @@ class DataCollector(Consoleable):
         self._truncate_signal = False
         self._warned_no_fit = []
         self._warned_no_det = []
+        self._plot_data_buffers = {}
+        self._live_plot_limits = {}
+        self._last_plot_panel_update = 0
 
         if self.starttime is None:
             self.starttime = time.time()
@@ -185,15 +193,14 @@ class DataCollector(Consoleable):
                 break
 
         evt.set()
+        self._flush_plot_buffers(force=True)
         # self.debug('waiting for write to finish')
         # t.join()
 
         self.debug("measurement finished")
 
-    def _pre_trigger_hook(self):
-        return True
-
     def _post_iter_hook(self, i):
+        self._flush_plot_buffers(cnt=i)
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
             self.isotope_group.calculate_age(force=True)
 
@@ -203,7 +210,7 @@ class DataCollector(Consoleable):
     def _iter_hook(self, i):
         return self._iteration(i)
 
-    def _iteration(self, i, detectors=None):
+    def _iteration(self, i: int, detectors=None):
         try:
             data = self._get_data(detectors)
             if not data:
@@ -211,7 +218,7 @@ class DataCollector(Consoleable):
 
             k, s, t, inc = data
         except (AttributeError, TypeError, ValueError) as e:
-            self.debug("failed getting data {}".format(e))
+            self._handle_iteration_exception(e)
             return
 
         if k is not None and s is not None:
@@ -220,6 +227,18 @@ class DataCollector(Consoleable):
             self._plot_data(i, x, k, s)
 
         return inc
+
+    def _handle_iteration_exception(self, exc: Exception) -> None:
+        message = "Measurement failed getting data: {}".format(exc)
+        self.err_message = message
+        self.warning(message)
+        self.debug_exception()
+        self.canceled = True
+
+        if self.automated_run is not None:
+            self.automated_run.cancel_run(
+                state=FAILED, do_post_equilibration=False
+            )
 
     def _get_time(self, t):
         if t is None:
@@ -243,19 +262,21 @@ class DataCollector(Consoleable):
             return
         if data:
             keys, signals, ct, inc = data
-            if detectors:
-                # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
-                nkeys, nsignals = [], []
-                for k, s in zip(keys, signals):
-                    if k in detectors:
-                        nkeys.append(k)
-                        nsignals.append(s)
+            if keys is not None and signals is not None:
+                if detectors:
+                    # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
+                    nkeys, nsignals = [], []
+                    for k, s in zip(keys, signals):
+                        if k in detectors:
+                            nkeys.append(k)
+                            nsignals.append(s)
 
-                data = (nkeys, nsignals, ct, inc)
-                self._data = (nkeys, nsignals)
-            else:
-                self._data = (keys, signals)
+                    ds = (nkeys, nsignals, ct, inc)
 
+                else:
+                    ds = (keys, signals, ct, inc)
+
+                self._data = ds
             return data
 
     def _save_data(self, x, keys, signals):
@@ -287,14 +308,15 @@ class DataCollector(Consoleable):
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
-                signal = self._get_signal(keys, signals, dn.name)
-                if signal is not None:
-                    if not a.append_data(iso, dn.name, x, signal, kind):
-                        self.debug(
-                            "{} - failed appending data for {}. not a current isotope {}".format(
-                                kind, iso, a.isotope_keys
+                if iso:
+                    signal = self._get_signal(keys, signals, dn.name)
+                    if signal is not None:
+                        if not a.append_data(iso, dn.name, x, signal, kind):
+                            self.debug(
+                                "{} - failed appending data for {}. not a current isotope {}".format(
+                                    kind, iso, a.isotope_keys
+                                )
                             )
-                        )
 
     def _get_signal(self, keys, signals, det):
         try:
@@ -317,21 +339,17 @@ class DataCollector(Consoleable):
             if det:
                 self._set_plot_data(cnt, det, x, signal)
 
-        if not cnt % self.plot_panel_update_period:
-            self.plot_panel.update()
-
     def _set_plot_data(self, cnt, det, x, signal):
-
         iso = det.isotope
         detname = det.name
         ypadding = det.ypadding
-
+        gs = []
         if self.collection_kind == SNIFF:
-            gs = [
-                (self.plot_panel.sniff_graph, iso, None, 0, 0),
-                (self.plot_panel.isotope_graph, iso, None, 0, 0),
-            ]
-
+            if iso:
+                gs = [
+                    (self.plot_panel.sniff_graph, iso, None, 0, 0),
+                    (self.plot_panel.isotope_graph, iso, None, 0, 0),
+                ]
         elif self.collection_kind == BASELINE:
             iso = self.isotope_group.get_isotope(detector=detname, kind="baseline")
             if iso is not None:
@@ -339,7 +357,7 @@ class DataCollector(Consoleable):
             else:
                 fit = "average"
             gs = [(self.plot_panel.baseline_graph, detname, fit, 0, 0)]
-        else:
+        elif iso:
             title = self.isotope_group.get_isotope_title(name=iso, detector=detname)
             iso = self.isotope_group.get_isotope(name=iso, detector=detname)
             fit = iso.get_fit(cnt)
@@ -354,23 +372,165 @@ class DataCollector(Consoleable):
             ]
 
         for g, name, fit, series, fit_series in gs:
-
             pid = g.get_plotid_by_ytitle(name)
             if pid is None:
-                self.critical(
-                    "failed to locate {}, ytitles={}".format(name, g.get_plot_ytitles())
-                )
+                # this case arises when doing a sniff and a peakhop.
+                # the sniff graph and the signal graph have different plots and its ok not to warn about this
+                if not self.collection_kind == SNIFF:
+                    self.critical(
+                        "failed to locate {}, ytitles={}".format(
+                            name, g.get_plot_ytitles()
+                        )
+                    )
                 continue
 
-            g.add_datum(
-                (x, signal),
-                series=series,
-                plotid=pid,
-                update_y_limits=True,
-                ypadding=ypadding,
+            self._queue_plot_data(
+                g, pid, series, fit_series, fit, x, signal, ypadding
             )
+
+    def _queue_plot_data(
+        self, graph, plotid, series, fit_series, fit, x, signal, ypadding
+    ):
+        key = (id(graph), plotid, series, fit_series)
+        buf = self._plot_data_buffers.get(key)
+        if buf is None:
+            buf = {
+                "graph": graph,
+                "plotid": plotid,
+                "series": series,
+                "fit_series": fit_series,
+                "fit": fit,
+                "ypadding": ypadding,
+                "xs": [],
+                "ys": [],
+            }
+            self._plot_data_buffers[key] = buf
+
+        buf["xs"].append(x)
+        buf["ys"].append(signal)
+        buf["fit"] = fit
+        buf["ypadding"] = ypadding
+
+    def _flush_plot_buffers(self, cnt=None, force=False):
+        if not self.plot_panel or not self._plot_data_buffers:
+            return
+
+        now = time.time()
+        if not force and not self._should_refresh_plot_panel(cnt, now):
+            return
+
+        for buf in self._plot_data_buffers.values():
+            xs = buf["xs"]
+            ys = buf["ys"]
+            if not xs:
+                continue
+
+            graph = buf["graph"]
+            graph.add_bulk_data(
+                xs,
+                ys,
+                plotid=buf["plotid"],
+                series=buf["series"],
+                ypadding=buf["ypadding"],
+                update_y_limits=False,
+            )
+            self._update_live_plot_limits(
+                graph,
+                plotid=buf["plotid"],
+                series=buf["series"],
+                xs=xs,
+                ys=ys,
+                ypadding=buf["ypadding"],
+            )
+            fit = buf["fit"]
             if fit:
-                g.set_fit(fit, plotid=pid, series=fit_series)
+                graph.set_fit(fit, plotid=buf["plotid"], series=buf["fit_series"])
+
+        self._plot_data_buffers.clear()
+        self.plot_panel.update()
+        self._last_plot_panel_update = now
+
+    def _should_refresh_plot_panel(self, cnt, now):
+        period = max(1, self.plot_panel_update_period)
+        period_ready = cnt is not None and not cnt % period
+        time_ready = (
+            self._last_plot_panel_update == 0
+            or now - self._last_plot_panel_update >= self.plot_panel_update_min_period
+        )
+        return period_ready or time_ready
+
+    def _update_live_plot_limits(self, graph, plotid, series, xs, ys, ypadding):
+        key = (id(graph), plotid, series, self.collection_kind)
+        state = self._live_plot_limits.get(key)
+        if state is None:
+            state = {
+                "min": None,
+                "max": None,
+                "recalc_count": 0,
+            }
+            self._live_plot_limits[key] = state
+
+        batch_min = min(ys)
+        batch_max = max(ys)
+        state["min"] = batch_min if state["min"] is None else min(state["min"], batch_min)
+        state["max"] = batch_max if state["max"] is None else max(state["max"], batch_max)
+
+        all_ys = graph.get_data(plotid=plotid, series=series, axis=1)
+        if len(all_ys):
+            observed_min = all_ys.min()
+            observed_max = all_ys.max()
+            state["recalc_count"] += 1
+
+            # Shrink stale limits only occasionally so the live plot stays stable.
+            if state["recalc_count"] >= 4:
+                state["min"] = observed_min
+                state["max"] = observed_max
+                state["recalc_count"] = 0
+
+        ymin, ymax = state["min"], state["max"]
+        if ymin is None or ymax is None:
+            return
+
+        if isinstance(ypadding, str):
+            ypad = abs(ymax - ymin) * float(ypadding)
+        else:
+            ypad = ypadding
+
+        # Only anchor to 0 if ymin is small relative to the data range
+        # This prevents forcing data at 400±1 to plot from 0-401+
+        data_range = ymax - ymin
+        should_anchor_to_zero = (
+            self.collection_kind in (SIGNAL, SNIFF)
+            and ymin >= 0
+            and data_range > 0
+            and ymin <= 0.5 * data_range  # Only if ymin is < 50% of range
+        )
+        
+        if should_anchor_to_zero:
+            ymin = 0
+        else:
+            ymin -= ypad
+        ymax += ypad
+
+        if isfinite(ymin) and isfinite(ymax):
+            graph.set_y_limits(min_=ymin, max_=ymax, plotid=plotid, force=False)
+
+        xmax = max(xs)
+        self._update_live_x_limits(graph, plotid, xmax)
+
+    def _update_live_x_limits(self, graph, plotid, xmax):
+        expected = None
+        if self.plot_panel is not None:
+            expected = self.plot_panel._ncounts * self.plot_panel.integration_time
+
+        _, current_max = graph.get_x_limits(plotid)
+        candidates = [xmax * 1.05]
+        if expected:
+            candidates.append(expected)
+        if current_max is not None:
+            candidates.append(current_max)
+
+        graph.set_x_limits(min_=0, max_=max(candidates), plotid=plotid, force=False)
 
     # ===============================================================================
     #
@@ -409,14 +569,16 @@ class DataCollector(Consoleable):
         queue = ex.experiment_queue
         tr.do_modifications(run, ex, queue)
 
-        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        if self.measurement_script is not None:
+            self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
         if tr.use_truncation:
             return self._set_truncated()
         elif tr.use_termination:
             return "terminate"
 
     def _truncation_func(self, tr):
-        self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+        if self.measurement_script is not None:
+            self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
         return self._set_truncated()
 
     def _action_func(self, tr):
@@ -427,7 +589,7 @@ class DataCollector(Consoleable):
     def _set_truncated(self):
         self.state = "truncated"
         self.automated_run.truncated = True
-        self.automated_run.spec.state = "truncated"
+        self.automated_run.spec.transition("truncate", source="data_collector")
         return "break"
 
     def _check_iteration(self, i):
@@ -481,36 +643,36 @@ class DataCollector(Consoleable):
             return self._set_truncated()
 
         if self.check_conditionals:
-            for tag, func, conditionals in (
-                (
-                    "modification",
-                    self._modification_func,
-                    self.modification_conditionals,
-                ),
-                ("truncation", self._truncation_func, self.truncation_conditionals),
-                ("action", self._action_func, self.action_conditionals),
-                ("termination", lambda x: "terminate", self.termination_conditionals),
-                ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
-                (
-                    "equilibration",
-                    self._equilibration_func,
-                    self.equilibration_conditionals,
-                ),
-            ):
+            result = self._check_run_conditionals(i, j, original_counts)
+            if result:
+                return result
 
-                if tag == "equilibration" and self.collection_kind != SNIFF:
-                    continue
+    def _check_run_conditionals(self, i, executed_counts, original_counts):
+        for tag, func, conditionals in self._iter_conditionals():
+            tripped = self._check_conditionals(conditionals, i)
+            if tripped:
+                self.info(
+                    "{} conditional {}. measurement iteration executed {}/{} counts".format(
+                        tag, tripped.message, executed_counts, original_counts
+                    ),
+                    color="red",
+                )
+                self.automated_run.show_conditionals(tripped=tripped)
+                return func(tripped)
 
-                tripped = self._check_conditionals(conditionals, i)
-                if tripped:
-                    self.info(
-                        "{} conditional {}. measurement iteration executed {}/{} counts".format(
-                            tag, tripped.message, j, original_counts
-                        ),
-                        color="red",
-                    )
-                    self.automated_run.show_conditionals(tripped=tripped)
-                    return func(tripped)
+    def _iter_conditionals(self):
+        for tag, func, conditionals in (
+            ("modification", self._modification_func, self.modification_conditionals),
+            ("truncation", self._truncation_func, self.truncation_conditionals),
+            ("action", self._action_func, self.action_conditionals),
+            ("termination", lambda x: "terminate", self.termination_conditionals),
+            ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
+            ("equilibration", self._equilibration_func, self.equilibration_conditionals),
+        ):
+            if tag == "equilibration" and self.collection_kind != SNIFF:
+                continue
+            if conditionals:
+                yield tag, func, conditionals
 
     @property
     def isotope_group(self):

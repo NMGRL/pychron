@@ -17,12 +17,15 @@
 # =============enthought library imports=======================
 # =============standard library imports ========================
 from __future__ import absolute_import
+
+import glob
 import logging
 import os
 import shutil
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from typing import BinaryIO, Optional, Union, Tuple
 
-from pychron.core.helpers.filetools import list_directory, unique_path2
 from pychron.paths import paths
 
 NAME_WIDTH = 40
@@ -32,26 +35,57 @@ gFORMAT = (
     )
 )
 gLEVEL = logging.DEBUG
+PYCHRON_MANAGED_HANDLER = "_pychron_managed_handler"
 
 
-def simple_logger(name):
+def _coerce_level(level: Optional[Union[int, str]]) -> int:
+    if level is None:
+        return gLEVEL
+
+    if isinstance(level, str):
+        return getattr(logging, level.upper(), gLEVEL)
+
+    return level
+
+
+def _close_handler(handler: logging.Handler) -> None:
+    handler.flush()
+    handler.close()
+
+
+def _clear_managed_root_handlers(root: logging.Logger) -> None:
+    for handler in tuple(root.handlers):
+        if getattr(handler, PYCHRON_MANAGED_HANDLER, False):
+            root.removeHandler(handler)
+            _close_handler(handler)
+
+
+def simple_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    h = logging.StreamHandler()
-    h.setFormatter(logging.Formatter(gFORMAT))
-    logger.addHandler(h)
+    logger.setLevel(gLEVEL)
+
+    for handler in logger.handlers:
+        if getattr(handler, PYCHRON_MANAGED_HANDLER, False):
+            break
+    else:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(gFORMAT))
+        setattr(handler, PYCHRON_MANAGED_HANDLER, True)
+        logger.addHandler(handler)
+
     return logger
 
 
-def get_log_text(n):
+def get_log_text(n: int) -> Optional[str]:
     root = logging.getLogger()
     for h in root.handlers:
         if isinstance(h, RotatingFileHandler):
             with open(h.baseFilename, "rb") as rfile:
                 return tail(rfile, n)
+    return None
 
 
-def tail(f, lines=20):
+def tail(f: BinaryIO, lines: int = 20) -> str:
     """
     http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
     """
@@ -82,76 +116,102 @@ def tail(f, lines=20):
     return b"\n".join(all_read_text.splitlines()[-total_lines_wanted:]).decode("utf-8")
 
 
-# def anomaly_setup(name):
-#     ld = logging.Logger.manager.loggerDict
-#     print 'anomaly setup ld={}'.format(ld)
-#     if name not in ld:
-#         bdir = paths.log_dir
-#         name = add_extension(name, '.anomaly')
-#         apath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log')
-#         logger = logging.getLogger('anomalizer')
-#         h = logging.FileHandler(apath)
-#         logger.addHandler(h)
+def _archive_old_logs(bdir: str, logname: str, use_archiver: bool = True) -> None:
+    """Archive logs from previous session into timestamped directory."""
+    logpath = os.path.join(bdir, logname)
+    if not os.path.isfile(logpath):
+        return
 
+    # Create unique session directory based on file modification time
+    result = os.stat(logpath)
+    mt = result.st_mtime
+    creation_date = datetime.fromtimestamp(mt)
 
-def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
-    """ """
-    # set up deprecation warnings
-    # import warnings
-    #     warnings.simplefilter('default')
-    bdir = paths.log_dir if root is None else root
+    # Ensure uniqueness by appending counter if needed
+    session_dir = os.path.join(bdir, creation_date.strftime("%y%m%d_%H%M%S"))
+    counter = 1
+    while os.path.exists(session_dir):
+        session_dir = os.path.join(
+            bdir, creation_date.strftime("%y%m%d_%H%M%S") + f"_{counter}"
+        )
+        counter += 1
 
-    # make sure we have a log directory
-    # if not os.path.isdir(bdir):
-    #     os.mkdir(bdir)
+    os.makedirs(session_dir, exist_ok=True)
 
+    # Move all log files from this session
+    for src in glob.glob(os.path.join(bdir, f"{logname}*")):
+        shutil.move(src, session_dir)
+
+    # Optionally archive old session directories
     if use_archiver:
-        # archive logs older than 1 month
-        # lazy load Archive because of circular dependency
-        from pychron.core.helpers.archiver import Archiver
+        try:
+            # Lazy load to avoid circular dependency
+            from pychron.core.helpers.archiver import Archiver
 
-        a = Archiver(archive_days=14, archive_months=1, root=bdir)
-        a.clean()
+            archiver = Archiver(archive_days=30, archive_months=3, root=bdir)
+            archiver.clean(use_dirs=True)
+        except ImportError:
+            pass  # Archiver not available
+
+
+def logging_setup(
+    name: str,
+    use_archiver: bool = True,
+    root: Optional[str] = None,
+    use_file: bool = True,
+    **kw,
+) -> None:
+    """
+    Set up logging for Pychron.
+
+    Configures console and file handlers with rotation support.
+    On startup, archives logs from previous session into a timestamped directory.
+
+    Args:
+        name: Logger name (e.g., 'pychron')
+        use_archiver: If True, clean old archived sessions
+        root: Override log directory (defaults to paths.log_dir)
+        use_file: If True, create rotating file handler
+        **kw: Additional keyword arguments
+            - level: Log level (default: DEBUG)
+    """
+    bdir = paths.log_dir if root is None else root
+    level = _coerce_level(kw.pop("level", None))
 
     if use_file:
-        # create a new logging file
-        logname = "{}.current.log".format(name)
+        # Archive logs from previous session
+        logname = f"{name}.current.log"
+        _archive_old_logs(bdir, logname, use_archiver=use_archiver)
         logpath = os.path.join(bdir, logname)
 
-        if os.path.isfile(logpath):
-            backup_logpath, _cnt = unique_path2(
-                bdir, name, delimiter="-", extension=".log", width=5
-            )
-
-            shutil.copyfile(logpath, backup_logpath)
-            os.remove(logpath)
-
-            ps = list_directory(bdir, filtername=logname, remove_extension=False)
-            for pi in ps:
-                _h, t = os.path.splitext(pi)
-                v = os.path.join(bdir, pi)
-                shutil.copyfile(v, "{}{}".format(backup_logpath, t))
-                os.remove(v)
-
     root = logging.getLogger()
-    root.setLevel(gLEVEL)
+    _clear_managed_root_handlers(root)
+    root.setLevel(level)
     shandler = logging.StreamHandler()
 
     handlers = [shandler]
     if use_file:
-        rhandler = RotatingFileHandler(logpath, maxBytes=1e7, backupCount=50)
+        rhandler = RotatingFileHandler(logpath, maxBytes=1e8, backupCount=50)
         handlers.append(rhandler)
 
     fmt = logging.Formatter(gFORMAT)
     for hi in handlers:
-        hi.setLevel(gLEVEL)
+        hi.setLevel(level)
         hi.setFormatter(fmt)
+        setattr(hi, PYCHRON_MANAGED_HANDLER, True)
         root.addHandler(hi)
 
 
-def add_root_handler(path, level=None, strformat=None, **kw):
+def add_root_handler(
+    path: str,
+    level: Optional[Union[int, str]] = None,
+    strformat: Optional[str] = None,
+    **kw,
+) -> logging.Handler:
     if level is None:
         level = gLEVEL
+    else:
+        level = _coerce_level(level)
 
     if strformat is None:
         strformat = gFORMAT
@@ -165,12 +225,13 @@ def add_root_handler(path, level=None, strformat=None, **kw):
     return handler
 
 
-def remove_root_handler(handler):
+def remove_root_handler(handler: logging.Handler) -> None:
     root = logging.getLogger()
     root.removeHandler(handler)
+    _close_handler(handler)
 
 
-def new_logger(name):
+def new_logger(name: str) -> logging.Logger:
     name = "{:<{}}".format(name, NAME_WIDTH)
     l = logging.getLogger(name)
     l.setLevel(gLEVEL)
@@ -178,7 +239,50 @@ def new_logger(name):
     return l
 
 
-def wrap(items, width=40, indent=90, delimiter=","):
+def check_log_disk_usage(
+    log_dir: str, warn_threshold_gb: float = 2.0
+) -> Tuple[float, bool]:
+    """
+    Check total disk usage of log directory.
+
+    Args:
+        log_dir: Path to log directory
+        warn_threshold_gb: Threshold in GB to trigger warning (default: 2.0)
+
+    Returns:
+        Tuple of (total_size_gb, exceeded_threshold)
+    """
+    if not os.path.isdir(log_dir):
+        return 0.0, False
+
+    total_size = 0
+    try:
+        for dirpath, dirnames, filenames in os.walk(log_dir):
+            for filename in filenames:
+                try:
+                    filepath = os.path.join(dirpath, filename)
+                    total_size += os.path.getsize(filepath)
+                except (OSError, IOError):
+                    # File might have been deleted or permission denied
+                    pass
+    except (OSError, IOError):
+        pass
+
+    total_gb = total_size / (1024**3)
+    exceeded = total_gb > warn_threshold_gb
+
+    if exceeded:
+        root_logger = logging.getLogger()
+        if root_logger.handlers:
+            root_logger.warning(
+                f"Log directory {log_dir} is using {total_gb:.2f} GB "
+                f"(exceeds {warn_threshold_gb:.1f} GB threshold)"
+            )
+
+    return total_gb, exceeded
+
+
+def wrap(items, width: int = 40, indent: int = 90, delimiter: str = ",") -> str:
     """
     wrap a list
     """
@@ -207,4 +311,5 @@ def wrap(items, width=40, indent=90, delimiter=","):
 
     return ",\n{}".format(" " * indent).join(rs)
 
-    # ============================== EOF ===================================
+
+# ============================== EOF ===================================

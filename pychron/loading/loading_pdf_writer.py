@@ -30,7 +30,7 @@ from reportlab.platypus.flowables import Spacer
 from reportlab.platypus.frames import Frame
 from six.moves import range
 from traits.api import Bool
-from traits.api import Color as TraitsColor
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import Item, VGroup
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -53,7 +53,7 @@ class LoadingPDFOptions(BasePDFOptions):
     show_hole_numbers = dumpable(Bool)
     view_pdf = dumpable(Bool)
     use_alternating_background = dumpable(Bool)
-    alternating_background = dumpable(TraitsColor)
+    alternating_background = dumpable(PyfaceColor)
 
     def _show_colors_changed(self, new):
         if new:
@@ -61,7 +61,14 @@ class LoadingPDFOptions(BasePDFOptions):
 
     def get_alternating_background(self):
         color = self.alternating_background
-        t = color.red(), color.green(), color.blue()
+        def _component(value):
+            return value() if callable(value) else value
+
+        t = (
+            _component(getattr(color, "red", 0)),
+            _component(getattr(color, "green", 0)),
+            _component(getattr(color, "blue", 0)),
+        )
         return [x / 255.0 for x in t]
 
     def traits_view(self):
@@ -96,7 +103,6 @@ class LoadingPDFWriter(BasePDFTableWriter):
     _options_klass = LoadingPDFOptions
 
     def _build(self, doc, positions, grouped_positions, component, meta):
-
         n = len(grouped_positions)
         if n > 5:
             idx = int(round(n / 2.0))
@@ -231,7 +237,6 @@ class LoadingPDFWriter(BasePDFTableWriter):
         # ts.add('VALIGN', (-3, 1), (-1, -1), 'MIDDLE')
 
         for idx, pi in enumerate(positions):
-
             items = [
                 RowItem(i)
                 for i in (pi.identifier, pi.level_str, pi.sample, pi.position_str)

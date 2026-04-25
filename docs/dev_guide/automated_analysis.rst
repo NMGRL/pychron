@@ -2,9 +2,17 @@ Automated Analysis
 ---------------------
 Automated analysis is handled by ``ExperimentExecutor``, ``ExperimentQueue``, and ``AutomatedRun``.
 
+The runtime is now split between:
+
+- ``ExperimentExecutor`` for UI-facing traits, service wiring, threads, and side effects
+- ``ExecutorController`` for executor/queue/run lifecycle decisions
+- explicit executor, queue, and run state machines under ``pychron.experiment.state_machines``
+
 ExperimentExecutor
 ~~~~~~~~~~~~~~~~~~~~
-``ExperimentExcecutor`` is a top level object for coordinating the running of automated analyses.
+``ExperimentExcecutor`` is the top level object for coordinating automated analyses.
+It remains the integration point for panes, Traits events, managers, and persistence side effects,
+but queue/run lifecycle policy is progressively moving into the controller and state machines.
 
 
 ExperimentQueue
@@ -23,22 +31,58 @@ The ``AutomatedRun`` contains the top level logic for executing an automated ana
 object is reused and the ``ExperimentExecutor`` has ``measuring_run`` and ``extracting_run`` objects. Two ``AutomatedRun``
 objects are required to handle overlap. ``AutomatedRun`` is executed using ``start()``.
 
+State Machine Layers
+~~~~~~~~~~~~~~~~~~~~~~
+
+The experiment runtime now uses three explicit state layers.
+
+1. ``ExecutorStateMachine``
+
+   - top-level executor lifecycle
+   - execute, precheck, running queue, stopping at boundary, cancel, abort, finalize
+
+2. ``QueueStateMachine``
+
+   - one queue lifecycle
+   - queue startup, next-run preparation, overlap mode, save waits, shutdown, completion
+
+3. ``RunStateMachine``
+
+   - one run lifecycle
+   - create, start, extraction, overlap wait, measurement, post measurement, save, terminal state
+
 Execution Sequence
+~~~~~~~~~~~~~~~~~~~~~~
 
 1.  Start button pressed, calls ``ExperimentExecutor.execute``
-2.  pre execute check. ``ExperimentExecutor._pre_execute_check``
-3.  New thread started. function= ``ExperimentExecutor._execute``
-4.  Each queue in ``ExperimentExecutor.experiment_queues`` is run using ``ExperimentExecutor._execute_queues``
-5.  pre run check
-6.  runspec retrieved from ``new_runs_generator``
-7.  ``AutomatedRun`` updated with runspec data
-8.  if overlap new thread started else wait for run to complete return to  step 5
-9.  ``ExperimentExecutor._do_run`` starts the ``AutomatedRun``
+2.  ``ExperimentExecutor`` drives pre-execute checks and signals the controller
+3.  ``ExecutorController`` advances the executor machine into queue execution
+4.  A background thread runs ``ExperimentExecutor._execute``
+5.  Each queue is started through controller-owned queue lifecycle helpers
+6.  A run spec is retrieved from ``new_runs_generator``
+7.  ``ExperimentExecutor`` builds an ``AutomatedRun`` from the spec
+8.  The controller selects queue run execution mode:
 
-    a) ``AutoamtedRun._start``
-    b) ``AutoamtedRun._extraction``
-    c) ``AutoamtedRun._measurement``
-    d) ``AutoamtedRun._post_measurement``
+    - ``serial``
+    - ``overlap``
+
+9.  ``ExperimentExecutor._do_run`` performs run side effects while the controller owns:
+
+    - run step ordering
+    - stop/cancel/abort decisions
+    - overlap eligibility
+    - queue settle policy
+    - queue terminal result selection
+
+10. The run executes the major phases
+
+    a) ``AutomatedRun.start``
+    b) extraction
+    c) measurement
+    d) post measurement
+    e) save
+
+11. Queue shutdown and terminal result selection are finalized through controller-owned helpers
 
 PyScripts
 ~~~~~~~~~~~~~~~~~~~~~~

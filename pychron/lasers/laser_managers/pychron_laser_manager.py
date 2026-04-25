@@ -355,8 +355,13 @@ class PychronLaserManager(EthernetLaserManager):
         self._ask(cmd, verbose=True)
 
         if block:
+            if isinstance(block, bool):
+                timeout = 200
+            else:
+                timeout = block
+
             time.sleep(0.5)
-            if not self._block("IsPatterning", period=1, timeout=100):
+            if not self._block("IsPatterning", period=1, timeout=timeout):
                 self._ask("AbortPattern")
 
     # ===============================================================================
@@ -525,7 +530,6 @@ class PychronUVLaserManager(PychronLaserManager):
     #
     # ===============================================================================
     def _fire_fired(self):
-
         if self.fire_mode == "Continuous":
             mode = "continuous"
         else:
@@ -558,7 +562,6 @@ class PychronUVLaserManager(PychronLaserManager):
         self._mask = 0
 
     def _move_to_position(self, pos, autocenter, block):
-
         cmd = "GoToPoint"
 
         # if pos.startswith('t'):

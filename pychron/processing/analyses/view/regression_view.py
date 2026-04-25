@@ -58,7 +58,6 @@ class RegressionView(HasTraits):
         self.setup_graph(an)
 
     def setup_graph(self, an):
-
         container = HPlotContainer()
 
         container_dict = {"spacing": 5, "stack_order": "top_to_bottom"}

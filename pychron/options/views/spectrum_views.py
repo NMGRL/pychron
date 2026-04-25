@@ -112,6 +112,7 @@ class SpectrumAppearance(AppearanceSubOptions):
             self._get_bg_group(),
             self._get_layout_group(),
             self._get_padding_group(),
+            self._get_margin_group(),
             self._get_grid_group(),
         )
         return self._make_view(VGroup(g, fgrp))
@@ -278,7 +279,7 @@ class SpectrumMainOptions(MainOptions):
     def _get_columns(self):
         cols = [
             checkbox_column(name="plot_enabled", label="Use"),
-            object_column(name="name", width=130, editor=EnumEditor(name="names")),
+            object_column(name="name", editor=EnumEditor(name="names")),
             object_column(name="scale"),
             object_column(name="height", format_func=lambda x: str(x) if x else ""),
             checkbox_column(name="show_labels", label="Labels"),

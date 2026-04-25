@@ -48,7 +48,7 @@ class TextCell(HasTraits):
             if self.format:
                 self.text = self.format(text)
             else:
-                self.text = u"{}".format(text)
+                self.text = "{}".format(text)
 
 
 #             if self.width:
@@ -207,7 +207,7 @@ class ValueErrorAdapter(TextTableAdapter):
     columns = [
         ("", "name", str, 20),
         ("Value", "value", None, 20),
-        (u"{}1s".format(PLUSMINUS), "error", None, 20),
+        ("{}1s".format(PLUSMINUS), "error", None, 20),
     ]
 
     def _make_tables(self, value):
@@ -237,7 +237,7 @@ class RatiosAdapter(ValueErrorAdapter):
     columns = [
         ("Ratio", "name", str, 20),
         ("Value", "value", None, 20),
-        (u"{}1s".format(PLUSMINUS), "error", None, 20),
+        ("{}1s".format(PLUSMINUS), "error", None, 20),
     ]
 
 

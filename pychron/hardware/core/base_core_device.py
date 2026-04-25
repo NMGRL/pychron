@@ -26,6 +26,7 @@ import inspect
 # =============standard library imports ========================
 import random
 import time
+from typing import Any, Optional
 
 from traits.api import provides
 
@@ -37,6 +38,7 @@ from pychron.has_communicator import HasCommunicator
 
 # =============local library imports  ==========================
 from .i_core_device import ICoreDevice
+from pychron.hardware.core.watchdog import DeviceHeartbeat
 
 
 def crc_caller(func):
@@ -45,7 +47,12 @@ def crc_caller(func):
             return func(*args, **kw)
         except CRCError:
             stack = inspect.stack()
-            print("{} called by {}".format(func.__name__, stack[1][3]))
+            obj = args[0]
+            msg = "{} called by {}".format(func.__name__, stack[1][3])
+            if hasattr(obj, "warning"):
+                obj.warning(msg)
+            if hasattr(obj, "debug_exception"):
+                obj.debug_exception()
 
     return d
 
@@ -57,6 +64,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     _auto_started = False
     _no_response_counter = 0
     _scheduler_name = None
+    _heartbeat: DeviceHeartbeat | None = None
 
     def load_from_device(self):
         pass
@@ -71,8 +79,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     # ICoreDevice protocol
     def close(self):
-        if self.communicator:
-            self.communicator.close()
+        self.close_communicator()
 
     def get(self, *args, **kw):
         return self.current_scan_value
@@ -81,25 +88,74 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         pass
 
     def is_connected(self):
-        if self.communicator:
-            return not self.communicator.simulation
+        comm = self.communicator
+        if comm:
+            return not comm.simulation
+
+    def get_device_health(self):
+        """Return device health state.
+
+        Returns:
+            HeartbeatState or None if watchdog disabled
+        """
+        if self._heartbeat:
+            return self._heartbeat.get_state()
+        return None
+
+    def is_device_healthy(self) -> bool:
+        """Check if device is in HEALTHY state."""
+        if self._heartbeat:
+            return self._heartbeat.is_healthy()
+        return True  # Default to healthy if watchdog disabled
+
+    def reset_device_health(self) -> None:
+        """Manually reset device health to HEALTHY state."""
+        if self._heartbeat:
+            self._heartbeat.reset()
+
+    def _wire_communicator_health(self) -> None:
+        """Attach communicator callbacks to the device heartbeat."""
+        comm = self.communicator
+        if comm is None:
+            return
+
+        setattr(comm, "health_success_callback", self._handle_communication_success)
+        setattr(comm, "health_failure_callback", self._handle_communication_failure)
+        setattr(comm, "health_device_name", self.name or "unknown_device")
+
+    def _handle_communication_success(self, operation: str, **_: Any) -> None:
+        """Record a successful communication on the device heartbeat."""
+        if self._heartbeat:
+            self._heartbeat.record_success()
+
+    def _handle_communication_failure(
+        self,
+        operation: str,
+        error: Optional[str] = None,
+        **_: Any,
+    ) -> None:
+        """Record a failed communication on the device heartbeat."""
+        if self._heartbeat:
+            exc = Exception(error) if error else None
+            self._heartbeat.record_failure(exc=exc)
 
     def test_connection(self):
-        if self.communicator:
-            return self.communicator.test_connection()
+        comm = self.require_communicator("test connection")
+        if comm:
+            return comm.test_connection()
 
     def set_simulation(self, tf):
-        if self.communicator:
-            self.communicator.simulation = tf
+        comm = self.require_communicator("set simulation")
+        if comm:
+            comm.simulation = tf
 
-    def load(self, *args, **kw):
+    def load(self, *args: Any, **kw: Any) -> Any:
         """
         Load a configuration file.
         Get Communications info to make a new communicator
         """
         config = self.get_configuration()
         if config:
-
             if config.has_section("General"):
                 name = self.config_get(config, "General", "name", optional=True)
                 if name is not None:
@@ -126,7 +182,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 self._loaded = True
             return r
 
-    def open(self, *args, **kw):
+    def open(self, *args: Any, **kw: Any) -> Any:
         self.debug("open device")
         return HasCommunicator.open(self, **kw)
 
@@ -145,9 +201,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         return True
 
-    def blocking_poll(
-        self, func, args=None, kwargs=None, period=1, timeout=None, script=None
-    ):
+    def blocking_poll(self, func, args=None, kwargs=None, period=1, timeout=None, script=None):
         """
         repeatedly ask func at 1/period rate
         if func returns true return True
@@ -170,9 +224,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 et = time.time() - st
                 if et > timeout:
                     self.warning(
-                        'blocking poll of "{}" timed out after {}s'.format(
-                            func.__name__, timeout
-                        )
+                        'blocking poll of "{}" timed out after {}s'.format(func.__name__, timeout)
                     )
                     raise TimeoutError(func.__name__, timeout)
             time.sleep(period)
@@ -192,7 +244,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 self._communicate_hook(cmd, r)
             return r
         else:
-            self.info("no communicator for this device {}".format(self.name))
+            self.require_communicator("ask")
 
     @crc_caller
     def write(self, *args, **kw):
@@ -202,17 +254,19 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     @crc_caller
     def tell(self, *args, **kw):
         """ """
-        if self.communicator is not None:
+        comm = self.require_communicator("tell")
+        if comm is not None:
             cmd = " ".join([str(a) for a in args] + [str(a) for a in kw.items()])
 
             self._communicate_hook(cmd, "-")
-            return self.communicator.tell(*args, **kw)
+            return comm.tell(*args, **kw)
 
     @crc_caller
     def read(self, *args, **kw):
         """ """
-        if self.communicator is not None:
-            return self.communicator.read(*args, **kw)
+        comm = self.require_communicator("read")
+        if comm is not None:
+            return comm.read(*args, **kw)
 
     # if self.simulation:
     #            return 'simulation'
@@ -223,7 +277,12 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     #                                   id_query=self.id_query,
     #                                   id_response=self.id_response
     #                                )
-    def post_initialize(self, *args, **kw):
+    def post_initialize(self, *args: Any, **kw: Any) -> None:
+        # Initialize heartbeat if watchdog enabled
+        if globalv.watchdog_enabled:
+            self._heartbeat = DeviceHeartbeat(self.name or "unknown_device")
+        self._wire_communicator_health()
+
         if self.graph_ytitle:
             self.graph.set_y_title(self.graph_ytitle)
 
@@ -246,22 +305,20 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         return random.randint(mi, ma) if globalv.communication_simulation else None
 
     def setup_scheduler(self, name=None):
-
         if self.application:
             if name is None:
                 name = self._scheduler_name
             if name is not None:
-                sc = self.application.get_service(
-                    CommunicationScheduler, 'name=="{}"'.format(name)
-                )
+                sc = self.application.get_service(CommunicationScheduler, 'name=="{}"'.format(name))
                 if sc is None:
                     sc = CommunicationScheduler(name=name)
                     self.application.register_service(type(sc), sc)
                 self.set_scheduler(sc)
 
     def set_scheduler(self, s):
-        if self.communicator is not None:
-            self.communicator.scheduler = s
+        comm = self.require_communicator("set scheduler")
+        if comm is not None:
+            comm.scheduler = s
 
     def repeat_command(
         self,
@@ -271,9 +328,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         check_type=None,
         break_val=None,
         verbose=True,
-        **kw
+        delay=None,
+        **kw,
     ):
-
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)
         else:
@@ -283,9 +340,10 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         for i in range(ntries + 1):
             resp = self._parse_response(self.ask(cmd, verbose=verbose))
             if verbose:
-                m = "repeat command {} response = {} len={} ".format(
-                    i + 1, resp, len(str(resp)) if resp is not None else None
-                )
+                resp = resp or ""
+                resp = resp.strip()
+                n = len(str(resp))
+                m = "repeat command {} response = {} len={} ".format(i + 1, resp, n)
                 self.debug(m)
 
             if break_val and resp == break_val:
@@ -298,6 +356,8 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 if resp == check_val:
                     break
                 else:
+                    if delay:
+                        time.sleep(delay)
                     continue
 
             if check_type is not None:

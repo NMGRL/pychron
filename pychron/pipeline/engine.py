@@ -123,6 +123,7 @@ from pychron.pipeline.pipeline_defaults import (
     RECENT_RUNS,
     CSV_INVERSE_ISOCHRON,
     CSV_REGRESSION,
+    REVERT_HISTORY,
 )
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
@@ -379,6 +380,23 @@ class PipelineEngine(Loggable):
         if info.result:
             agv.save(ans, self.dvc)
 
+    def unknowns_set_fixed_plateau(self):
+        items = self.selected_unknowns
+        if not items:
+            items = self.selected.unknowns
+
+        if len(items) > 1:
+            s, e = items[0], items[-1]
+            gs = self.selected.editor.get_analysis_groups()
+            for gi in gs:
+                if s in gi.analyses:
+                    gi.calculate_fixed_plateau = True
+                    gi.fixed_step_low = s.step
+                    gi.fixed_step_high = e.step
+
+                    self.selected.editor.request_refresh()
+                    break
+
     def unknowns_clear_all_grouping(self):
         self._set_grouping(self.selected.unknowns, 0)
 
@@ -401,17 +419,27 @@ class PipelineEngine(Loggable):
         self.refresh_figure_editors()
 
     def group_selected(self, key):
-        items = self.selected.unknowns
+        # if there are multiple graphs only get the analyses from the selected graph
+        if key != "graph_id":
+            # e.g. key=='group_id'
+            items = self.selected_unknowns
+            graph_id = items[0].graph_id
+            items = [i for i in items if i.graph_id == graph_id]
+            items_to_set = items
+        else:
+            # graph grouping
+            items = self.selected.unknowns
+            items_to_set = self.selected_unknowns
+
         max_gid = max([getattr(si, key) for si in items]) + 1
+        self._set_grouping(items_to_set, max_gid, attr=key)
 
-        self._set_grouping(self.selected_unknowns, max_gid, attr=key)
-
-    def unknowns_toggle_status(self):
+    def unknowns_toggle_status(self) -> None:
         for i in self.selected_unknowns:
             # print('asdf', i.temp_status)
             i.temp_status = "ok" if i.temp_status == "omit" else "omit"
             if hasattr(self.selected, "editor") and self.selected.editor:
-                self.selected.editor.refresh_needed = True
+                self.selected.editor.request_refresh()
 
     def play_analysis_video(self):
         self.debug("play analysis video")
@@ -437,7 +465,6 @@ class PipelineEngine(Loggable):
                 ("Ideogram", IdeogramNode, IdeogramEditor),
                 ("Spectrum", SpectrumNode, SpectrumEditor),
             ):
-
                 if isinstance(node, klass):
                     e = node.editor
                     es = [
@@ -456,7 +483,10 @@ class PipelineEngine(Loggable):
                         if yes:
                             for ni in es:
                                 ni.plotter_options = e.plotter_options
-                                ni.refresh_needed = True
+                                if hasattr(ni, "request_rebuild"):
+                                    ni.request_rebuild()
+                                else:
+                                    ni.refresh_needed = True
 
                         if remember:
                             self._confirmation_cache[tag] = yes
@@ -529,6 +559,7 @@ class PipelineEngine(Loggable):
         unks = self.selected.unknowns
         self.selected.unknowns = [unk for unk in unks if unk.tag.lower() != "invalid"]
         self.refresh_table_needed = True
+        self.state.unknowns = self.selected.unknowns
 
     # ============================================================================================================
     # nodes
@@ -737,11 +768,11 @@ class PipelineEngine(Loggable):
     def resume_pipeline(self):
         return self.run_pipeline(state=self.state)
 
-    def refresh_figure_editors(self):
+    def refresh_figure_editors(self) -> None:
         for ed in self.state.editors:
             if isinstance(ed, FigureEditor):
-                print("refresh figure editors")
-                ed.refresh_needed = True
+                self.debug("refresh figure editors")
+                ed.request_refresh()
 
     def rerun_with(self, unks, post_run=True):
         if not self.state:
@@ -756,7 +787,6 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(self.pipeline.iternodes(None)):
             if node.enabled:
                 with ActiveCTX(node):
-
                     if not node.pre_run(state, configure=False):
                         self.debug("Pre run failed {}".format(node))
                         return True
@@ -830,7 +860,6 @@ class PipelineEngine(Loggable):
             configure = False
 
         for idx, node in enumerate(pipeline.iternodes(start_node)):
-
             if node.enabled:
                 # node.editor = None
 
@@ -1027,7 +1056,14 @@ class PipelineEngine(Loggable):
                     ("Audit", AUDIT),
                 ),
             ),
-            ("Edit", (("Bulk Edit", BULK_EDIT), ("RunID Edit", RUNID_EDIT))),
+            (
+                "Edit",
+                (
+                    ("Bulk Edit", BULK_EDIT),
+                    ("RunID Edit", RUNID_EDIT),
+                    ("Revert History", REVERT_HISTORY),
+                ),
+            ),
             ("Plot", plots),
             ("Table", tables),
             (
@@ -1158,15 +1194,16 @@ class PipelineEngine(Loggable):
                 if not r.update():
                     self.warning('Failed to update repo="{}"'.format(r.name))
 
-    def _set_grouping(self, items, gid, attr="group_id"):
+    def _set_grouping(self, items, gid, attr: str = "group_id") -> None:
         for si in items:
             setattr(si, attr, gid)
 
         if hasattr(self.selected, "editor") and self.selected.editor:
-            self.selected.editor.refresh_needed = True
+            self.selected.editor.request_refresh()
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
+        self.debug("template set to ={}".format(name))
         if isinstance(name, (str, tuple)):
             pt = self.pipeline_template_root.get_template(name)
         else:
@@ -1241,7 +1278,7 @@ class PipelineEngine(Loggable):
 
     def _handle_figure_event(self, evt):
         kind = evt[0]
-        print("fiafsfdasfsa", evt, kind)
+        self.debug("handle figure event evt={} kind={}".format(evt, kind))
         if kind == "alternate_figure":
             self._make_alternate_figure(evt)
         elif kind == "tag":
@@ -1334,7 +1371,7 @@ class PipelineEngine(Loggable):
     _len_references_cnt = 0
     _len_references_removed = 0
 
-    def _handle_len(self, k, func):
+    def _handle_len(self, k, func) -> None:
         lr = "_len_{}_removed".format(k)
         lc = "_len_{}_cnt".format(k)
 
@@ -1355,7 +1392,10 @@ class PipelineEngine(Loggable):
             setattr(self, lc, 0)
             if editor:
                 func(editor)
-                editor.refresh_needed = True
+                if hasattr(editor, "request_rebuild"):
+                    editor.request_rebuild()
+                else:
+                    editor.refresh_needed = True
 
     def _dclicked_changed(self, new):
         self.configure(new)

@@ -1,0 +1,205 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "dev/**"
+      - "hot/**"
+      - "release/**"
+  push:
+    branches:
+      - main
+      - develop
+      - "dev/**"
+      - "hot/**"
+      - "release/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  QT_API: pyqt5
+  ETS_TOOLKIT: qt
+  QT_QPA_PLATFORM: offscreen
+
+jobs:
+  lint:
+    name: Black
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Fetch base branch
+        if: github.event_name == 'pull_request'
+        run: git fetch origin ${{ github.base_ref }} --depth=1
+
+      - name: Determine Python files to check
+        id: changed-python
+        run: |
+          python <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          import subprocess
+
+          event_name = os.environ["GITHUB_EVENT_NAME"]
+          head_ref = os.environ.get("GITHUB_HEAD_REF", "")
+          ref_name = os.environ.get("GITHUB_REF_NAME", "")
+          is_release = (event_name == "pull_request" and head_ref.startswith("release/")) or (
+              event_name == "push" and ref_name.startswith("release/")
+          )
+
+          if is_release:
+              files = []
+          else:
+              if event_name == "pull_request":
+                  base = os.environ["GITHUB_BASE_REF"]
+                  cmd = ["git", "diff", "--name-only", f"origin/{base}...HEAD", "--", "*.py"]
+              else:
+                  before = os.environ.get("GITHUB_EVENT_BEFORE")
+                  if before:
+                      cmd = ["git", "diff", "--name-only", before, "HEAD", "--", "*.py"]
+                  else:
+                      cmd = ["git", "ls-files", "*.py"]
+
+              files = subprocess.check_output(cmd, text=True).splitlines()
+          files = [f for f in files if f.startswith("pychron/")]
+          print("files<<EOF")
+          print(" ".join(files))
+          print("EOF")
+          PY
+
+      - name: Install lint dependencies
+        run: uv sync --group dev --no-install-project
+
+      - name: Check formatting
+        if: steps.changed-python.outputs.files != ''
+        run: uv run --no-sync black --check --diff ${{ steps.changed-python.outputs.files }}
+
+      - name: Skip formatting when no Python files changed
+        if: steps.changed-python.outputs.files == ''
+        run: echo "No Python files selected for formatting checks"
+
+  typecheck:
+    name: MyPy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Fetch base branch
+        if: github.event_name == 'pull_request'
+        run: git fetch origin ${{ github.base_ref }} --depth=1
+
+      - name: Determine Python files to check
+        id: changed-python
+        run: |
+          python <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          import subprocess
+
+          event_name = os.environ["GITHUB_EVENT_NAME"]
+          head_ref = os.environ.get("GITHUB_HEAD_REF", "")
+          ref_name = os.environ.get("GITHUB_REF_NAME", "")
+          is_release = (event_name == "pull_request" and head_ref.startswith("release/")) or (
+              event_name == "push" and ref_name.startswith("release/")
+          )
+
+          if is_release:
+              files = []
+          else:
+              if event_name == "pull_request":
+                  base = os.environ["GITHUB_BASE_REF"]
+                  cmd = ["git", "diff", "--name-only", f"origin/{base}...HEAD", "--", "*.py"]
+              else:
+                  before = os.environ.get("GITHUB_EVENT_BEFORE")
+                  if before:
+                      cmd = ["git", "diff", "--name-only", before, "HEAD", "--", "*.py"]
+                  else:
+                      cmd = ["git", "ls-files", "*.py"]
+
+              files = subprocess.check_output(cmd, text=True).splitlines()
+          files = [f for f in files if f.startswith("pychron/")]
+          print("files<<EOF")
+          print(" ".join(files))
+          print("EOF")
+          PY
+
+      - name: Install typecheck dependencies
+        run: uv sync --group dev --no-install-project
+
+      - name: Run type checking
+        if: steps.changed-python.outputs.files != ''
+        run: uv run --no-sync mypy --explicit-package-bases ${{ steps.changed-python.outputs.files }}
+
+      - name: Skip type checking when no Python files changed
+        if: steps.changed-python.outputs.files == ''
+        run: echo "No Python files selected for type checking"
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install OS packages for headless Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 xvfb
+
+      - name: Install test dependencies
+        run: uv sync --group dev --no-install-project
+
+      - name: Run import hygiene tests
+        run: uv run --no-sync python -m unittest pychron.core.tests.import_hygiene_test
+
+      - name: Run targeted regression tests
+        run: |
+          xvfb-run -a uv run --no-sync python -m unittest \
+            pychron.core.tests.import_hygiene_test \
+            pychron.experiment.tests.queue_metadata \
+            pychron.experiment.tests.pyscript_integration

@@ -23,7 +23,9 @@ import re
 from pprint import pformat
 
 from pychron import json
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.helpers.filetools import subdirize, add_extension
+from pychron.core.helpers.strtools import camel_case
 from pychron.paths import paths
 from pychron.wisc_ar_constants import WISCAR_ID_RE
 
@@ -33,6 +35,10 @@ __version__ = "2.1"
 # 2.1 added pre/post cleanup
 
 USE_GIT_TAGGING = False
+DATA_COLLECTION_BRANCH = "data_collection"
+REDUCTION_ROOT = "reduction"
+REDUCTION_TAGS = "tags"
+REDUCTION_IA = "ia"
 
 MASS_SPEC_REDUCED = "MASS SPEC REDUCED"
 HISTORY_TAGS = (
@@ -62,6 +68,8 @@ static = (PEAKCENTER, "extraction", "monitor")
 PATH_MODIFIERS = HISTORY_PATHS + static
 NPATH_MODIFIERS = (None, DATA, TAGS) + static
 
+logger = new_logger("dvc")
+
 
 class DVCException(BaseException):
     def __init__(self, attr):
@@ -87,24 +95,27 @@ class AnalysisNotAnvailableError(BaseException):
 
 def dvc_dump(obj, path):
     if obj is None:
-        print("no object to dump")
+        logger.warning("No object to dump to %s", path)
         return
 
     with open(path, "w") as wfile:
         try:
             json.dump(obj, wfile, indent=4, sort_keys=True)
         except TypeError as e:
-            print("dvc dump exception. error:{}, {}".format(e, pformat(obj)))
+            logger.warning("dvc dump exception. error:%s, %s", e, pformat(obj))
 
 
-def dvc_load(path):
-    ret = {}
-    if os.path.isfile(path):
+def dvc_load(path, default=None):
+    if default is None:
+        ret = {}
+    else:
+        ret = default
+    if path and os.path.isfile(path):
         with open(path, "r") as rfile:
             try:
                 ret = json.load(rfile)
             except ValueError as e:
-                print("dvc load exception. error: {}, {}".format(e, path))
+                logger.warning("dvc load exception. error: %s, %s", e, path)
     return ret
 
 
@@ -141,11 +152,14 @@ def analysis_path(analysis, *args, **kw):
     else:
         uuid, record_id = analysis.uuid, analysis.record_id
 
+    # using the uuid for the path identifiers is preferred.
+    # data should be saved this way. but for backwards compatibility
+    # analysis paths using the record_id/runid can also be handled
     try:
-        ret = _analysis_path(record_id, *args, **kw)
+        ret = _analysis_path(uuid, *args, **kw)
     except AnalysisNotAnvailableError:
         try:
-            ret = _analysis_path(uuid, *args, **kw)
+            ret = _analysis_path(record_id, *args, **kw)
         except AnalysisNotAnvailableError as e:
             if kw.get("mode", "r") == "r":
                 ret = None
@@ -182,6 +196,7 @@ def _analysis_path(
         if not os.path.isdir(root):
             os.mkdir(root)
 
+    # determine the length of dir name for subdirize
     if force_sublen:
         sublen = force_sublen
     elif UUID_RE.match(runid):
@@ -196,36 +211,98 @@ def _analysis_path(
                 sublen = 4
             else:
                 sublen = 5
-    try:
-        root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
-    except TypeError as e:
+
+    # make sure sublen is iterable
+    if isinstance(sublen, int):
+        sublen = (sublen,)
+
+    # save root as oroot.  root is reused in the loop
+    oroot = root
+    for si in sublen:
+        try:
+            root, tail = subdirize(oroot, runid, sublen=si, mode=mode)
+        except TypeError as e:
+            continue
+
+        if modifier:
+            d = os.path.join(root, modifier)
+            if not os.path.isdir(d):
+                if mode == "r":
+                    raise AnalysisNotAnvailableError(root, runid)
+
+                os.mkdir(d)
+
+            root = d
+            fmt = "{}.{}"
+            if modifier.startswith("."):
+                fmt = "{}{}"
+            tail = fmt.format(tail, modifier[:4])
+
+        name = add_extension(tail, extension)
+        path = os.path.join(root, name)
+        if mode == "r":
+            if not os.path.isfile(path):
+                # this can happen if there is overlap in the subdirs.
+                # for example this could be the directory structure
+                # cf
+                #  -529ae-34de-415b-ad8c-a27567b44fd8.json
+                # cff52
+                #  -7ab-86e8-4ccc-a6c5-118ff07c5083.json
+
+                # in this case pychron will fail to find cf529ae... because subdirize will use a sublen of 5 first
+
+                # moving the sublen looping out of subdirize resolves this issue
+                continue
+
+        return path
+    else:
         raise AnalysisNotAnvailableError(root, runid)
-
-    if modifier:
-        d = os.path.join(root, modifier)
-        if not os.path.isdir(d):
-            if mode == "r":
-                raise AnalysisNotAnvailableError(root, runid)
-
-            os.mkdir(d)
-
-        root = d
-        fmt = "{}.{}"
-        if modifier.startswith("."):
-            fmt = "{}{}"
-        tail = fmt.format(tail, modifier[:4])
-
-    name = add_extension(tail, extension)
-    path = os.path.join(root, name)
-    if mode == "r":
-        if not os.path.isfile(path):
-            raise AnalysisNotAnvailableError(root, runid)
-
-    return path
 
 
 def repository_path(*args):
     return os.path.join(paths.repository_dataset_dir, *args)
+
+
+def reduction_path(analysis, repository, *args, **kw):
+    if isinstance(analysis, tuple):
+        uuid, record_id = analysis
+    elif isinstance(analysis, str):
+        uuid, record_id = analysis, analysis
+    else:
+        uuid, record_id = analysis.uuid, analysis.record_id
+
+    root = repository_path(repository, REDUCTION_ROOT)
+    mode = kw.get("mode", "r")
+
+    try:
+        ret = _analysis_path(uuid, "", root=root, *args, **kw)
+    except AnalysisNotAnvailableError:
+        try:
+            ret = _analysis_path(record_id, "", root=root, *args, **kw)
+        except AnalysisNotAnvailableError as e:
+            if kw.get("mode", "r") == "r":
+                ret = None
+            else:
+                raise e
+
+    legacy = analysis_path(analysis, repository, *args, **kw)
+    if mode == "r":
+        if ret and os.path.isfile(ret):
+            return ret
+        return legacy
+
+    if legacy and os.path.isfile(legacy):
+        return legacy
+
+    return ret
+
+
+# def make_ref_plot_list(refs):
+#
+#     xs = [for r in refs]
+#     ys = [for r in refs]
+#
+#     return {"xs": xs, "ys": ys}
 
 
 def make_ref_list(refs):
@@ -246,6 +323,14 @@ def list_frozen_productions(repo):
         name = "{}.{}".format(irrad, level)
         ps.append((name, prod))
     return ps
+
+
+def prep_repo_name(name):
+    # camel case and remove special characters
+    name = camel_case(name)
+    name = re.sub(r"[^.a-zA-Z0-9]", "-", name)
+
+    return name
 
 
 # ============= EOF =============================================

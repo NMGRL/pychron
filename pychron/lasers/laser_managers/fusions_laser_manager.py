@@ -145,7 +145,6 @@ class FusionsLaserManager(LaserManager):
             return chiller.get_coolant_out_temperature(**kw)
 
     def get_coolant_status(self, **kw):
-
         chiller = self.chiller
         if chiller is not None:
             return chiller.get_faults(**kw)
@@ -266,7 +265,7 @@ class FusionsLaserManager(LaserManager):
             klass = "NewportMotionControllerManager"
             package += ".newport_motion_controller_manager"
 
-        module = __import__(package, globals(), locals(), [klass], -1)
+        module = __import__(package, globals(), locals(), [klass])
         factory = getattr(module, klass)
         m = factory(motion_controller=stage_controller)
         self.open_view(m)
@@ -297,18 +296,19 @@ class FusionsLaserManager(LaserManager):
     def _luminosity_hook(self, power, **kw):
         self.degasser.degas(power, **kw)
 
-    def _move_to_position(self, position, autocenter):
-
+    def _move_to_position(self, position, autocenter, **kw):
         if self.stage_manager is not None:
             if isinstance(position, tuple):
                 if len(position) > 1:
                     x, y = position[:2]
-                    self.stage_manager.linear_move(x, y)
+                    self.stage_manager.linear_move(x, y, **kw)
                     if len(position) == 3:
                         self.stage_manager.set_z(position[2])
             else:
+                self.stage_manager.move_to_hole(position, correct_position=autocenter)
+                if kw.get("block"):
+                    self.stage_manager.block()
 
-                self.stage_manager.move_to_hole(position)
             return True
 
     def _disable_hook(self):

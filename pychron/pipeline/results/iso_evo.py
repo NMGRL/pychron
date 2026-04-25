@@ -90,6 +90,8 @@ class IsoEvoResult(BaseResult):
 
     hover_text = Property
 
+    klass = None
+
     @cached_property
     def _get_hover_text(self):
         a = "RunID: {}".format(self.record_id)

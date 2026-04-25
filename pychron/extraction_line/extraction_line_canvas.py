@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Any
-from traitsui.api import View, Item
+from traitsui.api import View, UItem
 
 
 # ============= standard library imports ========================
@@ -51,6 +51,12 @@ class ExtractionLineCanvas(HasTraits):
         """ """
         self._canvas_function("load_canvas_file", *args, **kw)
 
+    def apply_canvas_state(self, state, *args, **kw):
+        self._canvas_function("apply_canvas_state", state, *args, **kw)
+
+    def set_valve_visual_state(self, name, visual_state, *args, **kw):
+        self._canvas_function("set_valve_visual_state", name, visual_state, *args, **kw)
+
     def update_switch_state(self, name, state, *args, **kw):
         """
         do the specific canvas action
@@ -73,8 +79,6 @@ class ExtractionLineCanvas(HasTraits):
         c = self.canvas2D
         if c:
             getattr(c, func)(*args, **kw)
-        else:
-            print("canvas2D not available")
 
     def _canvas_factory(self):
         from pychron.canvas.canvas2D.extraction_line_canvas2D import (
@@ -89,13 +93,9 @@ class ExtractionLineCanvas(HasTraits):
 
     def _canvas2D_group(self):
         """ """
-
-        g = Item(
+        g = UItem(
             "canvas2D",
-            style="custom",
-            show_label=False,
             editor=ComponentEditor(),
-            label="2D",
         )
         return g
 

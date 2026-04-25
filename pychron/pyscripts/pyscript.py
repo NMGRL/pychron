@@ -26,6 +26,7 @@ from threading import Event, Thread, Lock
 import yaml
 from traits.api import Str, Any, Bool, Int, Dict
 
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -113,6 +114,8 @@ class PyScript(Loggable):
     interpolation_path = Str
 
     _interpolation_context = None
+    _cached_script_context = None
+    _cached_command_names = None
 
     def is_aborted(self):
         return self._aborted
@@ -122,6 +125,9 @@ class PyScript(Loggable):
 
     def is_truncated(self):
         return self._truncate
+
+    def is_completed(self):
+        return self._completed
 
     def finish(self):
         self._finish()
@@ -198,7 +204,6 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
-
             self.debug("testing...")
             self._estimated_duration = 0
             self.syntax_checked = True
@@ -211,8 +216,7 @@ class PyScript(Loggable):
             if r is not None:
                 self.console_info("invalid syntax")
                 ee = PyscriptError(self.filename, r)
-                print("invalid pyscript", self.text)
-                print("error", r)
+                self.warning("invalid pyscript {}. {}".format(self.name, r))
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -250,7 +254,6 @@ class PyScript(Loggable):
                 return MainError
 
         else:
-
             try:
                 code = compile(snippet, "<string>", "exec")
             except BaseException as e:
@@ -321,15 +324,23 @@ class PyScript(Loggable):
         # for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
         self._setup_docstr_context()
+        self._invalidate_script_context_cache()
 
     def get_context(self):
+        if self._cached_script_context is not None:
+            return dict(self._cached_script_context)
+
         ctx = dict()
-        for k in self.get_commands():
-            if isinstance(k, tuple):
-                ka, kb = k
-                name, func = ka, getattr(self, kb)
-            else:
-                name, func = k, getattr(self, k)
+        for k in self._get_command_names():
+            try:
+                if isinstance(k, tuple):
+                    ka, kb = k
+                    name, func = ka, getattr(self, kb)
+                else:
+                    name, func = k, getattr(self, k)
+            except AttributeError:
+                self.debug(f'{self} has no attribute "{k}"')
+                continue
 
             ctx[name] = func
 
@@ -350,7 +361,8 @@ class PyScript(Loggable):
         # cmd.update(ctx)
         # ctx['cmd']=cmd
 
-        return ctx
+        self._cached_script_context = dict(ctx)
+        return dict(ctx)
 
     def get_variables(self):
         return []
@@ -369,7 +381,13 @@ class PyScript(Loggable):
         if self._gosub_script is not None:
             self._gosub_script.truncate(style=style)
 
+    @command_register
     def abort(self):
+        """
+        Abort the current script.
+        :return:
+        """
+
         self._aborted = True
         if self._gosub_script is not None:
             if not self._gosub_script.is_aborted():
@@ -380,11 +398,17 @@ class PyScript(Loggable):
                 self.parent_script.abort()
 
         if self._wait_control:
-            self._wait_control.stop()
+            invoke_in_main_thread(self._wait_control.stop)
         self._abort_hook()
 
     @command_register
     def cancel(self, **kw):
+        """
+        Cancel the current script
+
+
+        :return:
+        """
         self._cancel = True
         if self._gosub_script is not None:
             if not self._gosub_script.is_canceled():
@@ -395,7 +419,7 @@ class PyScript(Loggable):
                 self.parent_script.cancel(**kw)
 
         if self._wait_control:
-            self._wait_control.stop()
+            invoke_in_main_thread(self._wait_control.stop)
 
         self._cancel_hook(**kw)
 
@@ -438,6 +462,16 @@ class PyScript(Loggable):
     @calculate_duration
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, calc_time=False, **kw):
+        """
+        Execute a GoSub, aka another script
+
+        :param name:
+        :param root:
+        :param klass:
+        :param argv:
+
+        :return:
+        """
 
         if not name.endswith(".py"):
             name += ".py"
@@ -479,7 +513,7 @@ class PyScript(Loggable):
             parent_script=self,
             # syntax_checked=self.syntax_checked,
             _ctx=self._ctx,
-            **kw
+            **kw,
         )
 
         if calc_time:
@@ -498,8 +532,10 @@ class PyScript(Loggable):
             if not self._cancel:
                 self.console_info("doing GOSUB")
                 self._gosub_script = s
-                s.execute(argv=argv)
-                self._gosub_script = None
+                try:
+                    s.execute(argv=argv)
+                finally:
+                    self._gosub_script = None
                 if not self._cancel:
                     self.console_info("gosub finished")
                 return s
@@ -512,10 +548,15 @@ class PyScript(Loggable):
 
     @command_register
     def interval(self, dur):
+        """
+        :type dur: float, int
+
+        """
         return IntervalContext(self, dur)
 
     @command_register
     def complete_interval(self):
+        """ """
         if self._cancel:
             return
 
@@ -542,6 +583,15 @@ class PyScript(Loggable):
     @calculate_duration
     @command_register
     def begin_interval(self, duration, name=None, calc_time=False):
+        """
+
+        Args:
+            duration (`float`, `int`): Duration of interval in seconds
+            name (`str`, optional): Optional name of this interval. Useful for logging
+
+        Returns:
+            None
+        """
         duration = float(duration)
         if calc_time:
             self._estimated_duration += duration
@@ -606,7 +656,6 @@ class PyScript(Loggable):
                 if self.info_color:
                     self.manager.info(message, color=self.info_color, log=False)
                 else:
-                    print(self.manager)
                     self.manager.info(message, log=False)
 
         except AttributeError as e:
@@ -654,7 +703,6 @@ class PyScript(Loggable):
     # private
     # ===============================================================================
     def _execute(self, **kw):
-
         self._cancel = False
         self._completed = False
         self._truncate = False
@@ -761,7 +809,7 @@ class PyScript(Loggable):
         else:
             time.sleep(v)
 
-    def _setup_wait_control(self):
+    def _setup_wait_control(self) -> "WaitControl":
         from pychron.core.wait.wait_control import WaitControl
 
         wd = self._wait_control
@@ -775,9 +823,7 @@ class PyScript(Loggable):
         self._wait_control = wd
         if self.manager:
             try:
-                if wd not in self.manager.wait_group.controls:
-                    self.manager.wait_group.controls.append(wd)
-                self.manager.wait_group.active_control = wd
+                self.manager.wait_group.ensure_control(wd)
             except AttributeError:
                 pass
 
@@ -805,8 +851,33 @@ class PyScript(Loggable):
 
             self.debug(msg)
 
-            wd.start(duration=timeout, message=msg, paused=paused)
-            # wd.join()
+            if self.manager:
+                try:
+                    self.manager.wait_group.start_wait(
+                        wd, duration=timeout, message=msg, paused=paused
+                    )
+                except AttributeError:
+                    done = Event()
+                    invoke_in_main_thread(
+                        wd.start,
+                        block=False,
+                        duration=timeout,
+                        message=msg,
+                        paused=paused,
+                        on_finished=done.set,
+                    )
+                    done.wait()
+            else:
+                done = Event()
+                invoke_in_main_thread(
+                    wd.start,
+                    block=False,
+                    duration=timeout,
+                    message=msg,
+                    paused=paused,
+                    on_finished=done.set,
+                )
+                done.wait()
 
             if self.manager:
                 try:
@@ -857,11 +928,23 @@ class PyScript(Loggable):
 
         return d
 
+    def _interpolation_path_changed(self):
+        self._interpolation_context = None
+        self._invalidate_script_context_cache()
+
     def _tracer(self, frame, event, arg):
         if event == "line":
-            print(frame.f_code.co_filename, frame.f_lineno)
+            self.debug("{}:{}".format(frame.f_code.co_filename, frame.f_lineno))
 
         return self._tracer
+
+    def _invalidate_script_context_cache(self):
+        self._cached_script_context = None
+
+    def _get_command_names(self):
+        if self._cached_command_names is None:
+            self._cached_command_names = list(self.get_commands())
+        return self._cached_command_names
 
     def _generate_ctx_hash(self, ctx):
         """
@@ -908,6 +991,15 @@ class PyScript(Loggable):
         return ctx.get(key, default)
 
     @property
+    def analysis_type(self):
+        at = self._get_property("analysis_type")
+        self.debug(
+            "getting analysis type for {}. "
+            "analysis_type={}".format(self.run_identifier, at)
+        )
+        return at
+
+    @property
     def filename(self):
         return os.path.join(self.root, self.name)
 
@@ -936,9 +1028,10 @@ class PyScript(Loggable):
 
     def __getattr__(self, item):
         ctx = self._get_interpolation_context()
+
         v = ctx.get(item, None)
         if v is None:
-            raise AttributeError
+            raise AttributeError('Attribute "{}" not found'.format(item))
 
         return v
 

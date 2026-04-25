@@ -60,6 +60,8 @@ class LeastSquaresRegressor(BaseRegressor):
             # logger.debug('A integrity check failed')
             # import traceback
             # traceback.print_stack()
+            self._covariance = None
+            self.clear_dirty()
             return
 
         if not filtering:
@@ -74,7 +76,12 @@ class LeastSquaresRegressor(BaseRegressor):
             self._coefficients = list(coeffs)
             self._covariance = cov
             self._coefficient_errors = list(sqrt(diagonal(cov)))
+            self.clear_dirty()
         except RuntimeError:
+            self._covariance = None
+            self._coefficients = []
+            self._coefficient_errors = []
+            self.clear_dirty()
             import os
 
             if not os.getenv("TRAVIS_CI"):
@@ -130,7 +137,7 @@ class LeastSquaresRegressor(BaseRegressor):
             if error_calc == "sem":
                 se = sef * sqrt(varY_hat)
             else:
-                se = sqrt(sef ** 2 + sef ** 2 * varY_hat)
+                se = sqrt(sef**2 + sef**2 * varY_hat)
 
             return se[0, 0]
 

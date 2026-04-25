@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.color_utils import normalize_color_name
 from pychron.core.displays.display import ErrorDisplay, DisplayController
 from pychron.core.utils import get_display_size
 
@@ -25,8 +26,8 @@ ds = get_display_size()
 gWarningDisplay = DisplayController(
     title="Warnings",
     width=450,
-    default_color="red",
-    bgcolor="light grey",
+    default_color=normalize_color_name("red"),
+    bgcolor=normalize_color_name("light grey"),
     max_blocks=300,
 )
 
@@ -36,8 +37,8 @@ gLoggerDisplay = DisplayController(
     x=ds.width - 650,
     y=20,
     font_size=10,
-    default_color="black",
-    bgcolor="light grey",
+    default_color=normalize_color_name("black"),
+    bgcolor=normalize_color_name("light grey"),
     max_blocks=300,
 )
 
@@ -45,8 +46,8 @@ gMessageDisplay = DisplayController(
     title="Messages",
     width=480,
     y=100,
-    default_color="darkgreen",
-    bgcolor="light grey",
+    default_color=normalize_color_name("darkgreen"),
+    bgcolor=normalize_color_name("light grey"),
     max_blocks=300,
 )
 
@@ -55,7 +56,7 @@ gTraceDisplay = ErrorDisplay(
     width=825,
     x=int((ds.width - 825) / 2),
     y=100,
-    default_color="black",
+    default_color=normalize_color_name("black"),
 )
 
 # ============= EOF =============================================

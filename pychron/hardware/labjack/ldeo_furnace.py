@@ -45,7 +45,7 @@ class LamontFurnaceControl(CoreDevice):
 
     def to_double(self, buf):
         right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buf[0:8]))
-        return float(left) + float(right) / (2 ** 32)
+        return float(left) + float(right) / (2**32)
 
     def return_sn(self):
         return self._device.serialNumber
@@ -94,7 +94,6 @@ class LamontFurnaceControl(CoreDevice):
         self.test_connection()
 
     def test_connection(self):
-
         sn = self.return_sn()
         if 256 <= sn <= 2147483647:
             self.info("Labjack loaded")
@@ -119,7 +118,6 @@ class LamontFurnaceControl(CoreDevice):
         return temp
 
     def extract(self, value, units=None, furnace=1):
-
         self.furnace = furnace
 
         print(units)

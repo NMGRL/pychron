@@ -28,7 +28,13 @@ from pychron.lasers.tasks.panes.ostech import (
     OsTechDiodeSupplementalPane,
     OsTechDiodeControlPane,
 )
-from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_DIODE, OSTECH_DIODE
+from pychron.pychron_constants import (
+    FUSIONS_CO2,
+    FUSIONS_DIODE,
+    OSTECH_DIODE,
+    TAP_DIODE,
+    UC2000_CO2,
+)
 
 
 class BaseLaserTask(BaseHardwareTask):
@@ -151,6 +157,90 @@ class OsTechDiodeTask(BaseLaserTask):
             ]
 
 
+class TAPDiodeTask(BaseLaserTask):
+    id = "pychron.tap.diode"
+    name = TAP_DIODE
+
+    def create_central_pane(self):
+        if self.manager.mode == "client":
+            from pychron.lasers.tasks.panes.tap import TAPDiodeClientPane
+
+            return TAPDiodeClientPane(model=self.manager)
+
+        # else:
+        #     from pychron.lasers.tasks.panes.ostech import OsTechDiodePane
+        #     return OsTechDiodePane(model=self.manager)
+
+    def create_dock_panes(self):
+        if self.manager.mode == "client":
+            return []
+        # else:
+        #     from pychron.lasers.tasks.panes.ostech import OsTechDiodeStagePane
+        #
+        #     # from pychron.lasers.tasks.panes.diode import FusionsDiodeControlPane
+        #     # from pychron.lasers.tasks.panes.diode import FusionsDiodeSupplementalPane
+        #     # from pychron.lasers.tasks.laser_panes import PulsePane
+        #     # from pychron.lasers.tasks.laser_panes import OpticsPane
+        #     # from pychron.lasers.tasks.laser_panes import AuxilaryGraphPane
+        #
+        #     return [
+        #         OsTechDiodeStagePane(model=self.manager),
+        #         OsTechDiodeControlPane(model=self.manager),
+        #         OsTechDiodeSupplementalPane(model=self.manager),
+        #         # PulsePane(model=self.manager),
+        #         # OpticsPane(model=self.manager),
+        #         # AuxilaryGraphPane(model=self.manager)
+        #     ]
+        #
+
+
+class UC2000CO2Task(BaseLaserTask):
+    id = "pychron.uc2000.co2"
+    name = UC2000_CO2
+
+    def create_central_pane(self):
+        from pychron.lasers.tasks.panes.uc2000 import UC2000CO2Pane
+
+        return UC2000CO2Pane(model=self.manager)
+
+        # if self.manager.mode == "client":
+        #     from pychron.lasers.tasks.panes.tap import TAPDiodeClientPane
+        #
+        #     return TAPDiodeClientPane(model=self.manager)
+
+        # else:
+        #     from pychron.lasers.tasks.panes.ostech import OsTechDiodePane
+        #     return OsTechDiodePane(model=self.manager)
+
+    def create_dock_panes(self):
+        from pychron.lasers.tasks.panes.uc2000 import UC2000CO2SupplementalPane
+        from pychron.lasers.tasks.panes.uc2000 import UC2000CO2StagePane
+        from pychron.lasers.tasks.panes.uc2000 import UC2000CO2ControlPane
+        from pychron.lasers.tasks.laser_panes import PulsePane
+        from pychron.lasers.tasks.laser_panes import AuxilaryGraphPane
+
+        return [
+            UC2000CO2StagePane(model=self.manager),
+            UC2000CO2ControlPane(model=self.manager),
+            PulsePane(model=self.manager),
+            # UC2000CO2SupplementalPane(model=self.manager),
+            # AuxilaryGraphPane(model=self.manager),
+        ]
+
+    def _default_layout_default(self):
+        return TaskLayout(
+            left=PaneItem("{}.stage".format(self.id)),
+            top=Splitter(
+                PaneItem("{}.control".format(self.id), width=200),
+                PaneItem("pychron.lasers.pulse", width=300),
+                # Tabbed(
+                #     PaneItem("pychron.lasers.optics"),
+                #     PaneItem("{}.supplemental".format(self.id)),
+                # ),
+            ),
+        )
+
+
 class AblationCO2Task(BaseLaserTask):
     id = "pychron.ablation.co2"
     name = "Ablation CO2"
@@ -218,7 +308,6 @@ class FusionsCO2Task(FusionsTask):
             return FusionsCO2Pane(model=self.manager)
 
     def create_dock_panes(self):
-
         if self.manager.mode == "client":
             return []
         else:

@@ -29,6 +29,11 @@ class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
     scene_klass = Scene
     legend = None
+    
+    _padding_top = 5
+    _padding_bottom = 5
+    _padding_left = 5
+    _padding_right= 5
 
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
@@ -70,26 +75,26 @@ class SceneCanvas(BaseDataCanvas):
         if self.legend:
             self.legend.draw(self, gc)
 
-    def _draw_inset_border(self, gc, view_bounds=None, mode="default"):
-        if not self.border_visible:
-            return
-
-        border_width = self.border_width
-        with gc:
-            gc.set_line_width(border_width)
-            gc.set_line_dash(self.border_dash_)
-            gc.set_stroke_color(self.border_color_)
-            gc.set_antialias(0)
-            gc.set_line_join(JOIN_ROUND)
-            offset = self.border_width
-            gc.move_to(self.x + offset, self.y + offset)
-            gc.line_to(self.x + offset, self.y2 - offset)
-            gc.line_to(self.x2 - offset, self.y2 - offset)
-            gc.line_to(self.x2 - offset, self.y + offset)
-            gc.line_to(self.x + offset, self.y + offset)
-            gc.line_to(self.x + offset, self.y2 - offset)
-            gc.close_path()
-            gc.stroke_path()
+    # def _draw_inset_border(self, gc, view_bounds=None, mode="default"):
+    #     if not self.border_visible:
+    #         return
+    #
+    #     border_width = self.border_width
+    #     with gc:
+    #         gc.set_line_width(border_width)
+    #         gc.set_line_dash(self.border_dash_)
+    #         gc.set_stroke_color(self.border_color_)
+    #         gc.set_antialias(0)
+    #         gc.set_line_join(JOIN_ROUND)
+    #         offset = self.border_width
+    #         gc.move_to(self.x + offset, self.y + offset)
+    #         gc.line_to(self.x + offset, self.y2 - offset)
+    #         gc.line_to(self.x2 - offset, self.y2 - offset)
+    #         gc.line_to(self.x2 - offset, self.y + offset)
+    #         gc.line_to(self.x + offset, self.y + offset)
+    #         gc.line_to(self.x + offset, self.y2 - offset)
+    #         gc.close_path()
+    #         gc.stroke_path()
 
     # handlers
     def _scene_changed(self, name, old, new):
@@ -97,6 +102,16 @@ class SceneCanvas(BaseDataCanvas):
             new.on_trait_change(self.request_redraw, "layout_needed")
         if old:
             old.on_trait_change(self.request_redraw, "layout_needed", remove=True)
+
+    def _bounds_changed(self, old, new):
+        handler = getattr(super(SceneCanvas, self), "_bounds_changed", None)
+        if handler is not None:
+            handler(old, new)
+
+        if self.scene:
+            self.scene.request_layout()
+        self.invalidate_draw()
+        self.request_redraw()
 
     def _scene_default(self):
         if self.scene_klass:

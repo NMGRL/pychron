@@ -135,7 +135,6 @@ class MapView(Viewable):
 
     def _update(self, new):
         if new:
-
             hov = self.scatter.index.metadata.get("hover")
             if hov:
                 hid = hov[0]

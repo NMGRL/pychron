@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, List, Instance, Int
+from traits.api import HasTraits, List, Instance, Int, Any
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.pipeline.results.base_matrix_result import BaseMatrixResult
@@ -32,7 +32,9 @@ class ResultsAdapter(TabularAdapter):
 class BaseMatrixTable(HasTraits):
     results = List
     adapter = Instance(TabularAdapter)
-    result_klass = Instance(BaseMatrixResult)
+    # A class used to build per-row results. Subclasses override with a Results
+    # class (not an instance), so this should not be an Instance trait.
+    result_klass = Any(BaseMatrixResult)
 
     def __init__(self, ags, *args, **kw):
         super().__init__(*args, **kw)

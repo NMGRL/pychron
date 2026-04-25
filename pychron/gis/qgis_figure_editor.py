@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import uuid
+from logging import getLogger
 from operator import attrgetter
 
 from PyQt5 import QtWidgets
@@ -42,7 +43,7 @@ from qgis.gui import (
 )
 from traits.api import HasTraits, Instance, Str, Event, Float, Any, List, Button, Bool
 from traitsui.api import View, Item, UItem, HSplit, HGroup, BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.options.options_manager import IdeogramOptionsManager
@@ -50,6 +51,8 @@ from pychron.pipeline.plot.editors.base_editor import BaseEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.processing.analyses.file_analysis import NonDBAnalysis
+
+logger = getLogger(__name__)
 
 
 class MyMenuProvider(QgsLayerTreeViewMenuProvider):
@@ -72,7 +75,7 @@ class MyMenuProvider(QgsLayerTreeViewMenuProvider):
     def position_to_extent(self):
         layer = self.view.currentLayer()
         r = layer.extent()
-        print(r)
+        logger.debug("Positioning to extent %s", r)
         r.grow(0.5)
         layer.triggerRepaint()
         self.canvas.setExtent(r)
@@ -207,7 +210,7 @@ class _QGISEditor(Editor):
         if rlayer.isValid():
             qproject.addMapLayer(rlayer)
         else:
-            print("basemap layer invalid", rlayer, self.value.basemap)
+            logger.warning("Basemap layer invalid: %s %s", rlayer, self.value.basemap)
 
         qproject.addMapLayer(layer)
         canvas.setLayers([layer, rlayer])
@@ -289,7 +292,7 @@ class _QGISEditor(Editor):
                 else:
                     mext.combineExtentWith(ext)
             else:
-                print("not valid", layer, loption.uri)
+                logger.warning("Invalid map layer: %s %s", layer, loption.uri)
 
             if loption.visible:
                 layers.insert(0, layer)
@@ -396,7 +399,6 @@ class GISFigureEditor(BaseEditor):
         self.ideogram.refresh_needed = True
 
     def load(self):
-
         p = IdeogramOptionsManager()
         options = p.selected_options
 
@@ -462,7 +464,6 @@ class GISFigureEditor(BaseEditor):
         self.refresh_map()
 
     def traits_view(self):
-
         # center_grp = VGroup(HGroup(
         #     UReadonly('object.fmap.center.ylabel'), UItem('object.fmap.center.y'),
         #     UReadonly('object.fmap.center.xlabel'), UItem('object.fmap.center.x')))

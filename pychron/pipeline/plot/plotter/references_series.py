@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import logging
 
 from chaco.array_data_source import ArrayDataSource
 from numpy import zeros_like, array, asarray, isinf, isnan
@@ -31,15 +32,17 @@ from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.pipeline.plot.plotter.series import BaseSeries
 from pychron.pychron_constants import PLUSMINUS
 
+logger = logging.getLogger(__name__)
+
 
 def calc_limits(ys, ye, n):
     try:
         ymi = (ys - (ye * n)).min()
-    except BaseException:
+    except (AttributeError, TypeError, ValueError):
         ymi = 0
     try:
         yma = (ys + (ye * n)).max()
-    except BaseException:
+    except (AttributeError, TypeError, ValueError):
         yma = 0
 
     return ymi, yma
@@ -51,7 +54,7 @@ def unzip_data(data):
             [std_dev(ri) for ri in data]
         )
     except ValueError as e:
-        print(e)
+        logger.warning("Failed unpacking reference data: %s", e)
 
 
 class ReferencesSeries(BaseSeries):
@@ -120,7 +123,6 @@ class ReferencesSeries(BaseSeries):
         key = key.format(0)
         for plotobj, reg in new:
             if isinstance(reg, BaseRegressor):
-
                 excluded = reg.get_excluded()
                 for i, r in enumerate(self.sorted_references):
                     r.set_temp_status("omit" if i in excluded else "ok")
@@ -135,8 +137,13 @@ class ReferencesSeries(BaseSeries):
             v, e = nominal_value(i), std_dev(i)
         return v, e
 
-    def _get_isotope(self, po, analysis):
-        return analysis.get_isotope(po.name)
+    def _get_isotope(self, po, analysis, parent_analysis=None):
+        det = None
+        name = po.name
+        if parent_analysis:
+            iso = parent_analysis.get_isotope(name)
+            det = iso.detector
+        return analysis.get_isotope(name, detector=det)
 
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
@@ -202,7 +209,6 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-
         data = self._get_reference_data(po)
         if data:
             ans, xs, ys = data
@@ -229,7 +235,7 @@ class ReferencesSeries(BaseSeries):
     def _plot_unknowns_current(self, pid, po):
         ymi, yma = 0, 0
 
-        if self.analyses and self.show_current:
+        if self.analyses and self.options.show_current:
             graph = self.graph
             n = [ai.record_id for ai in self.sorted_analyses]
 
@@ -255,7 +261,7 @@ class ReferencesSeries(BaseSeries):
                 v, e = self._get_interpolated_value(po, analysis)
                 s, se = self._get_signal_intensity(po, analysis)
                 return (
-                    u"Interpolated: {} {} {}".format(
+                    "Interpolated: {} {} {}".format(
                         floatfmt(v), PLUSMINUS, floatfmt(e)
                     ),
                     "Run Date: {}".format(analysis.rundate.strftime("%m-%d-%Y %H:%M")),
@@ -348,6 +354,7 @@ class ReferencesSeries(BaseSeries):
                     bind_id = hash(tuple([r.uuid for r in refs]))
 
                 ffit = "{}_{}".format(po.fit, po.error_type)
+
                 _, scatter, l = graph.new_series(
                     r_xs,
                     r_ys,

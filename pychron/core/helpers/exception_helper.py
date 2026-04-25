@@ -46,6 +46,7 @@ from traitsui.menu import Action
 # ============= local library imports  ==========================
 from pychron import json
 from pychron.github import GITHUB_API_URL
+from pychron.git.tasks.github_auth import authorization_headers, ensure_access_token
 from pychron.globals import globalv
 
 LABELS = [
@@ -108,50 +109,54 @@ def create_card(card):
 
 def create_issue(issue):
     org = os.environ.get("GITHUB_ORGANIZATION", "NMGRL")
-    cmd = "{}/repos/{}/pychron/issues".format(GITHUB_API_URL, org)
-
     data = json.dumps(issue)
+    cmd = "{}/repos/{}/pychron/issues".format(GITHUB_API_URL, org)
     return git_post(cmd, data=data)
 
 
 def git_post(cmd, return_json=True, **kw):
-    tok = os.environ.get("GITHUB_TOKEN")
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        token = ensure_access_token(scopes=["repo"])
 
-    if not tok:
-        usr = os.environ.get("GITHUB_USER")
-        pwd = os.environ.get("GITHUB_PASSWORD")
-        if usr and pwd:
-            warning(
-                None,
-                "Password authentication deprecated. Please update to a Github token. Contact Pychron "
-                "Developers.\n"
-                "Pychron will quit when this window is closed".format(usr),
-            )
-        else:
-            warning(
-                None,
-                'No Github token set for "{}". Please set the GITHUB_TOKEN environment variable or Contact '
-                "Pychron Developers\n"
-                "Pychron will quit when this window is closed",
-            )
-        sys.exit()
+    if not token:
+        warning(
+            None,
+            "GitHub sign-in is required before Pychron can submit an issue. "
+            "No access token is available.",
+        )
+        return
 
-    kw["auth"] = (tok, "")
+    headers = kw.pop("headers", {})
+    headers.update(authorization_headers(token))
+    headers.setdefault("Accept", "application/vnd.github+json")
+    kw["headers"] = headers
+
     if globalv.cert_file:
         kw["verify"] = globalv.cert_file
 
     r = requests.post(cmd, **kw)
 
     if r.status_code == 401:
-        warning(None, "Failed to submit issue. Username/Password incorrect.")
+        warning(
+            None,
+            "GitHub authentication failed. Please sign in again from the browser."
+        )
     elif r.status_code == 403:
-        print("asf", r.json())
+        warning(None, "GitHub rejected the issue submission. {}".format(r.text))
     if r.status_code in (201, 422):
         ret = True
         if return_json:
             ret = r.json()
 
         return ret
+    else:
+        warning(
+            None,
+            "Failed to submit issue to GitHub. HTTP {} {}".format(
+                r.status_code, r.reason
+            ),
+        )
 
 
 class ExceptionModel(HasTraits):
@@ -163,7 +168,8 @@ class ExceptionModel(HasTraits):
     helpstr = Str(
         """<p align="center"><br/> <font size="14" color="red"><b>There was a Pychron error<br/>
 Please consider submitting a bug report to the developer</b></font><br/>
-Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of the bug. Then click <b>Submit</b><br/></p>"""
+Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b>
+of the bug. Then click <b>Submit</b><br/></p>"""
     )
 
     @property
@@ -191,7 +197,6 @@ class ExceptionHandler(Controller):
         info.ui.dispose()
 
     def submit_issue_github(self):
-
         issue = self._make_issue()
         issue_obj = create_issue(issue)
         if issue_obj:
@@ -266,7 +271,7 @@ def ignored_exceptions(exctype, value, tb):
     )
 
     if not ret:
-        # if exception was not generated from pychron. This should obviate the subsequent if statements
+        # If the exception was not generated from pychron, skip the Exception view.
         sep = os.path.sep
         tb = traceback.extract_tb(tb)
         for ti in tb:

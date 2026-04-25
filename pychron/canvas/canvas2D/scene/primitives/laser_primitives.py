@@ -92,7 +92,6 @@ class Transect(PolyLine):
     def add_point(
         self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0), **ptargs
     ):
-
         p2 = LaserPoint(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
 

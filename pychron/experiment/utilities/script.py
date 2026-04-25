@@ -19,7 +19,43 @@
 # ============= local library imports  ==========================
 
 from __future__ import absolute_import
+from os.path import isfile, join
+
 from six.moves import zip
+
+
+def script_name_candidates(name, mass_spectrometer="", extension=".py"):
+    if not name:
+        return []
+
+    if extension and not name.endswith(extension):
+        name = "{}{}".format(name, extension)
+
+    ms = (mass_spectrometer or "").strip().lower()
+    prefixed = name
+    unprefixed = name
+    if ms:
+        prefix = "{}_".format(ms)
+        if name.startswith(prefix):
+            unprefixed = name[len(prefix) :]
+        else:
+            prefixed = "{}{}".format(prefix, name)
+
+    candidates = []
+    for candidate in (prefixed, unprefixed):
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+
+    return candidates
+
+
+def resolve_script_name(root, name, mass_spectrometer="", extension=".py"):
+    candidates = script_name_candidates(name, mass_spectrometer, extension=extension)
+    for candidate in candidates:
+        if isfile(join(root, candidate)):
+            return candidate
+
+    return candidates[0] if candidates else name
 
 
 def assemble_script_blob(scripts, kinds=None):

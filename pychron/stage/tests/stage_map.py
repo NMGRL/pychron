@@ -6,6 +6,19 @@ import unittest
 from pychron.core.geometry.affine import transform_point, itransform_point
 from pychron.stage.maps.laser_stage_map import LaserStageMap
 
+class NewStageMapTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        p = "pychron/stage/tests/data/18hole.txt"
+        if not os.path.isfile(p):
+            base = os.path.dirname(os.path.abspath(__file__))
+            p = os.path.join(base, "data", "18hole.txt")
+
+        self.sm = LaserStageMap(file_path=p)
+        self.sm.load()
+
+    def test_nholes(self):
+        self.assertEqual(len(self.sm.sample_holes), 18)
+
 
 class StageMapTestCase(unittest.TestCase):
     def setUp(self):
@@ -246,7 +259,7 @@ class TransformTestCase(unittest.TestCase):
         pt = 1, 0
         tpt = transform_point(pt, cpos, rot, 1)
 
-        r2 = 0.5 ** 0.5
+        r2 = 0.5**0.5
         self.assertAlmostEqual(r2, tpt[0])
         self.assertAlmostEqual(r2, tpt[1])
 
@@ -257,7 +270,7 @@ class TransformTestCase(unittest.TestCase):
         pt = 1, 0
         tpt = transform_point(pt, cpos, rot, 1)
 
-        r2 = 0.5 ** 0.5
+        r2 = 0.5**0.5
         self.assertAlmostEqual(1.5 + r2, tpt[0])
         self.assertAlmostEqual(-1.5 + r2, tpt[1])
 

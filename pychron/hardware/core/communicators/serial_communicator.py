@@ -37,11 +37,12 @@ def get_ports():
         furpi = glob.glob("/dev/furpi.*")
         pychron = glob.glob("/dev/pychron.*")
         slab = glob.glob("/dev/tty.SLAB*")
+        acm = glob.glob("/dev/ttyACM*")
         if sys.platform == "darwin":
             keyspan = glob.glob("/dev/tty.U*")
         else:
             keyspan = glob.glob("/dev/ttyU*")
-        ports = keyspan + usb + furpi + pychron + slab
+        ports = keyspan + usb + furpi + pychron + slab + acm
 
     return ports
 
@@ -93,6 +94,8 @@ class SerialCommunicator(Communicator):
         return self.port
 
     def test_connection(self):
+        if self.transport_adapter is not None:
+            return self.transport_adapter.connected
         return self.handle is not None
 
     def reset(self):
@@ -116,6 +119,9 @@ class SerialCommunicator(Communicator):
             self.warning("failed to reset connection")
 
     def close(self):
+        if self.transport_adapter is not None:
+            self.transport_adapter.close()
+            return
         if self.handle:
             self.debug("closing handle {}".format(self.handle))
             self.handle.close()
@@ -128,7 +134,6 @@ class SerialCommunicator(Communicator):
         self.bytesize = bytesize
 
     def load(self, config, path):
-
         self.config_path = path
         self._config = config
 
@@ -219,6 +224,13 @@ class SerialCommunicator(Communicator):
 
     def tell(self, cmd, is_hex=False, info=None, verbose=True, **kw):
         """ """
+        if self.transport_adapter is not None:
+            with self._lock:
+                self.transport_adapter.write(cmd, is_hex=is_hex, **kw)
+                if verbose:
+                    self.log_tell(cmd, info)
+            return
+
         if self.handle is None:
             if verbose:
                 info = "no handle"
@@ -232,6 +244,10 @@ class SerialCommunicator(Communicator):
 
     def read(self, nchars=None, *args, **kw):
         """ """
+        if self.transport_adapter is not None:
+            with self._lock:
+                return self.transport_adapter.read(nchars=nchars, *args, **kw)
+
         with self._lock:
             if nchars is not None:
                 r = self._read_nchars(nchars)
@@ -257,6 +273,24 @@ class SerialCommunicator(Communicator):
         nchars=None,
     ):
         """ """
+        if self.transport_adapter is not None:
+            with self._lock:
+                re = self.transport_adapter.request(
+                    cmd,
+                    is_hex=is_hex,
+                    delay=delay,
+                    handshake=handshake,
+                    nchars=nchars,
+                    nbytes=nbytes,
+                    read_terminator=read_terminator,
+                    terminator_position=terminator_position,
+                )
+            if remove_eol and not is_hex:
+                re = remove_eol_func(re)
+            if verbose:
+                pre = process_response(re, replace, remove_eol=not is_hex)
+                self.log_response(cmd, pre, info)
+            return re
 
         if self.handle is None:
             if verbose:
@@ -309,6 +343,10 @@ class SerialCommunicator(Communicator):
         stopbits= STOPBITS_ONE
         timeout=None
         """
+        if self.transport_adapter is not None:
+            self.simulation = True
+            return self.transport_adapter.open(**kw)
+
         port = kw.get("port")
         if port is None:
             port = self.port
@@ -391,7 +429,6 @@ class SerialCommunicator(Communicator):
                 break
 
         if not found:
-
             # update the port
             if self._auto_write_handle and port:
                 # port in form
@@ -429,7 +466,7 @@ class SerialCommunicator(Communicator):
                     self.warning(v)
                 self.warning("=============================")
 
-    def _write(self, cmd, is_hex=False):
+    def _write(self, cmd, is_hex=False, retry_on_exception=True):
         """
         use the serial handle to write the cmd to the serial buffer
         return True if there is an exception writing cmd
@@ -463,6 +500,12 @@ class SerialCommunicator(Communicator):
                 ValueError,
             ) as e:
                 self.warning("Serial Communicator write execption: {}".format(e))
+                if (
+                    isinstance(e, serial.serialutil.SerialException)
+                    and retry_on_exception
+                ):
+                    self.open()
+                    return self._write(cmd, is_hex, retry_on_exception=False)
                 return
 
         return cmd
@@ -489,7 +532,6 @@ class SerialCommunicator(Communicator):
     def _read_terminator(
         self, timeout=1, delay=None, terminator=None, terminator_position=None
     ):
-
         if terminator is None:
             terminator = self.read_terminator
         if terminator_position is None:
@@ -510,14 +552,19 @@ class SerialCommunicator(Communicator):
                 r += self.handle.read(inw)
                 if r and r.strip():
                     for ti in terminator:
+                        if isinstance(ti, str):
+                            ti = ti.encode()
+
                         if terminator_position:
-                            terminated = r[terminator_position] == ti
+                            if not len(r) >= abs(terminator_position):
+                                continue
+                            terminated = chr(r[terminator_position]).encode() == ti
                         else:
-                            if isinstance(ti, str):
-                                ti = ti.encode()
+
                             terminated = r.endswith(ti)
                         if terminated:
                             break
+
             except BaseException as e:
                 self.warning(e)
             return r, terminated

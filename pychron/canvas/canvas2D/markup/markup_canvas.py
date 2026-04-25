@@ -138,7 +138,6 @@ class MarkupCanvas(BaseDataCanvas):
         gc.save_state()
         test = lambda x: self.invalid_layers and x in self.invalid_layers
         try:
-
             for i, l in enumerate(self.markupcontainer.layers):
                 if test(i):
                     continue
@@ -248,7 +247,6 @@ class InteractionMarkupCanvas(MarkupCanvas):
                 event.window.set_pointer(self.select_pointer)
                 event.handled = True
         else:
-
             if self.tool_state == "point":
                 event.window.set_pointer(self.cross_pointer)
             elif self.tool_state not in ["line", "mline", "rect"]:
@@ -348,7 +346,6 @@ class InteractionMarkupCanvas(MarkupCanvas):
         self.key_set_tool_state(event)
 
     def omove_mouse_move(self, event):
-
         xadj, yadj = self._calc_adjustment(event)
         self.temp_start_pos = (event.x, event.y)
         self.selected_element.adjust(xadj, yadj)
@@ -365,7 +362,6 @@ class InteractionMarkupCanvas(MarkupCanvas):
         self.temp_start_pos = (event.x, event.y)
 
         def _update_(point, container, elem):
-
             if (
                 abs(point[0] - container[0][0]) <= 1
                 and abs(point[1] - container[0][1]) <= 1
@@ -624,7 +620,6 @@ class InteractionMarkupCanvas(MarkupCanvas):
 
     def _over_mark_up_line(self, event, tolerance=7):
         def _get_key(cont, tolerance):
-
             x = cont[0][0]
             y = cont[0][1]
             x2 = cont[1][0]

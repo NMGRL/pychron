@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+import logging
+
 from traits.api import HasTraits
 
 # ============= standard library imports ========================
@@ -33,10 +35,11 @@ from pychron.dvc.dvc_orm import (
 from six.moves import map
 
 TABLES = {"project": ProjectTbl, "sample": SampleTbl}
+logger = logging.getLogger(__name__)
 
 
 class CustomAnalysisQuery(HasTraits):
-    def execute_query(self, filters):
+    def execute_query(self, filters) -> list:
         q = self.session.query(AnalysisTbl)
         q = q.join(IrradiationPositionTbl)
         q = q.join(SampleTbl)
@@ -44,12 +47,13 @@ class CustomAnalysisQuery(HasTraits):
         for fi in filters:
             q = q.filter(fi)
         results = self.db._query_all(q)
-        print(len(results))
+        logger.debug("Custom analysis query returned %s rows", len(results))
+        return results
 
-    def load_query(self):
+    def load_query(self) -> None:
         pass
 
-    def generate_query(self, txt):
+    def generate_query(self, txt: str):
         filters = []
         for line in txt.split("\n"):
             tbl, val = list(map(str.strip, line.split(":")))
@@ -70,7 +74,7 @@ class CustomAnalysisQuery(HasTraits):
                     f = attr == val
                 filters.append(f)
             else:
-                print("invalid table {}".format(tbl))
+                logger.warning("Invalid custom query table %s", tbl)
 
         return filters
 

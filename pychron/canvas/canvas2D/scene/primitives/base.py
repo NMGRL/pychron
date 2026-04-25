@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from kiva.fonttools import str_to_font
+from pyface.ui_traits import PyfaceColor
 from traits.api import (
     HasTraits,
     Str,
@@ -23,7 +24,6 @@ from traits.api import (
     Float,
     Property,
     on_trait_change,
-    Color,
     List,
 )
 from traitsui.api import View, Item, VGroup, HGroup
@@ -50,11 +50,11 @@ class Primitive(HasTraits):
     state = False
     selected = False
 
-    default_color = Color("red")
-    active_color = Color("(0,255,0)")
-    selected_color = Color("blue")
-    name_color = Color("black")
-    text_color = Color("black")
+    default_color = PyfaceColor("red")
+    active_color = PyfaceColor("green")
+    selected_color = PyfaceColor("blue")
+    name_color = PyfaceColor("black")
+    text_color = PyfaceColor("black")
 
     canvas = Any
 
@@ -80,12 +80,20 @@ class Primitive(HasTraits):
     _cached_wh = None
     _cached_xy = None
     _layout_needed = True
+    _cached_colors = None
+    _cached_text_extent = None
+    _cached_bounds = None
+    _cached_bounds_key = None
 
     def __init__(self, x, y, *args, **kw):
         self.x = x
         self.y = y
         self.ox = x
         self.oy = y
+        self._cached_colors = {}
+        self._cached_text_extent = {}
+        self._cached_bounds = None
+        self._cached_bounds_key = None
         super(Primitive, self).__init__(*args, **kw)
         self._initialized = True
 
@@ -117,10 +125,10 @@ class Primitive(HasTraits):
     def request_layout(self):
         self._cached_wh = None
         self._cached_xy = None
+        self._cached_bounds = None
         self._layout_needed = True
 
     def render(self, gc):
-
         with gc:
             if self.visible:
                 self.set_stroke_color(gc)
@@ -154,9 +162,8 @@ class Primitive(HasTraits):
         self.x += dx
         self.y += dy
 
-    def get_xy(self, x=None, y=None, clear_layout_needed=True):
-        if self._layout_needed or not self._cached_xy:
-
+    def get_xy(self, x=None, y=None, clear_layout_needed=True, force=False):
+        if force or self._layout_needed or not self._cached_xy:
             if x is None:
                 x = self.x
             if y is None:
@@ -207,6 +214,23 @@ class Primitive(HasTraits):
 
         return w
 
+    def get_bounds(self):
+        """Get bounding box as (x, y, x2, y2)."""
+        canvas_bounds = None
+        if self.canvas is not None:
+            canvas_bounds = tuple(self.canvas.bounds) if self.canvas.bounds is not None else None
+            if self.bounds != canvas_bounds:
+                self._layout_needed = True
+                self.bounds = canvas_bounds
+
+        key = (self.x, self.y, self.width, self.height, canvas_bounds)
+        if self._cached_bounds is None or self._cached_bounds_key != key:
+            x, y = self.get_xy(clear_layout_needed=False)
+            w, h = self.get_wh()
+            self._cached_bounds = (x, y, x + w, y + h)
+            self._cached_bounds_key = key
+        return self._cached_bounds
+
     bounds = None
 
     def set_canvas(self, canvas):
@@ -234,23 +258,22 @@ class Primitive(HasTraits):
 
     def is_in_region(self, x1, x2, y1, y2):
         """
+        Check if component's bounding box intersects with region.
 
-          |------------- x2,y2
-          |       T      |
-          |              |
-        x1,y1------------|    F
+          x1,y1 ---------------
+          |                   |
+          |    component      |
+          |        (x,y)     |
+          |        +----+     |
+          |        |    |     |
+          |        +----+-----|
+          |              (x2,y2)
 
-
-        check to see if self.x and self.y within region
-        :param x1: float
-        :param x2: float
-        :param y1: float
-        :param y2: float
-        :return: bool
-
+        Returns True if component intersects region.
         """
+        bx, by, bx2, by2 = self.get_bounds()
 
-        return x1 <= self.x <= x2 and y1 <= self.y <= y2
+        return not (x2 < bx or x1 > bx2 or y2 < by or y1 > by2)
 
     # private
     def _render(self, gc):
@@ -265,8 +288,11 @@ class Primitive(HasTraits):
                 self._render_textbox(gc, x, y, w, h, txt)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
-
-        tw, th, _, _ = gc.get_full_text_extent(txt)
+        if txt not in self._cached_text_extent:
+            tw, th, _, _ = gc.get_full_text_extent(txt)
+            self._cached_text_extent[txt] = (tw, th)
+        else:
+            tw, th = self._cached_text_extent[txt]
         x = x + w / 2.0 - tw / 2.0
         y = y + h / 2.0 - th / 2.0
 
@@ -275,19 +301,30 @@ class Primitive(HasTraits):
     def _render_text(self, gc, t, x, y):
         with gc:
             gc.translate_ctm(x, y)
-            gc.set_fill_color((0, 0, 0))
+            gc.set_fill_color(self._convert_color(self.text_color))
             gc.set_text_position(0, 0)
             gc.show_text(t)
 
     def _convert_color(self, c):
+        cache_key = id(c)
+        if cache_key in self._cached_colors:
+            return self._cached_colors[cache_key]
+
         if not isinstance(c, (list, tuple)):
             c = c.red, c.green, c.blue
         c = [x / 255.0 for x in c]
+
+        self._cached_colors[cache_key] = c
         return c
 
     # handlers
-    @on_trait_change("default_color, active_color, x, y")
+    @on_trait_change(
+        "default_color, active_color, name_color, text_color, x, y, width, height, state, visible"
+    )
     def _refresh_canvas(self):
+        self._cached_colors.clear()
+        self._cached_text_extent.clear()
+        self._cached_bounds = None
         self.request_redraw()
 
     def request_redraw(self):
@@ -300,17 +337,23 @@ class Primitive(HasTraits):
 
 class QPrimitive(Primitive):
     def _convert_color(self, c):
-        if not isinstance(c, (list, tuple)):
-            c = c.red(), c.green(), c.blue(), c.alpha()
+        cache_key = id(c)
+        if cache_key in self._cached_colors:
+            return self._cached_colors[cache_key]
 
-        c = [x / 255.0 for x in c]
+        if not isinstance(c, (list, tuple)):
+            c = c.rgba
+
+        if any((ci > 1 for ci in c)):
+            c = [x / 255.0 for x in c]
+
+        self._cached_colors[cache_key] = c
         return c
 
     def is_in(self, x, y):
         mx, my = self.get_xy()
         w, h = self.get_wh()
-        if mx <= x <= (mx + w) and my <= y <= (my + h):
-            return True
+        return mx <= x <= (mx + w) and my <= y <= (my + h)
 
 
 class Connectable(QPrimitive):
@@ -322,16 +365,16 @@ class Connectable(QPrimitive):
         if not self._initialized:
             return
 
-        cvo = self.x != self.ox
-        cho = self.y != self.oy
-
+        # cvo = self.x != self.ox
+        # cho = self.y != self.oy
+        w, h = self.width, self.height
         for t, c in self.connections:
-            c.clear_vorientation = cvo
-            c.clear_horientation = cho
+            # c.clear_vorientation = cvo
+            # c.clear_horientation = cho
 
             func = getattr(c, "set_{}point".format(t))
-            w, h = self.width, self.height
             func((self.x + w / 2.0, self.y + h / 2.0))
+            c.request_layout()
 
         self.request_redraw()
 

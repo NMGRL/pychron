@@ -24,9 +24,11 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from traits.api import Instance, Bool, on_trait_change, Any
 
 from pychron.core.pdf.save_pdf_dialog import save_pdf
-from pychron.core.printer.printer import print_component
+
+# from pychron.core.printer.printer import print_component
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
+from pychron.dvc.simple_recaller import SimpleDVCRecaller
 from pychron.dvc.util import DVCInterpretedAge
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
@@ -220,6 +222,36 @@ class PipelineTask(BaseBrowserTask):
                 )
             )
 
+    def pipeline_dvc_recall(self):
+        v = SimpleDVCRecaller()
+        while 1:
+            info = v.edit_traits()
+            if info.result:
+                record = v.record
+                potential = self.dvc.find_record(record)
+                if potential:
+                    if len(potential) > 1:
+                        self.warning_dialog(
+                            'More than one analysis matches the entered uuid "{}".'
+                            "Please enter more characters of the uuid".format(
+                                record.uuid
+                            )
+                        )
+                    else:
+                        self.debug(
+                            "Found record. RunID={}, UUID={}".format(
+                                record.record_id, record.uuid
+                            )
+                        )
+                        self.recall((record,), use_quick=False)
+                        break
+                else:
+                    self.warning_dialog(
+                        "No records found matching {}".format(record.uuid)
+                    )
+            else:
+                break
+
     def pipeline_recall(self):
         if self._browser_info:
             if self._browser_info.control:
@@ -281,7 +313,7 @@ class PipelineTask(BaseBrowserTask):
         self.set_tag("outlier", outlier_ans, use_filter=False)
         self.set_tag("invalid", invalid_ans)
 
-    def set_tag(self, tag=None, items=None, use_filter=True, warn=True):
+    def set_tag(self, tag=None, items=None, use_filter: bool = True, warn: bool = True) -> None:
         """
         set tag for either
         analyses selected in unknowns pane
@@ -307,8 +339,18 @@ class PipelineTask(BaseBrowserTask):
             if tag and items:
                 # tags stored as lowercase
                 tag = tag.lower()
+                try:
+                    self.dvc.tag_items(tag, items, note)
+                except BaseException as e:
+                    self.debug_exception()
+                    if self.confirmation_dialog(
+                        "Any error occurred trying to tag the analyses. You may not have "
+                        "sufficient privileges to UPDATE the database. Contact your DB "
+                        "administrator. Would you like to try to report the error to Pychron "
+                        "developers?"
+                    ):
+                        raise e
 
-                self.dvc.tag_items(tag, items, note)
                 if use_filter:
                     for e in self.editor_area.editors:
                         if hasattr(e, "set_items"):
@@ -323,7 +365,7 @@ class PipelineTask(BaseBrowserTask):
 
                 if self.active_editor:
                     self.active_editor.figure_model = None
-                    self.active_editor.refresh_needed = True
+                    self.active_editor.request_rebuild()
 
                 self.browser_model.table.set_tags(tag, items)
                 self.browser_model.table.remove_invalid()
@@ -397,9 +439,11 @@ class PipelineTask(BaseBrowserTask):
         self.debug("print figure")
         if not self.has_active_editor():
             return
-        ed = self.active_editor
-        if isinstance(ed, FigureEditor):
-            print_component(ed.component)
+
+        self.warning_dialog("Printing is not supported in this version")
+        # ed = self.active_editor
+        # if isinstance(ed, FigureEditor):
+        #     print_component(ed.component)
 
     def save_figure_pdf(self):
         self.debug("save figure pdf")
@@ -610,9 +654,7 @@ class PipelineTask(BaseBrowserTask):
                 break
 
     def _run(self, message, func, close_all=False):
-
         if self.engine.pre_run_check(func):
-
             self.debug("{} started".format(message))
             if close_all:
                 self.close_all()
@@ -670,7 +712,13 @@ class PipelineTask(BaseBrowserTask):
         )
 
     def _extra_actions_default(self):
-        sas = (("MenuBar/data.menu", RunAction, {}),)
+        sas = (
+            ("MenuBar/data.menu", RunAction, {}),
+            ("MenuBar/data.menu", ResumeAction, {}),
+            ("MenuBar/data.menu", RunFromAction, {}),
+            ("MenuBar/data.menu", ResetAction, {}),
+            ("MenuBar/data.menu", ClearAction, {}),
+        )
         return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
 
     def _help_tips_default(self):

@@ -17,8 +17,18 @@
 # ============= enthought library imports =======================
 from reportlab.lib.pagesizes import A4, letter, landscape, A2, A0
 from reportlab.lib.units import inch, cm
-from traits.api import Str, Bool, Enum, Button, Float, Color
-from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
+from traits.api import Str, Bool, Enum, Button, Float
+from traitsui.api import (
+    View,
+    Item,
+    UItem,
+    HGroup,
+    Group,
+    VGroup,
+    spring,
+    Spring,
+    Color,
+)
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import UNITS_MAP
@@ -121,8 +131,10 @@ class BasePDFOptions(BasePersistenceOptions):
             page = landscape(page)
 
         if self.fit_to_page:
-            page[0] -= (self.left_margin + self.right_margin) * units
-            page[1] -= (self.top_margin + self.bottom_margin) * units
+            w, h = page
+            w -= (self.left_margin + self.right_margin) * units
+            h -= (self.top_margin + self.bottom_margin) * units
+            page = [w, h]
         elif self.use_column_width:
             width_margins = (self.left_margin + self.right_margin) * units
             height_margins = (self.top_margin + self.bottom_margin) * units
@@ -179,7 +191,6 @@ class PDFTableOptions(BasePDFOptions):
     _persistence_name = "table_pdf_options"
 
     def _load_yaml_hook(self, d):
-
         self.age_nsigma = d.get("age_nsigma", 2)
         self.kca_nsigma = d.get("kca_nsigma", 2)
         self.link_sigmas = d.get("link_sigmas", True)

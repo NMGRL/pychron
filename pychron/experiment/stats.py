@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from traits.api import Property, String, Float, Any, Int, List, Instance
 
 from pychron.core.helpers.timer import Timer
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
@@ -33,13 +34,24 @@ class ExperimentStats(Loggable):
     delay_after_air = Float
 
     duration_tracker = Instance(AutomatedRunDurationTracker, ())
+    _duration_tracker_loaded = False
+    _dirty = True
 
     def update_run_duration(self, run, t):
         a = self.duration_tracker
         a.update(run, t)
+        self._dirty = True
+
+    def invalidate(self):
+        self._dirty = True
+
+    def load_duration_tracker(self):
+        if not self._duration_tracker_loaded:
+            self.duration_tracker.load()
+            self._duration_tracker_loaded = True
 
     def calculate_duration(self, runs=None):
-        self.duration_tracker.load()
+        self.load_duration_tracker()
         dur = self._calculate_duration(runs)
         return dur
 
@@ -62,7 +74,6 @@ class ExperimentStats(Loggable):
 
     # private
     def _calculate_duration(self, runs):
-
         dur = 0
         if runs:
             script_ctx = dict()
@@ -111,6 +122,7 @@ class StatsGroup(Loggable):
     nruns_finished = Int
     run_duration = String
     current_run_duration = String
+    current_run_duration_f = Float
 
     _timer = Any
 
@@ -127,6 +139,7 @@ class StatsGroup(Loggable):
 
     _post = None
     _run_start = 0
+    _queue_sig = None
 
     # not used
     def continue_run(self):
@@ -157,21 +170,21 @@ class StatsGroup(Loggable):
 
     # ====================================
 
-    def start_timer(self):
+    def start_timer(self) -> None:
         st = time.time()
         self._post = datetime.now()
 
-        def update_time():
+        def update_time() -> None:
             e = round(time.time() - st)
             d = {"_elapsed": e}
             if self._run_start:
                 re = round(time.time() - self._run_start)
                 d["_run_elapsed"] = re
-            self.trait_set(**d)
+            invoke_in_main_thread(self.trait_set, **d)
 
         self._timer = Timer(900, update_time)
 
-    def stop_timer(self):
+    def stop_timer(self) -> None:
         self.debug("Stop timer. self._timer: {}".format(self._timer))
         if self._timer:
             tt = self._total_time
@@ -198,45 +211,71 @@ class StatsGroup(Loggable):
         self.current_run_duration = self.active_queue.stats.get_run_duration(
             run.spec, as_str=True
         )
+        self.current_run_duration_f = self.active_queue.stats.get_run_duration(run.spec)
 
     def finish_run(self):
         self._run_start = 0
         self.nruns_finished += 1
         self.debug("finish run. runs completed={}".format(self.nruns_finished))
 
-    def calculate(self, force=False):
-        """
-        calculate the total duration
-        calculate the estimated time of finish
-        """
-
-        if force or not self._total_time:
-            self.nruns = sum(
-                [len(ei.cleaned_automated_runs) for ei in self.experiment_queues]
-            )
-
-            self.debug("calculating experiment stats")
-            tt = sum(
-                [
-                    ei.stats.calculate_duration(ei.cleaned_automated_runs)
-                    for ei in self.experiment_queues
-                ]
-            )
-
-            self.debug("total_time={}".format(tt))
-            self._total_time = tt
-            self.etf = self.format_duration(tt)
-
-    def recalculate_etf(self):
-        tt = sum(
+    def _calculate_total_duration(self):
+        """Calculate total duration across all experiment queues."""
+        return sum(
             [
                 ei.stats.calculate_duration(ei.cleaned_automated_runs)
                 for ei in self.experiment_queues
             ]
         )
 
-        self._total_time = tt + self._elapsed
-        self.etf = self.format_duration(tt, post=datetime.now())
+    def _clear_dirty_flags(self):
+        """Clear dirty flags on all experiment queue stats."""
+        for ei in self.experiment_queues:
+            ei.stats._dirty = False
+
+    def calculate(self, force=False) -> None:
+        """
+        calculate the total duration
+        calculate the estimated time of finish
+        """
+        queue_sig = self._make_queue_sig()
+        should_recalculate = (
+            force
+            or not self._total_time
+            or queue_sig != self._queue_sig
+            or any(ei.stats._dirty for ei in self.experiment_queues)
+        )
+        if should_recalculate:
+            nruns = sum(
+                [len(ei.cleaned_automated_runs) for ei in self.experiment_queues]
+            )
+
+            self.debug("calculating experiment stats")
+            tt = self._calculate_total_duration()
+            self._clear_dirty_flags()
+            self.debug("total_time={}".format(tt))
+
+            # Set nruns first to ensure UI updates, then set the other stats
+            self.trait_set(
+                nruns=nruns,
+                _total_time=tt,
+                etf=self.format_duration(tt),
+                _queue_sig=queue_sig,
+            )
+
+    def recalculate_etf(self):
+        """Recalculate estimated time to finish based on current elapsed time."""
+        tt = self._calculate_total_duration()
+        self._clear_dirty_flags()
+
+        self.trait_set(
+            _total_time=tt + self._elapsed,
+            etf=self.format_duration(tt, post=datetime.now()),
+            _queue_sig=self._make_queue_sig(),
+        )
+
+    def refresh_on_queue_change(self):
+        if self.experiment_queues:
+            self.calculate(force=True)
 
     def calculate_at(self, sel, at_times=True):
         """
@@ -280,7 +319,6 @@ class StatsGroup(Loggable):
         for ei in self.experiment_queues:
             stats = ei.stats
             if sel in ei.cleaned_automated_runs:
-
                 si = ei.cleaned_automated_runs.index(sel)
 
                 st += (
@@ -300,11 +338,39 @@ class StatsGroup(Loggable):
                 et += stats.calculate_duration()
         return st, et
 
+    def _make_queue_sig(self):
+        sig = []
+        for queue in self.experiment_queues:
+            runs = tuple(
+                (
+                    ri.runid,
+                    ri.state,
+                    ri.skip,
+                    ri.executable,
+                    getattr(ri, "_changed", False),
+                )
+                for ri in queue.automated_runs
+            )
+            sig.append(
+                (
+                    id(queue),
+                    queue.delay_before_analyses,
+                    queue.delay_between_analyses,
+                    queue.delay_after_blank,
+                    queue.delay_after_air,
+                    len(queue.cleaned_automated_runs),
+                    runs,
+                )
+            )
+        return tuple(sig)
+
     def _get_run_elapsed(self):
-        return str(timedelta(seconds=self._run_elapsed))
+        dur = timedelta(seconds=round(self._run_elapsed))
+        return str(dur)
 
     def _get_elapsed(self):
-        return str(timedelta(seconds=self._elapsed))
+        dur = timedelta(seconds=round(self._elapsed))
+        return str(dur)
 
     def _get_total_time(self):
         dur = timedelta(seconds=round(self._total_time))

@@ -62,6 +62,7 @@ class ConditionalsAdapter(BaseConditionalsAdapter):
         ("Level", "level"),
         ("Attribute", "attr"),
         ("Start", "start_count"),
+        ("N. trips", "ntrips"),
         ("Frequency", "frequency"),
         ("Check", "teststr"),
         ("Location", "location"),
@@ -82,7 +83,19 @@ class EConditionalsAdapter(ConditionalsAdapter):
         ("Attribute", "attr"),
         ("Start", "start_count"),
         ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
         ("Check", "teststr"),
+    ]
+
+
+class ETruncationConditionalsAdapter(ConditionalsAdapter):
+    columns = [
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
+        ("Check", "teststr"),
+        ("Trunc. Count Ratio", "abbreviated_count_ratio"),
     ]
 
 
@@ -91,6 +104,7 @@ class EActionConditionalsAdapter(ConditionalsAdapter):
         ("Attribute", "attr"),
         ("Start", "start_count"),
         ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
         ("Check", "teststr"),
         ("Action", "action"),
     ]
@@ -101,6 +115,7 @@ class EModificationConditionalsAdapter(ConditionalsAdapter):
         ("Attribute", "attr"),
         ("Start", "start_count"),
         ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
         ("Check", "teststr"),
         ("Action", "action"),
         ("Skip N", "nskip"),
@@ -108,15 +123,24 @@ class EModificationConditionalsAdapter(ConditionalsAdapter):
         ("Terminate", "use_termination"),
     ]
 
+    action_text = Property
+    nskip_text = Property
     use_termination_text = Property
     use_truncation_text = Property
     action_width = Int(150)
 
-    def _get_use_termination_text(self):
-        return "Yes" if self.item.use_termination else "No"
+    def _get_action_text(self) -> str:
+        return getattr(self.item, "action", "") or ""
 
-    def _get_use_truncation_text(self):
-        return "Yes" if self.item.use_truncation else "No"
+    def _get_nskip_text(self) -> str:
+        value = getattr(self.item, "nskip", "")
+        return "" if value in ("", None) else str(value)
+
+    def _get_use_termination_text(self) -> str:
+        return "Yes" if getattr(self.item, "use_termination", False) else "No"
+
+    def _get_use_truncation_text(self) -> str:
+        return "Yes" if getattr(self.item, "use_truncation", False) else "No"
 
 
 # ============= EOF =============================================

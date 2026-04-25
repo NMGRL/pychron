@@ -26,9 +26,9 @@ from pyface.qt.QtGui import (
     QApplication,
     QTextCharFormat,
 )
-from pyface.ui.qt4.code_editor.code_widget import AdvancedCodeWidget, CodeWidget
-from pyface.ui.qt4.code_editor.find_widget import FindWidget
-from pyface.ui.qt4.code_editor.replace_widget import ReplaceWidget
+from pyface.ui.qt.code_editor.code_widget import AdvancedCodeWidget, CodeWidget
+from pyface.ui.qt.code_editor.find_widget import FindWidget
+from pyface.ui.qt.code_editor.replace_widget import ReplaceWidget
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -80,7 +80,6 @@ class myCodeWidget(CodeWidget):
         cursor.endEditBlock()
 
     def replace_selection(self, txt):
-
         cursor = self.textCursor()
         #  #     QtGui.QTextCursor.StartOfLine, QtGui.QTextCursor.KeepAnchor, txt.count('\n'))
         cursor.beginEditBlock()

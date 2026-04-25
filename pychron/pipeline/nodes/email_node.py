@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import os
 
+from pyface.message_dialog import information
 from traits.api import Instance, List, HasTraits, Str, Bool
 from traitsui.api import UItem, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -26,7 +27,25 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.social.email.emailer import Emailer
+
+try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    from pychron.social.email.emailer import Emailer
+except ImportError:
+
+    class Emailer:
+        def send(self, *args, **kw):
+            information(
+                None,
+                "Not all packages that a required to send emails are installed. Please "
+                "install the necessary packages. "
+                "\n"
+                "See https://developers.google.com/gmail/api/quickstart/python",
+            )
 
 
 class Emailee(HasTraits):
@@ -37,7 +56,8 @@ class Emailee(HasTraits):
 
 class EmailNode(BaseNode):
     name = "Email"
-    emailer = Instance(Emailer)
+    # emailer = Instance(Emailer)
+    emailer = Instance("pychron.social.email.emailer.Emailer")
     addresses = List
 
     def traits_view(self):

@@ -58,7 +58,6 @@ class AblationCO2Manager(SerialLaserManager):
             i += 1
 
     def end_extract(self, *args, **kw):
-
         self.info("ending extraction. set laser power to 0")
         self.set_laser_power(0)
 
@@ -266,7 +265,6 @@ class AblationCO2Manager(SerialLaserManager):
         return r
 
     def _stage_manager_default(self):
-
         name = "ablation"
         args = dict(
             name="stage",

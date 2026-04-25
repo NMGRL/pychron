@@ -58,6 +58,8 @@ class InfoInspector(ScatterInspector):
         super(InfoInspector, self).__init__(*args, **kw)
         self.selection_mode = "multi"
         self.multiselect_modifier = KeySpec(None)
+        self._pointer_active = False
+        self._last_hittest = None
 
     # select_event = Event
 
@@ -82,27 +84,34 @@ class InfoInspector(ScatterInspector):
         xy = event.x, event.y
         try:
             pos = self.component.hittest(xy, threshold=self.hittest_threshold)
-            event.window.set_pointer("cross")
-        except IndexError:
-            event.window.set_pointer("arrow")
-            return
+        except (IndexError, ValueError):
+            pos = None
+            self._pointer_active = False
 
         if isinstance(pos, (tuple, list)):
-            self.current_position = pos
+            if not self._pointer_active:
+                event.window.set_pointer("cross")
+                self._pointer_active = True
+            try:
+                self.current_position = (pos[0][0], pos[1][0])
+            except IndexError:
+                self.current_position = pos
             self.current_screen = xy
             event.handled = True
         else:
-            event.window.set_pointer("arrow")
+            if self._pointer_active:
+                event.window.set_pointer("arrow")
+            self._pointer_active = False
             self.current_position = None
             self.current_screen = None
 
         if self.event_queue is not None:
             self.event_queue[id(self)] = self.current_position is not None
 
-        # if self.use_pane:
-        #     self._generate_inspector_event()
-
-        self.metadata_changed = True
+        state = (self.current_position, self.current_screen, self._pointer_active)
+        if state != self._last_hittest:
+            self._last_hittest = state
+            self.metadata_changed = True
 
     def assemble_lines(self):
         return
@@ -110,8 +119,12 @@ class InfoInspector(ScatterInspector):
     def normal_mouse_leave(self, event):
         self.current_screen = None
         self.current_position = None
-        self.metadata_changed = True
         # event.window.set_pointer('arrow')
+        self._pointer_active = False
+        if self._last_hittest != (None, None, False):
+            self._last_hittest = (None, None, False)
+            self.metadata_changed = True
+        event.window.set_pointer("arrow")
 
     # def _generate_inspector_event(self):
     #     if self.current_position:
@@ -139,10 +152,9 @@ class InfoOverlay(AbstractOverlay):
     visible = False
 
     def _update(self):
-        if self.tool.current_position is not None:
-            self.visible = True
-        else:
-            self.visible = False
+        visible = self.tool.current_position is not None
+        if visible != self.visible:
+            self.visible = visible
         self.request_redraw()
 
     def overlay(self, plot, gc, *args, **kw):

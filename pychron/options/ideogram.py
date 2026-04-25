@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
+from pyface.qt import QtGui
+from traitsui.api import Color
 from traits.api import (
     Int,
     Bool,
@@ -27,9 +29,9 @@ from traits.api import (
     Dict,
     Button,
     Str,
-    Color,
 )
 
+from pychron.core.helpers.color_utils import coerce_qcolor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
@@ -52,7 +54,12 @@ from pychron.pychron_constants import (
     SCHAEN2020_3,
     DEINO,
     SCHAEN2020_3youngest,
+    GUIDES,
 )
+
+
+def _as_qcolor(color):
+    return coerce_qcolor(color, qcolor_class=QtGui.QColor)
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -199,6 +206,7 @@ class IdeogramOptions(AgeOptions):
             "Calculations",
             DISPLAY,
             GROUPS,
+            GUIDES,
         ]
 
     def to_dict(self):
@@ -228,7 +236,6 @@ class IdeogramOptions(AgeOptions):
         return [fg.color for fg in self.groups]
 
     def get_plot_dict(self, group_id, subgroup_id):
-
         n = len(self.groups)
         gid = group_id % n
         fg = self.groups[gid]
@@ -249,10 +256,13 @@ class IdeogramOptions(AgeOptions):
         }
 
         if fg.use_fill:
-            color = fg.color.toRgb()
-            color.setAlphaF(fg.alpha * 0.01)
-            d["fill_color"] = color
-            d["type"] = "filled_line"
+            qcolor = _as_qcolor(fg.color)
+            if qcolor is not None:
+                if hasattr(qcolor, "toRgb"):
+                    qcolor = qcolor.toRgb()
+                qcolor.setAlphaF(fg.alpha * 0.01)
+                d["fill_color"] = qcolor
+                d["type"] = "filled_line"
 
         if fg.marker_non_default():
             d["marker"] = fg.marker
@@ -340,6 +350,7 @@ class IdeogramOptions(AgeOptions):
             "Ar37": "11:Ar37",
             "Ar36": "12:Ar36",
             "j": "13:J",
+            "equilibration_age": "14:Equilibration Age",
         }
 
 

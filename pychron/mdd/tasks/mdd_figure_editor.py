@@ -16,7 +16,8 @@
 import csv
 import os
 
-from traits.api import Instance, List, HasTraits, Str, Event, Any, Bool, Color
+from traits.api import Instance, List, HasTraits, Str, Event, Any, Bool
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import View, UItem, VGroup
 
 # from traitsui.editors.api import TreeEditor
@@ -43,7 +44,7 @@ class BaseItem(HasTraits):
 
 class MDDItem(BaseItem):
     plots = List
-    background = Color
+    background = PyfaceColor
     visible = Bool(True)
 
     def toggle_visible(self):
@@ -256,7 +257,6 @@ class MDDFigureEditor(BaseTraitsEditor):
             for root in self.roots:
                 for i, tags in ps:
                     for tag in tags:
-
                         ltag = tag.lower().replace(" ", "_")
                         data = getattr(self, "_get_{}_data".format(ltag))(root)
                         if data is not None:

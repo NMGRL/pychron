@@ -52,12 +52,13 @@ class _LaserComponentEditor(_ComponentEditor):
         self.control = self._window.control
         self._window.bgcolor = self.factory.bgcolor
         self._parent = parent
+        self._orig_resize_event = self.control.resizeEvent
 
         self.sync_value("keyboard_focus", "keyboard_focus", mode="both")
         self._window.on_key_release = self.onKeyUp
+        self.control.resizeEvent = self.onResize
 
     def onKeyUp(self, event):
-
         """
         key_released looking for text repr
 
@@ -71,11 +72,27 @@ class _LaserComponentEditor(_ComponentEditor):
             (Qt.Key_Up, "up"),
             (Qt.Key_Down, "down"),
         ):
-
             if ekey == sk:
                 if hasattr(self.value, "key_released"):
                     self.value.key_released(n)
                 break
+
+    def onResize(self, event):
+        if self._orig_resize_event:
+            self._orig_resize_event(event)
+
+        component = self.value
+        if component is None:
+            return
+
+        if hasattr(component, "scene") and component.scene:
+            component.scene.request_layout()
+
+        if hasattr(component, "invalidate_draw"):
+            component.invalidate_draw()
+
+        if hasattr(component, "request_redraw"):
+            component.request_redraw()
 
     def _keyboard_focus_changed(self):
         self.control.setFocus()

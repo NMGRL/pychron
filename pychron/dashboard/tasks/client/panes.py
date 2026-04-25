@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, VGroup
+from traitsui.api import View, UItem, VGroup, HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -30,8 +30,11 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 
 class DashboardCentralPane(TraitsTaskPane):
     def traits_view(self):
-        url = CustomLabel("url", label="URL")
-        v = View(VGroup(url, UItem("selected_device", style="custom")))
+        url = CustomLabel("server_url", label="URL")
+        state = CustomLabel("connection_state", label="State")
+        config_error = CustomLabel("last_config_error", label="Config Error")
+        alert = CustomLabel("active_alert", label="Alert")
+        v = View(VGroup(HGroup(url, state), config_error, alert, UItem("selected_device", style="custom")))
 
         return v
 
@@ -43,7 +46,15 @@ class DashboardDevicePane(TraitsDockPane):
         cols = [CheckboxColumn(name="use"), ObjectColumn(name="name", editable=False)]
 
         editor = TableEditor(columns=cols, selected="selected_device")
-        v = View(UItem("devices", editor=editor))
+        value_cols = [
+            ObjectColumn(name="name", label="Name"),
+            ObjectColumn(name="value", label="Value"),
+            ObjectColumn(name="last_time_str", label="Timestamp"),
+            ObjectColumn(name="timed_out", label="Timed Out"),
+            ObjectColumn(name="stale", label="Stale"),
+        ]
+        veditor = TableEditor(columns=value_cols, editable=False)
+        v = View(VGroup(UItem("devices", editor=editor), UItem("values", editor=veditor)))
         return v
 
         # ============= EOF =============================================

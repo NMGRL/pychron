@@ -43,7 +43,6 @@ def db_factory():
 
 
 class SampleLoaderTestCase(unittest.TestCase):
-
     # @classmethod
     # def setUpClass(cls):
     #

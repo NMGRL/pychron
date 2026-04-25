@@ -25,12 +25,15 @@ from pyface.tasks.action.task_action import TaskAction
 # from pychron.envisage.core.action_helper import open_manager
 
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import PTaskAction
 from pychron.envisage.view_util import open_view
 
 
 class AutoReloadAction(TaskAction):
     name = "Auto Reload"
-    method = "enable_auto_reload"
+    method = "toggle_auto_reload"
+    image = icon("arrow_refresh")
+    style = "toggle"
 
 
 class SampleLoadingAction(TaskAction):
@@ -39,11 +42,55 @@ class SampleLoadingAction(TaskAction):
     image = icon("arrow_out")
 
 
+class ToggleAutomatedValveConfirmationAction(PTaskAction):
+    name = "Confirm Valve Actuation"
+    description = "Toggle confirmation before opening automated valves"
+    style = "toggle"
+    checked = False
+    image = icon("confirm")
+
+    def _get_canvas2d(self) -> object | None:
+        task = self.task
+        if task is None:
+            return None
+
+        canvas_pane = getattr(task, "canvas_pane", None)
+        if canvas_pane is not None:
+            canvas = getattr(canvas_pane, "canvas", None)
+            if canvas is not None:
+                return getattr(canvas, "canvas2D", None)
+
+        manager = getattr(task, "manager", None)
+        if manager is not None:
+            canvas = getattr(manager, "canvas", None)
+            if canvas is not None:
+                return getattr(canvas, "canvas2D", None)
+
+        return None
+
+    def _confirm_open(self) -> bool:
+        canvas2d = self._get_canvas2d()
+        if canvas2d is None:
+            return True
+
+        return bool(getattr(canvas2d, "confirm_open", True))
+
+    def _task_changed(self) -> None:
+        if self.task is not None:
+            self.checked = self._confirm_open()
+
+    def perform(self, event) -> None:
+        canvas2d = self._get_canvas2d()
+        if canvas2d is None:
+            return
+
+        canvas2d.confirm_open = not bool(canvas2d.confirm_open)
+        self.checked = bool(canvas2d.confirm_open)
+
+
 class ExtractionLineAction(Action):
     def _get_manager(self, event, app=None):
-        EL_PROTOCOL = (
-            "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
-        )
+        EL_PROTOCOL = "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
         if app is None:
             app = event.task.window.application
         return app.get_service(EL_PROTOCOL)

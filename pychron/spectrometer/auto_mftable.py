@@ -46,7 +46,6 @@ class AutoMFTable(Loggable):
     def do_auto_mftable(self, path=None):
         yd = self._load_config(path)
         if yd:
-
             if not self._prepare(yd["extraction"]):
                 self.warning("Failed preparing system")
                 return
@@ -104,7 +103,6 @@ class AutoMFTable(Loggable):
                         self._update_deflection(di, de, pc)
 
     def _construct_mftable(self, dets, isos):
-
         pc = self._do_peak_center(dets[0], isos[0])
         if not pc:
             self.warning("Failed reference peak center")
@@ -160,7 +158,6 @@ class AutoMFTable(Loggable):
     def _backup_deflection(self, reset=False):
         src = paths.deflection
         if src:
-
             dst = unique_path2(paths.backup_deflection_dir)
             self.debug("backing up {} to {}".format(src, dst))
             shutil.copyfile(src, dst)

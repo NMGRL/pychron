@@ -20,6 +20,7 @@
 
 import os
 import re
+from typing import Any
 
 import six
 from lxml.etree import (
@@ -152,7 +153,7 @@ class XMLParser(object):
         else:
             self._root = Element("root")
 
-    def _parse_file(self, p):
+    def _parse_file(self, p: Any) -> bool:
         txt = None
         if isinstance(p, (str, six.text_type)):
             txt = ""
@@ -165,9 +166,8 @@ class XMLParser(object):
             self._root = XML(txt, parser=LXMLParser(remove_blank_text=True))
             return True
         except XMLSyntaxError as e:
-            print("Syntax error", p, e)
             self._syntax_error = str(e)
-            print("asdfasdfas", p, self._syntax_error)
+            return False
 
     def load(self, rfile):
         return self._parse_file(rfile)

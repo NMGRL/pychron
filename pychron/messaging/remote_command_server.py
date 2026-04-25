@@ -47,6 +47,7 @@ class RCSHandler(Handler):
         obj = info.object
         if obj._running:
             obj.led.state = 2
+        return True
 
     def object__running_changed(self, info):
         """ """
@@ -115,7 +116,6 @@ class RemoteCommandServer(ConfigLoadable):
 
         config = self.get_configuration()
         if config:
-
             server_class = self.config_get(config, "General", "class")
             if server_class is None:
                 return
@@ -199,7 +199,7 @@ class RemoteCommandServer(ConfigLoadable):
 
         #        server = gdict[server_class]
         if ds is None:
-            ds = 2 ** 10
+            ds = 2**10
         #        return server(self, ptype, ds, addr, handler_klass)
         return factory(self, ptype, ds, addr)
 

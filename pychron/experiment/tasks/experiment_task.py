@@ -16,9 +16,11 @@
 import os
 import shutil
 import time
+from typing import Optional
 
 import xlrd
 from pyface.constant import CANCEL, NO
+from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
 from traits.api import on_trait_change, Bool, Instance, Event
@@ -45,6 +47,10 @@ from pychron.experiment.tasks.experiment_panes import (
     LoggerPane,
     ExplanationPane,
     ConditionalsPane,
+    TimeSeriesPane,
+)
+from pychron.extraction_line.tasks.extraction_line_actions import (
+    ToggleAutomatedValveConfirmationAction,
 )
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
@@ -99,6 +105,9 @@ class ExperimentEditorTask(EditorTask):
     dock_pane_factories = None
     activations = None
     deactivations = None
+    _layout_reset = False
+    _adjust_extraction_canvas_split_timer = None
+    _update_info_timer = None
 
     def save_as_current_experiment(self):
         self.debug("save as current experiment")
@@ -184,9 +193,7 @@ class ExperimentEditorTask(EditorTask):
                 self._open_editor(editor)
                 if self.loading_manager:
                     self.loading_manager.clear()
-                    self.manager.experiment_factory.loading_manager = (
-                        self.loading_manager
-                    )
+                    self.manager.experiment_factory.loading_manager = self.loading_manager
 
                 if not self.manager.executor.is_alive():
                     self.manager.executor.executable = False
@@ -206,10 +213,129 @@ class ExperimentEditorTask(EditorTask):
     def activated(self):
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
+        self.debug(
+            "experiment_task activated window_present={} layout_reset={} editors={} active_editor={} ".format(
+                self.window is not None,
+                self._layout_reset,
+                len(self.editor_area.editors) if self.editor_area else 0,
+                type(self.active_editor).__name__ if self.active_editor is not None else None,
+            )
+        )
+
+        if not self._layout_reset and self.window is not None:
+            self.window.reset_layout()
+            self.debug("Extraction canvas split adjustment scheduled in 500ms")
+            
+            # Try to restore saved layout state first, otherwise fix the extraction canvas split.
+            if not self._restore_window_layout():
+                self._schedule_extraction_canvas_split(500)
+            
+            self._layout_reset = True
 
         self._do_callables(self.activations)
+    
+    def _restore_window_layout(self):
+        """Restore a previously saved window layout state from preferences.
+        
+        Returns True if layout was restored, False otherwise.
+        """
+        try:
+            prefs = self.application.preferences
+            state_str = prefs.get('pychron.experiment.window_layout_state')
+            
+            if state_str:
+                # Parse the layout state string and restore it
+                layout_state = eval(state_str)
+                self.window.set_layout_state(layout_state)
+                self.debug("Window layout state restored from preferences")
+                return True
+        except Exception as e:
+            self.debug(f"Failed to restore window layout: {e}")
+            import traceback
+            self.debug(traceback.format_exc())
+        
+        return False
+    
+    def _find_host_splitter(self, control) -> tuple[Optional[object], int]:
+        from pyface.qt.QtWidgets import QSplitter
+
+        widget = control
+        while widget is not None:
+            parent = widget.parent()
+            if isinstance(parent, QSplitter):
+                idx = parent.indexOf(widget)
+                if idx != -1:
+                    return parent, idx
+            widget = parent
+
+        return None, -1
+
+    def _adjust_extraction_canvas_split(self) -> None:
+        """Restore the extraction canvas pane size after Qt rebuilds the dock layout.
+
+        Inference: after ``window.reset_layout()``, the Qt splitter does not reliably
+        preserve the ``PaneItem(height=...)`` hints from ``TaskLayout``, so the
+        extraction-line canvas dock can reopen collapsed.
+        """
+        self.debug("_adjust_extraction_canvas_split: Starting adjustment")
+        try:
+            pane = getattr(self, "canvas_pane", None)
+            if pane is None:
+                self.debug("_adjust_extraction_canvas_split: canvas_pane is None")
+                return
+
+            control = getattr(pane, "control", None)
+            if control is None:
+                self.debug("_adjust_extraction_canvas_split: canvas pane has no control")
+                return
+
+            splitter, idx = self._find_host_splitter(control)
+            if splitter is None or idx < 0:
+                self.debug("_adjust_extraction_canvas_split: no host splitter found")
+                return
+
+            count = splitter.count()
+            if count < 2:
+                self.debug(
+                    "_adjust_extraction_canvas_split: splitter child count too small"
+                )
+                return
+
+            sizes = splitter.sizes()
+            total = max(sum(sizes), splitter.height(), count)
+            canvas_size = int(total * 0.7)
+            other_size = max(1, total - canvas_size)
+
+            if count == 2:
+                new_sizes = (
+                    [canvas_size, other_size]
+                    if idx == 0
+                    else [other_size, canvas_size]
+                )
+            else:
+                new_sizes = [1] * count
+                new_sizes[idx] = canvas_size
+                remaining = max(1, total - canvas_size)
+                for i in range(count):
+                    if i != idx:
+                        new_sizes[i] = max(1, int(remaining / max(1, count - 1)))
+
+            self.debug(
+                "_adjust_extraction_canvas_split: setting splitter sizes to {}".format(
+                    new_sizes
+                )
+            )
+            splitter.setSizes(new_sizes)
+        except Exception as e:
+            self.debug(f"_adjust_extraction_canvas_split failed: {e}")
+            import traceback
+            self.debug(traceback.format_exc())
 
     def prepare_destroy(self):
+        # Save the current window layout state before destroying
+        self._save_window_layout()
+        self._cancel_delayed_ui_work()
+        
         super(ExperimentEditorTask, self).prepare_destroy()
 
         self.manager.experiment_factory.destroy()
@@ -217,8 +343,59 @@ class ExperimentEditorTask(EditorTask):
 
         self._do_callables(self.deactivations)
 
-    def create_dock_panes(self):
+    def _cancel_timer(self, attr: str) -> None:
+        timer = getattr(self, attr, None)
+        if timer is None:
+            return
 
+        for method_name in ("cancel", "stop"):
+            method = getattr(timer, method_name, None)
+            if method is None:
+                continue
+            try:
+                method()
+            except BaseException as e:
+                self.debug(
+                    "failed canceling delayed ui work {} using {}: {}".format(
+                        attr, method_name, e
+                    )
+                )
+            break
+
+        setattr(self, attr, None)
+
+    def _cancel_delayed_ui_work(self) -> None:
+        self._cancel_timer("_adjust_extraction_canvas_split_timer")
+        self._cancel_timer("_update_info_timer")
+
+    def _schedule_extraction_canvas_split(self, delay: int) -> None:
+        self._cancel_timer("_adjust_extraction_canvas_split_timer")
+        self._adjust_extraction_canvas_split_timer = do_after(
+            delay, self._adjust_extraction_canvas_split
+        )
+
+    def _schedule_update_info(self, delay: int, manager) -> None:
+        self._cancel_timer("_update_info_timer")
+        self._update_info_timer = do_after(delay, manager.update_info)
+    
+    def _save_window_layout(self):
+        """Save the current window layout state to preferences."""
+        if not self.window:
+            return
+        
+        try:
+            # Get the current layout state from the window
+            layout_state = self.window.get_layout_state()
+            if layout_state:
+                # Persist to preferences
+                prefs = self.application.preferences
+                state_str = repr(layout_state)
+                prefs.set('pychron.experiment.window_layout_state', state_str)
+                self.debug(f"Window layout state saved")
+        except Exception as e:
+            self.debug(f"Failed to save window layout: {e}")
+
+    def create_dock_panes(self):
         name = "Isotope Evolutions"
         man = self.application.get_service(SPECTROMETER_PROTOCOL)
         if not man or man.simulation:
@@ -227,14 +404,13 @@ class ExperimentEditorTask(EditorTask):
         ex = self.manager.executor
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
-        self.experiment_factory_pane = ExperimentFactoryPane(
-            model=self.manager.experiment_factory
-        )
+        self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
         wait_pane = WaitPane(model=self.manager.executor.wait_group)
 
         explanation_pane = ExplanationPane()
         explanation_pane.set_colors(self._assemble_state_colors())
         self.conditionals_pane = ConditionalsPane(model=ex)
+        timeseries_pane = TimeSeriesPane(model=ex)
 
         panes = [
             StatsPane(model=ex.stats, executor=ex),
@@ -247,6 +423,7 @@ class ExperimentEditorTask(EditorTask):
             self.isotope_evolution_pane,
             explanation_pane,
             wait_pane,
+            timeseries_pane,
         ]
 
         if self.loading_manager:
@@ -273,18 +450,14 @@ class ExperimentEditorTask(EditorTask):
     def _editor_factory(self, is_uv=False, **kw):
         klass = UVExperimentEditor if is_uv else ExperimentEditor
         editor = klass(
-            application=self.application,
-            automated_runs_editable=self.automated_runs_editable,
-            **kw
+            application=self.application, automated_runs_editable=self.automated_runs_editable, **kw
         )
 
         prefs = self.application.preferences
         prefid = "pychron.experiment"
         bgcolor = prefs.get("{}.bg_color".format(prefid))
         even_bgcolor = prefs.get("{}.even_bg_color".format(prefid))
-        use_analysis_type_colors = to_bool(
-            prefs.get("{}.use_analysis_type_colors".format(prefid))
-        )
+        use_analysis_type_colors = to_bool(prefs.get("{}.use_analysis_type_colors".format(prefid)))
 
         editor.setup_tabular_adapters(
             bgcolor,
@@ -298,9 +471,7 @@ class ExperimentEditorTask(EditorTask):
     def _assemble_analysis_type_colors(self):
         colors = {}
         for c in (BLANK, AIR, COCKTAIL):
-            v = self.application.preferences.get(
-                "pychron.experiment.{}_color".format(c)
-            )
+            v = self.application.preferences.get("pychron.experiment.{}_color".format(c))
             colors[c] = v or "#FFFFFF"
 
         return colors
@@ -317,9 +488,7 @@ class ExperimentEditorTask(EditorTask):
             END_AFTER,
             INVALID,
         ):
-            v = self.application.preferences.get(
-                "pychron.experiment.{}_color".format(c)
-            )
+            v = self.application.preferences.get("pychron.experiment.{}_color".format(c))
             colors[c] = v or "#FFFFFF"
 
         return colors
@@ -333,9 +502,7 @@ class ExperimentEditorTask(EditorTask):
                     import traceback
 
                     traceback.print_exc()
-                    self.debug(
-                        "Callable {} failed. exception={}".format(fi.__name__, str(e))
-                    )
+                    self.debug("Callable {} failed. exception={}".format(fi.__name__, str(e)))
             else:
                 self.debug("{} not callable".format(fi))
 
@@ -354,7 +521,7 @@ class ExperimentEditorTask(EditorTask):
 
                 manager.path = path
                 # manager.update_info()
-                do_after(1000, manager.update_info)
+                self._schedule_update_info(1000, manager)
                 return True
 
     def _open_experiment(self, path):
@@ -461,9 +628,7 @@ class ExperimentEditorTask(EditorTask):
             return True
 
     def _get_save_path(self, default_filename=None, **kw):
-        sd = ExperimentSaveDialog(
-            root=paths.experiment_dir, name=default_filename or "Untitled"
-        )
+        sd = ExperimentSaveDialog(root=paths.experiment_dir, name=default_filename or "Untitled")
         info = sd.edit_traits()
         if info.result:
             return sd.path
@@ -550,10 +715,23 @@ class ExperimentEditorTask(EditorTask):
         if self.active_editor:
             self.manager.experiment_factory.edit_enabled = True
             self.manager.experiment_queue = self.active_editor.queue
-            self.manager.executor.active_editor = self.active_editor
+            self.manager.executor.sync_active_context(
+                editor=self.active_editor,
+                queue=self.active_editor.queue,
+                queues=[ei.queue for ei in self.editor_area.editors],
+            )
             self._show_pane(self.experiment_factory_pane)
         else:
             self.manager.experiment_factory.edit_enabled = False
+            self.manager.executor.sync_active_context(
+                editor=None, queue=None, queues=[ei.queue for ei in self.editor_area.editors]
+            )
+
+    @on_trait_change("manager:experiment_queue:changed")
+    def _handle_queue_change(self, obj, name, old, new):
+        if self.loading_manager:
+            runs = obj.cleaned_automated_runs
+            self.loading_manager.set_loaded_runs(runs)
 
     @on_trait_change("loading_manager:group_positions")
     def _update_group_positions(self, new):
@@ -601,9 +779,7 @@ class ExperimentEditorTask(EditorTask):
                         self.laser_control_client_pane.model = man
 
         if new == FUSIONS_UV:
-            if self.active_editor and not isinstance(
-                self.active_editor, UVExperimentEditor
-            ):
+            if self.active_editor and not isinstance(self.active_editor, UVExperimentEditor):
                 editor = UVExperimentEditor()
 
                 ms = self.manager.experiment_factory.queue_factory.mass_spectrometer
@@ -616,9 +792,7 @@ class ExperimentEditorTask(EditorTask):
                 if ans:
                     if self.confirmation_dialog("Copy runs to the new UV Editor?"):
                         # editor.queue.executed_runs=self.active_editor.queue.executed_runs
-                        editor.queue.automated_runs = (
-                            self.active_editor.queue.automated_runs
-                        )
+                        editor.queue.automated_runs = self.active_editor.queue.automated_runs
 
                         # self.warning_dialog('Copying runs not yet implemented')
 
@@ -642,8 +816,19 @@ class ExperimentEditorTask(EditorTask):
         self.manager.experiment_factory.run_factory.load_run_blocks()
 
     @on_trait_change("editor_area:editors[]")
-    def _update_editors(self, new):
-        self.manager.experiment_queues = [ei.queue for ei in new]
+    def _update_editors(self, new) -> None:
+        self.debug("_update_editors start n={}".format(len(new)))
+        qs = [ei.queue for ei in new]
+        self.manager.experiment_queues = qs
+        self.debug("_update_editors set manager.experiment_queues")
+        # Mirror open queues onto the executor so panes (e.g. StatsPane) can
+        # recalculate even when the executor is idle.
+        try:
+            self.manager.executor.experiment_queues = qs
+            self.debug("_update_editors set executor.experiment_queues")
+        except Exception:
+            self.debug_exception()
+            pass
 
     @on_trait_change("manager:executor:measuring_run:plot_panel")
     def _update_plot_panel(self, new):
@@ -653,6 +838,14 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change("manager:executor:run_completed")
     def _update_run_completed(self, new):
         # self._publish_notification(new)
+        self.debug(
+            "experiment_task run_completed run={} identifier={} active_editor={} editors={}".format(
+                getattr(new, "runid", None),
+                getattr(new, "identifier", None),
+                type(self.active_editor).__name__ if self.active_editor is not None else None,
+                len(self.editor_area.editors) if self.editor_area else 0,
+            )
+        )
 
         load_name = self.manager.executor.experiment_queue.load_name
         if load_name:
@@ -698,12 +891,16 @@ class ExperimentEditorTask(EditorTask):
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
 
-            qs = [
-                ei.queue for ei in self.editor_area.editors if ei != self.active_editor
-            ]
+            qs = [ei.queue for ei in self.editor_area.editors if ei != self.active_editor]
 
             if self.active_editor:
                 qs.insert(0, self.active_editor.queue)
+
+            self.manager.executor.sync_active_context(
+                editor=self.active_editor,
+                queue=self.active_editor.queue if self.active_editor else None,
+                queues=qs,
+            )
 
             if self.manager.execute_queues(qs):
                 # self._show_pane(self.wait_pane)
@@ -714,18 +911,54 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change("manager:executor:autoplot_event")
     def _handle_autoplot(self, new):
         if new:
+            self.debug(
+                "experiment_task autoplot_event run={} identifier={} editors_before={}".format(
+                    getattr(new, "runid", None),
+                    getattr(new, "identifier", None),
+                    len(self.editor_area.editors) if self.editor_area else 0,
+                )
+            )
+            self.debug(
+                "experiment_task autoplot suppressed_for_stability run={} identifier={}".format(
+                    getattr(new, "runid", None), getattr(new, "identifier", None)
+                )
+            )
+            return
+
             editor = self._new_autoplot_editor(new)
             ans = self._get_autoplot_analyses(new)
+            self.debug(
+                "experiment_task autoplot analyses_loaded={} editor_type={} editor_id={}".format(
+                    len(ans) if ans is not None else None,
+                    type(editor).__name__ if editor is not None else None,
+                    id(editor) if editor is not None else None,
+                )
+            )
             editor.set_items(ans)
 
             self._open_editor(editor)
+            self.debug(
+                "experiment_task autoplot editor_opened editor_type={} editors_after={}".format(
+                    type(editor).__name__ if editor is not None else None,
+                    len(self.editor_area.editors) if self.editor_area else 0,
+                )
+            )
 
             fs = [e for e in self.iter_editors(FigureEditor)]
 
-            # close the oldest editor
+            # Conservative reliability guard:
+            # repeated figure-editor disposal appears to line up with intermittent
+            # post-run Qt crashes on hover/focus, so leave older autoplot editors
+            # open while we stabilize the lifecycle.
             if len(fs) > 5:
                 fs = sorted(fs, key=lambda x: x.last_update)
-                self.close_editor(fs[0])
+                self.debug(
+                    "experiment_task autoplot retaining_old_editors count={} oldest_type={} oldest_id={}".format(
+                        len(fs),
+                        type(fs[0]).__name__ if fs else None,
+                        id(fs[0]) if fs else None,
+                    )
+                )
 
     def _get_autoplot_analyses(self, new):
         dvc = self.window.application.get_service(DVC_PROTOCOL)
@@ -739,6 +972,11 @@ class ExperimentEditorTask(EditorTask):
         for editor in self.editor_area.editors:
             if isinstance(editor, FigureEditor):
                 if new.identifier == editor.identifier:
+                    self.debug(
+                        "experiment_task autoplot reusing_editor editor_type={} editor_id={} identifier={}".format(
+                            type(editor).__name__, id(editor), new.identifier
+                        )
+                    )
                     break
         else:
             if is_special(new.identifier):
@@ -755,6 +993,11 @@ class ExperimentEditorTask(EditorTask):
                 editor = IdeogramEditor()
 
             editor.identifier = new.identifier
+            self.debug(
+                "experiment_task autoplot created_editor editor_type={} editor_id={} identifier={}".format(
+                    type(editor).__name__, id(editor), new.identifier
+                )
+            )
 
         editor.last_update = time.time()
         return editor
@@ -823,9 +1066,7 @@ class ExperimentEditorTask(EditorTask):
         return PatternMakerView()
 
     def _loading_manager_default(self):
-        lm = self.window.application.get_service(
-            "pychron.loading.loading_manager.LoadingManager"
-        )
+        lm = self.window.application.get_service("pychron.loading.loading_manager.LoadingManager")
         if lm:
             dvc = self.window.application.get_service(DVC_PROTOCOL)
             lm.trait_set(db=dvc.db, show_group_positions=True)
@@ -835,28 +1076,35 @@ class ExperimentEditorTask(EditorTask):
     def _default_directory_default(self):
         return paths.experiment_dir
 
-    def _default_layout_default(self):
+    def _default_layout_default(self) -> TaskLayout:
         return TaskLayout(
             left=Splitter(
-                PaneItem("pychron.wait", height=100),
+                PaneItem("pychron.wait", height=150),
                 Tabbed(
-                    PaneItem("pychron.experiment.factory"),
+                    PaneItem(
+                        "pychron.experiment.factory",
+                    ),
                     PaneItem("pychron.experiment.isotope_evolution"),
                 ),
                 orientation="vertical",
             ),
             right=Splitter(
                 Tabbed(
-                    PaneItem("pychron.experiment.stats"),
-                    PaneItem("pychron.console", height=425),
-                    PaneItem("pychron.experiment.explanation", height=425),
+                    PaneItem("pychron.experiment.stats", height=220),
+                    PaneItem("pychron.console"),
+                    PaneItem("pychron.experiment.timeseries"),
+                    PaneItem("pychron.experiment.conditionals"),
                     PaneItem("pychron.experiment.connection_status"),
+                    PaneItem("pychron.experiment.explanation"),
                 ),
-                PaneItem("pychron.extraction_line.canvas_dock"),
+                PaneItem("pychron.extraction_line.canvas_dock", height=500, width=700),
                 orientation="vertical",
             ),
             top=PaneItem("pychron.experiment.controls"),
         )
+
+    def _tool_bars_default(self) -> list[SToolBar]:
+        return [SToolBar(ToggleAutomatedValveConfirmationAction())]
 
 
 # ============= EOF =============================================

@@ -22,13 +22,13 @@ from traits.trait_types import Any
 
 # ============= standard library imports ========================
 import os
-from PySide import QtCore
+from pyface.qt import QtCore
 from pyface.qt.QtCore import QRect
 from pyface.qt.QtGui import QWidget, QImageReader, QPixmap
 
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 from pychron.envisage.resources import icon
 
 
@@ -100,6 +100,12 @@ class _AnimatedPNGEditor(Editor):
     def update_editor(self):
         pass
 
+    def dispose(self):
+        if self._animation is not None:
+            self._animation.stop()
+            self._animation = None
+        super(_AnimatedPNGEditor, self).dispose()
+
     def _state_fired(self):
         if not self._state:
             anim = QtCore.QPropertyAnimation(self.control, "count")
@@ -116,7 +122,6 @@ class _AnimatedPNGEditor(Editor):
             self._animation = anim
 
         else:
-
             self._animation.stop()
             self.control.set_count(0)
         self._state = not self._state

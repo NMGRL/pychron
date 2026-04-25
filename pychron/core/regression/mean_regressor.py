@@ -20,7 +20,7 @@
 from numpy import average, where, full
 
 from pychron.core.helpers.formatting import floatfmt
-from pychron.pychron_constants import SEM, MSEM
+from pychron.pychron_constants import SEM, MSEM, SE
 from .base_regressor import BaseRegressor
 
 
@@ -38,6 +38,7 @@ class MeanRegressor(BaseRegressor):
         if not filtering:
             # prevent infinite recursion
             self.calculate_filtered_data()
+        self.clear_dirty()
 
     def calculate_outliers(self):
         nsigma = self.filter_outliers_dict.get("std_devs", 2)
@@ -58,7 +59,6 @@ class MeanRegressor(BaseRegressor):
 
     @property
     def summary(self):
-
         m = self.mean
         e = self.std
         sem = self.sem
@@ -94,7 +94,6 @@ sem={}
         return ly, uy
 
     def tostring(self, sig_figs=3):
-
         m = self.mean
         std = self.std
         sem = self.sem
@@ -131,7 +130,9 @@ sem={}
         if error_calc == SEM.lower():
             e = self.sem
         elif error_calc in (MSEM.lower(), "msem"):
-            e = self.se * (self.mswd ** 0.5 if self.mswd > 1 else 1)
+            e = self.se * (self.mswd**0.5 if self.mswd > 1 else 1)
+        elif error_calc == SE.lower():
+            e = self.se
         else:
             e = self.std
 
@@ -149,7 +150,10 @@ sem={}
         return self.std
 
     def _check_integrity(self, x, y):
-        nx, ny = x.shape[0], y.shape[0]
+        nx, ny = (
+            x.shape[0] if x is not None else None,
+            y.shape[0] if y is not None else None,
+        )
         if not nx or not ny:
             return
         if nx != ny:
@@ -192,7 +196,7 @@ class WeightedMeanRegressor(MeanRegressor):
     def _get_weights(self):
         e = self.clean_yserr
         if self._check_integrity(e, e):
-            return 1 / e ** 2
+            return 1 / e**2
 
 
 # ============= EOF =============================================

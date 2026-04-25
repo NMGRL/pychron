@@ -18,9 +18,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-from six.moves import range
-from traits.api import HasTraits, Button, Instance
-from traitsui.api import View, Item, UItem, VGroup, InstanceEditor, Tabbed
+from traits.api import Instance
+from traitsui.api import Item, UItem, VGroup, InstanceEditor, Tabbed
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,8 +28,6 @@ from pychron.core.pdf.options import PDFLayoutView
 from pychron.core.pdf.save_pdf_dialog import FigurePDFOptions
 from pychron.core.save_model import SaveModel, SaveController
 from pychron.core.ui.combobox_editor import ComboboxEditor
-from pychron.paths import paths
-
 
 class SaveFigureModel(SaveModel):
     pdf_options = Instance(FigurePDFOptions)
@@ -77,31 +74,4 @@ class SaveFigureView(SaveController):
         )
         return v
 
-
-if __name__ == "__main__":
-    import random
-
-    paths.build("_dev")
-
-    class A(object):
-        def __init__(self):
-            self.repository_identifier = random.choice(["Foo", "Bar", "Bat"])
-            self.identifier = "1000"
-
-    ans = [A() for i in range(5)]
-    sfm = SaveFigureModel(ans)
-    sfv = SaveFigureView(model=sfm)
-
-    class Demo(HasTraits):
-        test = Button
-
-        def traits_view(self):
-            return View("test")
-
-        def _test_fired(self):
-            sfv.edit_traits()
-            # sfv.configure_traits()
-            print("fff", sfm.prepare_path())
-
-    Demo().configure_traits()
 # ============= EOF =============================================

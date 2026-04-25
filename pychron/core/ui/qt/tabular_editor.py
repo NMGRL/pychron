@@ -19,7 +19,7 @@
 from pickle import dumps
 
 import six
-from PyQt5.QtCore import QSize
+
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
 from traits.api import (
@@ -31,21 +31,23 @@ from traits.api import (
     Property,
     Int,
     HasTraits,
-    Color,
     Either,
     Callable,
     Event,
 )
+from pyface.ui_traits import PyfaceColor
 from traitsui.api import Item, TabularEditor, Handler
+from traitsui.ui_traits import SequenceTypes
 from traitsui.mimedata import PyMimeData
-from traitsui.qt4.tabular_editor import (
+from traitsui.qt.tabular_editor import (
     TabularEditor as qtTabularEditor,
     _TableView as TableView,
     HeaderEventFilter,
     _ItemDelegate,
 )
-from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
+from traitsui.qt.tabular_model import TabularModel, tabular_mime_type
 
+from pychron.core.helpers.color_utils import coerce_qcolor
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
@@ -62,7 +64,7 @@ class myTabularEditor(TabularEditor):
     drag_external = Bool(False)
     drag_enabled = Bool(True)
 
-    bgcolor = Color
+    bgcolor = PyfaceColor
     row_height = Int
     mime_type = Str("pychron.tabular_item")
 
@@ -202,6 +204,18 @@ class _TableView(TableView):
         else:
             vheader.ResizeMode(QHeaderView.ResizeToContents)
 
+        # The experiment editor uses a large, fixed-height table; these settings
+        # reduce repaint and layout work while scrolling large queues.
+        self.setWordWrap(False)
+        self.setTextElideMode(QtCore.Qt.ElideMiddle)
+        self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setShowGrid(False)
+        if hasattr(self, "setUniformRowHeights"):
+            self.setUniformRowHeights(True)
+
     def set_bg_color(self, bgcolor):
         # if isinstance(bgcolor, tuple):
         #     if len(bgcolor) == 3:
@@ -209,11 +223,19 @@ class _TableView(TableView):
         #     elif len(bgcolor) == 4:
         #         bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
         # elif isinstance(bgcolor, QColor):
-        #     bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
+        #     bgcolor = 'rgba({},{},{},{})'.format(
+        #         bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha()
+        #     )
         # self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
         p = self.palette()
-        p.setColor(QtGui.QPalette.Base, bgcolor)
+        p.setColor(QtGui.QPalette.Base, self._coerce_qcolor(bgcolor))
         self.setPalette(p)
+
+    def _coerce_qcolor(self, color):
+        qcolor = coerce_qcolor(color, qcolor_class=QtGui.QColor)
+        if qcolor is not None:
+            return qcolor
+        return QtGui.QColor(color)
 
     def set_vertical_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
@@ -357,7 +379,6 @@ class _TableView(TableView):
             if self.pastable:
                 self._paste()
         else:
-
             self._editor.key_pressed = TabularKeyEvent(event)
 
             self._key_press_hook(event)
@@ -370,7 +391,7 @@ class _TableView(TableView):
 
     def sizeHintForColumn(self, column):
         try:
-            return super(_TableView, self).sizeHintForColumn(column)
+            return int(super(_TableView, self).sizeHintForColumn(column))
         except AttributeError:
             pass
 
@@ -378,7 +399,7 @@ class _TableView(TableView):
         try:
             return super(_TableView, self).sizeHint()
         except TypeError:
-            return QSize()
+            return QtCore.QSize()
 
     # private
     def _copy(self):
@@ -517,6 +538,44 @@ class _TableView(TableView):
 
 
 class _TabularModel(TabularModel):
+    def _to_qcolor(self, color):
+        if color is None:
+            return None
+
+        if isinstance(color, SequenceTypes):
+            comps = list(color)
+        elif hasattr(color, "rgba"):
+            rgba = color.rgba() if callable(color.rgba) else color.rgba
+            if isinstance(rgba, int):
+                return QtGui.QColor(rgba)
+            comps = list(rgba)
+        elif all(hasattr(color, attr) for attr in ("red", "green", "blue")):
+            def _component(value):
+                return value() if callable(value) else value
+
+            comps = [
+                _component(getattr(color, "red")),
+                _component(getattr(color, "green")),
+                _component(getattr(color, "blue")),
+            ]
+            alpha = getattr(color, "alpha", None)
+            if alpha is not None:
+                comps.append(_component(alpha))
+        else:
+            try:
+                return QtGui.QColor(color)
+            except Exception:
+                return None
+
+        if comps and max(comps) <= 1:
+            comps = [int(round(c * 255)) for c in comps]
+
+        if len(comps) >= 4:
+            return QtGui.QColor(comps[0], comps[1], comps[2], comps[3])
+        if len(comps) == 3:
+            return QtGui.QColor(comps[0], comps[1], comps[2])
+        return None
+
     def dropMimeData(self, mime_data, action, row, column, parent):
         if action == QtCore.Qt.IgnoreAction:
             return False
@@ -557,6 +616,28 @@ class _TabularModel(TabularModel):
         """Reimplemented to return the data."""
         if role is None:
             role = QtCore.Qt.DisplayRole
+
+        if role == QtCore.Qt.ItemDataRole.BackgroundRole:
+            editor = self._editor
+            adapter = editor.adapter
+            obj, name = editor.object, editor.name
+            row, column = mi.row(), mi.column()
+            color = adapter.get_bg_color(obj, name, row, column)
+            if color is not None:
+                q_color = self._to_qcolor(color)
+                if q_color is not None:
+                    return QtGui.QBrush(q_color)
+
+        if role == QtCore.Qt.ItemDataRole.ForegroundRole:
+            editor = self._editor
+            adapter = editor.adapter
+            obj, name = editor.object, editor.name
+            row, column = mi.row(), mi.column()
+            color = adapter.get_text_color(obj, name, row, column)
+            if color is not None:
+                q_color = self._to_qcolor(color)
+                if q_color is not None:
+                    return QtGui.QBrush(q_color)
 
         return TabularModel.data(self, mi, role)
 

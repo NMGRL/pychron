@@ -143,7 +143,6 @@ class VerticalFluxEditor(FigureEditor):
     def set_items(self, items, as_analyses=False):
         nitems = []
         if as_analyses:
-
             use_weights = True
             error_kind = self.plotter_options.error_kind
             lambda_k = nominal_value(self.plotter_options.lambda_k)

@@ -52,7 +52,6 @@ def auto_reset_connect(func):
             if not obj.db.connected:
                 obj.connect()
             else:
-
                 obj.db.reset_connection()
                 obj.db.reset_connection()
                 obj.db.connect()
@@ -127,7 +126,6 @@ class LabspyClient(Loggable):
         return self.db.connect(**kw)
 
     def start(self):
-
         self.debug("Start Connection status timer")
         if self.application and self.use_connection_status:
             self.debug("timer started period={}".format(self.connection_status_period))
@@ -151,7 +149,6 @@ class LabspyClient(Loggable):
         return self.db.get_latest_lab_pneumatics()
 
     def _connection_status(self, verbose=False):
-
         # if verbose:
         #     self.debug('Connection Status. ndevs={}'.format(len(devs or ())))
         # if devs:
@@ -163,7 +160,6 @@ class LabspyClient(Loggable):
             st = time.time()
             ts = datetime.now()
             for dev in devs:
-
                 # remove Communicator for name. e.g SerialCommunicator to Serial
                 cname = dev.communicator.__class__.__name__
                 com_name = cname[:-12]
@@ -367,7 +363,6 @@ class LabspyClient(Loggable):
         return LabspyDatabaseAdapter()
 
     def _run_dict(self, run):
-
         spec = run.spec
         return {
             "identifier": spec.identifier,

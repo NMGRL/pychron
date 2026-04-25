@@ -49,7 +49,6 @@ class ScannerBoundsTool(DragTool):
         self.updated = (mi, ma)
 
     def set_low(self, v):
-
         offset = (self.high - v) * 0.1
         v += offset
         self.low = v
@@ -184,8 +183,6 @@ class DACScanner(BaseScanner):
         # graph.set_x_title('Magnet DAC (Voltage)')
         # graph.set_y_title('Intensity')
 
-        self._use_mftable_limits_fired()
-
     # private
     def _reset_hook(self):
         self._use_mftable_limits_fired()
@@ -198,6 +195,7 @@ class DACScanner(BaseScanner):
         graph.new_series()
         graph.set_x_title("Magnet DAC (Voltage)")
         graph.set_y_title("Intensity")
+        # self._use_mftable_limits_fired()
 
     # scan methods
     def _do_step(self, magnet, step):
@@ -301,7 +299,6 @@ class DACScanner(BaseScanner):
         self.step = st * d / t
 
     def _handle_tool_change(self, new):
-
         self.scan_min_dac = new[0]  # self.tool.low
         self.scan_max_dac = new[1]  # self.tool.high
 
@@ -318,14 +315,14 @@ class DACScanner(BaseScanner):
             self.tool.low = self.scan_min_dac
             self.tool.overlay.low = self.scan_min_dac
         self._scan_time_length_changed()
-        self.graph.redraw()
+        # self.graph.redraw()
 
     def _scan_max_dac_changed(self):
         if self.tool:
             self.tool.high = self.scan_max_dac
             self.tool.overlay.high = self.scan_max_dac
         self._scan_time_length_changed()
-        self.graph.redraw()
+        # self.graph.redraw()
 
     def _min_dac_changed(self):
         if self.min_dac < self.max_dac:

@@ -43,8 +43,19 @@ def format_percent_error(v, e, n=2, include_percent_sign=False):
 
 def calc_percent_error(v, e, scale=100):
     try:
+        # Convert to float if needed
+        v = float(v) if v is not None else None
+        e = float(e) if e is not None else None
+        
+        # Check for NaN or inf values before calculation
+        if v is None or e is None:
+            return "NaN"
+        if math.isnan(v) or math.isnan(e):
+            return "NaN"
+        if math.isinf(v) or math.isinf(e):
+            return "NaN"
         return abs(e / v * scale)
-    except (ZeroDivisionError, TypeError):
+    except (ZeroDivisionError, TypeError, ValueError):
         return "NaN"
 
 

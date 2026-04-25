@@ -32,12 +32,17 @@ from traits.api import (
 )
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.timer import Timer
+from pychron.core.ui.gui import invoke_in_main_thread
 
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
+from pychron.experiment.utilities.repository_identifier import (
+    normalize_repository_identifier,
+)
 from pychron.pychron_constants import (
     NULL_STR,
     LINE_STR,
@@ -88,6 +93,7 @@ delay_before_analyses: {delay_before_analyses:}
 delay_between_analyses: {delay_between_analyses:}
 delay_after_blank: {delay_after_blank:}
 delay_after_air: {delay_after_air:}
+delay_after_conditional: {delay_after_conditional:}
 extract_device: {extract_device:}
 default_lighting: {default_lighting:}
 tray: {tray:}
@@ -114,6 +120,7 @@ class BaseExperimentQueue(RunBlock):
     delay_between_analyses = CInt(30)
     delay_after_blank = CInt(15)
     delay_after_air = CInt(10)
+    delay_after_conditional = Str
 
     default_lighting = CInt(0)
 
@@ -136,10 +143,64 @@ class BaseExperimentQueue(RunBlock):
 
     _no_update = False
     _frequency_group_counter = 0
+    _stats_timer = None
+    _table_refresh_timer = None
+    _info_refresh_timer = None
+    _pending_scroll_to_row = None
+    _pending_stats_invalidation = False
 
     @property
     def no_update(self):
         return self._no_update
+
+    def invalidate_stats(self):
+        # If we're currently updating/refreshing, defer invalidation to avoid cascading updates
+        if self._no_update:
+            self._pending_stats_invalidation = True
+            return
+            
+        self.stats.invalidate()
+        if self._stats_timer:
+            self._stats_timer.stop()
+        self._stats_timer = Timer(250, self._flush_stats)
+
+    def request_table_refresh(self, delay=75) -> None:
+        if self._table_refresh_timer:
+            self._table_refresh_timer.stop()
+        self._table_refresh_timer = Timer(delay, self._flush_table_refresh)
+
+    def request_info_refresh(self, delay=75, scroll_to_row=None) -> None:
+        if scroll_to_row is not None:
+            self._pending_scroll_to_row = scroll_to_row
+        if self._info_refresh_timer:
+            self._info_refresh_timer.stop()
+        self._info_refresh_timer = Timer(delay, self._flush_info_refresh)
+
+    def _flush_stats(self) -> None:
+        if self._stats_timer:
+            self._stats_timer.stop()
+            self._stats_timer = None
+        self.request_info_refresh()
+
+    def _flush_table_refresh(self) -> None:
+        if self._table_refresh_timer:
+            self._table_refresh_timer.stop()
+            self._table_refresh_timer = None
+        invoke_in_main_thread(setattr, self, "refresh_table_needed", True)
+
+    def _flush_info_refresh(self) -> None:
+        if self._info_refresh_timer:
+            self._info_refresh_timer.stop()
+            self._info_refresh_timer = None
+        if self._pending_scroll_to_row is not None:
+            invoke_in_main_thread(
+                setattr,
+                self,
+                "automated_runs_scroll_to_row",
+                self._pending_scroll_to_row,
+            )
+            self._pending_scroll_to_row = None
+        invoke_in_main_thread(setattr, self, "refresh_info_needed", True)
 
     # ===============================================================================
     # persistence
@@ -207,8 +268,7 @@ class BaseExperimentQueue(RunBlock):
 
     def set_extract_device(self, v):
         self.extract_device = v
-        for a in self.automated_runs:
-            a.extract_device = v
+        self.sync_queue_meta(attrs=("extract_device",), force=True)
 
     def is_updateable(self):
         return not self._no_update
@@ -223,8 +283,9 @@ class BaseExperimentQueue(RunBlock):
             self._frequency_group_counter -= 1
 
     def extend_runs(self, runs):
+        self.sync_queue_meta(runs=runs)
         self.automated_runs.extend(runs)
-        self.refresh_table_needed = True
+        self.request_table_refresh()
 
     def add_runs(
         self,
@@ -267,7 +328,6 @@ class BaseExperimentQueue(RunBlock):
     def _add_frequency_runs(
         self, runspecs, freq, freq_before, freq_after, is_run_block, is_repeat_block
     ):
-
         aruns = self.automated_runs
         runblock = self.automated_runs
         if is_repeat_block:
@@ -318,17 +378,40 @@ class BaseExperimentQueue(RunBlock):
 
     def _add_runs(self, runspecs):
         aruns = self.automated_runs
+        self.sync_queue_meta(runs=runspecs)
 
         if self.selected and self.selected[-1] in aruns:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
-                if not ri.repository_identifier:
-                    ri.repository_identifier = self.repository_identifier
-
                 aruns.insert(idx + 1, ri)
         else:
             aruns.extend(runspecs)
         return runspecs
+
+    def sync_queue_meta(self, runs=None, attrs=None, force=False):
+        if runs is None:
+            runs = self.automated_runs
+
+        if attrs is None:
+            for run in runs:
+                run.apply_queue_metadata(self, force=force)
+            return
+
+        trait_pairs = []
+        for attr in attrs:
+            if attr == "tray":
+                value = self.tray
+                trait_pairs.append(("tray", value))
+                trait_pairs.append(("load_holder", self.load_holder))
+            else:
+                trait_pairs.append((attr, getattr(self, attr)))
+
+        for run in runs:
+            for attr, value in trait_pairs:
+                if value in (None, ""):
+                    continue
+                if force or not getattr(run, attr):
+                    setattr(run, attr, value)
 
     def _add_queue_meta(self, params):
         for attr in (
@@ -371,6 +454,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param("delay_before_analyses", meta, default_int)
         self._set_meta_param("delay_after_blank", meta, default_int)
         self._set_meta_param("delay_after_air", meta, default_int)
+        self._set_meta_param("delay_after_conditional", meta, default)
         self._set_meta_param("username", meta, default)
         self._set_meta_param("use_email", meta, bool_default)
         self._set_meta_param("email", meta, default)
@@ -440,7 +524,7 @@ class BaseExperimentQueue(RunBlock):
             ("t_o", COLLECTION_TIME_ZERO_OFFSET),
             ("measurement", "measurement_script"),
             ("conditionals", "conditionals"),
-            "syn_extraction",
+            ("syn_extraction", "syn_extraction_script"),
             USE_CDD_WARMING,
             ("post_meas", "post_measurement_script"),
             ("post_eq", "post_equilibration_script"),
@@ -478,6 +562,7 @@ class BaseExperimentQueue(RunBlock):
             delay_between_analyses=self.delay_between_analyses,
             delay_after_blank=self.delay_after_blank,
             delay_after_air=self.delay_after_air,
+            delay_after_conditional=self.delay_after_conditional,
             extract_device=self.extract_device,
             default_lighting=self.default_lighting,
             tray=self.tray or "",
@@ -495,9 +580,24 @@ class BaseExperimentQueue(RunBlock):
     # ===============================================================================
     def _delay_between_analyses_changed(self, new):
         self.stats.delay_between_analyses = new
+        self.invalidate_stats()
 
     def _delay_before_analyses_changed(self, new):
         self.stats.delay_before_analyses = new
+        self.invalidate_stats()
+
+    def _delay_after_blank_changed(self, new):
+        self.stats.delay_after_blank = new
+        self.invalidate_stats()
+
+    def _delay_after_air_changed(self, new):
+        self.stats.delay_after_air = new
+        self.invalidate_stats()
+
+    def _repository_identifier_changed(self, new):
+        normalized = normalize_repository_identifier(new)
+        if normalized != new:
+            self.repository_identifier = normalized
 
     def _mass_spectrometer_changed(self):
         ms = self.mass_spectrometer
@@ -511,6 +611,16 @@ class BaseExperimentQueue(RunBlock):
         )
         for a in self.automated_runs:
             a.spectrometer_manager = sm
+        self.invalidate_stats()
+
+    @on_trait_change(
+        "automated_runs:[measurement_script,post_measurement_script,post_equilibration_script,"
+        "extraction_script,syn_extraction_script,script_options,position,duration,cleanup,"
+        "pre_cleanup,post_cleanup,extract_value,extract_units,light_value,beam_diameter,"
+        "ramp_duration,ramp_rate,pattern,delay_after,skip,end_after,state]"
+    )
+    def _handle_automated_run_updates(self, obj, name, old, new):
+        self.invalidate_stats()
 
     # ===============================================================================
     # property get/set

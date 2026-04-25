@@ -553,9 +553,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def _make_diff_changes(self, rev, d):
         rev = self._repo.get_commit(rev)
-        print("asdf", d)
+        self.debug("building diff changes for %s", d)
         if d.change_type == "A":
-            print(rev.stats)
+            self.debug("added file stats=%s", rev.stats)
         elif d.change_type == "M":
             pass
         # txt = self._repo.diff('{}~1'.format(oid), oid, '--', new)
@@ -583,7 +583,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     # handlers
     def _refresh_branch_button_changed(self):
-        self._refresh_branches(fetch=True)
+        selected = self._has_selected_local()
+        if selected:
+            self._refresh_branches(fetch=True)
 
     def _selected_file_changed(self, new):
         if new:

@@ -18,8 +18,8 @@
 from __future__ import absolute_import
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool, Enum, Directory, Color, Range, Float, Int
-from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
+from traits.api import Bool, Enum, Directory, Range, Float, Int
+from traitsui.api import View, Item, VGroup, HGroup, Group, UItem, Color
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
@@ -29,6 +29,8 @@ from pychron.pychron_constants import (
     FUSIONS_CO2,
     FUSIONS_UV,
     OSTECH_DIODE,
+    TAP_DIODE,
+    UC2000_CO2,
 )
 
 
@@ -76,9 +78,12 @@ class LaserPreferences(BasePreferencesHelper):
     crosshairs_offset_color = Color("blue")
     crosshairs_line_width = Float(1.0)
 
+    aux_crosshairs_enabled = Bool
+    aux_crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float(0)
     aux_crosshairs_offsety = Float(0)
+    aux_crosshairs_offset_color = Color("red")
     aux_crosshairs_color = Color("red")
     aux_crosshairs_line_width = Float(1.0)
 
@@ -131,6 +136,16 @@ class FusionsUVPreferences(FusionsLaserPreferences):
 class OsTechDiodePreferences(LaserPreferences):
     name = OSTECH_DIODE
     preferences_path = "pychron.ostech.diode"
+
+
+class TAPDiodePreferences(LaserPreferences):
+    name = TAP_DIODE
+    preferences_path = "pychron.tap.diode"
+
+
+class UC2000CO2Preferences(LaserPreferences):
+    name = UC2000_CO2
+    preferences_path = "pychron.uc2000.co2"
 
 
 # ===============================================================================
@@ -298,7 +313,7 @@ class LaserPreferencesPane(PreferencesPane):
         return [canvasgrp, videogrp, autocenter_grp, patgrp, powergrp]
 
 
-class FusionsLaserPreferencesPane(PreferencesPane):
+class FusionsLaserPreferencesPane(LaserPreferencesPane):
     pass
 
 
@@ -320,6 +335,16 @@ class FusionsUVPreferencesPane(FusionsLaserPreferencesPane):
 class OsTechDiodePreferencesPane(LaserPreferencesPane):
     category = OSTECH_DIODE
     model_factory = OsTechDiodePreferences
+
+
+class TAPDiodePreferencesPane(LaserPreferencesPane):
+    category = TAP_DIODE
+    model_factory = TAPDiodePreferences
+
+
+class UC2000CO2PreferencesPane(LaserPreferencesPane):
+    category = UC2000_CO2
+    model_factory = UC2000CO2Preferences
 
 
 # ============= EOF =============================================

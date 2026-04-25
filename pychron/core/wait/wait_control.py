@@ -15,22 +15,25 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-import time
-from threading import Event
+from threading import current_thread
+from typing import Any, Callable
 
 # ============= enthought library imports =======================
-from traits.api import Str, Color, Button, Float, Bool, Property, Int, Event as TEvent
+from pyface.qt.QtCore import QTimer
+from pyface.qt.QtWidgets import QApplication
+from traits.api import Str, Button, Float, Bool, Property, Int, Event as TEvent
+from pyface.ui_traits import PyfaceColor
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.timer import Timer
 from pychron.loggable import Loggable
 
 
 class WaitControl(Loggable):
     page_name = Str("Wait")
-    message = Str
-    message_color = Color("black")
+    message = Str("")
+    message_color = PyfaceColor("black")
+    message_bgcolor = PyfaceColor("#eaebbc")
 
     high = Int(auto_set=False, enter_set=True)
     duration = Float(10)
@@ -40,153 +43,303 @@ class WaitControl(Loggable):
 
     auto_start = Bool(False)
     timer = None
-    end_evt = None
+    _on_finished: Callable[[], None] | None = None
 
     continue_button = Button("Continue")
     pause_button = TEvent
     pause_label = Property(depends_on="_paused")
+    status = Str("idle")
     _paused = Bool
     _continued = Bool
     _canceled = Bool
     _no_update = False
 
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any) -> None:
         self.reset()
         super(WaitControl, self).__init__(*args, **kw)
         if self.auto_start:
-            self.start(evt=self.end_evt)
+            self.start(block=False)
 
-    def is_active(self):
-        if self.timer:
-            return self.timer.isActive()
+    def _get_timer(self) -> QTimer:
+        timer = self.timer
+        if timer is None:
+            app = QApplication.instance()
+            timer = QTimer(app) if app is not None else QTimer()
+            timer.setInterval(1000)
+            timer.timeout.connect(self._update_time)
+            self.timer = timer
+            self.debug(
+                "wait_control timer created page={} timer_id={} app_present={} thread={}".format(
+                    self.page_name,
+                    id(timer),
+                    app is not None,
+                    current_thread().name,
+                )
+            )
+        return timer
 
-    def is_canceled(self):
-        return self._canceled
+    def _start_timer(self) -> None:
+        timer = self._get_timer()
+        if timer.isActive():
+            timer.stop()
+            self.debug(
+                "wait_control timer restarted page={} timer_id={} current_time={} status={} thread={}".format(
+                    self.page_name,
+                    id(timer),
+                    self.current_time,
+                    self.status,
+                    current_thread().name,
+                )
+            )
+        else:
+            self.debug(
+                "wait_control timer starting page={} timer_id={} current_time={} status={} thread={}".format(
+                    self.page_name,
+                    id(timer),
+                    self.current_time,
+                    self.status,
+                    current_thread().name,
+                )
+            )
+        timer.start()
 
-    def is_continued(self):
-        return self._continued
+    def _stop_timer(self) -> None:
+        timer = self.timer
+        if timer is not None and timer.isActive():
+            self.debug(
+                "wait_control timer stopping page={} timer_id={} current_time={} status={} thread={}".format(
+                    self.page_name,
+                    id(timer),
+                    self.current_time,
+                    self.status,
+                    current_thread().name,
+                )
+            )
+            timer.stop()
 
-    def join(self, evt=None):
-        if evt is None:
-            evt = self.end_evt
+    def is_active(self) -> bool:
+        return bool(self.timer and self.timer.isActive())
 
-        if self.duration > 1:
-            evt.wait(self.duration - 1)
+    def _is_timer_active(self) -> bool:
+        return self.is_active()
 
-        while not evt.wait(timeout=0.25):
-            time.sleep(0.25)
+    def is_canceled(self) -> bool:
+        return self.status in ("canceled", "stopped")
 
-        self.debug("Join finished")
+    def is_continued(self) -> bool:
+        return self.status == "continued"
 
-    def start(self, block=True, evt=None, duration=None, message=None, paused=False):
-        if self.end_evt:
-            self.end_evt.set()
+    def set_message(
+        self,
+        message: str,
+        *,
+        color: str | None = None,
+        bgcolor: str | None = None,
+        wait: bool = True,
+    ) -> None:
+        traits: dict[str, Any] = {"message": message}
+        if color is not None:
+            traits["message_color"] = color
+        if bgcolor is not None:
+            traits["message_bgcolor"] = bgcolor
+        self.trait_set(**traits)
 
-        if evt is None:
-            evt = Event()
+    def set_remaining_time(self, remaining: float, *, wait: bool = False) -> None:
+        self.trait_set(current_time=remaining)
 
-        if evt:
-            evt.clear()
-            self.end_evt = evt
+    def continue_wait(self) -> None:
+        self._continue()
 
-        if self.timer:
-            self.timer.stop()
-            self.timer.wait_for_completion()
+    def _finish(
+        self,
+        status: str,
+        *,
+        remaining_time: float | None = None,
+        message: str | None = None,
+        color: str | None = None,
+    ) -> None:
+        traits: dict[str, Any] = {
+            "status": status,
+            "_continued": status == "continued",
+            "_canceled": status in ("canceled", "stopped"),
+        }
+        if remaining_time is not None:
+            traits["current_time"] = remaining_time
+        if message is not None:
+            traits["message"] = message
+        if color is not None:
+            traits["message_color"] = color
 
-        if duration:
-            # self.duration = 1
+        self.debug(
+            "wait_control finish page={} from_status={} to_status={} remaining_time={} message={} thread={}".format(
+                self.page_name,
+                self.status,
+                status,
+                remaining_time,
+                message,
+                current_thread().name,
+            )
+        )
+        self.trait_set(**traits)
+
+        self._stop_timer()
+        on_finished = self._on_finished
+        self._on_finished = None
+        if on_finished is not None:
+            on_finished()
+
+    def start(
+        self,
+        block: bool = True,
+        duration: float | None = None,
+        message: str | None = None,
+        paused: bool = False,
+        on_finished: Callable[[], None] | None = None,
+    ) -> None:
+        if block:
+            raise RuntimeError(
+                "WaitControl.start(block=True) is no longer supported; "
+                "start waits via WaitGroup.start_wait or a caller-owned completion event"
+            )
+
+        self.debug(
+            "wait_control start page={} duration_arg={} message={} paused={} current_time={} status={} thread={}".format(
+                self.page_name,
+                duration,
+                message,
+                paused,
+                self.current_time,
+                self.status,
+                current_thread().name,
+            )
+        )
+        self._on_finished = on_finished
+        self._stop_timer()
+
+        if duration is not None:
             self.duration = duration
             self.reset()
 
         if message:
-            self.message = message
+            self.set_message(message)
 
-        self.timer = Timer(1000, self._update_time, delay=1000)
-        self._continued = False
-        self._paused = paused
+        self._start_timer()
+        self.trait_set(
+            status="running",
+            _continued=False,
+            _canceled=False,
+            _paused=paused,
+            message_color="black",
+            message_bgcolor="#eaebbc",
+        )
 
-        if block:
-            self.join(evt=evt)
-            if evt == self.end_evt:
-                self.end_evt = None
-
-    def stop(self):
-        self._end()
+    def stop(self) -> None:
+        status = "stopped" if self.is_active() else "canceled"
+        self.debug(
+            "wait_control stop page={} chosen_status={} current_time={} status={} thread={}".format(
+                self.page_name,
+                status,
+                self.current_time,
+                self.status,
+                current_thread().name,
+            )
+        )
+        self._finish(status)
         self.debug("wait dialog stopped")
         if self.current_time > 1:
-            self.message = "Stopped"
-            self.message_color = "red"
-            # self.current_time = 0
+            self.set_message("Stopped", color="red")
 
-    def reset(self):
+    def reset(self) -> None:
         with no_update(self, fire_update_needed=False):
-            self.high = int(self.duration)
-            self.current_time = self.duration
-            self._paused = False
+            self.trait_set(
+                high=int(self.duration),
+                current_time=self.duration,
+                status="idle",
+                _paused=False,
+                _continued=False,
+                _canceled=False,
+            )
 
-    def pause(self):
-        self._paused = True
+    def pause(self) -> None:
+        self.trait_set(_paused=True)
 
     # ===============================================================================
     # private
     # ===============================================================================
 
-    def _continue(self):
-        self._paused = False
-        self._continued = True
-        self._end()
-        self.current_time = 0
+    def _continue(self) -> None:
+        self.debug(
+            "wait_control continue page={} current_time={} status={} thread={}".format(
+                self.page_name, self.current_time, self.status, current_thread().name
+            )
+        )
+        self.trait_set(_paused=False)
+        self._finish("continued", remaining_time=0, message="")
 
-    def _end(self):
-        self.message = ""
+    def _end(self) -> None:
+        self.debug(
+            "wait_control end page={} current_time={} status={} thread={}".format(
+                self.page_name, self.current_time, self.status, current_thread().name
+            )
+        )
+        self._finish("completed", remaining_time=0, message="")
 
-        if self.timer is not None:
-            self.timer.Stop()
-        if self.end_evt is not None:
-            self.end_evt.set()
-
-    def _update_time(self):
+    def _update_time(self) -> None:
         if self._paused:
+            self.debug(
+                "wait_control tick skipped page={} current_time={} status={} paused={} thread={}".format(
+                    self.page_name,
+                    self.current_time,
+                    self.status,
+                    self._paused,
+                    current_thread().name,
+                )
+            )
             return
-
         ct = self.current_time
-        if self.timer and self.timer.isActive():
-            self.current_time -= 1
+        if self._is_timer_active():
             ct -= 1
+            self.debug(
+                "wait_control tick page={} next_time={} current_time={} status={} thread={}".format(
+                    self.page_name,
+                    ct,
+                    self.current_time,
+                    self.status,
+                    current_thread().name,
+                )
+            )
             # self.debug('Current Time={}/{}'.format(ct, self.duration))
             if ct <= 0:
                 self._end()
-                self._canceled = False
             else:
-                self.current_time = ct
+                self.set_remaining_time(ct)
 
                 # def _current_time_changed(self):
                 # if self.current_time <= 0:
                 # self._end()
                 # self._canceled = False
 
-    def _get_current_display_time(self):
+    def _get_current_display_time(self) -> str:
         return "{:03d}".format(int(self.current_time))
 
-    def _get_pause_label(self):
+    def _get_pause_label(self) -> str:
         return "Unpause" if self._paused else "Pause"
 
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _pause_button_fired(self):
-        print("asdfas", self._paused)
-        self._paused = not self._paused
+    def _pause_button_fired(self) -> None:
+        self.trait_set(_paused=not self._paused)
 
-    def _continue_button_fired(self):
-        self._continue()
+    def _continue_button_fired(self) -> None:
+        self.continue_wait()
 
-    def _high_changed(self, v):
+    def _high_changed(self, v: int) -> None:
         if self._no_update:
             return
 
         self.duration = v
-        self.current_time = v
+        self.set_remaining_time(v)
 
         # def traits_view(self):
         # v = View(VGroup(

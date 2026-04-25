@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, Instance
+from typing import Any, List as TypingList
+
+from traits.api import Any, HasTraits, List, Property
 
 # from pychron.pipeline.plot.layout import FigureLayout
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -27,16 +29,29 @@ class FigureModel(HasTraits):
     analyses = List
     references = List
     plot_options = Any
-    _panel_klass = Instance("pychron.pipeline.plotters.figure_panel.FigurePanel")
+    # A class (callable) used to construct panels. This is intentionally not an
+    # Instance trait; subclasses override it with a *class* (e.g. SeriesPanel).
+    _panel_klass = Any
     titles = List
+
+    def _panel_klass_default(self):
+        # Lazy import to avoid import cycles.
+        from pychron.pipeline.plot.panels.figure_panel import FigurePanel
+
+        return FigurePanel
 
     # layout = Instance(FigureLayout, ())
     analysis_groups = List
     panel_gen = None
+    force_refresh_panels = True
+    _panel_signature = None
 
-    def refresh(self, force=False):
-        if not self.panels or force:
-            self.refresh_panels()
+    def refresh(self, force: bool = False) -> bool:
+        panels_rebuilt = False
+        if force:
+            panels_rebuilt = self.refresh_panels(force=True)
+        elif self._panels_need_refresh():
+            panels_rebuilt = self.refresh_panels()
 
         for p in self.panels:
             if not p.figures or force:
@@ -45,7 +60,9 @@ class FigureModel(HasTraits):
             for f in p.figures:
                 f.replot()
 
-    def dump_metadata(self):
+        return panels_rebuilt
+
+    def dump_metadata(self) -> TypingList[Any]:
         ps = []
 
         for pp in self.panels:
@@ -53,7 +70,7 @@ class FigureModel(HasTraits):
 
         return ps
 
-    def load_metadata(self, metadata):
+    def load_metadata(self, metadata: TypingList[Any]) -> None:
         for pp, meta in zip(self.panels, metadata):
             pp.load_metadata(meta)
 
@@ -61,12 +78,19 @@ class FigureModel(HasTraits):
     # def _analyses_items_changed(self):
     #     self.refresh_panels()
 
-    def refresh_panels(self):
-        ps = self._make_panels()
-        self.panels = ps
+    def refresh_panels(self, force: bool = False) -> bool:
+        if force or not self.panels or self.force_refresh_panels:
+            ps = self._make_panels()
+            self.panels = ps
+            self._panel_signature = self._make_panel_signature()
+            rebuilt = True
+        else:
+            self._sync_panels()
+            rebuilt = False
         self.reset_panel_gen()
+        return rebuilt
 
-    def reset_panel_gen(self):
+    def reset_panel_gen(self) -> None:
         self.panel_gen = (gi for gi in self.panels)
 
     def _panel_factory(self, *args, **kw):
@@ -113,7 +137,50 @@ class FigureModel(HasTraits):
 
         return gs
 
-    def _get_npanels(self):
+    def _make_panel_signature(self):
+        if self.analysis_groups:
+            groups = self.analysis_groups
+        else:
+            groups = [list(ais) for _, ais in groupby_key(self.analyses, "graph_id")]
+
+        titles = tuple(self.titles) if self.titles else ()
+        return tuple(
+            (
+                index,
+                tuple(sorted({getattr(ai, "group_id", 0) for ai in analyses})),
+                len(analyses),
+                titles[index] if index < len(titles) else None,
+            )
+            for index, analyses in enumerate(groups)
+        )
+
+    def _panels_need_refresh(self) -> bool:
+        return self._panel_signature != self._make_panel_signature()
+
+    def _sync_panels(self) -> None:
+        groups = self._make_panel_groups()
+        titles = tuple(self.titles) if self.titles else ()
+
+        for index, (panel, new_panel) in enumerate(zip(self.panels, groups)):
+            panel.analyses = new_panel.analyses
+            panel.references = getattr(new_panel, "references", [])
+            panel.plot_options = self.plot_options
+            panel.graph_id = new_panel.graph_id
+            if panel.figures:
+                grouped = [list(ais) for _, ais in groupby_key(panel.analyses, "group_id")]
+                for figure, analyses in zip(panel.figures, grouped):
+                    figure.analyses = analyses
+                    figure.options = self.plot_options
+                    figure.graph_id = panel.graph_id
+            if titles:
+                if index < len(titles):
+                    panel.title = titles[index]
+            elif self.plot_options.auto_generate_title:
+                panel.title = self.plot_options.generate_title(panel.analyses, index)
+
+        self._panel_signature = self._make_panel_signature()
+
+    def _get_npanels(self) -> int:
         return len(self.panels)
 
     def next_panel(self):

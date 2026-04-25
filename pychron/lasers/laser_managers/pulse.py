@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from threading import Thread
+from threading import Event as TEvent, Thread
 
 # ============= enthought library imports =======================
 from traits.api import (
@@ -43,6 +43,7 @@ from traitsui.api import (
 
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_control import WaitControl
 
 
@@ -105,7 +106,11 @@ class Pulse(HasTraits):
                 self.trait_set(duration=0, trait_change_notify=False)
                 return
 
-        self.wait_control.start()
+        done = TEvent()
+        invoke_in_main_thread(
+            self.wait_control.start, block=False, on_finished=done.set
+        )
+        done.wait()
 
         self.pulsing = False
         if man is not None:
@@ -123,7 +128,7 @@ class Pulse(HasTraits):
     def _pulse_button_fired(self):
         if self.pulsing:
             self.pulsing = False
-            self.wait_control.current_time = -1
+            self.wait_control.stop()
         else:
             self.pulsing = True
             t = Thread(target=self.start)

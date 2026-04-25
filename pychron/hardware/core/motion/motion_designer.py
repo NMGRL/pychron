@@ -104,7 +104,7 @@ class MotionDesigner(HasTraits):
         for i in linspace(0, atime, 50):
             x.append(i)
 
-            p = 0.5 * self.acceleration * i ** 2
+            p = 0.5 * self.acceleration * i**2
             y.append(p)
 
         # plot constant velocity
@@ -114,7 +114,7 @@ class MotionDesigner(HasTraits):
         for i in linspace(0, dtime, 50):
             x.append(atime + vtime + i)
             #            p = yo + self.velocity * i - 0.5 * self.deceleration * i ** 2
-            p = yo + self.velocity * i - 0.5 * self.acceleration * i ** 2
+            p = yo + self.velocity * i - 0.5 * self.acceleration * i**2
             y.append(p)
         g.new_series(x, y, render_style="connectedpoints")
 
@@ -132,7 +132,6 @@ class MotionDesigner(HasTraits):
     # g.new_series(x, yu, color='blue')
 
     def velocity_profile(self, plotid):
-
         #        v = self.velocity
         # ac = self.acceleration
         # dc = self.deceleration

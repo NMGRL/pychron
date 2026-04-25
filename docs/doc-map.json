@@ -1,0 +1,73 @@
+{
+  "mappings": [
+    {
+      "id": "hardware-matrix",
+      "document": "Hardware Compatibility Matrix",
+      "doc_file": "docs/hardware_compatibility_matrix.md",
+      "description": "Catalogues every supported hardware device: spectrometers, lasers, furnaces, gauges, actuators, and other peripherals. Covers the Python class and file that implements each device, the communication protocol (serial, Ethernet, GPIB, Modbus, etc.), required configuration fields, and flags for partial or stub implementations.",
+      "path_prefixes": [
+        "pychron/hardware/",
+        "pychron/spectrometer/",
+        "pychron/lasers/",
+        "pychron/furnace/"
+      ]
+    },
+    {
+      "id": "dvc-setup-guide",
+      "document": "DVC Setup Guide",
+      "doc_file": "docs/dvc_setup_guide.md",
+      "description": "Covers what Pychron DVC does, the three storage layers (DVCDatabase, MetaRepo, data repos), the complete initialization and first-run sequence, every configuration field and preference path, failure modes when GitHub/GitLab/MySQL is unreachable, and the per-lab branch and repo structure.",
+      "path_prefixes": [
+        "pychron/dvc/"
+      ]
+    },
+    {
+      "id": "pyscript-api",
+      "document": "PyScript API Reference",
+      "doc_file": "docs/pyscript_api_reference.md",
+      "description": "Documents every command, parameter, and context available in Pychron's PyScript DSL — the scripting language used for extraction and measurement scripts. Covers extraction commands, measurement commands, gosub, conditionals, sleep, and all context variables.",
+      "path_prefixes": [
+        "pychron/pyscripts/"
+      ]
+    },
+    {
+      "id": "multi-node-deployment",
+      "document": "Multi-Node Deployment Guide",
+      "doc_file": "docs/multi_node_deployment_guide.md",
+      "description": "Covers deploying Pychron across multiple computers (pyExperiment, pyValve, pyLaser, furPi), the ZMQ/RPC inter-process communication layer, valve and extraction line XML/YAML configuration, canvas configuration, and startup tests for multi-node setups.",
+      "path_prefixes": [
+        "pychron/extraction_line/"
+      ]
+    },
+    {
+      "id": "dashboard-config",
+      "document": "Dashboard Configuration Guide",
+      "doc_file": "docs/dashboard_config_guide.md",
+      "description": "Covers the Pychron dashboard system: server and client configuration, device monitoring, the dashboard config YAML format, publisher/subscriber setup, and how to add new monitored devices.",
+      "path_prefixes": [
+        "pychron/dashboard/"
+      ]
+    },
+    {
+      "id": "mass-spec-migration",
+      "document": "MassSpec Migration Guide",
+      "doc_file": "docs/mass_spec_migration_guide.md",
+      "description": "Documents the migration path from MassSpec to Pychron: the MassSpec database schema, what data the MassSpecReducedNode imports, what is lost or requires manual re-entry, the MassSpecReverter for reverse migration, and day-to-day workflow differences after migration.",
+      "path_prefixes": [
+        "pychron/mass_spec/",
+        "pychron/data_mapper/"
+      ]
+    },
+    {
+      "id": "installation-guide",
+      "document": "Installation Guide",
+      "doc_file": "docs/installation_guide.md",
+      "description": "Covers the current installation path using uv and pyproject.toml, the pychron-bootstrap CLI, Python version requirements, optional dependency groups, environment variables (PYCHRON_ALEMBIC_URL, PYCHRON_USE_LOGIN), and platform-specific notes for macOS, Linux, and Windows.",
+      "path_prefixes": [
+        "pyproject.toml",
+        "app_utils/",
+        "uv.lock"
+      ]
+    }
+  ]
+}

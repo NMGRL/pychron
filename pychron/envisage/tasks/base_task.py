@@ -48,7 +48,6 @@ from pychron.envisage.tasks.actions import (
     CloseOthersAction,
     AboutAction,
     OpenAdditionalWindow,
-    NoteAction,
     RestartAction,
     DocumentationAction,
     ChangeLogAction,
@@ -320,6 +319,16 @@ class BaseManagerTask(BaseTask):
     _default_extension = ""
     wildcard = None
     manager = Any
+
+    def prepare_destroy(self):
+        if self.manager:
+            if hasattr(self.manager, "prepare_destroy"):
+                self.manager.prepare_destroy()
+
+    def activated(self):
+        if self.manager:
+            if hasattr(self.manager, "activate"):
+                self.manager.activate()
 
     def view_pdf(self, p):
         self.view_file(p, application="Preview")

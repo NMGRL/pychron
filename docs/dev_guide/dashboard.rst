@@ -7,10 +7,16 @@ air pressure drops between a threshold value, runs experiments can be canceled a
 current configuration. Another example is if the bone pressure goes above a threshold the mass spectrometer inlet valve can be
 locked closed.
 
+The current implementation accepts either ``setupfiles/dashboard.xml`` or
+``setupfiles/dashboard.yaml`` and normalizes both formats into the same runtime
+model before polling starts. The pub/sub transport now carries structured
+dashboard events in parallel with the legacy topic/value messages so existing
+consumers can continue to function during the transition.
+
 
 Server
 ----------------
-configure using ``setupfiles/dashboard.xml``
+configure using ``setupfiles/dashboard.xml`` or ``setupfiles/dashboard.yaml``
 
 Client
 ----------------

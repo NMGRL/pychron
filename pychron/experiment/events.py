@@ -23,7 +23,8 @@ from traits.api import HasTraits, Str, Callable, Enum
 START_QUEUE = 1
 
 START_RUN = 2
-END_RUN = 3
+SAVE_RUN = 3
+END_RUN = 4
 
 END_QUEUE = 20
 
@@ -31,7 +32,7 @@ END_QUEUE = 20
 class ExperimentEventAddition(HasTraits):
     id = Str
     action = Callable
-    level = Enum(0, START_QUEUE, START_RUN, END_QUEUE, END_RUN)
+    level = Enum(0, START_QUEUE, START_RUN, END_QUEUE, END_RUN, SAVE_RUN)
 
     def do(self, ctx):
         if self.action is not None:

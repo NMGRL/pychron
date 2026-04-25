@@ -41,7 +41,6 @@ class Scene(HasTraits):
                 ci.set_canvas(c)
 
     def reset_layers(self):
-
         self.set_canvas(None)
         for li in self.layers:
             li.destroy()
@@ -148,7 +147,6 @@ class Scene(HasTraits):
             else:
                 layer = olayer
         else:
-
             n = len(self.layers)
             if layer > n - 1:
                 self.layers.append(Layer(name="{}".format(n)))
@@ -211,11 +209,10 @@ class Scene(HasTraits):
     # private
     def _render(self, gc, canvas, components, bounds):
         for ci in components:
-            if ci.is_in_region(*bounds):
-                if self.font:
-                    ci.font = self.font
-                ci.set_canvas(canvas)
-                ci.render(gc)
+            ci.set_canvas(canvas)
+            if self.font:
+                ci.font = self.font
+            ci.render(gc)
 
     def _get_canvas_parser(self, p=None):
         if p is not None:

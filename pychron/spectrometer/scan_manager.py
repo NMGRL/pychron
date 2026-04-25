@@ -96,6 +96,8 @@ class ScanManager(StreamGraphManager):
     use_log_events = Bool
     log_events_enabled = False
     _valve_event_list = List
+    _detector_series_cache = None
+    _last_graph_limit_update = 0
     # _prev_signals = None
     # _no_intensity_change_cnt = 0
     _suppress_isotope_change = False
@@ -127,13 +129,6 @@ class ScanManager(StreamGraphManager):
         self.isotope = iso
         self._set_detector(det)
         self._set_position()
-
-    def stop(self):
-        self.prepare_destroy()
-
-    def stop_scan(self):
-        self.dump_settings()
-        self._stop_timer()
 
         # clear our graph settings so on reopen events will fire
         # del self.graph_scale
@@ -196,6 +191,7 @@ class ScanManager(StreamGraphManager):
         self._graph_scan_width_changed()
 
         self._detector_changed(None, self.detector)
+        self._rebuild_detector_series_cache()
         # self._isotope_changed(None, self.isotope)
 
         # bind
@@ -270,6 +266,7 @@ class ScanManager(StreamGraphManager):
 
     def _toggle_detector(self, obj, name, old, new):
         self.graph.set_series_visibility(new, series=obj.name)
+        self._rebuild_detector_series_cache()
 
     def _update_magnet(self, obj, name, old, new):
         self.debug("update magnet {},{},{}".format(name, old, new))
@@ -348,25 +345,18 @@ class ScanManager(StreamGraphManager):
         keys, signals, _, _ = data
         if keys:
             self._signal_failed_cnt = 0
-            # if self._check_intensity_no_change(signals):
-            #     return
-            series, idxs = list(
-                zip(
-                    *(
-                        (i, keys.index(d.name))
-                        for i, d in enumerate(self.detectors)
-                        if d.name in keys
-                    )
-                )
+            mapping = self._map_scan_signals(keys, signals)
+            if not mapping:
+                return
+
+            series, signals = list(zip(*mapping))
+            x = self.graph.record_multiple(
+                signals, series=series, track_y=False
             )
-            signals = [signals[idx] for idx in idxs]
 
-            x = self.graph.record_multiple(signals, series=series, track_y=False)
-
-            if self.graph_y_auto:
-                mi, ma = self._get_graph_y_min_max()
-                if mi is not None and ma is not None:
-                    self.graph.set_y_limits(min_=mi, max_=ma, pad="0.1")
+            if self.graph_y_auto and self._should_update_graph_limits():
+                self.graph.update_y_limits(plotid=0, pad="0.1")
+                self._last_graph_limit_update = time.time()
 
             if self._recording and self.queue:
                 self.queue.put((x, keys, signals))
@@ -406,13 +396,6 @@ class ScanManager(StreamGraphManager):
                     "Scan is stopped! Close and reopen window to restart"
                 )
                 self._stop_timer()
-
-    def _stop_timer(self):
-        self.info("stopping scan timer")
-        if self.timer:
-            self.timer.Stop()
-        else:
-            self.debug("no timer to stop")
 
     def _start_recording(self):
         #        self._first_recording = True
@@ -465,7 +448,6 @@ class ScanManager(StreamGraphManager):
                                 det.intensity, self.detector
                             )
                         ):
-
                             self.debug(
                                 "aborting magnet move {} intensity {} > {}".format(
                                     det, det.intensity, threshold
@@ -481,6 +463,7 @@ class ScanManager(StreamGraphManager):
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR and self.detector:
             self.info("set position {} on {}".format(self.isotope, self.detector))
+            self.spectrometer.set_position_hook()
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
     @property
@@ -502,6 +485,7 @@ class ScanManager(StreamGraphManager):
 
     def _graph_changed(self):
         self.rise_rate.graph = self.graph
+        self._rebuild_detector_series_cache()
 
         plot = self.graph.plots[0]
         plot.value_range.on_trait_change(
@@ -543,6 +527,7 @@ class ScanManager(StreamGraphManager):
                 plot.line_width = (
                     emphasize_width if name == self.detector.name else nominal_width
                 )
+            self.graph.redraw(force=False)
 
             # mass = self.magnet.mass
             # if abs(mass) > 1e-5:
@@ -570,14 +555,13 @@ class ScanManager(StreamGraphManager):
 
     def _integration_time_changed(self):
         if self.integration_time:
-            self.debug("setting integration time={}".format(self.integration_time))
-
-            if not self.timer:
-                if self._is_active:
-                    self.spectrometer.set_integration_time(
-                        self.integration_time, force=True
-                    )
-                    self.reset_scan_timer()
+            self.debug("scan manager.setting integration time={}".format(self.integration_time))
+            if not self.timer or self.spectrometer.reset_scan_timer_on_integration:
+                #if self._is_active:
+                self.spectrometer.set_integration_time(
+                    self.integration_time, force=True
+                )
+                self.reset_scan_timer()
             else:
                 self._integration_time_flag = True
 
@@ -632,10 +616,10 @@ class ScanManager(StreamGraphManager):
         plot.x_axis.title = "Time"
         plot.y_axis.title = "Signal"
 
-        plot.x_axis.title_font = "Arial 14"
-        plot.x_axis.tick_label_font = "Arial 12"
-        plot.y_axis.title_font = "Arial 14"
-        plot.y_axis.tick_label_font = "Arial 12"
+        plot.x_axis.title_font = "modern 14"
+        plot.x_axis.tick_label_font = "modern 12"
+        plot.y_axis.title_font = "modern 14"
+        plot.y_axis.tick_label_font = "modern 12"
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):
@@ -644,21 +628,47 @@ class ScanManager(StreamGraphManager):
             det.series_id = i
 
         if plot.plots:
-
-            cp = plot.plots[det.name][0]
-            dt = DataTool(
-                plot=cp, component=plot, normalize_time=True, use_date_str=False
-            )
-            dto = DataToolOverlay(component=plot, tool=dt)
-            plot.tools.append(dt)
-            plot.overlays.append(dto)
-
-            n = self.graph_scan_width
-            n = max(n, 1 / 60.0)
-            mins = n * 60
-            g.data_limits[0] = 1.8 * mins
+            pass
+            # disable datatool for now
+            # cp = plot.plots[det.name][0]
+            # dt = DataTool(
+            #     plot=cp, component=plot, normalize_time=True, use_date_str=False
+            # )
+            # dto = DataToolOverlay(component=plot, tool=dt)
+            # plot.tools.append(dt)
+            # plot.overlays.append(dto)
+            #
+            # n = self.graph_scan_width
+            # n = max(n, 1 / 60.0)
+            # mins = n * 60
+            # g.data_limits[0] = 1.8 * mins
 
         return g
+
+    def _rebuild_detector_series_cache(self):
+        self._detector_series_cache = [
+            (i, d.name)
+            for i, d in enumerate(self.detectors)
+            if getattr(d, "active", True)
+        ]
+
+    def _map_scan_signals(self, keys, signals):
+        cache = self._detector_series_cache
+        if cache is None:
+            self._rebuild_detector_series_cache()
+            cache = self._detector_series_cache
+
+        key_indexes = {key: i for i, key in enumerate(keys)}
+        mapped = []
+        for series, det_name in cache:
+            idx = key_indexes.get(det_name)
+            if idx is not None:
+                mapped.append((series, signals[idx]))
+
+        return mapped
+
+    def _should_update_graph_limits(self):
+        return time.time() - self._last_graph_limit_update >= 0.5
 
     # ===============================================================================
     # property get/set

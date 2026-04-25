@@ -20,6 +20,7 @@ from chaco.label import Label
 from pyface.timer.do_later import do_later
 from traits.api import Instance, List, Property, on_trait_change
 from traitsui.api import View, VSplit, VGroup, HSplit
+from traitsui.group import HGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -40,16 +41,15 @@ class Caption(AbstractOverlay):
         self.label.text = text
 
     def _draw_component(self, gc, view_bounds=None, mode="normal"):
-        print("casdcasd")
+        pass
 
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
-        print("asdfasdfasdf")
+        pass
 
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
-        print("unasdf")
+        pass
 
     def draw(self, gc, view_bounds=None, mode="default"):
-        print("dafasfasfd")
         with gc:
             self.label.draw()
 
@@ -158,12 +158,13 @@ class IdeogramEditor(InterpretedAgeEditor):
         )
 
         g = self.get_component_view()
-        g.height = 750
-
+        # g.height = 0.75
+        # v = View(g,
+        #          resizable=True)
         v = View(
             VSplit(
                 g,
-                HSplit(
+                HGroup(
                     tbl_grp, ttest_grp, rvalues_grp, visible_when="additional_visible"
                 ),
             ),

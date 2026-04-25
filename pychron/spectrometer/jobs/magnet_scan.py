@@ -21,7 +21,7 @@ from traits.api import Any, Float, DelegatesTo, List, Bool, Property
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 
 # ============= standard library imports ========================
-from numpy import linspace, hstack, array, Inf
+from numpy import linspace, hstack, array, inf as Inf
 from numpy.core.umath import exp
 import random
 import time
@@ -73,7 +73,6 @@ class MagnetScan(SpectrometerTask):
     verbose = False
 
     def _scan_dac(self, values):
-
         self.graph.set_x_limits(values[0], values[-1])
         if self.spectrometer.simulation:
             self._peak_generator = psuedo_peak(

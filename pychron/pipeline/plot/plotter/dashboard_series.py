@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import annotations
 
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-from numpy import Inf
+from numpy import inf, ndarray
 from traits.api import Array, Dict
+
+from typing import Any
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -34,7 +35,7 @@ class DashboardSeries(BaseArArFigure):
     xs = Array
     measurements = Dict
 
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         for po in plots:
             if po.use:
@@ -57,7 +58,7 @@ class DashboardSeries(BaseArArFigure):
             #            data = self.measurements[px.name]
             #            if data is None:
             #                return
-            _mi, _ma = Inf, -Inf
+            _mi, _ma = inf, -inf
             with graph.no_regression(refresh=True):
                 plots = [po for po in plots if po.use]
 
@@ -82,7 +83,9 @@ class DashboardSeries(BaseArArFigure):
                     _ma = max(_ma, _mi + 3600 * window_hours)
                     graph.set_x_limits(min_=_mi, max_=_ma, pad="0.1", plotid=0)
 
-    def _plot_series(self, po, pid, xs, ys):
+    def _plot_series(
+        self, po: Any, pid: int, xs: ndarray, ys: ndarray
+    ) -> None:
         graph = self.graph
         try:
             scatter, p = graph.new_series(
@@ -94,7 +97,7 @@ class DashboardSeries(BaseArArFigure):
                 )
 
         except (KeyError, ZeroDivisionError) as e:
-            print("Series", e)
+            self.debug("Dashboard series plot error: {}".format(e))
 
 
 # ===============================================================================

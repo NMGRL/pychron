@@ -20,6 +20,7 @@
 from traits.api import Bool
 
 from socket import gethostbyname, gethostname
+from threading import Lock
 import zmq
 
 from pychron.headless_loggable import HeadlessLoggable
@@ -28,6 +29,8 @@ from pychron.headless_loggable import HeadlessLoggable
 class Broadcaster(HeadlessLoggable):
     _sock = None
     _req_sock = None
+    _context = None
+    _lock = None
     enabled = Bool(False)
 
     @property
@@ -36,7 +39,10 @@ class Broadcaster(HeadlessLoggable):
         return "{}:{}".format(host, self.port)
 
     def setup(self, port):
+        if self._lock is None:
+            self._lock = Lock()
         context = zmq.Context()
+        self._context = context
         self._setup_publish(context, port)
 
     def send_message(self, msg, verbose=True):
@@ -62,6 +68,23 @@ class Broadcaster(HeadlessLoggable):
                     self.warning("failed sending message: error {}: {}".format(e, msg))
             else:
                 self.debug("notifier not setup")
+
+    def close(self):
+        if self._lock is None:
+            self._lock = Lock()
+
+        with self._lock:
+            if self._sock is not None:
+                self._sock.setsockopt(zmq.LINGER, 0)
+                self._sock.close()
+                self._sock = None
+            if self._req_sock is not None:
+                self._req_sock.setsockopt(zmq.LINGER, 0)
+                self._req_sock.close()
+                self._req_sock = None
+            if self._context is not None:
+                self._context.term()
+                self._context = None
 
 
 # ============= EOF =============================================

@@ -47,7 +47,6 @@ def confirmation_dialog(
     if return_retval:
         return retval
     else:
-
         return retval in (YES, OK)
 
 

@@ -66,7 +66,6 @@ class XLSIrradiationSource:
         return list({r[nameidx].value for r in dm.iterrows(sheet, start=1)})
 
     def get_irradiation_import_spec(self, name):
-
         spec = ImportSpec()
 
         i = Irradiation()

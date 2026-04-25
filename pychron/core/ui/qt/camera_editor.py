@@ -24,7 +24,7 @@ from traits.api import Int, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from traitsui.qt.editor import Editor
 
 
 class _CameraEditor(Editor):
@@ -41,6 +41,8 @@ class _CameraEditor(Editor):
     def dispose(self):
         if self.timer:
             self.timer.stop()
+            self.timer = None
+        super(_CameraEditor, self).dispose()
 
     def _setup_loop(self):
         # if self.value is not None:
