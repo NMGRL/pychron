@@ -1,4 +1,4 @@
-sphinx>=1.7
+sphinx>=9.1.0
 pyyaml
 uncertainties
 recommonmark
