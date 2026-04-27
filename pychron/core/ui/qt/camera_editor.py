@@ -40,12 +40,25 @@ class _CameraEditor(Editor):
 
     def dispose(self):
         if self.timer:
-            self.timer.stop()
+            try:
+                self.timer.stop()
+                self.timer.timeout.disconnect()
+                self.timer.deleteLater()
+            except (RuntimeError, AttributeError):
+                pass
             self.timer = None
         super(_CameraEditor, self).dispose()
 
     def _setup_loop(self):
-        # if self.value is not None:
+        # Stop and cleanup old timer if it exists
+        if self.timer:
+            try:
+                self.timer.stop()
+                self.timer.timeout.disconnect()
+                self.timer.deleteLater()
+            except (RuntimeError, AttributeError):
+                pass
+        
         self.timer = QTimer(self.control)
         self.timer.timeout.connect(self._update)
         print("fps", self.factory.fps)
@@ -54,20 +67,24 @@ class _CameraEditor(Editor):
         self.timer.start()
 
     def _update(self):
-        if self.value:
-            # w, h = self.control.width(), self.control.height()
-            # img = self.value.get_image_data(size=(w, h))
-            img = self.value.get_image_data()
-            if img is not None:
-                s = img.shape
-                if s:
-                    im = QImage(img, s[1], s[0], QImage.Format_RGB32)
-                    # im = QImage(img, s[1], s[0], QImage.Format_RGB16)
-                    if self.swap:
-                        im = QImage.rgbSwapped(im)
+        try:
+            if self.value and self.control:
+                # w, h = self.control.width(), self.control.height()
+                # img = self.value.get_image_data(size=(w, h))
+                img = self.value.get_image_data()
+                if img is not None:
+                    s = img.shape
+                    if s:
+                        im = QImage(img, s[1], s[0], QImage.Format_RGB32)
+                        # im = QImage(img, s[1], s[0], QImage.Format_RGB16)
+                        if self.swap:
+                            im = QImage.rgbSwapped(im)
 
-                    pix = QPixmap.fromImage(im)
-                    self.control.setPixmap(pix)
+                        pix = QPixmap.fromImage(im)
+                        self.control.setPixmap(pix)
+        except (RuntimeError, AttributeError, ReferenceError):
+            # Object was deleted or is being cleaned up
+            pass
 
     def _create_control(self, parent):
         label = QLabel()

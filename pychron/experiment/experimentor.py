@@ -151,32 +151,19 @@ class Experimentor(DVCIrradiationable):
         if not queues:
             return
 
-        # Suppress invalidate_stats() calls during update to prevent cascading refresh cycles
-        # Re-enable after update completes, then process any pending invalidations
-        try:
-            for queue in queues:
-                queue._no_update = True
-            
-            self.debug("executor executable {}".format(self.executor.executable))
-            self.debug("updating stats, ")
-            self.executor.stats.experiment_queues = queues
-            self.executor.stats.calculate()
-            self.debug("stats calculated")
+        self.debug("executor executable {}".format(self.executor.executable))
+        self.debug("updating stats, ")
+        self.executor.stats.experiment_queues = queues
+        self.executor.stats.calculate()
+        self.debug("stats calculated")
 
-            self.refresh_executable(queues)
-            self.debug("executable refreshed")
+        self.refresh_executable(queues)
+        self.debug("executable refreshed")
 
-            self._set_analysis_metadata()
-            self.debug("analysis metadata step finished")
+        self._set_analysis_metadata()
+        self.debug("analysis metadata step finished")
 
-            self.debug("info updated")
-        finally:
-            # Re-enable updates and process any pending invalidations
-            for queue in queues:
-                queue._no_update = False
-                if queue._pending_stats_invalidation:
-                    queue._pending_stats_invalidation = False
-                    queue.invalidate_stats()
+        self.debug("info updated")
 
     def _set_analysis_metadata(self) -> None:
         cache = dict()
@@ -334,7 +321,9 @@ class Experimentor(DVCIrradiationable):
             return
 
         now = time.monotonic()
-        if now - self._last_refresh_info_update_ts < 0.25:
+        # Throttle window must be > timer cascade duration (250ms + 75ms = 325ms)
+        # Set to 0.4s (400ms) to prevent excessive update loop spam
+        if now - self._last_refresh_info_update_ts < 0.4:
             self.debug("refresh_info_needed throttled to avoid update loop")
             return
 

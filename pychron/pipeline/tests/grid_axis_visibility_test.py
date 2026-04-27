@@ -53,7 +53,7 @@ class DummyOptions:
     plot_bgcolor = "white"
     use_xgrid = True
     use_ygrid = True
-    show_all_grid_axes = False
+    show_all_axes = True
     xtitle_font = "modern 12"
     ytitle_font = "modern 12"
     xtick_in = 1
@@ -78,7 +78,7 @@ class GridAxisVisibilityTestCase(unittest.TestCase):
         return po
 
     def _apply(self, po=None, row=(0, 2), col=(1, 2), show_all=False):
-        self.figure.options.show_all_grid_axes = show_all
+        self.figure.options.show_all_axes = show_all
         plot = DummyPlot()
         self.figure._apply_aux_plot_options(False, plot, po or self._plot_options(), row, col)
         return plot
@@ -121,8 +121,8 @@ class GridAxisVisibilityTestCase(unittest.TestCase):
         self.assertEqual(plot.y_axis.tick_label_formatter(5), "")
 
     def test_ideogram_and_spectrum_options_expose_trait(self):
-        self.assertIsNotNone(IdeogramOptions().trait("show_all_grid_axes"))
-        self.assertIsNotNone(SpectrumOptions().trait("show_all_grid_axes"))
+        self.assertIsNotNone(IdeogramOptions().trait("show_all_axes"))
+        self.assertIsNotNone(SpectrumOptions().trait("show_all_axes"))
 
 
 if __name__ == "__main__":

@@ -143,6 +143,7 @@ class WaitGroup(HasTraits):
         block: bool = True,
     ) -> None:
         done = Event()
+        timeout_occurred = False
 
         def on_finished() -> None:
             control.debug(
@@ -183,12 +184,28 @@ class WaitGroup(HasTraits):
                     control.page_name, current_thread().name
                 )
             )
-            done.wait()
+            # Add safety timeout to prevent indefinite hangs if Qt timer never fires
+            # Timeout is duration + 5 seconds (buffer for event loop processing)
+            safety_timeout = (duration or 10) + 5.0
+            if not done.wait(timeout=safety_timeout):
+                timeout_occurred = True
+                control.warning(
+                    "wait_group safety timeout triggered page={} duration={} timeout={} thread={}".format(
+                        control.page_name,
+                        duration,
+                        safety_timeout,
+                        current_thread().name,
+                    )
+                )
+                # Force completion to prevent indefinite hang
+                self._invoke_on_main_thread(control._end, wait=True)
+            
             control.debug(
-                "wait_group wait complete page={} status={} current_time={} thread={}".format(
+                "wait_group wait complete page={} status={} current_time={} timeout={} thread={}".format(
                     control.page_name,
                     control.status,
                     control.current_time,
+                    timeout_occurred,
                     current_thread().name,
                 )
             )

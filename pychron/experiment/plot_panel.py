@@ -215,6 +215,7 @@ class PlotPanel(Loggable):
         if self.is_baseline:
             self.baseline_graph.refresh()
         else:
+            self.sniff_graph.refresh()
             self.isotope_graph.refresh()
 
     def new_isotope_plot(self, **kw):

@@ -164,6 +164,9 @@ def remove_backup(uuid_str):
     """
     remove uuid from backup recovery file
     """
+    if not os.path.exists(paths.backup_recovery_file):
+        return
+    
     with open(paths.backup_recovery_file, "r") as rfile:
         r = rfile.read()
 
@@ -195,7 +198,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # control
     # ===========================================================================
 
-    can_start = Property(depends_on="executable, _alive")
+    can_start = Property(depends_on="executable, alive")
     delaying_between_runs = Bool
     experiment_status = Instance(ExperimentStatus, ())
 
@@ -328,6 +331,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._last_progress_timestamp = 0.0
         self._last_stall_warning_timestamp = 0.0
         self._loop_heartbeat_timestamps = {}
+        # Initialize UI state - ensure start button is enabled when no experiment is open
+        self._sync_compatibility_state()
         # self.set_managers()
         # self.notification_manager = NotificationManager()
 
@@ -885,12 +890,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if hasattr(queue, "request_table_refresh"):
                 queue.request_table_refresh()
             else:
-                queue.refresh_table_needed = True
+                # Safely set trait from worker thread
+                invoke_in_main_thread(setattr, queue, "refresh_table_needed", True)
 
             if hasattr(queue, "request_info_refresh"):
                 queue.request_info_refresh()
             else:
-                queue.refresh_info_needed = True
+                # Safely set trait from worker thread
+                invoke_in_main_thread(setattr, queue, "refresh_info_needed", True)
 
     def sync_active_context(self, editor=None, queue=None, queues=None):
         if editor is not None:
@@ -903,9 +910,33 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.experiment_queue = queue
             selected = getattr(queue, "selected", None)
             self.selected_run = selected[0] if selected else None
+            # Reset controller state machine when a new experiment is opened
+            self.debug(f"sync_active_context: opening queue={queue.name}")
+            self._controller.reset()
+            # When user opens an experiment, assume it's executable
+            # (it will be set to False by validation if there are errors)
+            is_executable = True
+            self.debug(f"sync_active_context: opened queue is_executable={is_executable}, controller.is_alive={self._controller.is_alive}")
+            # Set both executable and sync state together to ensure Property recalculates
+            self._set_ui_traits(
+                executable=is_executable,
+                alive=self._controller.is_alive,
+                measuring=self._controller.measuring,
+                extracting=self._controller.extracting,
+                end_at_run_completion=self._controller.end_at_run_completion,
+            )
+            self.debug(f"sync_active_context: after traits - executable={self.executable}, alive={self.alive}, can_start={self.can_start}")
         elif editor is None:
             self.experiment_queue = None
             self.selected_run = None
+            self._controller.reset()
+            self._set_ui_traits(
+                executable=False,
+                alive=self._controller.is_alive,
+                measuring=self._controller.measuring,
+                extracting=self._controller.extracting,
+                end_at_run_completion=self._controller.end_at_run_completion,
+            )
 
         if queues is not None:
             self.experiment_queues = list(queues)
@@ -2962,6 +2993,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not func(inform):
                 raise PreExecuteCheckException(msg, self._err_message)
 
+        # Sync queue metadata (including repository_identifier) to runs before syncing repositories
+        for q in self.experiment_queues:
+            q.sync_queue_meta(force=True)
+
         if prog:
             prog.change_message("Syncing repositories")
 
@@ -3179,10 +3214,21 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             for e in experiment_ids:
                 if prog:
                     prog.change_message("Syncing {}".format(e))
+                try:
                     if not self.datahub.mainstore.sync_repo(e, use_progress=False):
-                        return e
+                        self.warning(f"Failed to sync repository '{e}': sync_repo returned False")
+                        return f"{e} (sync failed)"
                     if not self.datahub.mainstore.is_clean(e):
-                        return e
+                        # Try to auto-recover clean state
+                        if prog:
+                            prog.change_message("Cleaning repository state {}".format(e))
+                        from pychron.dvc.repository_sync import _recover_clean_state
+                        if not _recover_clean_state(self.datahub.mainstore, e):
+                            self.warning(f"Repository '{e}' is not clean (has uncommitted changes or diverged history)")
+                            return f"{e} (not clean)"
+                except Exception as ex:
+                    self.warning(f"Exception syncing repository '{e}': {ex}")
+                    return f"{e} (error: {str(ex)})"
 
     def _post_run_check(self, run):
         """

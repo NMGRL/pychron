@@ -24,6 +24,62 @@ def is_clean(dvc: Any, name: str) -> bool:
         return False
 
 
+def _recover_clean_state(dvc: Any, name: str) -> bool:
+    """
+    Try to recover a clean repository state by resetting to match the remote.
+    This is needed when a repo has diverged (commits ahead or behind).
+    
+    Returns True if successfully cleaned, False otherwise.
+    """
+    try:
+        repo = dvc._get_repository(name)
+        ahead, behind = repo.ahead_behind()
+        dvc.debug(f"Attempting to clean repository '{name}': ahead={ahead}, behind={behind}")
+        
+        if ahead == 0 and behind == 0:
+            return True
+        
+        # Try to fetch fresh data from remote
+        try:
+            repo._repo.remotes.origin.fetch()
+            dvc.debug(f"Fetched from remote for '{name}'")
+        except Exception as e:
+            dvc.debug(f"Fetch failed for '{name}': {e}")
+        
+        # Check status again
+        ahead, behind = repo.ahead_behind()
+        if ahead == 0 and behind == 0:
+            return True
+        
+        # If still behind, try another pull
+        if behind > 0:
+            try:
+                repo.pull(use_progress=False)
+                ahead, behind = repo.ahead_behind()
+                if ahead == 0 and behind == 0:
+                    dvc.debug(f"Repository '{name}' cleaned via additional pull")
+                    return True
+            except Exception as e:
+                dvc.debug(f"Additional pull failed for '{name}': {e}")
+        
+        # If still ahead (unpushed commits), reset to remote
+        if ahead > 0:
+            try:
+                current_branch = repo._repo.active_branch
+                remote_ref = repo._repo.remotes.origin.refs[current_branch.name]
+                repo._repo.head.reset(index=True, working_tree=True)
+                repo._repo.remotes.origin.pull()
+                dvc.debug(f"Repository '{name}' reset to match remote (discarded {ahead} local commits)")
+                return True
+            except Exception as e:
+                dvc.debug(f"Reset to remote failed for '{name}': {e}")
+        
+        return False
+    except Exception as e:
+        dvc.debug(f"Failed to recover clean state for '{name}': {e}")
+        return False
+
+
 def sync_repo(
     dvc: Any, name: str, use_progress: bool = True, pull_frequency: int | None = None
 ) -> bool | None:
@@ -49,10 +105,15 @@ def sync_repo(
             if elapsed is not None and elapsed < pull_frequency:
                 return True
 
-        repo = dvc._get_repository(name)
-        repo.pull(use_progress=use_progress, use_auto_pull=dvc.use_auto_pull)
-        sync_repo_from_data_collection(dvc, repo)
-        return True
+        try:
+            repo = dvc._get_repository(name)
+            repo.pull(use_progress=use_progress, use_auto_pull=dvc.use_auto_pull)
+            sync_repo_from_data_collection(dvc, repo)
+            return True
+        except Exception as e:
+            dvc.warning(f"Failed to pull/sync repository '{name}': {e}")
+            dvc.debug(f"Pull error details for '{name}'", exc_info=True)
+            return False
 
     dvc.debug("getting repository from remote")
 
@@ -64,10 +125,14 @@ def sync_repo(
         service.create_empty_repo(name)
         return True
 
-    if service.clone_from(name, root, dvc.organization):
-        repo = dvc._get_repository(name)
-        sync_repo_from_data_collection(dvc, repo)
-        return True
+    try:
+        if service.clone_from(name, root, dvc.organization):
+            repo = dvc._get_repository(name)
+            sync_repo_from_data_collection(dvc, repo)
+            return True
+    except Exception as e:
+        dvc.warning(f"Failed to clone repository '{name}': {e}")
+        dvc.debug(f"Clone error details for '{name}'", exc_info=True)
 
     dvc.warning_dialog(
         "name={} not in available repos "

@@ -23,6 +23,7 @@ from math import isfinite
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance, Float
 
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF, FAILED
 
@@ -177,7 +178,11 @@ class DataCollector(Consoleable):
                     self.trigger()
 
                 evt.wait(period)
-                self.automated_run.plot_panel.counts = i
+                
+                # Defer plot panel count update to main thread to avoid Qt operations on worker thread
+                # This prevents spinning wheel freeze from main thread responding to worker thread Qt signals
+                invoke_in_main_thread(self._update_plot_panel_counts, i)
+                
                 inc = self._iter_hook(i)
                 if inc is None:
                     break
@@ -198,6 +203,21 @@ class DataCollector(Consoleable):
         # t.join()
 
         self.debug("measurement finished")
+
+    def _update_plot_panel_counts(self, count):
+        """Update plot panel counts on main thread to avoid Qt operations on worker thread."""
+        if self.automated_run and self.automated_run.plot_panel:
+            self.automated_run.plot_panel.counts = count
+
+    def _update_plot_panel_visual(self):
+        """Update plot panel visuals on main thread to avoid Qt operations on worker thread."""
+        if self.plot_panel:
+            self.plot_panel.update()
+
+    def _adjust_plot_panel_total_counts(self, delta):
+        """Adjust plot panel total counts on main thread to avoid Qt operations on worker thread."""
+        if self.plot_panel:
+            self.plot_panel.total_counts -= delta
 
     def _post_iter_hook(self, i):
         self._flush_plot_buffers(cnt=i)
@@ -419,7 +439,18 @@ class DataCollector(Consoleable):
         if not force and not self._should_refresh_plot_panel(cnt, now):
             return
 
-        for buf in self._plot_data_buffers.values():
+        # Collect buffer data to pass to main thread
+        buffers_to_flush = list(self._plot_data_buffers.values())
+        self._plot_data_buffers.clear()
+        
+        # Defer all graph updates to main thread to avoid Qt operations on worker thread
+        invoke_in_main_thread(self._flush_plot_buffers_on_main_thread, buffers_to_flush)
+        
+        self._last_plot_panel_update = now
+    
+    def _flush_plot_buffers_on_main_thread(self, buffers):
+        """Flush plot buffers on main thread to avoid Qt operations on worker thread."""
+        for buf in buffers:
             xs = buf["xs"]
             ys = buf["ys"]
             if not xs:
@@ -445,10 +476,10 @@ class DataCollector(Consoleable):
             fit = buf["fit"]
             if fit:
                 graph.set_fit(fit, plotid=buf["plotid"], series=buf["fit_series"])
-
-        self._plot_data_buffers.clear()
-        self.plot_panel.update()
-        self._last_plot_panel_update = now
+        
+        # Update plot panel visuals
+        if self.plot_panel:
+            self.plot_panel.update()
 
     def _should_refresh_plot_panel(self, cnt, now):
         period = max(1, self.plot_panel_update_period)
@@ -622,7 +653,7 @@ class DataCollector(Consoleable):
                         *count_args
                     )
                 )
-                self.plot_panel.total_counts -= original_counts - i
+                invoke_in_main_thread(self._adjust_plot_panel_total_counts, original_counts - i)
                 return self._set_truncated()
 
         elif script_counts != original_counts:

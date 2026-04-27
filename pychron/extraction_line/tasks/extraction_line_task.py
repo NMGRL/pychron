@@ -50,16 +50,17 @@ class ExtractionLineTask(BaseHardwareTask):
     name = "Extraction Line"
     wait_pane = Instance(WaitPane)
 
-    def activated(self):
-        self.manager.activate()
-
     def prepare_destroy(self):
         self.manager.deactivate()
-        #         self.manager.closed(True)
 
     def create_central_pane(self):
+        """Create and configure the central pane with forced sizing."""
         g = CanvasPane(model=self.manager)
         return g
+    
+    def activated(self):
+        """Task activated - the pane will open with default large layout."""
+        self.manager.activate()
 
     def create_dock_panes(self):
         self.wait_pane = WaitPane(model=self.manager.wait_group, closable=True)
@@ -101,6 +102,7 @@ class ExtractionLineTask(BaseHardwareTask):
 
     def _default_layout_default(self):
         return TaskLayout(
+            center=PaneItem("pychron.extraction_line.canvas"),
             top=PaneItem("pychron.extraction_line.gauges"),
             left=PaneItem("pychron.extraction_line.explanation"),
             right=PaneItem("pychron.console"),

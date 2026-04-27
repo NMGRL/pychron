@@ -148,6 +148,7 @@ class DVC(Loggable):
     max_cache_size = Int
     irradiation_prefix = Str
     irradiation_project_prefix = Str
+    repository_root = Str
 
     git_service = None
     _cache = None
@@ -2571,9 +2572,8 @@ class DVC(Loggable):
         except AttributeError:
             try:
                 return getattr(self.meta_repo, item)
-            except AttributeError as e:
-                print(e, item)
-                # raise DVCException(item)
+            except AttributeError:
+                raise DVCException(item)
 
     # defaults
     def _db_default(self):

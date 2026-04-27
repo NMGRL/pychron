@@ -282,10 +282,10 @@ class BaseArArFigure(SelectionFigure):
 
     def _apply_aux_plot_options(self, is_bottom_plot, pp, po, row, col):
         options = self.options
-        show_all_grid_axes = bool(getattr(options, "show_all_grid_axes", False))
+        show_all_axes = bool(getattr(options, "show_all_axes", True))
 
         # print('aaa', pp.padding_left, pp.width, pp.outer_width)
-        if col[0] > 0 and not show_all_grid_axes:
+        if col[0] > 0 and not show_all_axes:
             pp.padding_left = max(20, int(pp.padding_left * 0.5))
 
         # print('bbb', pp.padding_left, pp.width, pp.outer_width)
@@ -312,7 +312,7 @@ class BaseArArFigure(SelectionFigure):
 
             axis.tick_label_font = getattr(options, "{}tick_font".format(k))
 
-        if row[0] < (row[1] - 1) and not is_bottom_plot and not show_all_grid_axes:
+        if row[0] < (row[1] - 1) and not is_bottom_plot and not show_all_axes:
             pp.x_axis.title = ""
             pp.x_axis.tick_visible = False
             pp.x_axis.tick_label_formatter = lambda x: ""
@@ -336,7 +336,7 @@ class BaseArArFigure(SelectionFigure):
                     pp.underlays.append(alt_axis)
                     pp.alt_axis = alt_axis
 
-            if not po.ytitle_visible or (col[0] > 0 and not show_all_grid_axes):
+            if not po.ytitle_visible or (col[0] > 0 and not show_all_axes):
                 pp.y_axis.title = ""
 
             if not po.ytick_visible:
@@ -348,7 +348,7 @@ class BaseArArFigure(SelectionFigure):
                 if (
                     po.has_fixed_ylimits()
                     and col[0] > 0
-                    and not show_all_grid_axes
+                    and not show_all_axes
                 ):
                     pp.y_axis.tick_label_formatter = lambda x: ""
 

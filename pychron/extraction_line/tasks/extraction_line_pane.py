@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
+from pyface.qt.QtCore import QSize
+from pyface.qt.QtWidgets import QSizePolicy
 from traits.api import Any, Int
 from traitsui.api import (
     View,
@@ -39,6 +41,16 @@ class CanvasPane(TraitsTaskPane):
     id = "pychron.extraction_line.canvas"
     name = "Extraction Line"
 
+    def create_contents(self, parent):
+        """Override to set Qt-level size policy."""
+        control = super().create_contents(parent)
+        
+        # Force Qt to expand - use massive minimum size as hard floor
+        control.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        control.setMinimumSize(1200, 900)
+        
+        return control
+
     def traits_view(self):
         v = View(
             UItem(
@@ -46,8 +58,6 @@ class CanvasPane(TraitsTaskPane):
                 defined_when="not plugin_canvases",
                 editor=InstanceEditor(),
                 style="custom",
-                height=700,
-                width=900,
             ),
             UItem(
                 "canvases",
@@ -58,9 +68,8 @@ class CanvasPane(TraitsTaskPane):
                     editor=InstanceEditor(),
                 ),
                 style="custom",
-                height=700,
-                width=900,
             ),
+            resizable=True,
         )
         return v
 
@@ -124,8 +133,8 @@ class GaugePane(TraitsDockPane):
 
 
 class PumpPane(TraitsDockPane):
-    name = "Pumps"
-    id = "pychron.extraction_line.pumps"
+    name = "Pump"
+    id = "pychron.extraction_line.pump"
 
     def traits_view(self):
         v = View(
@@ -133,7 +142,6 @@ class PumpPane(TraitsDockPane):
                 "pump_manager",
                 editor=InstanceEditor(),
                 style="custom",
-                height=125,
                 defined_when="pump_manager",
             )
         )
@@ -145,7 +153,13 @@ class ExplanationPane(TraitsDockPane):
     id = "pychron.extraction_line.explanation"
 
     def traits_view(self):
-        v = View(UItem("explanation", style="custom"))
+        v = View(
+            UItem(
+                "canvas_manager",
+                editor=InstanceEditor(),
+                style="custom",
+            )
+        )
         return v
 
 
@@ -154,20 +168,14 @@ class InspectorPane(TraitsDockPane):
     id = "pychron.extraction_line.inspector"
 
     def traits_view(self):
-        return View(UItem("canvas_view_model", style="custom", editor=InstanceEditor()))
-
-
-class ReadbackAdapter(TabularAdapter):
-    columns = [
-        ("Name", "name"),
-        ("Cmd", "last_command"),
-        ("Value", "last_response"),
-        ("Timestamp", "timestamp"),
-    ]
-    font = "arial 10"
-    name_width = Int(75)
-    cmd_width = Int(50)
-    value_width = Int(100)
+        v = View(
+            UItem(
+                "canvas_manager",
+                editor=InstanceEditor(),
+                style="custom",
+            )
+        )
+        return v
 
 
 class ReadbackPane(TraitsDockPane):
@@ -177,8 +185,10 @@ class ReadbackPane(TraitsDockPane):
     def traits_view(self):
         v = View(
             UItem(
-                "devices",
-                editor=TabularEditor(adapter=ReadbackAdapter(), auto_update=True, editable=False),
+                "readback_manager",
+                editor=InstanceEditor(),
+                style="custom",
+                defined_when="readback_manager",
             )
         )
         return v
@@ -189,55 +199,13 @@ class EditorPane(TraitsDockPane):
     id = "pychron.extraction_line.editor"
 
     def traits_view(self):
-        egrp = VGroup(
-            BorderHGroup(
-                icon_button_editor("increment_down_x", "arrow_left"),
-                icon_button_editor("increment_up_x", "arrow_right"),
-                UItem("x_magnitude"),
-                label="X",
-            ),
-            BorderHGroup(
-                icon_button_editor("increment_up_y", "arrow_up"),
-                icon_button_editor("increment_down_y", "arrow_down"),
-                UItem("y_magnitude"),
-                label="Y",
-            ),
-            BorderHGroup(
-                UItem("width"),
-                icon_button_editor("width_increment_minus_button", "delete"),
-                icon_button_editor("width_increment_plus_button", "add"),
-                label="Width",
-            ),
-            BorderHGroup(
-                UItem("height"),
-                icon_button_editor("height_increment_minus_button", "delete"),
-                icon_button_editor("height_increment_plus_button", "add"),
-                label="Height",
-            ),
-            UItem("color"),
-            UItem("save_button"),
-        )
-
-        agrp = BorderVGroup(
-            UItem("add_item_button"),
-            UItem("new_item_kind"),
-            UItem("new_item", style="custom", editor=InstanceEditor(view="edit_view")),
-            label="New Item",
-        )
-        g = VGroup(
+        v = View(
             UItem(
-                "groups",
+                "editor_view",
+                editor=InstanceEditor(),
                 style="custom",
-                editor=ListEditor(
-                    use_notebook=True,
-                    page_name=".name",
-                    selected="selected_group",
-                    editor=InstanceEditor(),
-                ),
             )
         )
-
-        v = View(VGroup(UItem("edit_mode"), VGroup(g, agrp, egrp, enabled_when="edit_mode")))
         return v
 
 

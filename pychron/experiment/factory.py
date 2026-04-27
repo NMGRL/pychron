@@ -20,6 +20,7 @@ from traits.api import Instance, Button, Bool, Property, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import PositiveInteger
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.experiment.automated_run.cryo.factory import CryoAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
@@ -253,12 +254,14 @@ class ExperimentFactory(DVCAble):
         if hasattr(queue, "request_table_refresh"):
             queue.request_table_refresh()
         else:
-            queue.refresh_table_needed = True
+            # Safely set trait from worker thread
+            invoke_in_main_thread(setattr, queue, "refresh_table_needed", True)
 
         if hasattr(queue, "request_info_refresh"):
             queue.request_info_refresh()
         else:
-            queue.refresh_info_needed = True
+            # Safely set trait from worker thread
+            invoke_in_main_thread(setattr, queue, "refresh_info_needed", True)
         if auto_save:
             self._auto_save()
 

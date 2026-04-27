@@ -236,7 +236,7 @@ class AppearanceSubOptions(SubOptions):
             Item("use_xgrid", label="XGrid Visible"),
             Item("use_ygrid", label="YGrid Visible"),
             Item(
-                "show_all_grid_axes",
+                "show_all_axes",
                 label="Show All Grid Axes",
                 tooltip="Keep axis titles and tick labels visible on every subplot in a grid",
             ),
@@ -686,7 +686,7 @@ class GroupMixin(HasTraits):
 class FigureOptions(BaseOptions, GroupMixin):
     bgcolor = Color
     plot_bgcolor = Color
-    show_all_grid_axes = Bool(False)
+    show_all_axes = Bool(True)
     plot_spacing = Range(0, 50)
     padding_left = Int(100)
     padding_right = Int(100)

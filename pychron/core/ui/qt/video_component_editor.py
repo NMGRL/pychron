@@ -70,17 +70,34 @@ class _VideoComponentEditor(_LaserComponentEditor):
         print("VideoComponentEditor stop")
         self._alive = False
         try:
-            self.playTimer.stop()
-        except RuntimeError:
+            if self.playTimer:
+                self.playTimer.stop()
+                # Explicitly disconnect and delete the timer to prevent callbacks after disposal
+                self.playTimer.timeout.disconnect()
+                self.playTimer.deleteLater()
+                self.playTimer = None
+        except (RuntimeError, AttributeError):
             pass
 
     def dispose(self):
+        # Disconnect trait change listener before disposing
+        try:
+            if self.value:
+                self.value.on_trait_change(self.stop, "closed_event", remove=True)
+                self.value.on_trait_change(self._update_fps, "fps", remove=True)
+        except (RuntimeError, AttributeError):
+            pass
         self.stop()
         super(_VideoComponentEditor, self).dispose()
 
     def update(self):
-        if self.control and self._alive:
-            self.value.request_redraw()
+        # Guard against object destruction during cleanup
+        try:
+            if self.control and self._alive and self.value:
+                self.value.request_redraw()
+        except (RuntimeError, AttributeError, ReferenceError):
+            # Object was deleted or is being cleaned up
+            pass
             # self.value.invalidate_and_redraw()
             # st = time.time()
             # et = time.time() - pt

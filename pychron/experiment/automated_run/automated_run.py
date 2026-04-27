@@ -455,7 +455,7 @@ class AutomatedRun(Loggable):
         else:
             fits = dict([f.split(":") for f in fits])
 
-        g = self.plot_panel.isotope_graph
+        g = self.plot_panel.isotope_graph if self.plot_panel else None
         for k, iso in isotopes.items():
             try:
                 fi = fits[k]
@@ -477,9 +477,10 @@ class AutomatedRun(Loggable):
             iso.set_fit_blocks(fi)
             self.debug('set "{}" to "{}"'.format(k, fi))
 
-            idx = self._get_plot_id_by_ytitle(g, k, iso)
-            if idx is not None:
-                g.set_regressor(iso.regressor, idx)
+            if g is not None:
+                idx = self._get_plot_id_by_ytitle(g, k, iso)
+                if idx is not None:
+                    g.set_regressor(iso.regressor, idx)
 
     def py_set_baseline_fits(self, fits):
         if not fits:
@@ -2324,26 +2325,12 @@ anaylsis_type={}
 
         """
         self.debug("activate detectors")
-        p = self.plot_panel
 
-        create = not self._syn_extraction_active or p is None
-        # if self.plot_panel is None:
-        #     create = True
-        # else:
-        #     cd = set([d.name for d in self.plot_panel.detectors])
-        #     ad = set(dets)
-        #     create = cd - ad or ad - cd
-        if create:
-            p = self._new_plot_panel(stack_order="top_to_bottom")
+        create = not self._syn_extraction_active or self.plot_panel is None
 
         self._active_detectors = self._set_active_detectors(dets)
 
         self.spectrometer_manager.spectrometer.active_detectors = self._active_detectors
-
-        if create:
-            p.create(self._active_detectors)
-        else:
-            p.isotope_graph.clear_plots()
 
         self.debug("clear isotope group")
 
@@ -2365,9 +2352,59 @@ anaylsis_type={}
 
         self._load_previous()
 
-        # self.debug('load analysis view')
-        p.analysis_view.load(self)
-        self.plot_panel = p
+        # Defer PlotPanel creation to main thread to avoid blocking worker thread with Qt operations
+        # This prevents the spinning wheel freeze when creating graphs on the worker thread
+        # Use an Event to signal when setup is complete so data collection can proceed
+        self._plot_panel_ready_event = TEvent()
+        self._plot_panel_ready_event.clear()
+        
+        invoke_in_main_thread(
+            self._setup_plot_panel_on_main_thread, create, self._active_detectors
+        )
+        
+        # Wait for plot panel to be ready on main thread before returning
+        # Timeout after 5 seconds to avoid indefinite hang
+        self.debug("waiting for plot panel setup on main thread...")
+        if not self._plot_panel_ready_event.wait(timeout=5.0):
+            self.warning("plot panel setup timed out after 5 seconds")
+        self.debug("plot panel ready, continuing with data collection")
+
+    def _setup_plot_panel_on_main_thread(self, create, active_detectors):
+        """
+        Setup plot panel on main thread.
+        
+        Called from worker thread via invoke_in_main_thread to avoid Qt object
+        creation on worker thread which causes main thread freeze.
+        
+        :param create: bool - whether to create new PlotPanel
+        :param active_detectors: list of detectors to activate
+        """
+        try:
+            self.debug("setup_plot_panel_on_main_thread: create={}".format(create))
+            
+            if create:
+                p = self._new_plot_panel(stack_order="top_to_bottom")
+                try:
+                    p.create(active_detectors)
+                except Exception as e:
+                    self.debug("ERROR creating plot panel: {}".format(e))
+                    import traceback
+                    self.debug(traceback.format_exc())
+            else:
+                p = self.plot_panel
+                if p:
+                    p.isotope_graph.clear_plots()
+            
+            # Load analysis view and assign plot panel
+            if p:
+                self.debug('load analysis view')
+                p.analysis_view.load(self)
+                self.plot_panel = p
+                
+            self.debug("plot panel setup complete")
+        finally:
+            # Signal that setup is complete (even if there was an error)
+            self._plot_panel_ready_event.set()
 
     def _load_previous(self):
         # this is necessary for measuring the baseline before doing a peakhop or multicollect

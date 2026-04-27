@@ -160,9 +160,10 @@ class BaseExperimentQueue(RunBlock):
             return
             
         self.stats.invalidate()
-        if self._stats_timer:
-            self._stats_timer.stop()
-        self._stats_timer = Timer(250, self._flush_stats)
+        # Only start a new timer if one isn't already pending
+        # This prevents rapid re-triggers from restarting the cascade
+        if not self._stats_timer:
+            self._stats_timer = Timer(250, self._flush_stats)
 
     def request_table_refresh(self, delay=75) -> None:
         if self._table_refresh_timer:

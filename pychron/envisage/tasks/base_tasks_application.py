@@ -224,7 +224,22 @@ class BaseTasksApplication(TasksApplication, Loggable):
         if os.path.isfile(path):
             try:
                 with open(path, "rb") as rfile:
-                    return pickle.load(rfile)
+                    loaded = pickle.load(rfile)
+                
+                # Debug: log what was loaded
+                debug_file = "/tmp/pychron_layout_debug.txt"
+                with open(debug_file, "a") as f:
+                    f.write(f"\n=== LOAD: All keys loaded from file: {list(loaded.keys())}\n")
+                
+                # Filter out extraction_line layouts - always use fresh defaults
+                filtered = {k: v for k, v in loaded.items() 
+                           if 'extraction_line' not in k}
+                
+                # Debug: log what we're actually using
+                with open(debug_file, "a") as f:
+                    f.write(f"=== LOAD: Filtered keys being used: {list(filtered.keys())}\n")
+                
+                return filtered
             except BaseException:
                 logger.exception("Restoring task window layouts from %s", path)
         return {}
@@ -234,8 +249,22 @@ class BaseTasksApplication(TasksApplication, Loggable):
         try:
             # Ensure parent directory exists
             os.makedirs(os.path.dirname(path), exist_ok=True)
+            
+            # Debug: log all keys before filtering
+            debug_file = "/tmp/pychron_layout_debug.txt"
+            with open(debug_file, "a") as f:
+                f.write(f"\n=== SAVE: All keys in _task_window_layouts: {list(self._task_window_layouts.keys())}\n")
+            
+            # Never persist extraction_line task layout - always use fresh defaults
+            layouts_to_save = {k: v for k, v in self._task_window_layouts.items() 
+                             if 'extraction_line' not in k}
+            
+            # Debug: log what we're actually saving
+            with open(debug_file, "a") as f:
+                f.write(f"=== SAVE: Filtered keys to save: {list(layouts_to_save.keys())}\n")
+            
             with open(path, "wb") as wfile:
-                pickle.dump(self._task_window_layouts, wfile)
+                pickle.dump(layouts_to_save, wfile)
         except BaseException:
             logger.exception("Saving task window layouts to %s", path)
 
