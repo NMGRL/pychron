@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from typing import Any
+
 import six
-from pyface.qt import QtGui
 from pyface.qt.QtGui import (
     QCompleter,
     QSizePolicy,
@@ -36,31 +37,32 @@ from pychron.envisage.resources import icon
 
 
 class ComboBoxWidget(QWidget):
-    def __init__(self, *args, **kw):
+    def __init__(self, *args: Any, **kw: Any) -> None:
         super(ComboBoxWidget, self).__init__(*args, **kw)
 
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.combo = combo = QComboBox()
+        self.combo = combo = QComboBox(self)
         combo.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         combo.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
 
-        self.button = button = QPushButton()
+        self.button = button = QPushButton(self)
         button.setEnabled(False)
+        button.setVisible(False)
         button.setIcon(icon("add").create_icon())
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setFixedWidth(20)
         button.setFixedHeight(20)
 
         layout.addWidget(combo)
-        layout.addSpacing(10)
         layout.addWidget(button)
-        self.setLayout(layout)
 
-    def setSizePolicy(self, *args, **kwargs):
+    def setSizePolicy(self, *args: Any, **kwargs: Any) -> None:
+        super(ComboBoxWidget, self).setSizePolicy(*args, **kwargs)
         self.combo.setSizePolicy(*args, **kwargs)
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         return getattr(self.combo, item)
 
 
@@ -69,7 +71,7 @@ class _ComboboxEditor(SimpleEditor):
     refresh = Event
     _onames = List
 
-    def init(self, parent):
+    def init(self, parent: QWidget) -> None:
         super(_ComboboxEditor, self).init(parent)
 
         self.control = control = self.create_combo_box()
@@ -108,22 +110,32 @@ class _ComboboxEditor(SimpleEditor):
 
         # self._no_enum_update = 0
         self.set_tooltip()
-        control.setCompleter(QCompleter(control))
+        if control.completer() is None:
+            control.setCompleter(QCompleter(control))
         self.sync_value(self.factory.refresh, "refresh", "from")
 
         if self.factory.addable:
             self.control.button.clicked.connect(self.update_add)
 
-    def _refresh_fired(self):
+    def _refresh_fired(self) -> None:
         self.update_editor()
 
-    def create_combo_box(self):
+    def create_combo_box(self) -> QComboBox | ComboBoxWidget:
         if self.factory.addable:
             return ComboBoxWidget()
         else:
             return super(_ComboboxEditor, self).create_combo_box()
 
-    def update_add(self):
+    def _set_add_button_state(self, value: str) -> None:
+        if not self.factory.addable:
+            return
+
+        button = self.control.button
+        can_add = bool(value) and value not in self._names
+        button.setEnabled(can_add)
+        button.setVisible(can_add)
+
+    def update_add(self) -> None:
         v = self.control.combo.currentText()
         if v and v not in self._names:
             self._names.append(v)
@@ -131,8 +143,9 @@ class _ComboboxEditor(SimpleEditor):
 
             self.rebuild_editor()
             self.control.combo.setEditText(v)
+        self._set_add_button_state("")
 
-    def update_text_object(self, text):
+    def update_text_object(self, text: str) -> None:
         """Handles the user typing text into the combo box text entry field."""
         if self._no_enum_update == 0:
             value = six.text_type(text)
@@ -150,8 +163,7 @@ class _ComboboxEditor(SimpleEditor):
             try:
                 self.value = value
                 self._set_background(OKColor)
-                if self.factory.addable:
-                    self.control.button.setEnabled(True)
+                self._set_add_button_state(value)
 
                 if self.factory.use_filter:
                     vv = self._value()
@@ -173,13 +185,12 @@ class _ComboboxEditor(SimpleEditor):
                         self.control.setEditText("")
 
             except TraitError as excp:
-                if self.factory.addable:
-                    self.control.button.setEnabled(False)
+                self._set_add_button_state("")
                 self._set_background(ErrorColor)
 
             self._no_enum_update -= 1
 
-    def update_editor(self):
+    def update_editor(self) -> None:
         """Updates the editor when the object trait changes externally to the
         editor.
         """
@@ -197,6 +208,7 @@ class _ComboboxEditor(SimpleEditor):
                     self.control.setEditText(self.str_value)
                 except:
                     self.control.setEditText("")
+            self._set_add_button_state("")
             self._no_enum_update -= 1
 
 

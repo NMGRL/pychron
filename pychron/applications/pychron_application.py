@@ -28,7 +28,8 @@ from traits.api import List, Str
 
 from pychron.applications.about_dialog import myAboutDialog
 from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.envisage.resources import splash_icon
+from pychron.core.ui.qt.gif_splash_screen import GIFSplashScreen
+from pychron.envisage.resources import splash_gif_path, splash_icon
 from pychron.envisage.tasks.base_tasks_application import BaseTasksApplication
 from pychron.paths import about_search_path
 
@@ -143,8 +144,18 @@ class PychronApplication(BaseTasksApplication):
         about_dialog.additions = self.about_additions
         return about_dialog
 
-    def _splash_screen_default(self):
-        sp = SplashScreen(image=splash_icon(self.shortname))
+    def _splash_screen_default(self) -> object:
+        gif_path = splash_gif_path()
+        if os.path.isfile(gif_path):
+            sp = GIFSplashScreen(
+                image_path=gif_path,
+                image=splash_icon(self.shortname),
+                show_log_messages=False,
+            )
+        else:
+            sp = SplashScreen(
+                image=splash_icon(self.shortname), show_log_messages=False
+            )
         return sp
 
     def get_version_info(self):

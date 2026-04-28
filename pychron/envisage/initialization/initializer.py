@@ -20,7 +20,6 @@ from traits.api import Any, List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -35,7 +34,6 @@ class Initializer(Loggable):
     name = "Initializer"
     _init_list = List
     _parser = Any
-    _pd = Any
 
     def add_initialization(self, a):
         """ """
@@ -54,8 +52,6 @@ class Initializer(Loggable):
             sum([self._get_nsteps(idict["plugin_name"]) for idict in self._init_list])
             + 1
         )
-
-        pd = self._setup_progress(nsteps)
         try:
             for idict in self._init_list:
                 ok = self._run(**idict)
@@ -64,8 +60,6 @@ class Initializer(Loggable):
 
             msg = "Complete" if ok else "Failed"
             self.info("Initialization {}".format(msg))
-
-            pd.close()
         except BaseException as e:
             import traceback
 
@@ -76,15 +70,6 @@ class Initializer(Loggable):
         return ok
 
     def info(self, msg, **kw):
-        pd = self._pd
-        if pd is not None:
-            offset = pd.get_value()
-
-            if offset == pd.max - 1:
-                pd.max += 1
-
-            pd.change_message(msg)
-
         super(Initializer, self).info(msg, **kw)
 
     def _run(self, name=None, manager=None, plugin_name=None):
@@ -212,7 +197,7 @@ class Initializer(Loggable):
             dev.application = self.application
             result = dev.bootstrap_result(
                 prefs=self.device_prefs,
-                progress=self._pd,
+                progress=None,
                 run_post_initialize=True,
             )
             self._register_loaded_device(dev, result)
@@ -293,20 +278,6 @@ class Initializer(Loggable):
             )
 
         manager.devices.append(dev)
-
-    # helpers
-    def _setup_progress(self, n):
-        """
-        n: int, initialize progress dialog with n steps
-
-        return a myProgressDialog object
-        """
-        pd = myProgressDialog(
-            max=n, message="Welcome", position=(100, 100), size=(500, 50)
-        )
-        self._pd = pd
-        self._pd.open()
-        return pd
 
     def _check_required(self, subtree):
         # check the subtree has all required devices enabled

@@ -50,7 +50,7 @@ def icon(name):
     return ImageResource(name=name, search_path=icon_search_path)
 
 
-def splash_icon(appname):
+def splash_icon(appname=""):
     name = "splash.png"
     ps = icon_search_path
     for si in icon_search_path:
@@ -63,6 +63,10 @@ def splash_icon(appname):
             ps.append(splashes)
 
     return ImageResource(name=name, search_path=ps)
+
+
+def splash_gif_path() -> str:
+    return os.path.join(splashes, "splash.gif")
 
 
 class Icon(ImageResource):
