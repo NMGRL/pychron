@@ -50,6 +50,7 @@ dependencies = [
     "pyyaml>=6.0.3,<7",
     "qimage2ndarray>=1.10.0,<2",
     "reportlab>=4.4.4,<5",
+    "google-auth>=2.30.0,<3",
     "requests>=2.32.5,<3",
     "requests-oauthlib>=2.0.0,<3",
     "scikit-image>=0.26.0,<1",
