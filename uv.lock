@@ -391,14 +391,14 @@ wheels = [
 
 [[package]]
 name = "gitpython"
-version = "3.1.49"
+version = "3.1.50"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "gitdb" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/63/210aaa302d6a0a78daa67c5c15bbac2cad361722841278b0209b6da20855/gitpython-3.1.49.tar.gz", hash = "sha256:42f9399c9eb33fc581014bedd76049dfbaf6375aa2a5754575966387280315e1", size = 219367, upload-time = "2026-04-29T00:31:20.478Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/f6/354ae6491228b5eb40e10d89c4d13c651fe1cf7556e35ebdded50cff57ce/gitpython-3.1.50.tar.gz", hash = "sha256:80da2d12504d52e1f998772dc5baf6e553f8d2fcfe1fcc226c9d9a2ee3372dcc", size = 219798, upload-time = "2026-05-06T04:01:26.571Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/6f/b842bfa6f21d6f87c57f9abf7194225e55279d96d869775e19e9f7236fc5/gitpython-3.1.49-py3-none-any.whl", hash = "sha256:024b0422d7f84d15cd794844e029ffebd4c5d42a7eb9b936b458697ef550a02c", size = 212190, upload-time = "2026-04-29T00:31:18.412Z" },
+    { url = "https://files.pythonhosted.org/packages/20/7a/1c6e3562dfd8950adbb11ffbc65d21e7c89d01a6e4f137fa981056de25c5/gitpython-3.1.50-py3-none-any.whl", hash = "sha256:d352abe2908d07355014abdd21ddf798c2a961469239afec4962e9da884858f9", size = 212507, upload-time = "2026-05-06T04:01:23.799Z" },
 ]
 
 [[package]]
@@ -966,7 +966,7 @@ requires-dist = [
     { name = "chaco", specifier = ">=6.1.1,<7" },
     { name = "cryptography", specifier = ">=46.0.3,<47" },
     { name = "envisage", specifier = ">=7.0.4,<8" },
-    { name = "gitpython", specifier = ">=3.1.49,<4" },
+    { name = "gitpython", specifier = ">=3.1.50,<4" },
     { name = "jinja2", specifier = ">=3.1.6,<4" },
     { name = "lxml", specifier = ">=6.1.0,<7" },
     { name = "matplotlib", specifier = ">=3.10.9,<4" },
@@ -985,7 +985,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3,<7" },
     { name = "qimage2ndarray", specifier = ">=1.10.0,<2" },
     { name = "reportlab", specifier = ">=4.5.0,<5" },
-    { name = "requests", specifier = ">=2.32.5,<3" },
+    { name = "requests", specifier = ">=2.34.0,<3" },
     { name = "requests-oauthlib", specifier = ">=2.0.0,<3" },
     { name = "scikit-image", specifier = ">=0.26.0,<1" },
     { name = "scipy", specifier = ">=1.16.2,<2" },
@@ -1246,7 +1246,7 @@ wheels = [
 
 [[package]]
 name = "requests"
-version = "2.33.1"
+version = "2.34.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -1254,9 +1254,9 @@ dependencies = [
     { name = "idna" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/a4/98b9c7c6428a668bf7e42ebb7c79d576a1c3c1e3ae2d47e674b468388871/requests-2.33.1.tar.gz", hash = "sha256:18817f8c57c6263968bc123d237e3b8b08ac046f5456bd1e307ee8f4250d3517", size = 134120, upload-time = "2026-03-30T16:09:15.531Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/43/b8/7a707d60fea4c49094e40262cc0e2ca6c768cca21587e34d3f705afec47e/requests-2.34.0.tar.gz", hash = "sha256:7d62fe92f50eb82c529b0916bb445afa1531a566fc8f35ffdc64446e771b856a", size = 142436, upload-time = "2026-05-11T19:29:51.717Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/8e/7540e8a2036f79a125c1d2ebadf69ed7901608859186c856fa0388ef4197/requests-2.33.1-py3-none-any.whl", hash = "sha256:4e6d1ef462f3626a1f0a0a9c42dd93c63bad33f9f1c1937509b8c5c8718ab56a", size = 64947, upload-time = "2026-03-30T16:09:13.83Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/e6/e300fce5fe83c30520607a015dabd985df3251e188d234bfe9492e17a389/requests-2.34.0-py3-none-any.whl", hash = "sha256:917520a21b767485ce7c588f4ebb917c436b24a31231b44228715eaeb5a52c60", size = 73021, upload-time = "2026-05-11T19:29:49.923Z" },
 ]
 
 [[package]]
@@ -1536,11 +1536,11 @@ wheels = [
 
 [[package]]
 name = "types-pytz"
-version = "2026.1.1.20260408"
+version = "2026.2.0.20260506"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f7/b7/33f5a4f29b1f285b99ff79a607751a7996194cbb98705e331dab7a2daa28/types_pytz-2026.1.1.20260408.tar.gz", hash = "sha256:89b6a34b9198ea2a4b98a9d15cbca987053f52a105fd44f7ce3789cae4349408", size = 10788, upload-time = "2026-04-08T04:28:14.54Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/2e/a545aae2c4d2af7e3b7b967049c2f271b2f5338d96a58224fe1ee53a54f3/types_pytz-2026.2.0.20260506.tar.gz", hash = "sha256:fc6a0de6a1b7da82a748fb4065e152372dac3016559cb1eef5e8af1e338eb627", size = 10844, upload-time = "2026-05-06T05:17:51.964Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/90/12c059e6bb330a22d9cc97daf027ac7fb7f50fbf518e4d88185b4d39120e/types_pytz-2026.1.1.20260408-py3-none-any.whl", hash = "sha256:c7e4dec76221fb7d0c97b91ad8561d689bebe39b6bcb7b728387e7ffd8cde788", size = 10124, upload-time = "2026-04-08T04:28:13.353Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/cd/df3e4ccccb2a5a0b7e59c9fb2baafb6dac0817e80799e4c9854fe4d2eba3/types_pytz-2026.2.0.20260506-py3-none-any.whl", hash = "sha256:58ab5307c20885f9bcd42ff106616eb0e32710791f8cbdc770aee2ea0c4f01fb", size = 10120, upload-time = "2026-05-06T05:17:51.026Z" },
 ]
 
 [[package]]
