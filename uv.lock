@@ -1566,11 +1566,11 @@ wheels = [
 
 [[package]]
 name = "types-simplejson"
-version = "3.20.0.20260408"
+version = "3.20.0.20260508"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9f/36/e319fd0f6d906dbf7c2c03eef17db77ef461197a75b253fccd9c7c695d3e/types_simplejson-3.20.0.20260408.tar.gz", hash = "sha256:0b0e1bf61e70f81dfe6ef4c2b9c02e39403848c0652df334e7a430c3a26c06b3", size = 10693, upload-time = "2026-04-08T04:28:07.8Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/81/567f88a4a5ad49c648c5f36d9543220d762c2661dca122db0f8095b3c1ab/types_simplejson-3.20.0.20260508.tar.gz", hash = "sha256:4e7469e2d4f4ec06da6538ed027a8d0831721f2dde13ea9043d2fcddeba5cac5", size = 10706, upload-time = "2026-05-08T04:47:05.059Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/c0/01a5a4c3948c2269cf9d727e5e66a8b404e03beb4f9522680a3f71097011/types_simplejson-3.20.0.20260408-py3-none-any.whl", hash = "sha256:f9e542199cb159ed34ad54b6ceb3dc9af890c256b810ad1bd7c69c61db7d2236", size = 10415, upload-time = "2026-04-08T04:28:06.984Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/42/2c384dd111ad6beb34addf29e4932d1498f2c5d748b765449e2d6e23c90a/types_simplejson-3.20.0.20260508-py3-none-any.whl", hash = "sha256:f1ed32af465bda1755feffd2e36c8156acdea8644781f8616bd43b344ac9c121", size = 10406, upload-time = "2026-05-08T04:47:03.977Z" },
 ]
 
 [[package]]
