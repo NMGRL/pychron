@@ -1,14 +1,15 @@
 # Documentation Update Review
 
-**Triggered by commit:** `b0de8897f`  
-**Generated:** 2026-04-13 16:46 UTC  
-**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
+**Triggered by commit:** `c11d3a737`  
+**Generated:** 2026-04-30 20:42 UTC  
+**Compare:** [`4f756763caa25541ecd6a59937cdc893aa898fe2...c11d3a737`](../../compare/4f756763caa25541ecd6a59937cdc893aa898fe2...c11d3a737)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
+| [DVC Setup Guide](#dvc-setup-guide) | 1 file | ✅ Reviewed |
+| [Installation Guide](#installation-guide) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,16 +17,53 @@
 <summary>Click to expand</summary>
 
 ```
-.github/workflows/ci.yml
-.github/workflows/dependabot_automerge.yml
-.github/workflows/deploy-docs.yml
-.github/workflows/doc-maintenance.yml
-.github/workflows/wikidocs.yml
+pychron/core/tests/bridge_client_test.py
+pychron/core/tests/bridge_host_test.py
+pychron/core/tests/dvc_make_url_hook_test.py
+pychron/dvc/dvc.py
+pychron/envisage/pychron_run.py
+pychron/git/hosts/_bridge_client.py
+pychron/git/hosts/bridge.py
+pychron/git/tasks/bridge_plugin.py
+pychron/git/tasks/bridge_preferences.py
 pyproject.toml
-uv.lock
 ```
 
 </details>
+
+---
+
+## DVC Setup Guide {#dvc-setup-guide}
+
+**Doc file:** `docs/dvc_setup_guide.md`  
+**Matched prefixes:** `pychron/dvc/`
+
+### Changed Files
+
+- `pychron/dvc/dvc.py`
+
+### AI Review
+
+## Code Change Summary
+The code adds a new "Pychron Forgejo Bridge" service that takes priority over the existing GitHub/GitLab git hosting services when making repository URLs. This introduces a new component in the DVC architecture that can override the standard git host resolution, with fallback behavior to the legacy services when the bridge fails or returns empty URLs.
+
+## Documentation Updates Required
+
+- **Section/Topic:** Storage layers / DVC architecture overview
+  **Issue:** The documentation likely describes only GitHub/GitLab as git hosting options, but now there's a Bridge service that can take priority
+  **Suggested update:** Add explanation that a "Pychron Forgejo Bridge" service can be registered and enabled to override standard git host URL resolution, with automatic fallback to GitHub/GitLab when the bridge is unavailable or returns no URL
+
+- **Section/Topic:** Configuration fields and preferences
+  **Issue:** Missing documentation for Bridge service configuration options
+  **Suggested update:** Document the Bridge service configuration fields including how to enable it ("enabled" property) and any setup requirements for the Bridge to properly resolve repository URLs
+
+- **Section/Topic:** Failure modes section
+  **Issue:** New failure mode not documented - what happens when Bridge is enabled but fails
+  **Suggested update:** Add failure mode describing Bridge service fallback behavior: when Bridge returns empty URL or fails, system automatically falls back to configured GitHub/GitLab service with a warning logged
+
+- **Section/Topic:** Initialization and first-run sequence
+  **Issue:** The service registration and priority handling for Bridge vs standard git hosts is not covered
+  **Suggested update:** Explain that during DVC initialization, if multiple IGitHost services are registered, the Bridge service (when enabled) takes priority over GitHub/GitLab services for URL resolution
 
 ---
 
@@ -37,23 +75,25 @@ uv.lock
 ### Changed Files
 
 - `pyproject.toml`
-- `uv.lock`
 
 ### AI Review
 
 ## Code Change Summary
-
-The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
+A new dependency `google-auth>=2.30.0,<3` has been added to the core dependencies list in pyproject.toml. This is a significant addition as it introduces Google authentication capabilities as a required dependency for all Pychron installations, which may affect installation requirements, system dependencies, or authentication workflows that users need to be aware of.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Python version requirements / Dependencies section
-  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
-  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
+- **Section/Topic:** Dependencies or Requirements section
+  **Issue:** The installation guide may not mention the new google-auth dependency and any system-level requirements it might have
+  **Suggested update:** Add google-auth to the list of core dependencies and document any additional system requirements (such as specific SSL/TLS libraries) that may be needed for Google authentication to work properly
 
-- **Section/Topic:** Development environment setup (if covered)
-  **Issue:** Development dependency version requirement for mypy is outdated
-  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
+- **Section/Topic:** Authentication or Configuration section  
+  **Issue:** The addition of google-auth as a core dependency suggests new authentication capabilities that may require user configuration
+  **Suggested update:** Document any new environment variables, configuration files, or setup steps required for Google authentication integration, including how this relates to the existing PYCHRON_USE_LOGIN environment variable
+
+- **Section/Topic:** Troubleshooting or Platform-specific notes
+  **Issue:** Google authentication libraries may have platform-specific installation or runtime requirements that could cause issues
+  **Suggested update:** Add troubleshooting guidance for common google-auth related installation issues, particularly on different platforms (macOS, Linux, Windows) where SSL certificate handling or system authentication libraries might differ
 
 ---
 
