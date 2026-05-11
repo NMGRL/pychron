@@ -1,14 +1,16 @@
 # Documentation Update Review
 
-**Triggered by commit:** `b0de8897f`  
-**Generated:** 2026-04-13 16:46 UTC  
-**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
+**Triggered by commit:** `86da37ede`  
+**Generated:** 2026-04-16 17:09 UTC  
+**Compare:** [`1c102c14f80eb9c5e0096c2716ed27a294575405...86da37ede`](../../compare/1c102c14f80eb9c5e0096c2716ed27a294575405...86da37ede)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
+| [Multi-Node Deployment Guide](#multi-node-deployment) | 1 file | ✅ Reviewed |
+| [Hardware Compatibility Matrix](#hardware-matrix) | 1 file | ✅ Reviewed |
+| [PyScript API Reference](#pyscript-api) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,44 +18,81 @@
 <summary>Click to expand</summary>
 
 ```
-.github/workflows/ci.yml
-.github/workflows/dependabot_automerge.yml
-.github/workflows/deploy-docs.yml
-.github/workflows/doc-maintenance.yml
-.github/workflows/wikidocs.yml
-pyproject.toml
-uv.lock
+pychron/core/wait/tests/__init__.py
+pychron/core/wait/tests/test_wait_control.py
+pychron/core/wait/wait_control.py
+pychron/core/wait/wait_group.py
+pychron/experiment/experiment_executor.py
+pychron/experiment/state_machines/controller.py
+pychron/experiment/stats.py
+pychron/experiment/tasks/experiment_panes.py
+pychron/experiment/tasks/experiment_task.py
+pychron/experiment/tests/executor_state_machine_test.py
+pychron/extraction_line/extraction_line_manager.py
+pychron/lasers/laser_managers/pulse.py
+pychron/pyscripts/pyscript.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## Multi-Node Deployment Guide {#multi-node-deployment}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/multi_node_deployment_guide.md`  
+**Matched prefixes:** `pychron/extraction_line/`
 
 ### Changed Files
 
-- `pyproject.toml`
-- `uv.lock`
+- `pychron/extraction_line/extraction_line_manager.py`
 
 ### AI Review
 
 ## Code Change Summary
 
-The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
+The code changes show a refactoring in the ExtractionLineManager class where the `get_wait_control()` method implementation was simplified by delegating the logic to `self.wait_group.get_wait_control()` instead of handling the active control logic directly. This appears to be an internal code cleanup that moves responsibility for wait control management to the wait_group object itself, but doesn't change the external interface or behavior of the extraction line manager.
 
-## Documentation Updates Required
+## No Updates Required
 
-- **Section/Topic:** Python version requirements / Dependencies section
-  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
-  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
+These changes represent an internal refactoring that moves wait control logic from the ExtractionLineManager to the wait_group object without changing the public API or functionality. Since the Multi-Node Deployment Guide focuses on deployment architecture, inter-process communication, configuration files, and startup procedures rather than internal implementation details of individual classes, this code cleanup does not affect any of the documented deployment processes or configuration requirements.
 
-- **Section/Topic:** Development environment setup (if covered)
-  **Issue:** Development dependency version requirement for mypy is outdated
-  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
+---
+
+## Hardware Compatibility Matrix {#hardware-matrix}
+
+**Doc file:** `docs/hardware_compatibility_matrix.md`  
+**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
+
+### Changed Files
+
+- `pychron/lasers/laser_managers/pulse.py`
+
+### AI Review
+
+## Code Change Summary
+The changes modify the pulse functionality in the laser pulse manager by improving thread synchronization and GUI interaction safety. The code now uses threading Events and invokes GUI operations on the main thread, and changes how the pulse operation is stopped (using `wait_control.stop()` instead of setting `current_time = -1`). These are internal implementation improvements that don't affect the external hardware interface or communication protocols.
+
+## No Updates Required
+These changes are purely internal implementation improvements to thread safety and GUI handling within the existing pulse laser manager. They do not introduce new hardware devices, change communication protocols, modify configuration requirements, or alter the external interface that would be documented in a Hardware Compatibility Matrix. The hardware compatibility information remains unchanged.
+
+---
+
+## PyScript API Reference {#pyscript-api}
+
+**Doc file:** `docs/pyscript_api_reference.md`  
+**Matched prefixes:** `pychron/pyscripts/`
+
+### Changed Files
+
+- `pychron/pyscripts/pyscript.py`
+
+### AI Review
+
+## Code Change Summary
+The changes modify the internal threading behavior of PyScript operations, specifically how wait controls are stopped during abort/cancel operations and how wait dialogs are managed. The code now uses `invoke_in_main_thread` to ensure UI operations happen on the main thread and implements more sophisticated wait dialog handling with fallback mechanisms. These are internal implementation changes that don't affect the PyScript DSL commands or their public API.
+
+## No Updates Required
+These changes are internal implementation details related to thread safety and UI management that don't affect the PyScript DSL syntax, commands, parameters, or context variables that users interact with. The public API for PyScript commands remains unchanged, so no updates to the PyScript API Reference documentation are needed.
 
 ---
 
