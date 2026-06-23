@@ -448,25 +448,15 @@ def install_event_tracer() -> None:
         return
 
     # Dedicated logger + rotating file so the trace volume does not pollute
-    # the main diagnostics log.  Flush-per-emit (see _FlushingRotatingHandler)
-    # so the very last receiver before a SIGSEGV is on disk; the standard
-    # RotatingFileHandler relies on Python/libc stdio buffering and routinely
-    # loses the final 1-2 kB across a fault.
-    class _FlushingRotatingHandler(logging.handlers.RotatingFileHandler):
-        def emit(self, record):
-            super().emit(record)
-            try:
-                self.flush()
-            except Exception:
-                pass
-
+    # the main diagnostics log.  Unbuffered (flush per line) so the most
+    # recent receivers survive a SIGSEGV.
     trace_logger = logging.getLogger("pychron.m3_diag.eventtrace")
     trace_logger.setLevel(logging.DEBUG)
     trace_logger.propagate = False
     if not trace_logger.handlers:
         trace_path = os.path.join(os.path.dirname(_get_log_path()), "m3_eventtrace.log")
         try:
-            fh = _FlushingRotatingHandler(
+            fh = logging.handlers.RotatingFileHandler(
                 trace_path, maxBytes=5 * 1024 * 1024, backupCount=3
             )
             fh.setLevel(logging.DEBUG)
@@ -478,26 +468,6 @@ def install_event_tracer() -> None:
             _log.error("install_event_tracer: log open failed: %s", e)
             return
 
-    # Liveness probe.  PyQt5 wraps each QObject in a Python proxy whose
-    # underlying C++ pointer can be deleted while the proxy lives on; calling
-    # any method on a deleted proxy faults.  PyQt5.sip.isdeleted answers the
-    # question without touching the C++ object.  shiboken6.isValid is the
-    # PySide6 equivalent.  When neither is importable we fall back to a no-op
-    # liveness check (the tracer still records class + pyid).
-    _is_deleted = None
-    try:
-        from PyQt5 import sip as _sip  # type: ignore
-
-        _is_deleted = _sip.isdeleted
-    except Exception:
-        try:
-            import shiboken6 as _shib  # type: ignore
-
-            def _is_deleted(o):
-                return not _shib.isValid(o)
-        except Exception:
-            _is_deleted = None
-
     TIMER_EVT = int(QEvent.Timer)
 
     class _EventTracer(QObject):
@@ -508,25 +478,16 @@ def install_event_tracer() -> None:
                         tid = ev.timerId()
                     except Exception:
                         tid = -1
-                    dead = ""
-                    if _is_deleted is not None:
-                        try:
-                            if _is_deleted(obj):
-                                dead = " DEAD"
-                        except Exception:
-                            # Receiver wrapper itself unusable -> definitely dying.
-                            dead = " DEAD?"
                     # Capture receiver class + id() BEFORE Qt dispatches.
                     # If receiver is already dangling, accessing type(obj)
                     # may itself fault - but a faulting trace point still
                     # tells us we got here, and a successful one identifies
                     # the next dispatch target.
                     trace_logger.debug(
-                        "Timer cls=%s pyid=0x%x qtid=%d%s",
+                        "Timer cls=%s pyid=0x%x qtid=%d",
                         type(obj).__name__,
                         id(obj),
                         tid,
-                        dead,
                     )
             except Exception:
                 # Tracing must never interfere with event delivery; a
