@@ -30,7 +30,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from apptools.preferences.preference_binding import bind_preference
-from pyface.message_dialog import information
 from traits.api import HasTraits, Str, Enum, Bool, Int
 from traitsui.api import View
 
@@ -44,11 +43,19 @@ try:
     USE_GMAIL = True
 except ImportError:
     USE_GMAIL = False
-    information(
-        None,
-        "Not all packages installed for the email plugin.  Disable Email plugin in "
-        "initialization.xml or "
-        "install the necessary packages. See https://developers.google.com/gmail/api/quickstart/python",
+    # Previously raised a pyface.message_dialog.information() at import time,
+    # which on macOS opens a modal dialog *before* the main TasksApplication
+    # window is shown.  If the user dismisses it on a different Space the
+    # main window never gets focused; if they don't see it at all the launch
+    # looks hung.  Log the warning instead - the Gmail-backed code paths
+    # already short-circuit on USE_GMAIL=False.
+    import logging as _email_logging
+
+    _email_logging.getLogger("pychron.social.email").warning(
+        "Gmail API packages not installed; Email plugin disabled. "
+        "Disable Email plugin in initialization.xml or install the "
+        "necessary packages "
+        "(see https://developers.google.com/gmail/api/quickstart/python)."
     )
 
 # ============= local library imports  ==========================
