@@ -121,9 +121,17 @@ class GraphEditor(BaseEditor):
             try:
                 comp = self._component_factory()
             except Exception:
+                # Previously raised a warning_dialog modal here, but on macOS
+                # the dialog opens on the main thread while the recursive
+                # chaco/trait-observer chain that produced the exception is
+                # still firing on the same thread, leaving the modal painted
+                # but unresponsive (beachball).  The fallback
+                # _no_component_factory() below still runs and the user can
+                # check the log for the traceback.
                 logger.exception("Failed building pipeline figure component")
-                self.warning_dialog(
-                    "Failed to make figure. Check the log for more information"
+                self.warning(
+                    "Failed to make figure (see log for traceback). "
+                    "Falling back to empty component."
                 )
 
         if comp is None:
