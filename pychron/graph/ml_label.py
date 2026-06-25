@@ -241,6 +241,7 @@ class MLLabel(Label):
     def _calculate_text_positions(self):
         texts = []
         offset = 0
+        pm = "±"
         for ti in tokenize(self.text):
             if ti == "sup":
                 offset = 1
@@ -249,8 +250,18 @@ class MLLabel(Label):
             elif ti in ("/sup", "/sub"):
                 offset = 0
             else:
-                texts.append((offset, ti))
+                if pm in ti:
+                    for p in re.split("(" + pm + ")", ti):
+                        if p:
+                            texts.append((offset, p == pm, p))
+                else:
+                    texts.append((offset, False, ti))
         self._text_positions = texts
+
+    def _pm_font(self, base):
+        f = base.copy()
+        f.face_name = "Helvetica"
+        return f
 
     def _calculate_text_width(self, gc):
         ofont = self.font
@@ -262,16 +273,17 @@ class MLLabel(Label):
         s = 0
         mh = 0
         if self._cached_text_width is None:
-            for offset, text in self._text_positions:
+            for offset, swap, text in self._text_positions:
                 with gc:
                     if offset == 1:
                         gc.translate_ctm(0, suph)
-                        gc.set_font(sfont)
+                        base = sfont
                     elif offset == -1:
-                        gc.set_font(sfont)
                         gc.translate_ctm(0, subh)
+                        base = sfont
                     else:
-                        gc.set_font(ofont)
+                        base = ofont
+                    gc.set_font(self._pm_font(base) if swap else base)
 
                     w, h, _, _ = gc.get_full_text_extent(text)
                     s += w
@@ -314,16 +326,17 @@ class MLLabel(Label):
         gc.translate_ctm((ow - w) / 2, 0)
 
         x = 0
-        for offset, text in poss:
+        for offset, swap, text in poss:
             with gc:
                 if offset == 1:
                     gc.translate_ctm(0, suph)
-                    gc.set_font(sfont)
+                    base = sfont
                 elif offset == -1:
-                    gc.set_font(sfont)
                     gc.translate_ctm(0, subh)
+                    base = sfont
                 else:
-                    gc.set_font(ofont)
+                    base = ofont
+                gc.set_font(self._pm_font(base) if swap else base)
 
                 w, h, _, _ = gc.get_full_text_extent(text)
                 gc.set_text_position(x, 0)
