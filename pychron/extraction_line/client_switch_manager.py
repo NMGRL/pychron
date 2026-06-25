@@ -21,6 +21,7 @@ from __future__ import absolute_import
 import os
 from socket import gethostbyname, gethostname
 
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.globals import globalv
 import six
@@ -40,82 +41,89 @@ class ClientSwitchManager(SwitchManager):
     def load_valve_states(self, refresh=True, force_network_change=False):
         # self.debug('Load valve states')
         word = self.get_state_word()
-        # changed = False
-        states = []
+        pending = []
         if word:
             for k, v in six.iteritems(self.switches):
                 try:
                     s = word[k]
                     if s != v.state or force_network_change:
-                        # changed = True
-                        v.set_state(s)
-                        # self.refresh_state = (k, s)
-                        self.set_child_state(k, s)
-                        states.append((k, s))
-
+                        pending.append((k, v, s))
                 except KeyError:
                     pass
-
         elif force_network_change:
-            # changed = True
             for k, v in six.iteritems(self.switches):
-                states.append(k, v.state)
-                # self.refresh_state = (k, v.state)
-                # elm.update_valve_state(k, v.state)
+                pending.append((k, v, v.state))
 
-        if refresh and states:
-            self.refresh_state = states
-            self.refresh_canvas_needed = True
-            # elm.refresh_canvas()
+        if not pending:
+            return
+
+        states = [(k, s) for k, _v, s in pending]
+
+        def _apply():
+            for k, v, s in pending:
+                v.set_state(s)
+                self.set_child_state(k, s)
+            if refresh:
+                self.refresh_state = states
+                self.refresh_canvas_needed = True
+
+        invoke_in_main_thread(_apply)
 
     def load_valve_lock_states(self, refresh: bool = True, force: bool = False) -> None:
         word = self.get_lock_word()
         if globalv.valve_debug:
             self.debug("valve lock word={}".format(word))
 
-        changed = False
+        pending = []
         if word is not None:
             for k in self.switches:
                 if k in word:
                     v = self.get_switch_by_name(k)
                     s = word[k]
                     if v.software_lock != s or force:
-                        changed = True
+                        pending.append((k, v, s))
 
-                        v.software_lock = s
-                        self.refresh_lock_state = (k, s)
-                        # elm.update_valve_lock_state(k, s)
+        if not pending:
+            return
 
-        if refresh and changed:
-            self.refresh_canvas_needed = True
-            # elm.refresh_canvas()
+        def _apply():
+            for k, v, s in pending:
+                v.software_lock = s
+                self.refresh_lock_state = (k, s)
+            if refresh:
+                self.refresh_canvas_needed = True
+
+        invoke_in_main_thread(_apply)
 
     def load_valve_owners(self, refresh=True):
         """
         needs to return all valves
         not just ones that are owned
         """
-        # elm = self.extraction_line_manager
         owners = self.get_owners_word()
         if not owners:
             return
 
-        changed = False
         ip = gethostbyname("")
+        pending = []
         for owner, valves in owners:
             if owner != ip:
                 for k in valves:
                     v = self.get_switch_by_name(k)
-                    if v is not None:
-                        if v.owner != owner:
-                            v.owner = owner
-                            self.refresh_owned_state = (k, owner)
-                            # elm.update_valve_owned_state(k, owner)
-                            changed = True
+                    if v is not None and v.owner != owner:
+                        pending.append((k, v, owner))
 
-        if refresh and changed:
-            self.refresh_canvas_needed = True
-            # elm.refresh_canvas()
+        if not pending:
+            return
+
+        def _apply():
+            for k, v, owner in pending:
+                v.owner = owner
+                self.refresh_owned_state = (k, owner)
+            if refresh:
+                self.refresh_canvas_needed = True
+
+        invoke_in_main_thread(_apply)
 
     def get_state_word(self):
         d = {}
