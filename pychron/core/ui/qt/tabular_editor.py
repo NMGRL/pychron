@@ -216,6 +216,22 @@ class _TableView(TableView):
         if hasattr(self, "setUniformRowHeights"):
             self.setUniformRowHeights(True)
 
+    def closeEvent(self, event):
+        # When traitsui rebuilds an editor between runs the previous
+        # _TableView gets reparented away from its dock and Python loses
+        # its reference, but Qt may still have internal layout / scroll
+        # timer events queued for it.  Once the C++ object is freed those
+        # events dispatch into a dead vtable on Apple Silicon and the
+        # process dies with KERN_INVALID_ADDRESS at 0x101 inside
+        # QCoreApplication::notifyInternal2.  Forcing deleteLater() at
+        # close time lets Qt drain its event queue before reclaiming
+        # memory.
+        try:
+            self.deleteLater()
+        except Exception:
+            pass
+        super(_TableView, self).closeEvent(event)
+
     def set_bg_color(self, bgcolor):
         # if isinstance(bgcolor, tuple):
         #     if len(bgcolor) == 3:
@@ -808,6 +824,23 @@ class _TabularEditor(qtTabularEditor):
                 for idx, col in enumerate(self.adapter.columns):
                     if "{}_width".format(col[1]) == k:
                         self.control.setColumnWidth(idx, v)
+
+    def dispose(self):
+        # Schedule the QTableView for asynchronous deletion *before*
+        # traitsui drops its Python reference.  Without this Qt may free
+        # the C++ object while layout / scroll timer events are still
+        # pending; the next dispatch crashes the main thread with
+        # KERN_INVALID_ADDRESS inside QCoreApplication::notifyInternal2
+        # (the dying-receiver UAF pattern from the m3 stability work).
+        # deleteLater() defers destruction to the next event-loop
+        # iteration, which drains the queue first.
+        ctrl = self.control
+        if ctrl is not None:
+            try:
+                ctrl.deleteLater()
+            except Exception:
+                pass
+        super(_TabularEditor, self).dispose()
 
     # private
     def _add_image(self, image_resource):
