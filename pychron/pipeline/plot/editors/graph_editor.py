@@ -33,8 +33,22 @@ logger = logging.getLogger(__name__)
 
 class WarningLabel(PlotLabel):
     def _layout_as_overlay(self, size=None, force=False):
-        self.x = self.component.x + self.component.width / 2
-        self.y = self.component.y + self.component.height / 2
+        # Setting self.x / self.y writes through to position[0]/[1], which
+        # fires a TraitListObject items-event.  Chaco listens to that, marks
+        # the component dirty, and ultimately re-enters _layout_as_overlay
+        # via a font/layout observer chain - infinite recursion on Apple
+        # Silicon (the limit was previously absorbed silently on Intel via
+        # late-bound dispatch).  Short-circuit when the position is already
+        # at the requested centre so the cascade has nothing new to react
+        # to and terminates after one pass.
+        if self.component is None:
+            return
+        nx = self.component.x + self.component.width / 2
+        ny = self.component.y + self.component.height / 2
+        if self.x == nx and self.y == ny:
+            return
+        self.x = nx
+        self.y = ny
 
 
 class GraphEditor(BaseEditor):
