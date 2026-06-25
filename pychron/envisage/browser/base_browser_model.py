@@ -187,7 +187,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     auto_load_database = Bool(True)
     load_selection_enabled = Bool(True)
 
-    named_date_range = Enum("this month", "this week", "yesterday")
+    named_date_range = Enum("today", "this month", "this week", "yesterday")
     low_post = Property(
         Datetime(allow_none=True),
         depends_on="date_enabled, _low_post, use_low_post, use_named_date_range, "
@@ -813,7 +813,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self.date_enabled:
             tdy = datetime.today()
             if self.use_named_date_range:
-                if self.named_date_range == "this month":
+                if self.named_date_range == "today":
+                    lp = tdy.replace(hour=0, minute=0, second=0, microsecond=0)
+                elif self.named_date_range == "this month":
                     lp = tdy - timedelta(
                         days=tdy.day,
                         seconds=tdy.second,
