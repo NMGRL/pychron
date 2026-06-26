@@ -1221,6 +1221,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             )
 
         try:
+            # Hold a PreventUserIdleSystemSleep assertion for the duration of
+            # the experiment so macOS does not suspend the Qt event loop.
+            # Without this, idle/display sleep stalls the main thread for
+            # minutes and the watchdog reports MAIN-THREAD STALL.
+            try:
+                from pychron.core.helpers.power_assertion import acquire as _pm_acquire
+                _pm_acquire("pychron experiment session {}".format(_session_id))
+            except Exception as _pm_err:
+                self.debug("power_assertion acquire failed: {}".format(_pm_err))
             self._mark_progress(
                 "executor.session.start", extra={"session_id": _session_id}, flush=True
             )
@@ -1269,6 +1278,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             )
             self.alive = False
         finally:
+            try:
+                from pychron.core.helpers.power_assertion import release as _pm_release
+                _pm_release()
+            except Exception as _pm_err:
+                self.debug("power_assertion release failed: {}".format(_pm_err))
             self._maybe_emit_stall_snapshot("executor.session.end", force=True)
             # CRITICAL: Always close recorder on exit
             set_global_recorder(None)
