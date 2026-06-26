@@ -972,9 +972,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._wait(t, msg)
 
     def get_wait_control(self):
-        with self.wait_control_lock:
-            wd = self.wait_group.get_wait_control()
-        return wd
+        # Do NOT hold wait_control_lock here: wait_group.get_wait_control
+        # blocks on a main-thread roundtrip. If a second worker thread
+        # enters this method while the lock is held, and the main thread
+        # is itself wedged (idle sleep, modal nested loop, or a hung
+        # callback), both workers deadlock and the lock never releases.
+        # wait_group serialises control creation via its own main-thread
+        # dispatch, so the explicit lock here is redundant.
+        return self.wait_group.get_wait_control()
 
     def stop(self):
         if self.delaying_between_runs:
