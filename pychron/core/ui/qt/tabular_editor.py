@@ -156,6 +156,56 @@ class ItemDelegate(_ItemDelegate):
     # print 'asdf', painter, option, rect, pixmap
 
 
+def _drain_pending_qt_events(widget):
+    """Stop child QTimers and remove queued QEvent::Timer events for
+    `widget` and its children. Call before deleteLater() to prevent
+    dying-receiver UAF when timer events fire after C++ destruction
+    (KERN_INVALID_ADDRESS in QCoreApplication::notifyInternal2 on
+    Apple Silicon)."""
+    try:
+        try:
+            widget.releaseMouse()
+            widget.releaseKeyboard()
+        except Exception:
+            pass
+        for sb_name in ("horizontalScrollBar", "verticalScrollBar"):
+            sb_getter = getattr(widget, sb_name, None)
+            if sb_getter is None:
+                continue
+            try:
+                sb = sb_getter()
+                if sb is not None:
+                    sb.setSliderDown(False)
+                    sb.blockSignals(True)
+            except Exception:
+                pass
+        try:
+            for t in widget.findChildren(QtCore.QTimer):
+                try:
+                    t.stop()
+                    t.blockSignals(True)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        app = QApplication.instance()
+        if app is not None:
+            try:
+                app.removePostedEvents(widget, QtCore.QEvent.Timer)
+            except Exception:
+                pass
+            try:
+                for ch in widget.findChildren(QtCore.QObject):
+                    try:
+                        app.removePostedEvents(ch, QtCore.QEvent.Timer)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 # class _TableView(TableView, ConsumerMixin):
 class _TableView(TableView):
     """
@@ -217,15 +267,11 @@ class _TableView(TableView):
             self.setUniformRowHeights(True)
 
     def closeEvent(self, event):
-        # When traitsui rebuilds an editor between runs the previous
-        # _TableView gets reparented away from its dock and Python loses
-        # its reference, but Qt may still have internal layout / scroll
-        # timer events queued for it.  Once the C++ object is freed those
-        # events dispatch into a dead vtable on Apple Silicon and the
-        # process dies with KERN_INVALID_ADDRESS at 0x101 inside
-        # QCoreApplication::notifyInternal2.  Forcing deleteLater() at
-        # close time lets Qt drain its event queue before reclaiming
-        # memory.
+        # deleteLater() alone defers destruction by one event-loop tick,
+        # but child QTimers + scroll-bar auto-repeat timers can still
+        # fire into the freed widget in that gap. Stop child timers and
+        # purge already-posted Qt Timer events before deferring delete.
+        _drain_pending_qt_events(self)
         try:
             self.deleteLater()
         except Exception:
@@ -826,16 +872,12 @@ class _TabularEditor(qtTabularEditor):
                         self.control.setColumnWidth(idx, v)
 
     def dispose(self):
-        # Schedule the QTableView for asynchronous deletion *before*
-        # traitsui drops its Python reference.  Without this Qt may free
-        # the C++ object while layout / scroll timer events are still
-        # pending; the next dispatch crashes the main thread with
-        # KERN_INVALID_ADDRESS inside QCoreApplication::notifyInternal2
-        # (the dying-receiver UAF pattern from the m3 stability work).
-        # deleteLater() defers destruction to the next event-loop
-        # iteration, which drains the queue first.
+        # See _TableView.closeEvent: drain pending Qt Timer events and
+        # stop child QTimers before deleteLater() so queued events do
+        # not dispatch into a freed receiver.
         ctrl = self.control
         if ctrl is not None:
+            _drain_pending_qt_events(ctrl)
             try:
                 ctrl.deleteLater()
             except Exception:
