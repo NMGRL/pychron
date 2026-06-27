@@ -36,6 +36,12 @@ _event_loop_last_check = None
 _event_loop_warning_threshold = 1.0  # seconds - warn if event loop unresponsive for this long
 _monitoring_enabled = True
 
+# Tracks the wall-clock time of the last time the main thread finished servicing
+# an instrumented callback. Used as a baseline so a single real stall is not
+# multi-counted once per queued callback as the queue drains.
+_last_main_thread_tick = 0.0
+_last_main_thread_tick_lock = threading.Lock()
+
 
 def set_event_loop_warning_threshold(seconds):
     """Set the warning threshold for event loop responsiveness (in seconds)."""
@@ -56,7 +62,11 @@ def invoke_in_main_thread(fn, *args, **kw):
     _invocation_time = time.time()
 
     def _instrumented_fn(*args, **kw):
-        elapsed = time.time() - _invocation_time
+        global _last_main_thread_tick
+        now = time.time()
+        with _last_main_thread_tick_lock:
+            baseline = max(_invocation_time, _last_main_thread_tick)
+        elapsed = now - baseline
         fn_name = getattr(fn, "__name__", str(fn))
 
         if elapsed > _event_loop_warning_threshold:
@@ -70,6 +80,9 @@ def invoke_in_main_thread(fn, *args, **kw):
         except Exception as e:
             logger.exception(f"Exception in invoke_in_main_thread callback {fn_name}: {e}")
             raise
+        finally:
+            with _last_main_thread_tick_lock:
+                _last_main_thread_tick = time.time()
 
     GUI.invoke_later(_instrumented_fn, *args, **kw)
 
