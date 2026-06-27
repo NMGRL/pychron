@@ -757,7 +757,15 @@ def install_safe_event_filter() -> None:
                     if is_deleted(obj):
                         return True
                 except Exception:
-                    return True
+                    # sip.isdeleted raises TypeError on non-PyQt5-wrapped
+                    # receivers (pyface CallbackTimer, some Qt internals,
+                    # the watchdog heartbeat QTimer slot dispatch path).
+                    # Letting those events through is safe: if the receiver
+                    # really is dead, Qt's own deleteLater bookkeeping
+                    # handles it; what is NOT safe is dropping legitimate
+                    # Timer events, which starves the main-thread heartbeat
+                    # and any do_after / invoke_in_main_thread round-trip.
+                    return False
             return False
 
     f = _DyingReceiverFilter()
