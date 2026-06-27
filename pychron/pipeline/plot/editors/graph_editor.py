@@ -32,23 +32,34 @@ logger = logging.getLogger(__name__)
 
 
 class WarningLabel(PlotLabel):
+    _in_layout = False
+
     def _layout_as_overlay(self, size=None, force=False):
         # Setting self.x / self.y writes through to position[0]/[1], which
         # fires a TraitListObject items-event.  Chaco listens to that, marks
         # the component dirty, and ultimately re-enters _layout_as_overlay
         # via a font/layout observer chain - infinite recursion on Apple
         # Silicon (the limit was previously absorbed silently on Intel via
-        # late-bound dispatch).  Short-circuit when the position is already
-        # at the requested centre so the cascade has nothing new to react
-        # to and terminates after one pass.
-        if self.component is None:
+        # late-bound dispatch).
+        #
+        # The equality short-circuit below is necessary but not sufficient:
+        # parent layout can shift the component by sub-pixel amounts each
+        # cycle, so self.x == nx never holds and the cascade still hits
+        # the recursion limit (RecursionError seen in pychron.current.log
+        # at 09:09:48).  A hard re-entry guard breaks the cycle
+        # unconditionally.
+        if self._in_layout or self.component is None:
             return
         nx = self.component.x + self.component.width / 2
         ny = self.component.y + self.component.height / 2
         if self.x == nx and self.y == ny:
             return
-        self.x = nx
-        self.y = ny
+        self._in_layout = True
+        try:
+            self.x = nx
+            self.y = ny
+        finally:
+            self._in_layout = False
 
 
 class GraphEditor(BaseEditor):
