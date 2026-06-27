@@ -146,7 +146,8 @@ class Emailer(Loggable):
             return service
         else:
             try:
-                server = smtplib.SMTP(self.server_host, self.server_port, timeout=5)
+                timeout = 1 if test else 5
+                server = smtplib.SMTP(self.server_host, self.server_port, timeout=timeout)
                 server.ehlo()
                 server.starttls()
                 server.ehlo()

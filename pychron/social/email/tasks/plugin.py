@@ -37,6 +37,8 @@ class EmailPlugin(BaseTaskPlugin):
 
     def test_email_server(self):
         e = self._email_factory()
+        if not getattr(e, "use_gmail", False) and not e.server_host:
+            return None, "Email server not configured; skipping probe"
         return e.test_email_server()
 
     # private
