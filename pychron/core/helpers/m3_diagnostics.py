@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 import logging.handlers
 import os
+import signal
 import sys
 import threading
 import time
@@ -31,6 +32,8 @@ _WATCHDOG_INSTALLED = False
 _QTIMER_GUARD_INSTALLED = False
 _QT_MSG_HANDLER_INSTALLED = False
 _MARSHALLING_INSTALLED = False
+_FAULTHANDLER_INSTALLED = False
+_faulthandler_fp = None  # strong ref so the file is not closed
 
 _log = logging.getLogger("pychron.m3_diag")
 _log.setLevel(logging.DEBUG)
@@ -257,6 +260,26 @@ class _Watchdog:
             _log.error("\n".join(lines))
         except Exception as e:  # pragma: no cover
             _log.exception("watchdog dump failed: %s", e)
+
+        # Opt-in macOS native sample. `sample` itself blocks ~Ns, so only
+        # invoke when explicitly asked. Captures Qt/Cocoa/C-ext frames the
+        # Python-only dump above cannot see.
+        if sys.platform == "darwin" and os.environ.get("PYCHRON_M3_NATIVE_SAMPLE"):
+            try:
+                import subprocess
+                duration = int(os.environ.get("PYCHRON_M3_NATIVE_SAMPLE_SECS", "2"))
+                out_path = os.path.join(
+                    os.path.dirname(_get_log_path()),
+                    "m3_native_sample_%d.txt" % int(time.time()),
+                )
+                subprocess.Popen(
+                    ["sample", str(os.getpid()), str(duration), "-file", out_path],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                _log.error("watchdog: macOS sample -> %s", out_path)
+            except Exception as e:  # pragma: no cover
+                _log.warning("watchdog: native sample launch failed: %s", e)
 
     def start_main_timer(self):
         # called from main thread once QApplication exists
@@ -521,11 +544,49 @@ def install_event_tracer() -> None:
                     # may itself fault - but a faulting trace point still
                     # tells us we got here, and a successful one identifies
                     # the next dispatch target.
+                    cls = type(obj).__name__
+                    # When receiver is a bare QTimer the class name alone
+                    # doesn't tell us which subsystem owns it. Try to dig
+                    # one level: parent class + objectName + interval.
+                    # All getattr accesses are paranoid because the C++
+                    # object may already be half-destroyed.
+                    extra = ""
+                    if cls == "QTimer":
+                        try:
+                            parent = obj.parent()
+                            if parent is not None:
+                                pcls = type(parent).__name__
+                                pname = ""
+                                try:
+                                    pname = parent.objectName() or ""
+                                except Exception:
+                                    pass
+                                extra += " parent=%s" % pcls
+                                if pname:
+                                    extra += "(%s)" % pname
+                        except Exception:
+                            extra += " parent=?"
+                        try:
+                            oname = obj.objectName() or ""
+                            if oname:
+                                extra += " name=%s" % oname
+                        except Exception:
+                            pass
+                        try:
+                            extra += " ival=%d" % obj.interval()
+                        except Exception:
+                            pass
+                        try:
+                            if obj.isSingleShot():
+                                extra += " single"
+                        except Exception:
+                            pass
                     trace_logger.debug(
-                        "Timer cls=%s pyid=0x%x qtid=%d%s",
-                        type(obj).__name__,
+                        "Timer cls=%s pyid=0x%x qtid=%d%s%s",
+                        cls,
                         id(obj),
                         tid,
+                        extra,
                         dead,
                     )
             except Exception:
@@ -545,6 +606,55 @@ def install_event_tracer() -> None:
 
     _EVENT_TRACER_INSTALLED = True
     _log.info("event tracer installed (Timer events -> m3_eventtrace.log)")
+
+
+def install_faulthandler() -> None:
+    """Enable stdlib faulthandler so SIGSEGV/SIGABRT/SIGBUS/SIGFPE/SIGILL
+    dump every Python thread's C frame to a dedicated file before the
+    process dies. Also registers SIGUSR1 for on-demand dumps:
+        kill -USR1 <pid>
+    Catches native crashes inside Qt, sip, numpy, and the basler camera
+    C extension that would otherwise leave only a macOS Crash Reporter
+    .ips file with no Python context.
+    """
+    global _FAULTHANDLER_INSTALLED, _faulthandler_fp
+    if _FAULTHANDLER_INSTALLED:
+        return
+    try:
+        import faulthandler
+    except Exception as e:  # pragma: no cover
+        _log.error("install_faulthandler: import failed: %s", e)
+        return
+
+    log_dir = os.path.dirname(_get_log_path())
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        _faulthandler_fp = open(
+            os.path.join(log_dir, "m3_faulthandler.log"), "a", buffering=1
+        )
+    except OSError as e:
+        _log.error("install_faulthandler: log open failed: %s", e)
+        return
+
+    try:
+        faulthandler.enable(file=_faulthandler_fp, all_threads=True)
+    except Exception as e:
+        _log.error("install_faulthandler: enable failed: %s", e)
+        return
+
+    if hasattr(signal, "SIGUSR1"):
+        try:
+            faulthandler.register(
+                signal.SIGUSR1, file=_faulthandler_fp, all_threads=True, chain=False
+            )
+            _log.info("faulthandler: SIGUSR1 on-demand dump registered")
+        except Exception as e:
+            _log.warning("install_faulthandler: SIGUSR1 register failed: %s", e)
+
+    _FAULTHANDLER_INSTALLED = True
+    _log.info(
+        "faulthandler installed (pid=%d) -> %s", os.getpid(), _faulthandler_fp.name
+    )
 
 
 def install_main_thread_watchdog(stall_threshold: float = 2.0) -> None:
@@ -570,10 +680,76 @@ def install_early() -> None:
     if _INSTALLED:
         return
     _attach_file_handler()
+    install_faulthandler()
     install_qt_message_handler()
     install_qtimer_thread_guard()
     _INSTALLED = True
     _log.info("m3_diagnostics: early install complete (pid=%d)", os.getpid())
+
+
+_SAFE_FILTER_INSTALLED = False
+_safe_filter = None  # strong ref so Qt does not GC the filter
+
+
+def install_safe_event_filter() -> None:
+    """Install QApplication-wide event filter that drops QEvent::Timer
+    events whose receiver has already been destroyed at the C++ level.
+
+    The earlier deleteLater() + drain helpers in tabular_editor.py cover
+    pychron's _TableView dispose path, but the same dying-receiver UAF
+    can still fire from base traitsui TableView, parentless single-shot
+    QTimers, and other QObject subtrees we do not own.  sip.isdeleted()
+    detects the freed-C++ case and lets us swallow the event before Qt
+    dereferences the dead pointer inside QCoreApplication::notifyInternal2.
+    """
+    global _SAFE_FILTER_INSTALLED, _safe_filter
+    if _SAFE_FILTER_INSTALLED:
+        return
+    try:
+        from pyface.qt.QtCore import QCoreApplication, QEvent, QObject
+    except Exception as e:  # pragma: no cover
+        _log.error("safe_event_filter: Qt import failed: %s", e)
+        return
+
+    try:
+        from PyQt5 import sip as _sip  # type: ignore[attr-defined]
+    except Exception:
+        try:
+            import sip as _sip  # type: ignore[import-not-found]
+        except Exception as e:
+            _log.error("safe_event_filter: sip import failed: %s", e)
+            return
+
+    app = QCoreApplication.instance()
+    if app is None:
+        _log.warning(
+            "safe_event_filter: no QApplication; call install_late after app_factory"
+        )
+        return
+
+    timer_type = QEvent.Timer
+    is_deleted = _sip.isdeleted
+
+    class _DyingReceiverFilter(QObject):
+        def eventFilter(self, obj, event):
+            if event.type() == timer_type:
+                try:
+                    if is_deleted(obj):
+                        return True
+                except Exception:
+                    return True
+            return False
+
+    f = _DyingReceiverFilter()
+    try:
+        app.installEventFilter(f)
+    except Exception as e:
+        _log.error("safe_event_filter: installEventFilter failed: %s", e)
+        return
+
+    _safe_filter = f
+    _SAFE_FILTER_INSTALLED = True
+    _log.info("safe event filter installed (drops QEvent.Timer to dead receivers)")
 
 
 def install_late(stall_threshold: float = 5.0) -> None:
@@ -585,6 +761,7 @@ def install_late(stall_threshold: float = 5.0) -> None:
     imported, which is only guaranteed once app_factory has run)."""
     install_thread_safe_marshalling()
     install_main_thread_watchdog(stall_threshold=stall_threshold)
+    install_safe_event_filter()
     # Event tracer is opt-in: it logs one line per Timer event delivered
     # on the main thread, which is verbose.  Enable when hunting a crash
     # inside QCoreApplication::notifyInternal2 by setting
