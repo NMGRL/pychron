@@ -673,6 +673,25 @@ def install_main_thread_watchdog(stall_threshold: float = 2.0) -> None:
 # ---------------------------------------------------------------------------
 # top-level entry points
 # ---------------------------------------------------------------------------
+def _raise_recursion_limit(target: int = 3000) -> None:
+    """Raise sys.recursionlimit so chaco/traits layout cascades don't
+    hit RecursionError inside _change_accepted's TraitKind.trait.name
+    descriptor (Python 3.12 enum semantics expose a latent traits bug
+    that surfaces as a non-fatal CRITICAL during plot title font
+    changes). Only raise; never lower."""
+    try:
+        current = sys.getrecursionlimit()
+        if current < target:
+            sys.setrecursionlimit(target)
+            _log.info(
+                "recursion limit raised %d -> %d (chaco/traits cascade headroom)",
+                current,
+                target,
+            )
+    except Exception as e:  # pragma: no cover
+        _log.warning("recursion-limit raise failed: %s", e)
+
+
 def install_early() -> None:
     """Install everything that does not need a running QApplication.
     Call as early as possible (before any Qt object is constructed)."""
@@ -680,6 +699,7 @@ def install_early() -> None:
     if _INSTALLED:
         return
     _attach_file_handler()
+    _raise_recursion_limit()
     install_faulthandler()
     install_qt_message_handler()
     install_qtimer_thread_guard()
