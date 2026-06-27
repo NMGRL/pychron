@@ -2432,6 +2432,12 @@ anaylsis_type={}
             self.debug("plot panel setup: create={}".format(create))
             
             if create:
+                old_panel = self.plot_panel
+                if old_panel is not None and hasattr(old_panel, "dispose"):
+                    try:
+                        old_panel.dispose()
+                    except Exception as e:
+                        self.debug("plot panel dispose error: {}".format(e))
                 self.debug("plot panel setup: creating new plot panel...")
                 p = self._new_plot_panel(stack_order="top_to_bottom")
                 step_duration = time_module.time() - step_start

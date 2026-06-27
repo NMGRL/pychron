@@ -193,6 +193,30 @@ class PlotPanel(Loggable):
         for g in self.graphs:
             g.clear()
 
+    def dispose(self):
+        """Drop pending redraw timers on every owned graph before this panel
+        is replaced.  Prevents QTimer callbacks from firing on a chaco
+        container whose underlying QObject has already been freed.
+        """
+        self.debug("dispose plot panel")
+        for g in (
+            self.sniff_graph,
+            self.isotope_graph,
+            self.baseline_graph,
+            self.peak_center_graph,
+        ):
+            if g is not None and hasattr(g, "dispose"):
+                try:
+                    g.dispose()
+                except Exception as e:
+                    self.debug("graph dispose error: {}".format(e))
+        for g in self.graphs:
+            if g is not None and hasattr(g, "dispose"):
+                try:
+                    g.dispose()
+                except Exception as e:
+                    self.debug("graph dispose error: {}".format(e))
+
     def create(self, dets):
         """
         dets: list of Detector instances

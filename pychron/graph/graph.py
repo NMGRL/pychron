@@ -205,6 +205,7 @@ class Graph(ContextMenuMixin):
         """ """
         super(Graph, self).__init__(*args, **kw)
         self._redraw_pending = False
+        self._disposed = False
         self.clear()
 
         pc = self.plotcontainer
@@ -1005,6 +1006,8 @@ class Graph(ContextMenuMixin):
 
     def redraw(self, force=True):
         """ """
+        if self._disposed or self.plotcontainer is None:
+            return
         if force:
             self.invalidate_and_redraw()
             return
@@ -1426,11 +1429,26 @@ class Graph(ContextMenuMixin):
         return result
 
     def _execute_pending_redraw(self):
-        if not self._redraw_pending or self.plotcontainer is None:
+        if self._disposed or not self._redraw_pending or self.plotcontainer is None:
             return
 
         self._redraw_pending = False
         self.plotcontainer.request_redraw()
+
+    def dispose(self):
+        """Mark this graph dead so any timer callback still queued in the Qt
+        event loop bails out before touching freed chaco/Qt objects.
+        """
+        self._disposed = True
+        self._redraw_pending = False
+        try:
+            pc = self.plotcontainer
+            if pc is not None:
+                pc.tools = []
+                pc.overlays = []
+        except Exception:
+            pass
+        self.plotcontainer = None
 
     def _get_selected_plotid(self):
         r = 0
