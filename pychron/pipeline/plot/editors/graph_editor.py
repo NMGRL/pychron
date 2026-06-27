@@ -157,30 +157,48 @@ class GraphEditor(BaseEditor):
                 for ai in analyses:
                     ai.group_id = i
 
+    _in_get_component = False
+
     @cached_property
     def _get_component(self):
-        comp = None
-        if self.items:
-            try:
-                comp = self._component_factory()
-            except Exception:
-                # Previously raised a warning_dialog modal here, but on macOS
-                # the dialog opens on the main thread while the recursive
-                # chaco/trait-observer chain that produced the exception is
-                # still firing on the same thread, leaving the modal painted
-                # but unresponsive (beachball).  The fallback
-                # _no_component_factory() below still runs and the user can
-                # check the log for the traceback.
-                logger.exception("Failed building pipeline figure component")
-                self.warning(
-                    "Failed to make figure (see log for traceback). "
-                    "Falling back to empty component."
-                )
+        # Re-entry guard. When _component_factory raises, the logger.exception
+        # below fires trait notifications (traitsui _evaluate_when -> trait_get
+        # over the context) that re-read self.component. Because the
+        # @cached_property has not yet returned, the cache is empty and the
+        # property fires again — same path, same exception, deeper stack —
+        # until the recursion limit trips inside the logging machinery
+        # (RecursionError seen in pychron.current.log). On re-entry just
+        # return the empty fallback; the first invocation will still cache
+        # the proper result.
+        if self._in_get_component:
+            return self._no_component_factory()
 
-        if comp is None:
-            comp = self._no_component_factory()
+        self._in_get_component = True
+        try:
+            comp = None
+            if self.items:
+                try:
+                    comp = self._component_factory()
+                except Exception:
+                    # Previously raised a warning_dialog modal here, but on
+                    # macOS the dialog opens on the main thread while the
+                    # recursive chaco/trait-observer chain that produced the
+                    # exception is still firing on the same thread, leaving
+                    # the modal painted but unresponsive (beachball). The
+                    # fallback _no_component_factory() below still runs and
+                    # the user can check the log for the traceback.
+                    logger.exception("Failed building pipeline figure component")
+                    self.warning(
+                        "Failed to make figure (see log for traceback). "
+                        "Falling back to empty component."
+                    )
 
-        return comp
+            if comp is None:
+                comp = self._no_component_factory()
+
+            return comp
+        finally:
+            self._in_get_component = False
 
     def _component_factory(self):
         raise NotImplementedError
