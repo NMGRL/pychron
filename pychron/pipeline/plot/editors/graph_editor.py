@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class WarningLabel(PlotLabel):
     _in_layout = False
 
-    def _font_changed(self, *args, **kw):
+    def _font_changed(self, old, new):
         # Suppress the chaco PlotLabel font-changed handler while a layout
         # pass is already running on this instance. The base handler calls
         # do_layout -> _layout_as_overlay which writes self.x/self.y and
@@ -43,9 +43,14 @@ class WarningLabel(PlotLabel):
         # inside traits._change_accepted (the TraitKind enum descriptor
         # bug under Py 3.12). Gating at the entrance kills the cycle
         # before it builds frames.
+        #
+        # Signature must match chaco PlotLabel._font_changed(old, new):
+        # traits dispatches change handlers by reflected arity, and *args
+        # is coerced to the zero-arg form which then calls super with no
+        # arguments and trips a TypeError.
         if self._in_layout:
             return
-        return super(WarningLabel, self)._font_changed(*args, **kw)
+        return super(WarningLabel, self)._font_changed(old, new)
 
     def _layout_as_overlay(self, size=None, force=False):
         # Setting self.x / self.y writes through to position[0]/[1], which
