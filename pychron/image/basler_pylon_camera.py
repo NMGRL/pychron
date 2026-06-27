@@ -13,14 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pypylon.genicam import GenericException
-
 from pychron.core.yaml import yload
 
 try:
     from pypylon import pylon, genicam
 except ImportError:
-    print("failed importing basler pylon")
+    print('failed importing basler pylon')
 
 import os
 
@@ -29,18 +27,25 @@ from pychron.loggable import Loggable
 
 class BaslerPylonCamera(Loggable):
     def __init__(self, identifier, *args, **kw):
+
         # available_cameras = pypylon.factory.find_devices()
         factory = pylon.TlFactory.GetInstance()
         available_cameras = factory.EnumerateDevices()
-        self.debug("Available cameras {}".format(available_cameras))
+        self.debug('Available cameras {}'.format(available_cameras))
+        print('Available cameras {}'.format(available_cameras))
+        serialnumber0=int(available_cameras[0].GetSerialNumber())
+        print ('Serial Number 0 = {}'.format(serialnumber0))
+        serialnumber1=int(available_cameras[1].GetSerialNumber())
+        print ('Serial Number 1 = {}'.format(serialnumber1))
+    
         try:
             try:
+                print('Identifier = {}'.format(identifier))
                 dev = available_cameras[int(identifier)]
+                print ('dev1 = {}'.format(dev))
             except ValueError:
-                dev = next(
-                    (c for c in available_cameras if c.user_defined_name == identifier),
-                    None,
-                )
+                dev = next((c for c in available_cameras if c.user_defined_name == identifier), None)
+                print ('dev2 = {}'.format(dev))
             cam = pylon.InstantCamera(factory.CreateDevice(dev))
             # cam = pypylon.factory.create_device(dev)
         except (IndexError, NameError):
@@ -59,33 +64,30 @@ class BaslerPylonCamera(Loggable):
             return True
 
     def load_configuration(self, cfg):
-        self.debug("Load configuration")
+        self.debug('Load configuration')
 
         if cfg and self._cam:
             if not self._cam.IsOpen():
                 self._cam.Open()
 
             self._cam.StopGrabbing()
-            dev = cfg.get("Device")
+            dev = cfg.get('Device')
             if dev:
-                for k, v in dev.get("PylonParameters", {}).items():
+
+                for k, v in dev.get('PylonParameters', {}).items():
                     try:
                         setattr(self._cam, k, v)
-                        self.debug("Set {} to {}".format(k, v))
+                        self.debug('Set {} to {}'.format(k, v))
                     except ValueError as e:
-                        self.warning(
-                            'Invalid Property value. k="{}",v={}. e={}'.format(k, v, e)
-                        )
+                        self.warning('Invalid Property value. k="{}",v={}. e={}'.format(k, v, e))
                     except KeyError:
                         self.warning('Invalid Camera Property "{}"'.format(k))
                     except RuntimeError as e:
-                        self.warning("RunTimeError: {}. k={},v={}".format(e, k, v))
+                        self.warning('RunTimeError: {}. k={},v={}'.format(e, k, v))
                     except IOError as e:
-                        self.warning("IOError: {}, k={}, v={}".format(e, k, v))
+                        self.warning('IOError: {}, k={}, v={}'.format(e, k, v))
                     except genicam.AccessException as e:
-                        self.warning("Access Exception {}".format(e))
-                    except genicam.LogicalErrorException as e:
-                        self.warning("Logical Error Exception {}".format(e))
+                        self.warning('Access Exception {}'.format(e))
 
             self.pixel_depth = self._cam.PixelDynamicRangeMax.Value
             self._cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -105,24 +107,25 @@ class BaslerPylonCamera(Loggable):
 
         return ok, img
 
-        # img = self._cam.grab_one()
-        # return True, img
+            # img = self._cam.grab_one()
+            # return True, img
 
-        # if self._grabber is None:
-        #     self._grabber = self._cam.grab_images(-1, 1)
-        #
-        # try:
-        #     img = next(self._grabber)
-        #     return True, img
-        # except (StopIteration, RuntimeError, ValueError) as e:
-        #     self._grabber = None
-        #     print('read', e)
-        #     return False, None
+            # if self._grabber is None:
+            #     self._grabber = self._cam.grab_images(-1, 1)
+            #
+            # try:
+            #     img = next(self._grabber)
+            #     return True, img
+            # except (StopIteration, RuntimeError, ValueError) as e:
+            #     self._grabber = None
+            #     print('read', e)
+            #     return False, None
 
     def release(self):
         self._cam.Close()
 
     def reload_configuration(self, p):
+
         # if self._cam:
         #     self._cam.stop_grabbing()
         #     self._grabber = None
