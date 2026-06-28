@@ -2833,7 +2833,13 @@ anaylsis_type={}
 
         if for_collection:
             if update_labels:
-                self._update_labels()
+                # _update_labels mutates chaco trait state (plots[i].y_axis.title
+                # = ...) and calls graph.refresh(); both touch Qt-backed paint
+                # caches.  Running them on the worker thread races the Qt event
+                # loop and has been observed to corrupt overlay lifetimes,
+                # producing SIGSEGV in QCoreApplication::notifyInternal2 when a
+                # later QTimer fires on a freed receiver.  Marshal to main.
+                invoke_in_main_thread(self._update_labels)
 
             if update_detectors:
                 self._update_detectors()
