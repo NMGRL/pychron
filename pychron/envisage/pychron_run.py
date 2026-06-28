@@ -255,6 +255,21 @@ def app_factory(klass):
     assemble the plugins
     return a Pychron TaskApplication
     """
+    # macOS: PyQt5 routes menus to the native menu bar by default.  When
+    # Qt rebuilds the menu (which envisage does whenever tasks register
+    # or actions update), AppKit can enter an NSMenuTrackingSession modal
+    # event loop and starve every QTimer on the main thread - heartbeat,
+    # do_after, invoke_in_main_thread - even though no user clicked a
+    # menu.  Pinning menus inside the window removes that code path.
+    # Must be set BEFORE the QApplication is constructed (envisage builds
+    # it inside klass(plugins=...) below).
+    try:
+        from pyface.qt.QtCore import Qt
+        from pyface.qt.QtWidgets import QApplication
+        QApplication.setAttribute(Qt.AA_DontUseNativeMenuBar, True)
+    except Exception as _e:  # pragma: no cover
+        logger.warning("AA_DontUseNativeMenuBar set failed: %r", _e)
+
     pychron_plugin = PychronTasksPlugin()
 
     plugins = [

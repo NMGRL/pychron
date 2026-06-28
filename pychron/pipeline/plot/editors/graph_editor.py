@@ -18,9 +18,11 @@
 
 import logging
 import os
+import time
 
 from chaco.api import PlotLabel
 from enable.component_editor import ComponentEditor as EnableComponentEditor
+from pyface.timer.api import do_after as do_after_timer
 from traits.api import Any, Bool, Event, Property, cached_property
 from traitsui.api import View, UItem
 
@@ -29,6 +31,14 @@ from pychron.pipeline.plot.editors.base_editor import BaseEditor
 from pychron.pipeline.plot.figure_container import FigureContainer
 
 logger = logging.getLogger(__name__)
+
+# Coalesce rapid back-to-back request_refresh() calls into one component
+# rebuild.  Without this every analyses run_completed event hits N editors x
+# (set_items + force_update) and detonates a burst of _component_factory()
+# calls (38 rebuilds observed in one ~5 h run; that storm starves the
+# main-thread Qt timer queue and has been correlated with NSMenuTrackingSession
+# captures and full main-thread stalls).
+_REFRESH_DEBOUNCE_MS = 200
 
 
 class WarningLabel(PlotLabel):
@@ -138,8 +148,32 @@ class GraphEditor(BaseEditor):
             if refresh:
                 self.request_refresh()
 
+    _refresh_pending = False
+    _refresh_force_pending = False
+
     def request_refresh(self, force: bool = False) -> None:
-        self._force_refresh = force
+        # Coalesce bursts: keep the strongest force flag seen during the
+        # debounce window, fire refresh_needed once when it expires.  Any
+        # additional request_refresh() landing inside the window is folded
+        # into the already-scheduled fire instead of triggering a new
+        # _component_factory rebuild.
+        self._force_refresh = force or self._force_refresh
+        self._refresh_force_pending = force or self._refresh_force_pending
+        if self._refresh_pending:
+            return
+        self._refresh_pending = True
+        try:
+            do_after_timer(_REFRESH_DEBOUNCE_MS, self._fire_refresh)
+        except Exception:
+            # If the timer cannot be scheduled (e.g. no QApplication yet),
+            # fall back to immediate fire so we never silently swallow a
+            # refresh request.
+            self._refresh_pending = False
+            self.refresh_needed = True
+
+    def _fire_refresh(self) -> None:
+        self._refresh_pending = False
+        self._refresh_force_pending = False
         self.refresh_needed = True
 
     def request_rebuild(self) -> None:
