@@ -710,6 +710,11 @@ def install_early() -> None:
 _SAFE_FILTER_INSTALLED = False
 _safe_filter = None  # strong ref so Qt does not GC the filter
 
+# Updated by _DyingReceiverFilter; sampled by _QueueRateLogger so that we can
+# see, after the fact, whether Qt event traffic was outpacing the heartbeat
+# right before a stall.  Counters are reset every reporting window.
+_EVENT_COUNTS = {"timer_seen": 0, "timer_dropped": 0, "timer_typeerror": 0}
+
 
 def install_safe_event_filter() -> None:
     """Install QApplication-wide event filter that drops QEvent::Timer
@@ -753,8 +758,10 @@ def install_safe_event_filter() -> None:
     class _DyingReceiverFilter(QObject):
         def eventFilter(self, obj, event):
             if event.type() == timer_type:
+                _EVENT_COUNTS["timer_seen"] += 1
                 try:
                     if is_deleted(obj):
+                        _EVENT_COUNTS["timer_dropped"] += 1
                         return True
                 except Exception:
                     # sip.isdeleted raises TypeError on non-PyQt5-wrapped
@@ -765,6 +772,7 @@ def install_safe_event_filter() -> None:
                     # handles it; what is NOT safe is dropping legitimate
                     # Timer events, which starves the main-thread heartbeat
                     # and any do_after / invoke_in_main_thread round-trip.
+                    _EVENT_COUNTS["timer_typeerror"] += 1
                     return False
             return False
 
@@ -780,6 +788,56 @@ def install_safe_event_filter() -> None:
     _log.info("safe event filter installed (drops QEvent.Timer to dead receivers)")
 
 
+_QUEUE_LOGGER_STARTED = False
+
+
+def install_queue_rate_logger(window_seconds: float = 30.0) -> None:
+    """Periodic INFO log of QEvent.Timer arrival + drop rates.
+
+    Pairs with the safe event filter counters.  When the main thread later
+    stalls we can read backwards from the stall and see whether timer
+    traffic was already pathological (e.g. chaco redraw avalanche) before
+    the heartbeat died.
+    """
+    global _QUEUE_LOGGER_STARTED
+    if _QUEUE_LOGGER_STARTED:
+        return
+
+    def _loop():
+        last_seen = 0
+        last_dropped = 0
+        last_typeerror = 0
+        while True:
+            time.sleep(window_seconds)
+            seen = _EVENT_COUNTS["timer_seen"]
+            dropped = _EVENT_COUNTS["timer_dropped"]
+            te = _EVENT_COUNTS["timer_typeerror"]
+            d_seen = seen - last_seen
+            d_dropped = dropped - last_dropped
+            d_te = te - last_typeerror
+            last_seen, last_dropped, last_typeerror = seen, dropped, te
+            if d_seen == 0:
+                # Either the filter is gone or the event loop is stuck.
+                # Both are interesting.  Log at WARNING so it stands out.
+                _log.warning(
+                    "queue rate: timer_seen=0 over %.1fs (event loop stuck "
+                    "or filter detached)", window_seconds,
+                )
+            else:
+                _log.info(
+                    "queue rate: timer_seen=%d (%.1f/s) dropped=%d (%.1f%%) "
+                    "type_err=%d window=%.1fs",
+                    d_seen, d_seen / window_seconds,
+                    d_dropped, 100.0 * d_dropped / d_seen,
+                    d_te, window_seconds,
+                )
+
+    t = threading.Thread(target=_loop, name="M3QueueRate", daemon=True)
+    t.start()
+    _QUEUE_LOGGER_STARTED = True
+    _log.info("queue rate logger installed (window=%.1fs)", window_seconds)
+
+
 def install_late(stall_threshold: float = 5.0) -> None:
     """Install hooks that require a constructed QApplication.  Call right
     after app_factory() and before app.run().
@@ -790,6 +848,7 @@ def install_late(stall_threshold: float = 5.0) -> None:
     install_thread_safe_marshalling()
     install_main_thread_watchdog(stall_threshold=stall_threshold)
     install_safe_event_filter()
+    install_queue_rate_logger()
     # Event tracer is opt-in: it logs one line per Timer event delivered
     # on the main thread, which is verbose.  Enable when hunting a crash
     # inside QCoreApplication::notifyInternal2 by setting

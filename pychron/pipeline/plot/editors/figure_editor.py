@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 import logging
+import threading
+import time
 from typing import Any as TypingAny
 
 from enable.component_editor import ComponentEditor
@@ -26,6 +28,31 @@ from pychron.pipeline.plot.editors.graph_editor import GraphEditor
 from pychron.pipeline.plot.figure_container import FigureContainer
 
 logger = logging.getLogger(__name__)
+
+_REBUILD_LOCK = threading.Lock()
+_REBUILD_COUNT = 0
+_REBUILD_WINDOW_START = 0.0
+_REBUILD_WINDOW_HITS = 0
+_REBUILD_BURST_THRESHOLD = 8
+_REBUILD_WINDOW_SECONDS = 2.0
+
+
+def _track_rebuild() -> tuple[int, int]:
+    """Increment global FigureEditor rebuild counter and a sliding 2 s window
+    counter.  Returns (total, burst_count_in_window).  Logged so that runaway
+    rebuild storms (the chaco-redraw-saturates-main-thread pattern) are
+    visible in the diagnostic logs before the heartbeat dies.
+    """
+    global _REBUILD_COUNT, _REBUILD_WINDOW_START, _REBUILD_WINDOW_HITS
+    now = time.monotonic()
+    with _REBUILD_LOCK:
+        _REBUILD_COUNT += 1
+        if now - _REBUILD_WINDOW_START > _REBUILD_WINDOW_SECONDS:
+            _REBUILD_WINDOW_START = now
+            _REBUILD_WINDOW_HITS = 1
+        else:
+            _REBUILD_WINDOW_HITS += 1
+        return _REBUILD_COUNT, _REBUILD_WINDOW_HITS
 
 
 class FigureEditor(GraphEditor):
@@ -89,7 +116,19 @@ class FigureEditor(GraphEditor):
         self.request_refresh(force=force)
 
     def _component_factory(self) -> TypingAny:
-        logger.debug("FigureEditor._component_factory() start")
+        total, burst = _track_rebuild()
+        t0 = time.monotonic()
+        logger.debug(
+            "FigureEditor._component_factory() start total=%d burst_in_%0.1fs=%d",
+            total, _REBUILD_WINDOW_SECONDS, burst,
+        )
+        if burst >= _REBUILD_BURST_THRESHOLD:
+            logger.warning(
+                "FigureEditor rebuild burst: %d rebuilds in last %0.1fs "
+                "(threshold %d). Likely cause of main-thread chaco redraw "
+                "saturation. editor=%r",
+                burst, _REBUILD_WINDOW_SECONDS, _REBUILD_BURST_THRESHOLD, self,
+            )
         model = self._figure_model_factory()
         force_refresh = self.consume_refresh_request()
         logger.debug(f"Calling model.refresh(force={force_refresh})")
@@ -118,7 +157,11 @@ class FigureEditor(GraphEditor):
             self.figure_container.component.resizable = ""
 
         self._get_component_hook(model)
-        logger.debug("FigureEditor._component_factory() returning component")
+        dt = time.monotonic() - t0
+        logger.debug(
+            "FigureEditor._component_factory() returning component "
+            "elapsed=%0.3fs total=%d", dt, total,
+        )
         return self.figure_container.component
 
     def _figure_model_factory(self) -> TypingAny:
