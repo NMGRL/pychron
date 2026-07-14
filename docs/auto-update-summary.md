@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `b0de8897f`  
-**Generated:** 2026-04-13 16:46 UTC  
-**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
+**Triggered by commit:** `82c4016bf`  
+**Generated:** 2026-05-08 20:58 UTC  
+**Compare:** [`7911e3bd1b24941500c5782c5c39daf0f62860d5...82c4016bf`](../../compare/7911e3bd1b24941500c5782c5c39daf0f62860d5...82c4016bf)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
+| [DVC Setup Guide](#dvc-setup-guide) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,44 +16,40 @@
 <summary>Click to expand</summary>
 
 ```
-.github/workflows/ci.yml
-.github/workflows/dependabot_automerge.yml
-.github/workflows/deploy-docs.yml
-.github/workflows/doc-maintenance.yml
-.github/workflows/wikidocs.yml
-pyproject.toml
-uv.lock
+pychron/dvc/dvc_persister.py
+pychron/experiment/experiment_executor.py
+pychron/labspy/client.py
+pychron/paths.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## DVC Setup Guide {#dvc-setup-guide}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/dvc_setup_guide.md`  
+**Matched prefixes:** `pychron/dvc/`
 
 ### Changed Files
 
-- `pyproject.toml`
-- `uv.lock`
+- `pychron/dvc/dvc_persister.py`
 
 ### AI Review
 
 ## Code Change Summary
 
-The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
+The code changes remove all references to `globalv.communication_simulation` checks from the DVC persister's `post_measurement_save()` and `save_run_log_file()` methods. Previously, these methods would skip saving data to DVC repositories when simulation mode was active to prevent pollution of real data repositories with simulated data. This simulation mode bypass functionality has been completely removed.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Python version requirements / Dependencies section
-  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
-  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
+- **Section/Topic:** Configuration fields and preferences / Simulation mode behavior
+  **Issue:** If the DVC Setup Guide documents the `communication_simulation` preference and describes how DVC operations are skipped during simulation mode, this information is now incorrect since the simulation checks have been removed from the persister.
+  **Suggested update:** Remove any references to DVC operations being automatically skipped during simulation mode, or add a warning that simulation mode no longer prevents DVC repository writes and users must manually disable DVC persistence when running simulations.
 
-- **Section/Topic:** Development environment setup (if covered)
-  **Issue:** Development dependency version requirement for mypy is outdated
-  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
+- **Section/Topic:** Failure modes and troubleshooting / Data integrity protection
+  **Issue:** If the guide mentions built-in protections against accidental data pollution during testing/simulation, this protection mechanism no longer exists for DVC operations.
+  **Suggested update:** Add a note that users must manually ensure DVC persistence is disabled when running simulations or tests to avoid writing simulated data to production repositories, since automatic simulation mode detection has been removed from the DVC persister.
 
 ---
 
