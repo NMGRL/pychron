@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `b0de8897f`  
-**Generated:** 2026-04-13 16:46 UTC  
-**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
+**Triggered by commit:** `7911e3bd1`  
+**Generated:** 2026-05-08 16:24 UTC  
+**Compare:** [`b3ae1ed35d2db63f5e6e280589a45696df557b4e...7911e3bd1`](../../compare/b3ae1ed35d2db63f5e6e280589a45696df557b4e...7911e3bd1)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
+| [DVC Setup Guide](#dvc-setup-guide) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,44 +16,44 @@
 <summary>Click to expand</summary>
 
 ```
-.github/workflows/ci.yml
-.github/workflows/dependabot_automerge.yml
-.github/workflows/deploy-docs.yml
-.github/workflows/doc-maintenance.yml
-.github/workflows/wikidocs.yml
-pyproject.toml
-uv.lock
+pychron/dvc/dvc_persister.py
+pychron/experiment/experiment_executor.py
+pychron/labspy/client.py
+pychron/paths.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## DVC Setup Guide {#dvc-setup-guide}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/dvc_setup_guide.md`  
+**Matched prefixes:** `pychron/dvc/`
 
 ### Changed Files
 
-- `pyproject.toml`
-- `uv.lock`
+- `pychron/dvc/dvc_persister.py`
 
 ### AI Review
 
 ## Code Change Summary
 
-The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
+The code changes introduce simulation mode protection to the DVC persister by checking `globalv.communication_simulation` before performing data persistence operations. When simulation mode is active, both `post_measurement_save()` and `save_run_log_file()` operations are skipped with warning messages to prevent simulated data from being written to DVC repositories.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Python version requirements / Dependencies section
-  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
-  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
+- **Section/Topic:** Configuration fields and preference paths
+  **Issue:** The `communication_simulation` global variable is not documented as a configuration option that affects DVC behavior
+  **Suggested update:** Add documentation for the `communication_simulation` setting, explaining that when set to True, it prevents DVC data persistence operations to avoid contaminating repositories with simulated measurement data
 
-- **Section/Topic:** Development environment setup (if covered)
-  **Issue:** Development dependency version requirement for mypy is outdated
-  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
+- **Section/Topic:** Failure modes or troubleshooting section
+  **Issue:** Missing information about simulation mode behavior and the associated warning messages
+  **Suggested update:** Add a note that when running in simulation mode (`communication_simulation=True`), users will see warning messages about skipping DVC operations, and explain that this is expected behavior to prevent simulated data from being persisted to the actual DVC repositories
+
+- **Section/Topic:** DVC storage layers or data persistence workflow
+  **Issue:** The documentation may not clearly explain when and how data persistence can be bypassed
+  **Suggested update:** Include information that data persistence to DVC repositories can be conditionally disabled (such as in simulation mode) and that this affects both measurement data saves and run log file saves
 
 ---
 
