@@ -1,14 +1,14 @@
 # Documentation Update Review
 
-**Triggered by commit:** `b0de8897f`  
-**Generated:** 2026-04-13 16:46 UTC  
-**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
+**Triggered by commit:** `3184f6c1b`  
+**Generated:** 2026-04-14 14:58 UTC  
+**Compare:** [`9e726f62342e459d51777c1fd1f4c4a08c42998c...3184f6c1b`](../../compare/9e726f62342e459d51777c1fd1f4c4a08c42998c...3184f6c1b)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
+| [Hardware Compatibility Matrix](#hardware-matrix) | 3 files | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,44 +16,49 @@
 <summary>Click to expand</summary>
 
 ```
-.github/workflows/ci.yml
-.github/workflows/dependabot_automerge.yml
-.github/workflows/deploy-docs.yml
-.github/workflows/doc-maintenance.yml
-.github/workflows/wikidocs.yml
-pyproject.toml
-uv.lock
+pychron/experiment/executor_watchdog_integration.py
+pychron/experiment/experiment_executor.py
+pychron/experiment/tests/executor_state_machine_test.py
+pychron/experiment/tests/test_executor_comms_failure.py
+pychron/experiment/tests/test_executor_watchdog_integration.py
+pychron/hardware/core/base_core_device.py
+pychron/hardware/core/communicators/ethernet_communicator.py
+pychron/hardware/core/tests/ethernet_communicator_test.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## Hardware Compatibility Matrix {#hardware-matrix}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/hardware_compatibility_matrix.md`  
+**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
 
 ### Changed Files
 
-- `pyproject.toml`
-- `uv.lock`
+- `pychron/hardware/core/base_core_device.py`
+- `pychron/hardware/core/communicators/ethernet_communicator.py`
+- `pychron/hardware/core/tests/ethernet_communicator_test.py`
 
 ### AI Review
 
 ## Code Change Summary
-
-The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
+The code changes introduce a new health monitoring system for hardware devices that tracks communication success and failure events. The `BaseCoreDevice` class now automatically wires health callbacks to communicators during initialization, and the `EthernetCommunicator` class has been enhanced to report health status for all communication operations (ask, tell, read, readline, test_connection). This represents a significant enhancement to the monitoring capabilities of all Ethernet-connected hardware devices.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Python version requirements / Dependencies section
-  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
-  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
+- **Section/Topic:** Communication Protocols - Ethernet section
+  **Issue:** The documentation doesn't mention the new health monitoring capabilities that are now automatically available for all Ethernet-connected devices
+  **Suggested update:** Add a note that Ethernet communicators now include automatic health monitoring with success/failure tracking for all communication operations (ask, tell, read, readline, test_connection)
 
-- **Section/Topic:** Development environment setup (if covered)
-  **Issue:** Development dependency version requirement for mypy is outdated
-  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
+- **Section/Topic:** Base Device Implementation section (if it exists) or General Requirements
+  **Issue:** Missing information about the new automatic health callback wiring that occurs during device initialization
+  **Suggested update:** Document that all devices inheriting from `BaseCoreDevice` now automatically configure health monitoring callbacks when watchdog is enabled, requiring no additional configuration from device implementers
+
+- **Section/Topic:** Required Configuration Fields
+  **Issue:** No mention that health monitoring is now a standard feature that doesn't require additional configuration
+  **Suggested update:** Add a note that health monitoring is automatically enabled for devices when `globalv.watchdog_enabled` is True, with no additional configuration fields required
 
 ---
 
