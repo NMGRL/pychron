@@ -1,14 +1,15 @@
 # Documentation Update Review
 
-**Triggered by commit:** `b0de8897f`  
-**Generated:** 2026-04-13 16:46 UTC  
-**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
+**Triggered by commit:** `cc8140f6f`  
+**Generated:** 2026-05-05 22:58 UTC  
+**Compare:** [`a77e5479d22e9277f50a5d8ee5c61a95e2fbcf9a...cc8140f6f`](../../compare/a77e5479d22e9277f50a5d8ee5c61a95e2fbcf9a...cc8140f6f)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
+| [Multi-Node Deployment Guide](#multi-node-deployment) | 1 file | ✅ Reviewed |
+| [Hardware Compatibility Matrix](#hardware-matrix) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,44 +17,65 @@
 <summary>Click to expand</summary>
 
 ```
-.github/workflows/ci.yml
-.github/workflows/dependabot_automerge.yml
-.github/workflows/deploy-docs.yml
-.github/workflows/doc-maintenance.yml
-.github/workflows/wikidocs.yml
-pyproject.toml
-uv.lock
+pychron/core/ui/qt/color_map_bar_editor.py
+pychron/experiment/automated_run/automated_run.py
+pychron/extraction_line/status_monitor.py
+pychron/spectrometer/base_spectrometer.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## Multi-Node Deployment Guide {#multi-node-deployment}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/multi_node_deployment_guide.md`  
+**Matched prefixes:** `pychron/extraction_line/`
 
 ### Changed Files
 
-- `pyproject.toml`
-- `uv.lock`
+- `pychron/extraction_line/status_monitor.py`
 
 ### AI Review
 
 ## Code Change Summary
 
-The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
+The StatusMonitor class in the extraction line module has been significantly enhanced with comprehensive thread management, safety checks, and detailed logging during start/stop operations. These changes add thread cleanup validation, timeout handling, resource leak detection, and extensive debug instrumentation to prevent issues during multi-node communication teardown.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Python version requirements / Dependencies section
-  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
-  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
+- **Section/Topic:** Troubleshooting Multi-Node Communication Issues
+  **Issue:** The guide likely lacks information about the new detailed logging available for StatusMonitor thread lifecycle events
+  **Suggested update:** Add a subsection explaining that StatusMonitor now provides comprehensive debug logging for thread management, including start/stop events, cleanup validation, and resource leak detection. Include examples of relevant log messages like "Thread started", "Thread join completed", and "Possible resource leak" warnings that operators can use to diagnose inter-node communication problems.
 
-- **Section/Topic:** Development environment setup (if covered)
-  **Issue:** Development dependency version requirement for mypy is outdated
-  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
+- **Section/Topic:** ZMQ/RPC Inter-Process Communication Layer Configuration  
+  **Issue:** Missing information about new StatusMonitor thread timeout configuration parameter
+  **Suggested update:** Document that StatusMonitor now includes a configurable `_thread_timeout` parameter (default 5.0 seconds) that controls how long the system waits for graceful thread shutdown during node disconnection. Explain that this timeout can be relevant when nodes are experiencing high latency or blocked I/O during shutdown.
+
+- **Section/Topic:** Startup Tests for Multi-Node Setups
+  **Issue:** Test procedures may not account for the enhanced thread lifecycle validation now available
+  **Suggested update:** Update startup test procedures to mention that administrators can now monitor StatusMonitor thread health through debug logs, and include checking for successful thread cleanup (no "resource leak" warnings) as part of connection/disconnection testing between nodes.
+
+---
+
+## Hardware Compatibility Matrix {#hardware-matrix}
+
+**Doc file:** `docs/hardware_compatibility_matrix.md`  
+**Matched prefixes:** `pychron/hardware/`, `pychron/spectrometer/`, `pychron/lasers/`, `pychron/furnace/`
+
+### Changed Files
+
+- `pychron/spectrometer/base_spectrometer.py`
+
+### AI Review
+
+## Code Change Summary
+
+The changes to `base_spectrometer.py` improve error handling and robustness in the intensity reading methods by adding checks for empty signal arrays and array size mismatches. These are internal implementation improvements that add better validation and debugging capabilities, but do not change the external interface, supported hardware, communication protocols, or configuration requirements for any spectrometer devices.
+
+## No Updates Required
+
+These changes are internal error handling improvements that do not affect the hardware compatibility information documented in the matrix. The modifications add robustness to signal processing but do not introduce new hardware support, change communication protocols, modify configuration fields, or alter the implementation status of any devices that would be tracked in the Hardware Compatibility Matrix.
 
 ---
 
