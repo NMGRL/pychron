@@ -1,14 +1,15 @@
 # Documentation Update Review
 
-**Triggered by commit:** `b0de8897f`  
-**Generated:** 2026-04-13 16:46 UTC  
-**Compare:** [`2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f`](../../compare/2dc9a81ee22a4d398f971f58c63ea96ebd204783...b0de8897f)
+**Triggered by commit:** `532cf71d2`  
+**Generated:** 2026-04-14 18:03 UTC  
+**Compare:** [`3184f6c1b61490264c027d3ace350f5650fb332c...532cf71d2`](../../compare/3184f6c1b61490264c027d3ace350f5650fb332c...532cf71d2)
 
 ## Affected Documents
 
 | Document | Files Changed | Status |
 |---|---|---|
-| [Installation Guide](#installation-guide) | 2 files | ✅ Reviewed |
+| [Multi-Node Deployment Guide](#multi-node-deployment) | 1 file | ✅ Reviewed |
+| [PyScript API Reference](#pyscript-api) | 1 file | ✅ Reviewed |
 
 ## All Changed Files in This Commit
 
@@ -16,44 +17,75 @@
 <summary>Click to expand</summary>
 
 ```
-.github/workflows/ci.yml
-.github/workflows/dependabot_automerge.yml
-.github/workflows/deploy-docs.yml
-.github/workflows/doc-maintenance.yml
-.github/workflows/wikidocs.yml
-pyproject.toml
-uv.lock
+pychron/applications/pychron_application.py
+pychron/core/ui/qt/animated_png_editor.py
+pychron/core/ui/qt/camera_editor.py
+pychron/core/ui/qt/laser_status_editor.py
+pychron/core/ui/qt/video_component_editor.py
+pychron/core/wait/wait_group.py
+pychron/envisage/tasks/wait_pane.py
+pychron/experiment/experiment_executor.py
+pychron/experiment/plot_panel.py
+pychron/experiment/tasks/experiment_panes.py
+pychron/experiment/tasks/experiment_task.py
+pychron/extraction_line/extraction_line_manager.py
+pychron/graph/stacked_graph.py
+pychron/pyscripts/pyscript.py
 ```
 
 </details>
 
 ---
 
-## Installation Guide {#installation-guide}
+## Multi-Node Deployment Guide {#multi-node-deployment}
 
-**Doc file:** `docs/installation_guide.md`  
-**Matched prefixes:** `pyproject.toml`, `app_utils/`, `uv.lock`
+**Doc file:** `docs/multi_node_deployment_guide.md`  
+**Matched prefixes:** `pychron/extraction_line/`
 
 ### Changed Files
 
-- `pyproject.toml`
-- `uv.lock`
+- `pychron/extraction_line/extraction_line_manager.py`
 
 ### AI Review
 
 ## Code Change Summary
 
-The code changes update the minimum version requirements for three dependencies in pyproject.toml: lxml from 6.0.2 to 6.0.4, prometheus-client from 0.21.0 to 0.25.0, and mypy (dev dependency) from 1.15.0 to 1.20.1. The corresponding uv.lock file was also updated to reflect these new versions. These are routine dependency updates that affect the minimum required versions for installation.
+The changes refactor the timer management system in the ExtractionLineManager class, replacing direct `do_after()` calls with a centralized timer scheduling and cancellation system. This introduces new private attributes for tracking timers and adds proper cleanup methods that are called during deactivation. The changes improve resource management and prevent potential timer leaks in multi-node deployments.
 
 ## Documentation Updates Required
 
-- **Section/Topic:** Python version requirements / Dependencies section
-  **Issue:** The installation guide may reference outdated minimum version requirements for core dependencies
-  **Suggested update:** Update any specific version references to reflect lxml>=6.0.4 and prometheus-client>=0.25.0 if these are explicitly mentioned in dependency requirements or troubleshooting sections
+- **Section/Topic:** Startup tests for multi-node setups / Hardware update configuration
+  **Issue:** The documentation may reference the old direct `do_after()` timer behavior for hardware updates and canvas synchronization, which has been replaced with a managed timer system.
+  **Suggested update:** Update any troubleshooting or configuration sections to mention that hardware updates and canvas synchronization now use managed timers that are properly cancelled during shutdown, which should improve cleanup behavior in multi-node deployments.
 
-- **Section/Topic:** Development environment setup (if covered)
-  **Issue:** Development dependency version requirement for mypy is outdated
-  **Suggested update:** Update any references to mypy development dependency requirement from >=1.15.0 to >=1.20.1 if development setup instructions are included in the installation guide
+- **Section/Topic:** ZMQ/RPC inter-process communication layer / Connection management
+  **Issue:** The addition of proper timer cleanup (`_cancel_delayed_updates()`) during deactivation affects how extraction line managers clean up resources when shutting down communication with other nodes.
+  **Suggested update:** Note that extraction line manager shutdown now includes automatic cancellation of pending hardware update and canvas sync operations, which improves clean disconnection from other nodes in the multi-node setup.
+
+- **Section/Topic:** Troubleshooting / Resource cleanup
+  **Issue:** The new timer management system changes how resources are cleaned up, which may affect debugging procedures for stuck or hanging processes.
+  **Suggested update:** Add information that timer-related issues during shutdown are now logged with debug messages indicating which timers failed to cancel and why, which can help diagnose communication issues between nodes.
+
+---
+
+## PyScript API Reference {#pyscript-api}
+
+**Doc file:** `docs/pyscript_api_reference.md`  
+**Matched prefixes:** `pychron/pyscripts/`
+
+### Changed Files
+
+- `pychron/pyscripts/pyscript.py`
+
+### AI Review
+
+## Code Change Summary
+
+The changes are internal refactoring to the PyScript class implementation. The `_setup_wait_control()` method received a return type annotation, and the manual wait control management logic was replaced with a call to `self.manager.wait_group.ensure_control(wd)`. These are implementation details that don't affect the public PyScript API interface or available commands.
+
+## No Updates Required
+
+These changes are internal implementation improvements that don't modify any PyScript DSL commands, parameters, syntax, or available context variables. The PyScript API Reference documents the user-facing scripting language interface, and since no public API elements were added, removed, or changed, no documentation updates are necessary.
 
 ---
 
