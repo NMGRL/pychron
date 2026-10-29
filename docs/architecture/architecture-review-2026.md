@@ -1,7 +1,7 @@
 # Pychron Architecture Review (2026-10)
 
 Focus: long-term maintainability, not feature work. Every finding below comes
-from measuring the `develop` line at commit `6ccadb4`. The method and the
+from measuring `main` at commit `6ccadb4` (2026-06-28). The method and the
 commands to reproduce it are in the [Appendix](#appendix-a--method-and-reproduction).
 
 ---
