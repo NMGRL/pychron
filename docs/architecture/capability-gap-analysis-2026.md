@@ -285,6 +285,7 @@ overnight queue:
 5. **MySQL still has the rows.** Step 5 of 4.2 committed them, so the catalog now lists analyses whose files no longer exist. The read path then shows a "pull changes" dialog and skips them (`dvc.py:2257`).
 
 Nothing detects this drift. No Git to DB reconciler exists:
+
 - `offline_index.py` is entirely commented out.
 - `dvc/fix/*` are one-off scripts.
 - `repository_db_sync` only copies sample metadata from the DB to Git.
