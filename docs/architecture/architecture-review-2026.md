@@ -904,6 +904,16 @@ gantt
 
 ---
 
+## 12. Capability Gaps
+
+Runtime capability gaps (observability and monitoring, state machines, and the
+DVC Git plus MySQL persistence split) are analyzed in
+[capability-gap-analysis-2026.md](capability-gap-analysis-2026.md), with action
+items E1-E12 that extend the plan in section 9. Its P0 items (E1-E4) remove a
+silent data-loss path in DVC and should run alongside Phase 0.
+
+---
+
 ## Appendix A: Method and reproduction
 
 - **Static analysis:** Python `ast` walk over `pychron/**/*.py`. It collects
