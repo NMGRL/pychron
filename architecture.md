@@ -118,3 +118,9 @@ changes inside a task-specific package.
   or load points.
 - Prefer small fixes in the active path over broad cleanup across parallel
   legacy implementations.
+
+## Architecture Review
+
+For measured structure, layering, inheritance, test-coverage findings, and the
+prioritized maintenance roadmap, see
+`docs/architecture/architecture-review-2026.md`.
