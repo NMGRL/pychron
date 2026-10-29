@@ -87,59 +87,50 @@ docstring. `broad` counts `except Exception` handlers. `print` counts
 
 ### 2.2 Structural map (current)
 
-The diagram groups packages by the role they *should* play. Red edges are
-real imports that point the wrong way, from a lower layer to a higher one
-(sampled from the measured dependency graph).
+The first diagram groups packages by the role they *should* play, and shows
+the intended import direction. The second shows real imports that break it.
 
 ```mermaid
 flowchart TB
     subgraph L5["L5 Application shell"]
-        launchers --> envisage
-        applications --> envisage
+        direction LR
+        launchers ~~~ applications ~~~ envisage
     end
     subgraph L4["L4 Workflows and tasks (UI)"]
-        experiment
-        pipeline
-        entry
-        extraction_line_tasks["extraction_line (tasks)"]
-        lasers_tasks["lasers (tasks)"]
+        direction LR
+        experiment ~~~ pipeline ~~~ entry ~~~ el_tasks["extraction_line.tasks"]
     end
     subgraph L3["L3 Domain services"]
-        dvc
-        processing
-        pyscripts
-        spectrometer
-        extraction_line
-        lasers
-        furnace
-        database
+        direction LR
+        dvc ~~~ processing ~~~ pyscripts ~~~ spectrometer ~~~ extraction_line ~~~ lasers ~~~ database
     end
     subgraph L2["L2 Device and I/O"]
-        hardware
-        messaging
-        git_archive
-        git
+        direction LR
+        hardware ~~~ messaging ~~~ git ~~~ git_archive
     end
     subgraph L1["L1 Foundations"]
-        core
-        root["paths / globals / loggable / pychron_constants"]
-        graph_pkg["graph"]
-        canvas
+        direction LR
+        core ~~~ root["paths / globals / loggable"] ~~~ graph_pkg["graph"] ~~~ canvas
     end
-    envisage --> L4
-    L4 --> L3
-    L3 --> L2
-    L2 --> L1
+    L5 ==>|may import| L4
+    L4 ==>|may import| L3
+    L3 ==>|may import| L2
+    L2 ==>|may import| L1
+```
 
-    core -. "8 imports" .-> envisage
-    core -. "7" .-> git
-    core -. "3" .-> dvc
-    root -. "18" .-> experiment
-    envisage -. "BaseExtractionLineTask" .-> extraction_line
-    graph_pkg -. "1" .-> pipeline
-    hardware -. "mutual" .-> spectrometer
-    database -. "4" .-> experiment
-    linkStyle 6,7,8,9,10,11,12,13 stroke:#c0392b,stroke-width:2px
+Measured imports that point the wrong way (from a lower layer up to a higher
+one), a sample of the 59 mutually dependent package pairs:
+
+```mermaid
+flowchart LR
+    core1["core (L1)"] -- "8 imports" --> envisage1["envisage (L5)"]
+    core1 -- "7 imports" --> git1["git (L2)"]
+    core1 -- "3 imports" --> dvc1["dvc (L3)"]
+    root1["paths / globals (L1)"] -- "18 imports" --> experiment1["experiment (L4)"]
+    graph1["graph (L1)"] -- "imports" --> pipeline1["pipeline (L4)"]
+    database1["database (L3)"] -- "4 imports" --> experiment1
+    hardware1["hardware (L2)"] <-- "mutual" --> spectrometer1["spectrometer (L3)"]
+    linkStyle default stroke:#c0392b,stroke-width:2px
 ```
 
 ### 2.3 Dependency facts
